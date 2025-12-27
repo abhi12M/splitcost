@@ -1,0 +1,110 @@
+import { useState, useEffect } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { ArrowLeft, Loader2 } from "lucide-react";
+import { Layout } from "@/components/layout/Layout";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { ExpenseForm } from "@/components/expense/ExpenseForm";
+import { getGroup, addExpense, type Group } from "@/lib/storage";
+import { useToast } from "@/hooks/use-toast";
+
+export default function AddExpensePage() {
+  const { groupId } = useParams();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [group, setGroup] = useState<Group | undefined>();
+  const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const fetchGroup = async () => {
+      if (groupId) {
+        setLoading(true);
+        try {
+          const fetchedGroup = await getGroup(groupId);
+          setGroup(fetchedGroup);
+        } catch (error) {
+          console.error("Error fetching group:", error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+    fetchGroup();
+  }, [groupId]);
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="container py-12 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!group) {
+    return (
+      <Layout>
+        <div className="container py-12 text-center">
+          <p className="text-muted-foreground">Group not found</p>
+          <Button asChild className="mt-4">
+            <Link to="/">Go Home</Link>
+          </Button>
+        </div>
+      </Layout>
+    );
+  }
+
+  const handleSubmit = async (data: Parameters<typeof addExpense>[1]) => {
+    setIsSubmitting(true);
+    try {
+      await addExpense(groupId!, data);
+      toast({
+        title: "Expense added",
+        description: "Your expense has been saved",
+      });
+      navigate(`/group/${groupId}`);
+    } catch (error) {
+      console.error("Error adding expense:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add expense",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Layout>
+      <div className="container py-6 md:py-8 max-w-2xl">
+        <Button variant="ghost" size="sm" asChild className="mb-4">
+          <Link to={`/group/${groupId}`}>
+            <ArrowLeft className="w-4 h-4" />
+            Back to group
+          </Link>
+        </Button>
+
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <Card>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl">Add Expense</CardTitle>
+              <CardDescription>Record a new expense for {group.name}</CardDescription>
+            </CardHeader>
+
+            <CardContent>
+              <ExpenseForm
+                members={group.members}
+                defaultCurrency={group.currency}
+                onSubmit={handleSubmit}
+                submitLabel={isSubmitting ? "Adding..." : "Add Expense"}
+              />
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+    </Layout>
+  );
+}

@@ -1,0 +1,71 @@
+import { Link } from "react-router-dom";
+import { ReceiptIcon } from "@/components/icons/CategoryIcons";
+
+export function Footer() {
+  return (
+    <footer className="border-t border-border bg-muted/30">
+      <div className="container py-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="md:col-span-2">
+            <Link to="/" className="flex items-center gap-2.5 mb-4">
+              <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
+                <ReceiptIcon className="w-4 h-4 text-primary-foreground" />
+              </div>
+              <span className="text-lg font-bold text-foreground">SplitEase</span>
+            </Link>
+            <p className="text-sm text-muted-foreground max-w-sm">
+              The simplest way to split expenses with friends, roommates, and groups.
+              No signup required.
+            </p>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-foreground mb-4">Product</h4>
+            <ul className="space-y-2.5">
+              <li>
+                <Link to="/faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  FAQ
+                </Link>
+              </li>
+              <li>
+                <Link to="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Contact
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-foreground mb-4">Legal</h4>
+            <ul className="space-y-2.5">
+              <li>
+                <Link to="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link to="/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Terms & Conditions
+                </Link>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Ad placeholder */}
+        <div className="mt-8 p-4 border border-dashed border-border rounded-xl text-center text-sm text-muted-foreground bg-muted/50">
+          Ad Space Placeholder
+        </div>
+
+        <div className="mt-8 pt-8 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4">
+          <p className="text-sm text-muted-foreground">
+            © {new Date().getFullYear()} SplitEase. All rights reserved.
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Made with care for hassle-free expense splitting
+          </p>
+        </div>
+      </div>
+    </footer>
+  );
+}
