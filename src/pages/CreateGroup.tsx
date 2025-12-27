@@ -37,7 +37,6 @@ export default function CreateGroupPage() {
   const [members, setMembers] = useState<string[]>([]);
   const [newMember, setNewMember] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showAllMembers, setShowAllMembers] = useState(false);
   const [errors, setErrors] = useState<{
     groupName?: string;
     members?: string;
@@ -117,11 +116,6 @@ export default function CreateGroupPage() {
     if (hasSubmitted) validate();
   }, [groupName, members]);
 
-  useEffect(() => {
-    if (members.length <= MEMBERS_VISIBLE) {
-      setShowAllMembers(false);
-    }
-  }, [members]);
 
   const saveGroupIdToLocal = (groupId: string) => {
     const existingGroups = getEncryptedItem<string[]>(LOCAL_GROUPS_KEY, []);
@@ -133,7 +127,14 @@ export default function CreateGroupPage() {
 
   const handleMemberChange = (value: string) => {
     setNewMember(value);
-
+    const memberNameResult = MemberNameSchema.safeParse(newMember);
+    if (!memberNameResult?.error?.issues?.[0]?.message) {
+      setErrors((prev) => ({
+        ...prev,
+        memberName: null
+      }));
+      return false;
+    }
     setErrors((prev) => ({
       ...prev,
       memberExists: null
@@ -250,53 +251,47 @@ export default function CreateGroupPage() {
                   {errors.memberExists && (
                     <span className="text-xs text-destructive">{errors.memberExists}</span>
                   )}
-                  {/* Members List */}
+                  {/* Members List Container */}
                   {members.length > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="flex flex-wrap gap-2"
-                    >
-                      <AnimatePresence mode="popLayout">
-                        {(showAllMembers ? members : members.slice(0, 8)).map((member) => (
-                          <motion.div
-                            key={member}
-                            layout
-                            initial={{ scale: 0, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0, opacity: 0 }}
-                            className="flex items-center gap-2 bg-muted rounded-full pl-1 pr-2 py-1"
-                          >
-                            <UserAvatar name={member} size="sm" />
-                            <span className="text-sm font-medium text-foreground max-w-[100px] truncate">
-                              {member}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => removeMember(member)}
-                              className="w-5 h-5 rounded-full bg-background hover:bg-destructive hover:text-destructive-foreground flex items-center justify-center transition-colors"
-                              aria-label={`Remove ${member}`}
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </motion.div>
-                        ))}
-                      </AnimatePresence>
-                    </motion.div>
+                    <div className="space-y-2">
+                      {/* Scrollable Area */}
+                      <div className="max-h-[105px] overflow-y-auto scrollbar-thin scrollbar-thumb-rounded">
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="flex flex-wrap gap-2"
+                        >
+                          <AnimatePresence mode="popLayout">
+                            {members.map((member) => (
+                              <motion.div
+                                key={member}
+                                layout
+                                initial={{ scale: 0.8, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.8, opacity: 0 }}
+                                className="flex items-center gap-2 bg-background border rounded-full pl-1 pr-1.5 py-1 shadow-sm"
+                              >
+                                <UserAvatar name={member} size="sm" />
+                                <span className="text-xs font-medium text-foreground max-w-[120px] truncate" title={member}>
+                                  {member}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => removeMember(member)}
+                                  className="w-4 h-4 rounded-full hover:bg-destructive hover:text-white flex items-center justify-center transition-colors"
+                                  aria-label={`Remove ${member}`}
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </motion.div>
+                            ))}
+                          </AnimatePresence>
+                        </motion.div>
+
+                      </div>
+                    </div>
                   )}
 
-                  {/* Show more / collapse */}
-                  {members.length > 8 && (
-                    <button
-                      type="button"
-                      onClick={() => setShowAllMembers(!showAllMembers)}
-                      className="text-xs text-primary hover:underline"
-                    >
-                      {showAllMembers
-                        ? "Collapse"
-                        : `+${members.length - 8} more`}
-                    </button>
-                  )}
                 </div>
 
                 {/* Submit */}
