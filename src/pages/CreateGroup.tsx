@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, Plus, X, Users, Loader2 } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
@@ -255,28 +255,33 @@ export default function CreateGroupPage() {
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="flex flex-wrap gap-2 mt-3 max-h-[120px] overflow-y-auto"
+                      className="flex flex-wrap gap-2"
                     >
-                      {(showAllMembers ? members : members.slice(0, 8)).map((member, index) => (
-                        <motion.div
-                          key={member}
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          transition={{ delay: index * 0.03 }}
-                          className="flex items-center gap-2 bg-muted rounded-full pl-1 pr-2 py-1"
-                        >
-                          <UserAvatar name={member} size="sm" />
-                          <span className="text-sm font-medium">{member}</span>
-
-                          <button
-                            type="button"
-                            onClick={() => removeMember(member)}
-                            className="w-5 h-5 rounded-full bg-background hover:bg-destructive hover:text-destructive-foreground flex items-center justify-center"
+                      <AnimatePresence mode="popLayout">
+                        {(showAllMembers ? members : members.slice(0, 8)).map((member) => (
+                          <motion.div
+                            key={member}
+                            layout
+                            initial={{ scale: 0, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0, opacity: 0 }}
+                            className="flex items-center gap-2 bg-muted rounded-full pl-1 pr-2 py-1"
                           >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </motion.div>
-                      ))}
+                            <UserAvatar name={member} size="sm" />
+                            <span className="text-sm font-medium text-foreground max-w-[100px] truncate">
+                              {member}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => removeMember(member)}
+                              className="w-5 h-5 rounded-full bg-background hover:bg-destructive hover:text-destructive-foreground flex items-center justify-center transition-colors"
+                              aria-label={`Remove ${member}`}
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
                     </motion.div>
                   )}
 
