@@ -12,7 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { createGroup } from "@/lib/storage";
 import { getEncryptedItem, setEncryptedItem } from "@/lib/localstorage";
 import { LOCAL_GROUPS_KEY } from "@/lib/constants";
-import { TextInput } from "@/components/ui/text-input";
+import { MEMBERS_MAX, MEMBERS_VISIBLE, GroupSchema, MemberNameSchema } from "@/lib/validations/group.schema";
+
 const CURRENCIES = [
   { code: "USD", symbol: "$", name: "US Dollar" },
   { code: "EUR", symbol: "€", name: "Euro" },
@@ -37,13 +38,87 @@ export default function CreateGroupPage() {
   const [newMember, setNewMember] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAllMembers, setShowAllMembers] = useState(false);
-  const MAX_MEMBER_NAME_LENGTH = 30;
-  const MAX_MEMBERS = 50;
-  const MIN_MEMBERS = 2;
-  const VISIBLE_MEMBERS = 8;
+  const [errors, setErrors] = useState<{
+    groupName?: string;
+    members?: string;
+    memberName?: string,
+    memberExists?: string
+  }>({});
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+
+  const validate = () => {
+    const result = GroupSchema.safeParse({ groupName, members });
+    const memberNameResult = MemberNameSchema.safeParse(newMember);
+
+    if (!result.success || !memberNameResult.success) {
+      const e = result.error.format();
+      setErrors({
+        groupName: e.groupName?._errors[0],
+        members: e.members?._errors[0],
+        memberName: memberNameResult?.error?.issues?.[0]?.message,
+      });
+      return false;
+    }
+
+    setErrors({});
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setHasSubmitted(true);
+    const isValid = validate();
+    if (!isValid) return; // STOP submit
+    setIsSubmitting(true);
+    try {
+      const group = await createGroup(groupName.trim(), currency, members);
+      saveGroupIdToLocal(group.id);
+      navigate(`/group/${group.id}`);
+    } catch (error) {
+      console.error("Error creating group:", error);
+      setIsSubmitting(false);
+    }
+  };
+
+  const addMember = () => {
+    const memberNameResult = MemberNameSchema.safeParse(newMember);
+    if (!memberNameResult.success) {
+      setErrors((prev) => ({
+        ...prev,
+        memberName: memberNameResult?.error?.issues?.[0]?.message,
+      }));
+      return;
+    }
+    if (members.includes(newMember)) {
+      setErrors((prev) => ({
+        ...prev,
+        memberExists: "Member already added.",
+      }));
+      return;
+    }
+    if (!errors.memberName) {
+      setMembers([...members, newMember?.trim()]);
+      setNewMember("");
+    }
+  };
+
+  const removeMember = (memberToRemove: string) => {
+    setMembers(members.filter((m) => m !== memberToRemove));
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && newMember?.length) {
+      e.preventDefault();
+      addMember();
+    }
+  };
 
   useEffect(() => {
-    if (members.length <= VISIBLE_MEMBERS) {
+    if (hasSubmitted) validate();
+  }, [groupName, members]);
+
+  useEffect(() => {
+    if (members.length <= MEMBERS_VISIBLE) {
       setShowAllMembers(false);
     }
   }, [members]);
@@ -56,40 +131,24 @@ export default function CreateGroupPage() {
     }
   };
 
-  const addMember = () => {
-    if (newMember.trim() && !members.includes(newMember.trim())) {
-      setMembers([...members, newMember.trim()]);
-      setNewMember("");
+  const handleMemberChange = (value: string) => {
+    setNewMember(value);
+
+    setErrors((prev) => ({
+      ...prev,
+      memberExists: null
+    }));
+    if (hasSubmitted) {
+      const result = MemberNameSchema.safeParse(value);
+
+      setErrors((prev) => ({
+        ...prev,
+        memberName: result.success
+          ? null
+          : result.error.issues[0]?.message,
+      }));
     }
   };
-
-  const removeMember = (memberToRemove: string) => {
-    setMembers(members.filter((m) => m !== memberToRemove));
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      addMember();
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (groupName.trim() && members.length >= 2) {
-      setIsSubmitting(true);
-      try {
-        const group = await createGroup(groupName.trim(), currency, members);
-        saveGroupIdToLocal(group.id);
-        navigate(`/group/${group.id}`);
-      } catch (error) {
-        console.error("Error creating group:", error);
-        setIsSubmitting(false);
-      }
-    }
-  };
-
-  const isValid = groupName.trim() && members.length >= 2;
 
   return (
     <Layout>
@@ -112,9 +171,8 @@ export default function CreateGroupPage() {
             </CardHeader>
 
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Group Name */}
-                {/* <div className="space-y-2">
+              <div className="space-y-6">
+                <div className="space-y-2">
                   <Label htmlFor="groupName">Group Name</Label>
                   <Input
                     id="groupName"
@@ -122,18 +180,12 @@ export default function CreateGroupPage() {
                     value={groupName}
                     onChange={(e) => setGroupName(e.target.value)}
                     autoFocus
+                    aria-invalid={!!errors.groupName}
                   />
-                </div> */}
-                <TextInput
-                  id="groupName"
-                  label="Group Name"
-                  placeholder="e.g., Paris Trip 2024, Apartment 4B"
-                  value={groupName}
-                  onChange={(e) => setGroupName(e.target.value)}
-                  maxLength={50}
-                  autoFocus
-                  required
-                />
+                  {errors.groupName && (
+                    <span className="text-xs text-destructive">{errors.groupName}</span>
+                  )}
+                </div>
 
                 {/* Currency */}
                 <div className="space-y-2">
@@ -155,31 +207,25 @@ export default function CreateGroupPage() {
 
                 {/* Members */}
                 <div className="space-y-3">
-                  <Label className="flex items-center justify-between">
-                    <span>
-                      Members <span className="text-destructive">*</span>
-                    </span>
-
-                    {newMember.length == MAX_MEMBER_NAME_LENGTH && (
-                      <span className="text-destructive text-xs">
-                        {newMember.length}/{MAX_MEMBER_NAME_LENGTH}
-                      </span>
-                    )}
+                  <Label>
+                    Members <span className="text-destructive">*</span>
                   </Label>
 
                   {/* Input Row */}
                   <div className="flex gap-2">
                     <Input
                       placeholder={
-                        members.length >= MAX_MEMBERS
+                        members.length >= MEMBERS_MAX
                           ? "Maximum members reached"
                           : "Enter name"
                       }
                       value={newMember}
-                      onChange={(e) => setNewMember(e.target.value)}
+                      onChange={(e) => handleMemberChange(e.target.value)}
                       onKeyDown={handleKeyPress}
-                      maxLength={MAX_MEMBER_NAME_LENGTH}
-                      disabled={members.length >= MAX_MEMBERS}
+                      aria-invalid={!!errors.members}
+                      disabled={
+                        members.length >= MEMBERS_MAX
+                      }
                     />
 
                     <Button
@@ -188,25 +234,22 @@ export default function CreateGroupPage() {
                       size="icon"
                       onClick={addMember}
                       disabled={
-                        !newMember.trim() || members.length >= MAX_MEMBERS
+                        !newMember?.length || members.length >= MEMBERS_MAX
                       }
                     >
                       <Plus className="w-4 h-4" />
                     </Button>
+
                   </div>
-
-                  {/* {members.length < MAX_MEMBERS && (
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Max {MAX_MEMBER_NAME_LENGTH} characters</span>
-                      <span>{newMember.length}/{MAX_MEMBER_NAME_LENGTH}</span>
-                    </div>
-                  )} */}
-
-                  {/* Member Counter */}
-                  {/* <p className="text-xs text-muted-foreground">
-                    {members.length} / {MAX_MEMBERS} members
-                  </p> */}
-
+                  {errors.members && !errors.memberName && !errors.memberExists && (
+                    <span className="text-xs text-destructive">{errors.members}</span>
+                  )}
+                  {errors.memberName && (
+                    <span className="text-xs text-destructive">{errors.memberName}</span>
+                  )}
+                  {errors.memberExists && (
+                    <span className="text-xs text-destructive">{errors.memberExists}</span>
+                  )}
                   {/* Members List */}
                   {members.length > 0 && (
                     <motion.div
@@ -249,24 +292,10 @@ export default function CreateGroupPage() {
                         : `+${members.length - 8} more`}
                     </button>
                   )}
-
-                  {/* Validation Messages */}
-                  {members.length < MIN_MEMBERS && (
-                    <p className="text-sm text-muted-foreground">
-                      Add at least {MIN_MEMBERS - members.length} more{" "}
-                      {members.length === 1 ? "member" : "members"}
-                    </p>
-                  )}
-
-                  {members.length === MAX_MEMBERS && (
-                    <p className="text-sm text-muted-foreground">
-                      Limit of {MAX_MEMBERS} members per group reached
-                    </p>
-                  )}
                 </div>
 
                 {/* Submit */}
-                <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+                <Button type="submit" size="lg" className="w-full" onClick={handleSubmit} disabled={isSubmitting}>
                   {isSubmitting ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -276,7 +305,7 @@ export default function CreateGroupPage() {
                     "Create Group"
                   )}
                 </Button>
-              </form>
+              </div>
             </CardContent>
           </Card>
         </motion.div>
