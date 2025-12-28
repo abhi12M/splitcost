@@ -10,7 +10,6 @@ import { UserAvatar } from "@/components/ui/UserAvatar";
 import { EXPENSE_CATEGORIES, type CategoryKey, type SubcategoryId, GeneralIcon } from "@/components/icons/CategoryIcons";
 import { cn } from "@/lib/utils";
 import { detectCategoryFromDescription, type SplitType, type ExpenseSplit } from "@/lib/storage";
-import { TextInput } from "../ui/text-input";
 import {
   Command,
   CommandEmpty,
@@ -19,6 +18,11 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { Users } from "lucide-react";
+import { ExpenseSchema } from "@/lib/validations/expense.schema";
+import { formatAmount } from "../ui/formatters";
+import { InfoTooltip } from "../ui/info-tooltip";
+// Assuming you have these UI primitives or similar standard HTML
 const CURRENCIES = [
   { code: "USD", symbol: "$" },
   { code: "EUR", symbol: "€" },
@@ -70,13 +74,33 @@ export function ExpenseForm({
   const [participants, setParticipants] = useState<string[]>(initialData?.participants || [...members]);
   const [category, setCategory] = useState<CategoryKey | "">(initialData?.category || "");
   const [subcategory, setSubcategory] = useState<SubcategoryId>(initialData?.subcategory || "");
-  const [splitType, setSplitType] = useState<SplitType>(initialData?.splitType || "equal");
+  const [splitType, setSplitType] = useState<any>(initialData?.splitType || "equal");
   const [splits, setSplits] = useState<ExpenseSplit[]>(
     initialData?.splits || members.map((m) => ({ member: m, value: null, amount: 0 }))
   );
   const [categoryPopoverOpen, setCategoryPopoverOpen] = useState(false);
   const [manualCategorySelected, setManualCategorySelected] = useState(!!initialData?.category);
   const [open, setOpen] = useState(false);
+  const totalAmount = parseFloat(amount) || 0;
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+
+  const validationState = useMemo(() => {
+    if (splitType === "equal") return { isValid: true, diff: 0, currentTotal: totalAmount };
+
+    const currentTotal = splits.reduce((acc, curr) =>
+      acc + (splitType === "percentage" ? (curr.value || 0) : (curr.amount || 0)), 0
+    );
+
+    const target = splitType === "percentage" ? 100 : totalAmount;
+    const diff = target - currentTotal;
+
+    return {
+      isValid: Math.abs(diff) < 0.01,
+      diff,
+      currentTotal,
+      percentageOfTotal: splitType === "percentage" ? currentTotal : (currentTotal / totalAmount) * 100
+    };
+  }, [splits, splitType, totalAmount]);
 
   const calculateSplits = (
     splitType: SplitType,
@@ -84,7 +108,7 @@ export function ExpenseForm({
     splits: ExpenseSplit[],
     totalAmount: number
   ): ExpenseSplit[] => {
-    if (!participants.length || !totalAmount) return [];
+    if (!participants.length) return [];
 
     if (splitType === "equal") {
       const base = Math.floor((totalAmount / participants.length) * 100) / 100;
@@ -106,6 +130,7 @@ export function ExpenseForm({
     }
 
     // custom
+
     return splits.map((s) => ({
       member: s.member,
       value: null,
@@ -148,15 +173,6 @@ export function ExpenseForm({
     );
   }, [amount, splitType, participants]);
 
-
-  // Reset percentages to equal when switching to percentage mode
-  // useEffect(() => {
-  //   if (splitType === "percentage" && participants.length > 0) {
-  //     const equalPercentage = Math.round((100 / participants.length) * 100) / 100;
-  //     setSplits(participants.map((member) => ({ member, value: equalPercentage })));
-  //   }
-  // }, [splitType, participants.length]);
-
   const toggleParticipant = (member: string) => {
     setParticipants((prev) =>
       prev.includes(member) ? prev.filter((p) => p !== member) : [...prev, member]
@@ -181,7 +197,7 @@ export function ExpenseForm({
         splitType,
         participants,
         updated,
-        parseFloat(amount) || 0
+        parseFloat(amount) || null
       );
     });
   };
@@ -190,39 +206,61 @@ export function ExpenseForm({
     console.log("FINAL SPLITS →", splits);
   }, [splits]);
 
+  useEffect(() => {
+    if (hasSubmitted) validate();
+  }, [description, paidBy, amount, participants]);
+
+  // First, filter the splits
+  const validSplits = splits.filter(
+    (s) =>
+      participants.includes(s.member) &&
+      parseFloat(s.amount?.toString() || "0") > 0
+  );
+
+  // Then, filter participants to only those with a valid split
+  const validParticipants = participants.filter((p) =>
+    validSplits.some((s) => s.member === p)
+  );
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (description && amount && paidBy && participants.length > 0) {
-      onSubmit({
-        description,
-        amount: parseFloat(amount),
-        currency,
-        paidBy,
-        participants,
-        splits: splits.filter((s) => participants.includes(s.member)),
-        splitType,
-        category: category || "uncategorized",
-        subcategory: subcategory || "general",
-      });
-    }
+    setHasSubmitted(true);
+    const isValid = validate();
+    if (!isValid) return; // STOP submit
+    onSubmit({
+      description,
+      amount: parseFloat(amount),
+      currency,
+      paidBy,
+      participants: validParticipants,
+      splits: validSplits,
+      splitType,
+      category: category || "uncategorized",
+      subcategory: subcategory || "general",
+    });
   };
+  const [errors, setErrors] = useState<{
+    paidBy?: string;
+    description?: string;
+    amount?: string;
+    participants?: string;
+  }>({});
 
-  // Validate percentage total
-  const percentageTotal = useMemo(() => {
-    if (splitType !== "percentage") return 100;
+  const validate = () => {
+    const result = ExpenseSchema.safeParse({ description, paidBy, amount, participants });
+    if (!result.success) {
+      const e = result.error.format();
+      setErrors({
+        description: e.description?._errors[0] || "",
+        paidBy: e.paidBy?._errors[0] || "",
+        amount: e.amount?._errors[0] || "",
+        participants: e.participants?._errors[0] || "",
+      });
+      return false;
+    }
 
-    return splits
-      .filter((s) => participants.includes(s.member))
-      .reduce((sum, s) => sum + (s.value || 0), 0);
-  }, [splits, participants, splitType]);
-
-  const customTotal = useMemo(() => {
-    if (splitType !== "custom") return parseFloat(amount) || 0;
-
-    return splits
-      .filter((s) => participants.includes(s.member))
-      .reduce((sum, s) => sum + s.amount, 0);
-  }, [splits, participants, splitType, amount]);
+    setErrors({ description: "", paidBy: "", amount: "" });
+    return true;
+  };
 
   const selectedCategory = category ? EXPENSE_CATEGORIES[category] : null;
   const SelectedIcon = selectedCategory
@@ -231,10 +269,21 @@ export function ExpenseForm({
     GeneralIcon
     : GeneralIcon;
 
+  const handleSplitTypeChange = (splitType: SplitType) => {
+    setSplitType(splitType);
+    selectAllParticipants();
+  }
+
+  const splitTypeData: { type: SplitType, label: string, icon: React.ElementType, info: string }[] = [
+    { type: "equal", label: "Equally", icon: Equal, info: 'The total amount is divided equally among all selected participants.' },
+    { type: "percentage", label: "By %", icon: Percent, info: "Specify what percentage of the total each participant should pay.\nValue must be between 1.00% and 100.00%" },
+    { type: "custom", label: "Custom", icon: Calculator, info: `Specify exactly how much each selected participant owes.\nValue must be between ${formatAmount(Number(1), currency)} and ${amount ? formatAmount(Number(amount), currency) : 'the total amount'}.` },
+  ];
+
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* Row 1: Icon + Description */}
-      <div className="flex gap-3 items-start">
+      <div className="flex gap-3 items-center">
         <div className="shrink-0">
           <Popover open={categoryPopoverOpen} onOpenChange={setCategoryPopoverOpen}>
             <PopoverTrigger asChild>
@@ -298,9 +347,8 @@ export function ExpenseForm({
             </PopoverContent>
           </Popover>
         </div>
-        {/* <div className="flex-1 space-y-2">
-          <Label htmlFor="description">Description*</Label>
-
+        <div className="space-y-2 w-full">
+          <Label htmlFor="description" required={true}>Description</Label>
           <Input
             id="description"
             placeholder="What was this expense for?"
@@ -308,35 +356,13 @@ export function ExpenseForm({
             maxLength={255}
             onChange={(e) => setDescription(e.target.value)}
             autoFocus
-            required
+            aria-invalid={!!errors.description}
           />
+          {errors.description && (
+            <div className="text-xs text-destructive">{errors.description}</div>
+          )}
+        </div>
 
-          <div className="flex justify-between text-xs">
-            <span className="text-muted-foreground">
-              Max 255 characters
-            </span>
-
-            <span
-              className={
-                description.length === 255
-                  ? "text-destructive font-medium"
-                  : "text-muted-foreground"
-              }
-            >
-              {description.length}/255
-            </span>
-          </div>
-        </div> */}
-        <TextInput
-          id="description"
-          label="Description"
-          placeholder="What was this expense for?"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          maxLength={150}
-          autoFocus
-          required
-        />
       </div>
 
       {/* Row 2: Currency + Amount */}
@@ -357,36 +383,47 @@ export function ExpenseForm({
           </Select>
         </div>
         <div className="col-span-2 space-y-2">
-          <Label htmlFor="amount">Amount*</Label>
+          <Label htmlFor="amount" required={true}>Amount</Label>
           <Input
             id="amount"
             type="number"
             step="0.01"
-            min="0"
-            maxLength={10}
-            placeholder="0.00"
+            placeholder="1.00"
             value={amount}
-            required
+            minValue={1}
+            maxValue={99999999}
+            precision={2}
             onChange={(e) => setAmount(e.target.value)}
+            showHelper={true}
+            aria-invalid={!!errors.amount}
+            currency={currency}
           />
+          {errors.amount && (
+            <div className="text-xs text-destructive">{errors.amount}</div>
+          )}
         </div>
       </div>
 
       {/* Paid By */}
       <div className="space-y-2">
-        <Label>Paid by</Label>
+        <Label required={true}>Paid by</Label>
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
               role="combobox"
               aria-expanded={open}
-              className="w-full justify-between h-14 px-4 rounded-xl bg-background hover:bg-accent/50 transition-all border-2"
+              className={cn(
+                "w-full justify-between h-14 px-4 rounded-xl bg-background hover:bg-accent/50 transition-all border",
+                errors.paidBy
+                  ? "border-destructive focus-visible:ring-destructive"
+                  : "border-input focus-visible:ring-ring"
+              )}
             >
               {paidBy ? (
                 <div className="flex items-center gap-3">
                   <UserAvatar name={paidBy} size="sm" />
-                  <span className="font-semibold text-foreground">{paidBy}</span>
+                  <span className="text-foreground">{paidBy}</span>
                 </div>
               ) : (
                 <span className="text-muted-foreground">Select member...</span>
@@ -426,120 +463,172 @@ export function ExpenseForm({
             </Command>
           </PopoverContent>
         </Popover>
+        {errors.paidBy && (
+          <div className="text-xs text-destructive">{errors.paidBy}</div>
+        )}
       </div>
 
       {/* Split Type Selector */}
-      <div className="space-y-2">
-        <Label>Split type</Label>
-        <div className="grid grid-cols-3 gap-2">
-          {[
-            { type: "equal" as SplitType, label: "Equally", icon: Equal },
-            { type: "percentage" as SplitType, label: "By %", icon: Percent },
-            { type: "custom" as SplitType, label: "Custom", icon: Calculator },
-          ].map(({ type, label, icon: Icon }) => (
-            <button
-              key={type}
-              type="button"
-              onClick={() => setSplitType(type)}
-              className={cn(
-                "flex items-center justify-center gap-2 p-2.5 rounded-xl border-2 transition-all",
-                splitType === type
-                  ? "border-primary bg-primary-muted"
-                  : "border-border hover:border-primary/50"
-              )}
-            >
-              <Icon className="w-4 h-4" />
-              <span className="text-sm font-medium">{label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Participants with split values */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label>
-            Split between
-            {splitType === "percentage" && (
-              <span
-                className={cn(
-                  "ml-2 text-xs",
-                  Math.abs(percentageTotal - 100) < 0.01
-                    ? "text-success"
-                    : "text-destructive"
-                )}
-              >
-                ({percentageTotal.toFixed(1)}%)
-              </span>
-            )}
-            {splitType === "custom" && (
-              <span
-                className={cn(
-                  "ml-2 text-xs",
-                  Math.abs(customTotal - (parseFloat(amount) || 0)) < 0.01
-                    ? "text-success"
-                    : "text-destructive"
-                )}
-              >
-                ({customTotal.toFixed(2)} / {parseFloat(amount) || 0})
-              </span>
-            )}
-          </Label>
-          <Button type="button" variant="ghost" size="sm" onClick={selectAllParticipants} className="text-xs">
-            Select all
-          </Button>
-        </div>
-        <div className="space-y-2">
-          {members.map((member) => {
-            const isSelected = participants.includes(member);
-            const split = splits.find((s) => s.member === member);
-            return (
-              <div
-                key={member}
-                className={cn(
-                  "flex items-center gap-3 p-2.5 rounded-xl border-2 transition-all",
-                  isSelected ? "border-primary bg-primary-muted" : "border-border"
-                )}
-              >
+      <div className="space-y-6">
+        {/* 1. Split Type Segmented Control */}
+        <div className="space-y-3">
+          <Label>How should this be split?</Label>
+          <div className="flex p-1 bg-muted/50 rounded-xl border border-border/50">
+            {splitTypeData.map(({ type, label, icon: Icon, info }) => {
+              const isActive = splitType === type;
+              return (
                 <button
+                  key={type}
                   type="button"
-                  onClick={() => toggleParticipant(member)}
-                  className="flex items-center gap-2 flex-1 min-w-0"
+                  onClick={() => handleSplitTypeChange(type)}
+                  className={cn(
+                    "flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg transition-all duration-200",
+                    isActive
+                      ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
+                      : "text-muted-foreground hover:bg-white/50 hover:text-foreground"
+                  )}
                 >
-                  <div className="relative">
-                    <UserAvatar name={member} size="sm" />
-                    {isSelected && (
-                      <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
-                        <Check className="w-2.5 h-2.5 text-primary-foreground" />
-                      </div>
-                    )}
-                  </div>
-                  <span className="text-sm font-medium text-foreground truncate">{member}</span>
+                  <Icon className={cn("w-4 h-4", isActive ? "text-primary" : "text-muted-foreground")} />
+                  {label}
+                  <InfoTooltip>
+                    {info}
+                  </InfoTooltip>
                 </button>
-
-                {isSelected && splitType !== "equal" && (
-                  <div className="flex items-center gap-1">
-                    <Input
-                      type="number"
-                      step={splitType === "percentage" ? "0.1" : "0.01"}
-                      min="0"
-                      max={splitType === "percentage" ? "100" : undefined}
-                      value={splitType === "percentage" ? split?.value || 0 : split?.amount || 0}
-                      onChange={(e) => updateSplitValue(member, parseFloat(e.target.value) || 0)}
-                      className="w-20 h-8 text-sm text-right"
-                    />
-                    <span className="text-sm text-muted-foreground w-4">
-                      {splitType === "percentage" ? "%" : ""}
-                    </span>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-        {participants.length === 0 && (
-          <p className="text-sm text-destructive">Select at least one participant</p>
+
+        {/* 2. Validation & Progress Bar (Only for Non-Equal modes) */}
+        {splitType !== "equal" && (
+          <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="flex justify-between text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              <span>Allocated</span>
+              <span className={validationState.isValid ? "text-green-600" : "text-red-500"}>
+                {validationState.diff === 0
+                  ? "Balanced"
+                  : `${Math.abs(validationState.diff).toFixed(2)}${splitType === 'percentage' ? '%' : ''} ${validationState.diff > 0 ? 'Left' : 'Over'}`}
+              </span>
+            </div>
+            <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
+              <div
+                className={cn(
+                  "h-full transition-all duration-500 ease-out rounded-full",
+                  validationState.isValid ? "bg-green-500" : "bg-primary"
+                )}
+                style={{ width: `${Math.min(validationState.percentageOfTotal, 100)}%` }}
+              />
+            </div>
+          </div>
         )}
+
+        {/* 3. Participants List */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-muted-foreground" />
+              <Label required={true}>Participants</Label>
+              <span className={cn(
+                "text-xs font-normal px-2 py-0.5 rounded-full",
+                participants.length === 0
+                  ? "text-destructive bg-destructive/10"
+                  : "text-muted-foreground bg-muted"
+              )}>
+                {participants.length === 0
+                  ? "Select at least one"
+                  : `${participants.length} selected`}
+              </span>
+            </Label>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => selectAllParticipants()}
+              className="h-8 text-xs text-primary hover:text-primary/80 hover:bg-primary/5"
+            >
+              {participants.length !== members.length && "Select All"}
+            </Button>
+          </div>
+
+          <div className="grid gap-2">
+            {members.map((member) => {
+              const isSelected = participants.includes(member);
+              const split = splits.find((s) => s.member === member);
+
+              return (
+                <div
+                  key={member}
+                  className={cn(
+                    "group relative flex items-center justify-between p-3 rounded-xl border transition-all duration-200",
+                    isSelected
+                      ? "border-primary/30 bg-primary/5 shadow-sm"
+                      : "border-transparent bg-muted/30 hover:bg-muted/50"
+                  )}
+                >
+                  {/* Clickable Area for Selection */}
+                  <button
+                    type="button"
+                    onClick={() => toggleParticipant(member)}
+                    className="flex items-center gap-3 flex-1 text-left"
+                  >
+                    <div className="relative">
+                      <UserAvatar name={member} size="md" />
+                      {isSelected && (
+                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center ring-2 ring-white">
+                          <div className="w-full h-full bg-green-500 rounded-full flex items-center justify-center">
+                            <Check className="w-2.5 h-2.5 text-white" />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className={cn("text-sm font-medium", isSelected ? "text-foreground" : "text-muted-foreground")}>
+                        {member}
+                      </span>
+                      {/* Show calculated amount in Percentage Mode for better context */}
+                      {isSelected && splitType === "percentage" && (
+                        <span className="text-xs text-muted-foreground">
+                          {formatAmount(split?.amount || 0, currency)}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+
+                  {/* Input Area */}
+                  {isSelected && (
+                    <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-4 duration-200">
+                      {splitType === "equal" ? (
+                        <span className="text-sm font-semibold tabular-nums text-foreground/80 px-3">
+                          {formatAmount(split?.amount || 0, currency)}
+                        </span>
+                      ) : (
+                        <div className="relative">
+                          {/* We prevent propagation so clicking input doesn't toggle selection */}
+                          <Input
+                            type="number"
+                            onClick={(e) => e.stopPropagation()}
+                            step={splitType === "percentage" ? "0.1" : "0.01"}
+                            minValue={1}
+                            maxValue={splitType === "percentage" ? 100 : Number(amount || 0)}
+                            precision={2}
+                            placeholder="1.00"
+                            showHelper={false}
+                            postfix="%"
+                            value={splitType === "percentage" ? (split?.value === null ? '' : split?.value) : (split?.amount === null ? '' : split?.amount)}
+                            onChange={(e) => updateSplitValue(member, parseFloat(e.target.value) || null)}
+                            className={cn(
+                              splitType === "percentage" ? "w-[6rem]" : "w-28"
+                            )}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
 

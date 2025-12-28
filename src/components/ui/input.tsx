@@ -8,7 +8,8 @@ interface NumericProps {
   maxValue?: number;
   precision?: number;
   showHelper?: boolean;
-  currency?: string
+  currency?: string;
+  postfix?: string; // new prop
 }
 
 type InputProps = React.ComponentProps<"input"> & NumericProps;
@@ -22,7 +23,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       maxValue,
       precision = 2,
       showHelper = true,
-      currency='INR',
+      currency = "INR",
+      postfix,
       onChange,
       onKeyDown,
       ...props
@@ -35,68 +37,73 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       () => new RegExp(`^\\d*\\.?\\d{0,${precision}}$`),
       [precision],
     );
+
     const helperText =
       isNumeric && showHelper
-        ? `Enter a value between ${formatAmount(minValue, currency)}${maxValue !== undefined ? ` and ${formatAmount(maxValue, currency)}` : ""
-        }`
+        ? `Enter a value between ${formatAmount(minValue, currency)}${
+            maxValue !== undefined ? ` and ${formatAmount(maxValue, currency)}` : ""
+          }`
         : null;
+
     return (
       <div className="space-y-1">
-        <input
-          ref={ref}
-          type={type}
-          className={cn(
-            "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base",
-            "placeholder:text-muted-foreground",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-            "disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-            "aria-[invalid=true]:border-destructive",
-            "focus-visible:aria-[invalid=true]:border-input",
-            className,
+        <div className="relative w-full">
+          <input
+            ref={ref}
+            type={type}
+            className={cn(
+              "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base",
+              postfix ? "pr-7" : "pr-3", // add padding if postfix exists
+              "placeholder:text-muted-foreground",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              "disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+              "aria-[invalid=true]:border-destructive",
+              "focus-visible:aria-[invalid=true]:border-input",
+              className,
+            )}
+            {...props}
+            onKeyDown={(e) => {
+              if (isNumeric && ["-", "+", "e", "E"].includes(e.key)) {
+                e.preventDefault();
+              }
+              onKeyDown?.(e);
+            }}
+            onChange={(e) => {
+              if (!isNumeric) {
+                onChange?.(e);
+                return;
+              }
+
+              const value = e.target.value;
+
+              if (value === "") {
+                onChange?.(e);
+                return;
+              }
+
+              if (!regex.test(value)) return;
+
+              const num = Number(value);
+              if (Number.isNaN(num)) return;
+
+              if (
+                (minValue !== undefined && num < minValue) ||
+                (maxValue !== undefined && num > maxValue)
+              ) {
+                return;
+              }
+
+              onChange?.(e);
+            }}
+          />
+          {postfix && (
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
+              {postfix}
+            </span>
           )}
-          {...props}
-          onKeyDown={(e) => {
-            // Prevent invalid characters
-            if (isNumeric && ["-", "+", "e", "E"].includes(e.key)) {
-              e.preventDefault();
-            }
-            onKeyDown?.(e);
-          }}
-          onChange={(e) => {
-            if (!isNumeric) {
-              onChange?.(e);
-              return;
-            }
-
-            const value = e.target.value;
-
-            // Allow clearing
-            if (value === "") {
-              onChange?.(e);
-              return;
-            }
-
-            // Precision validation
-            if (!regex.test(value)) return;
-
-            const num = Number(value);
-            if (Number.isNaN(num)) return;
-
-            // Range validation
-            if (
-              (minValue !== undefined && num < minValue) ||
-              (maxValue !== undefined && num > maxValue)
-            ) {
-              return;
-            }
-
-            onChange?.(e);
-          }}
-        />
+        </div>
         {helperText && (
-          <p className="text-xs text-muted-foreground">
-            {helperText}
-          </p>
+          <p className="text-xs text-muted-foreground">{helperText}</p>
         )}
       </div>
     );

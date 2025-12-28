@@ -174,7 +174,7 @@ export default function CreateGroupPage() {
             <CardContent>
               <div className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="groupName">Group Name</Label>
+                  <Label htmlFor="groupName">Group Name<span className="text-destructive">*</span></Label>
                   <Input
                     id="groupName"
                     placeholder="e.g., Paris Trip 2024, Apartment 4B"
