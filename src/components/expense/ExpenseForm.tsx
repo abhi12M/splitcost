@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
-import { Check, Percent, Equal, Calculator } from "lucide-react";
+import { Check, Percent, Equal, Calculator, ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +11,14 @@ import { EXPENSE_CATEGORIES, type CategoryKey, type SubcategoryId, GeneralIcon }
 import { cn } from "@/lib/utils";
 import { detectCategoryFromDescription, type SplitType, type ExpenseSplit } from "@/lib/storage";
 import { TextInput } from "../ui/text-input";
-
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 const CURRENCIES = [
   { code: "USD", symbol: "$" },
   { code: "EUR", symbol: "€" },
@@ -49,7 +56,6 @@ interface ExpenseFormProps {
   }) => void;
   submitLabel: string;
 }
-
 export function ExpenseForm({
   members,
   defaultCurrency = "USD",
@@ -70,6 +76,7 @@ export function ExpenseForm({
   );
   const [categoryPopoverOpen, setCategoryPopoverOpen] = useState(false);
   const [manualCategorySelected, setManualCategorySelected] = useState(!!initialData?.category);
+  const [open, setOpen] = useState(false);
 
   const calculateSplits = (
     splitType: SplitType,
@@ -368,24 +375,57 @@ export function ExpenseForm({
       {/* Paid By */}
       <div className="space-y-2">
         <Label>Paid by</Label>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          {members.map((member) => (
-            <button
-              key={member}
-              type="button"
-              onClick={() => setPaidBy(member)}
-              className={cn(
-                "flex items-center gap-2 p-2.5 rounded-xl border-2 transition-all",
-                paidBy === member
-                  ? "border-primary bg-primary-muted"
-                  : "border-border hover:border-primary/50"
-              )}
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={open}
+              className="w-full justify-between h-14 px-4 rounded-xl bg-background hover:bg-accent/50 transition-all border-2"
             >
-              <UserAvatar name={member} size="sm" />
-              <span className="text-sm font-medium text-foreground truncate">{member}</span>
-            </button>
-          ))}
-        </div>
+              {paidBy ? (
+                <div className="flex items-center gap-3">
+                  <UserAvatar name={paidBy} size="sm" />
+                  <span className="font-semibold text-foreground">{paidBy}</span>
+                </div>
+              ) : (
+                <span className="text-muted-foreground">Select member...</span>
+              )}
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+
+          <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+            <Command>
+              <CommandInput placeholder="Search members..." />
+              <CommandList className="max-h-[300px] overflow-y-auto">
+                <CommandEmpty>No member found.</CommandEmpty>
+                <CommandGroup>
+                  {members.map((member) => (
+                    <CommandItem
+                      key={member}
+                      value={member}
+                      onSelect={(currentValue) => {
+                        setPaidBy(currentValue);
+                        setOpen(false);
+                      }}
+                      className="flex items-center gap-3 py-3 cursor-pointer"
+                    >
+                      <div className={cn(
+                        "flex items-center justify-center w-4 h-4 mr-2",
+                        paidBy === member ? "opacity-100" : "opacity-0"
+                      )}>
+                        <Check className="h-4 w-4 text-primary" />
+                      </div>
+                      <UserAvatar name={member} size="sm" />
+                      <span className="font-medium">{member}</span>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
       </div>
 
       {/* Split Type Selector */}
