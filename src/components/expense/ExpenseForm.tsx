@@ -110,32 +110,45 @@ export function ExpenseForm({
   ): ExpenseSplit[] => {
     if (!participants.length) return [];
 
+    const splitMap = new Map(splits.map(s => [s.member, s]));
+
     if (splitType === "equal") {
       const base = Math.floor((totalAmount / participants.length) * 100) / 100;
-      let remainder = +(totalAmount - base * participants.length).toFixed(2);
+      const remainder = +(totalAmount - base * participants.length).toFixed(2);
 
       return participants.map((member, index) => ({
         member,
-        value: null,
+        value: "",
         amount: +(base + (index === participants.length - 1 ? remainder : 0)).toFixed(2),
       }));
     }
 
     if (splitType === "percentage") {
-      return splits.map((s) => ({
-        member: s.member,
-        value: s.value,
-        amount: +((totalAmount * (s.value || 0)) / 100).toFixed(2),
-      }));
+      return participants.map((member) => {
+        const existing = splitMap.get(member);
+        const value = existing?.value ?? "";
+
+        return {
+          member,
+          value,
+          amount:
+            value === ""
+              ? ""
+              : +((totalAmount * Number(value)) / 100).toFixed(2),
+        };
+      });
     }
 
     // custom
+    return participants.map((member) => {
+      const existing = splitMap.get(member);
 
-    return splits.map((s) => ({
-      member: s.member,
-      value: null,
-      amount: +(s.amount || 0),
-    }));
+      return {
+        member,
+        value: "",
+        amount: existing?.amount ?? "",
+      };
+    });
   };
 
   // Auto-detect category from description (only if not manually selected)
@@ -183,21 +196,23 @@ export function ExpenseForm({
     setParticipants([...members]);
   };
 
-  const updateSplitValue = (member: string, value: number) => {
+  const updateSplitValue = (member: string, value: number | "") => {
     setSplits((prev) => {
-      const updated = prev.map(s =>
+      const updated = prev.map((s) =>
         s.member === member
           ? splitType === "percentage"
-            ? { ...s, value: value }   // update value for percentage
-            : { ...s, amount: value }  // update amount for custom/equal
+            ? { ...s, value }
+            : { ...s, amount: value }
           : s
       );
+
+      const total = Number(amount) || 0;
 
       return calculateSplits(
         splitType,
         participants,
         updated,
-        parseFloat(amount) || null
+        total
       );
     });
   };
@@ -275,9 +290,9 @@ export function ExpenseForm({
   }
 
   const splitTypeData: { type: SplitType, label: string, icon: React.ElementType, info: string }[] = [
-    { type: "equal", label: "Equally", icon: Equal, info: 'The total amount is divided equally among all selected participants.' },
-    { type: "percentage", label: "By %", icon: Percent, info: "Specify what percentage of the total each participant should pay.\nValue must be between 1.00% and 100.00%" },
-    { type: "custom", label: "Custom", icon: Calculator, info: `Specify exactly how much each selected participant owes.\nValue must be between ${formatAmount(Number(1), currency)} and ${amount ? formatAmount(Number(amount), currency) : 'the total amount'}.` },
+    { type: "equal", label: "Equally", icon: Equal, info: 'The amount is divided equally among all selected participants.' },
+    { type: "percentage", label: "By %", icon: Percent, info: "Specify what percentage of the amount each participant should pay.\nValue must be between 1.00% and 99.00%" },
+    { type: "custom", label: "Custom", icon: Calculator, info: `Specify exactly how much each selected participant owes.\nValue must be between ${formatAmount(Number(1), currency)} and ${amount ? formatAmount(Number(amount), currency) : 'the amount'}.` },
   ];
 
   return (
@@ -609,13 +624,23 @@ export function ExpenseForm({
                             onClick={(e) => e.stopPropagation()}
                             step={splitType === "percentage" ? "0.1" : "0.01"}
                             minValue={1}
-                            maxValue={splitType === "percentage" ? 100 : Number(amount || 0)}
+                            maxValue={splitType === "percentage" ? 99 : Number(amount || 0)}
                             precision={2}
                             placeholder="1.00"
                             showHelper={false}
-                            postfix="%"
-                            value={splitType === "percentage" ? (split?.value === null ? '' : split?.value) : (split?.amount === null ? '' : split?.amount)}
-                            onChange={(e) => updateSplitValue(member, parseFloat(e.target.value) || null)}
+                            postfix={splitType === "percentage" && '%'}
+                            value={
+                              splitType === "percentage"
+                                ? split?.value ?? ""
+                                : split?.amount ?? ""
+                            }
+                            onChange={(e) => {
+                              const v = e.target.value;
+                              updateSplitValue(
+                                member,
+                                v === "" ? "" : Number(v)
+                              );
+                            }}
                             className={cn(
                               splitType === "percentage" ? "w-[6rem]" : "w-28"
                             )}

@@ -16,8 +16,9 @@ export function InfoTooltip({ children, className }: InfoTooltipProps) {
     <Tooltip.Provider delayDuration={200}>
       <Tooltip.Root>
         <Tooltip.Trigger asChild>
-          <button
-            type="button"
+          <span
+            role="button"
+            tabIndex={0}
             className={cn(
               "ml-1 inline-flex items-center text-muted-foreground hover:text-foreground focus:outline-none",
               className
@@ -25,21 +26,21 @@ export function InfoTooltip({ children, className }: InfoTooltipProps) {
             aria-label="More info"
           >
             <Info className="h-3.5 w-3.5" />
-          </button>
+          </span>
         </Tooltip.Trigger>
 
         <Tooltip.Portal>
           <Tooltip.Content
-  side="top"
-  align="center"
-  className="z-50 max-w-xs rounded-md border bg-popover px-3 py-2 text-xs text-popover-foreground shadow-md whitespace-pre-line"
->
-  {children}
-  <Tooltip.Arrow className="fill-border" />
-</Tooltip.Content>
-
+            side="top"
+            align="center"
+            className="z-50 max-w-xs rounded-md border bg-popover px-3 py-2 text-xs text-popover-foreground shadow-md whitespace-pre-line"
+          >
+            {children}
+            <Tooltip.Arrow className="fill-border" />
+          </Tooltip.Content>
         </Tooltip.Portal>
       </Tooltip.Root>
     </Tooltip.Provider>
   );
 }
+

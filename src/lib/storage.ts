@@ -23,8 +23,8 @@ function parseSplits(data: Json | undefined | null): ExpenseSplit[] {
 
 export interface ExpenseSplit {
   member: string;
-  value: number|null; //for percentage only else null
-  amount: number; //for equal and custom and percentage
+  value: number | "";
+  amount: number | "";
 }
 
 export interface Expense {
