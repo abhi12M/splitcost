@@ -22,6 +22,7 @@ import { Users } from "lucide-react";
 import { ExpenseSchema } from "@/lib/validations/expense.schema";
 import { formatAmount } from "../ui/formatters";
 import { InfoTooltip } from "../ui/info-tooltip";
+import { Textarea } from "../ui/textarea";
 // Assuming you have these UI primitives or similar standard HTML
 const CURRENCIES = [
   { code: "USD", symbol: "$" },
@@ -79,7 +80,6 @@ export function ExpenseForm({
     initialData?.splits || members.map((m) => ({ member: m, value: null, amount: 0 }))
   );
   const [categoryPopoverOpen, setCategoryPopoverOpen] = useState(false);
-  const [manualCategorySelected, setManualCategorySelected] = useState(!!initialData?.category);
   const [open, setOpen] = useState(false);
   const totalAmount = parseFloat(amount) || 0;
   const [hasSubmitted, setHasSubmitted] = useState(false);
@@ -153,7 +153,7 @@ export function ExpenseForm({
 
   // Auto-detect category from description (only if not manually selected)
   useEffect(() => {
-    if (description && !manualCategorySelected) {
+    if (description) {
       const detected = detectCategoryFromDescription(description);
       if (detected) {
         setCategory(detected.category);
@@ -163,12 +163,11 @@ export function ExpenseForm({
         setSubcategory("");
       }
     }
-  }, [description, manualCategorySelected]);
+  }, [description]);
 
-  const handleSubcategorySelect = (cat: CategoryKey, subId: SubcategoryId) => {
+  const handleSubcategorySelect = (cat: any, subId: SubcategoryId) => {
     setCategory(cat);
     setSubcategory(subId);
-    setManualCategorySelected(true);
     setCategoryPopoverOpen(false);
   };
 
@@ -297,190 +296,248 @@ export function ExpenseForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      {/* Row 1: Icon + Description */}
-      <div className="flex gap-3 items-center">
-        <div className="shrink-0">
-          <Popover open={categoryPopoverOpen} onOpenChange={setCategoryPopoverOpen}>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                className={cn(
-                  "w-12 h-12 rounded-xl flex items-center justify-center border-2 transition-all",
-                  category
-                    ? "border-primary bg-primary-muted"
-                    : "border-border hover:border-primary/50"
-                )}
-                style={
-                  selectedCategory
-                    ? { backgroundColor: `hsl(var(--${selectedCategory.color}) / 0.15)` }
-                    : undefined
-                }
-              >
-                <SelectedIcon
-                  size={22}
-                  style={selectedCategory ? { color: `hsl(var(--${selectedCategory.color}))` } : undefined}
-                />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-80 p-3 max-h-80 overflow-y-auto" align="start">
-              <div className="space-y-4">
-                <p className="text-sm font-medium text-foreground">Select Category</p>
-                {Object.entries(EXPENSE_CATEGORIES).map(([key, cat]) => (
-                  <div key={key} className="space-y-2">
-                    <p className="text-xs font-medium text-muted-foreground">{cat.label}</p>
-                    <div className="grid grid-cols-4 gap-2">
-                      {cat.subcategories.map((sub) => {
-                        const Icon = sub.icon;
-                        const isSelected = category === key && subcategory === sub.id;
-                        return (
-                          <button
-                            key={sub.id}
-                            type="button"
-                            onClick={() => handleSubcategorySelect(key as CategoryKey, sub.id)}
-                            className={cn(
-                              "flex flex-col items-center gap-1 p-2 rounded-lg border transition-all",
-                              isSelected ? "border-primary bg-primary-muted" : "border-border hover:border-primary/50"
-                            )}
-                            title={sub.label}
-                          >
-                            <div
-                              className="w-7 h-7 rounded-md flex items-center justify-center"
-                              style={{ backgroundColor: `hsl(var(--${cat.color}) / 0.15)` }}
-                            >
-                              <Icon size={16} style={{ color: `hsl(var(--${cat.color}))` }} />
-                            </div>
-                            <span className="text-[9px] font-medium text-muted-foreground truncate w-full text-center">
-                              {sub.label}
-                            </span>
-                          </button>
-                        );
-                      })}
+      <div className="flex flex-wrap w-full gap-4">
+        {/* First column */}
+        <div className="w-full sm:flex-1">
+          <div className="flex gap-3 items-start">
+
+            {/* 1. Category Trigger (Fixed Size) */}
+            <div className="shrink-0 space-y-2">
+              <Popover open={categoryPopoverOpen} onOpenChange={setCategoryPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className={cn(
+                      "relative group w-14 h-14 rounded-2xl flex items-center justify-center border transition-all duration-200 ease-out",
+                      "focus:outline-none focus:ring-4 focus:ring-primary/20",
+                      category
+                        ? "border-transparent shadow-sm"
+                        : "border-dashed border-border bg-muted/30 hover:bg-muted hover:border-primary/50 text-muted-foreground"
+                    )}
+                    style={
+                      selectedCategory
+                        ? {
+                          backgroundColor: `hsl(var(--${selectedCategory.color}) / 0.15)`,
+                          color: `hsl(var(--${selectedCategory.color}))`
+                        }
+                        : undefined
+                    }
+                  >
+                    {selectedCategory ? (
+                      <SelectedIcon size={26} className="drop-shadow-sm" />
+                    ) : (
+                      <div className="flex flex-col items-center gap-1">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider">Cat</span>
+                      </div>
+                    )}
+
+                    {/* Subtle indicator that this is clickable */}
+                    <div className="absolute -bottom-1 -right-1 bg-background rounded-full border shadow-sm p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <ChevronsUpDown size={10} className="text-muted-foreground" />
                     </div>
+                  </button>
+                </PopoverTrigger>
+
+                {/* Popover Content - Clean Grid */}
+                <PopoverContent className="w-80 p-0 overflow-hidden rounded-xl shadow-xl border-border/50" align="start">
+                  <div className="bg-muted/30 p-3 border-b backdrop-blur-sm">
+                    <p className="text-sm font-semibold text-foreground">Select Category</p>
                   </div>
-                ))}
-              </div>
-            </PopoverContent>
-          </Popover>
-        </div>
-        <div className="space-y-2 w-full">
-          <Label htmlFor="description" required={true}>Description</Label>
-          <Input
-            id="description"
-            placeholder="What was this expense for?"
-            value={description}
-            maxLength={255}
-            onChange={(e) => setDescription(e.target.value)}
-            autoFocus
-            aria-invalid={!!errors.description}
-          />
-          {errors.description && (
-            <div className="text-xs text-destructive">{errors.description}</div>
-          )}
+                  <div className="p-3 max-h-[300px] overflow-y-auto space-y-5 custom-scrollbar">
+                    {Object.entries(EXPENSE_CATEGORIES).map(([key, cat]) => (
+                      <div key={key}>
+                        <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-2 pl-1">
+                          {cat.label}
+                        </p>
+                        <div className="grid grid-cols-4 gap-2">
+                          {cat.subcategories.map((sub) => {
+                            const Icon = sub.icon;
+                            const isSelected = category === key && subcategory === sub.id;
+                            return (
+                              <button
+                                key={sub.id}
+                                type="button"
+                                onClick={() => handleSubcategorySelect(key, sub.id)}
+                                className={cn(
+                                  "flex flex-col items-center justify-center gap-1.5 p-2 rounded-xl transition-all duration-200",
+                                  "hover:bg-muted active:scale-95",
+                                  isSelected
+                                    ? "bg-primary/10 ring-1 ring-primary/20"
+                                    : "bg-transparent border border-transparent hover:border-border"
+                                )}
+                              >
+                                <div
+                                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+                                  style={{
+                                    backgroundColor: isSelected
+                                      ? `hsl(var(--${cat.color}))`
+                                      : `hsl(var(--${cat.color}) / 0.15)`,
+                                    color: isSelected
+                                      ? "white"
+                                      : `hsl(var(--${cat.color}))`
+                                  }}
+                                >
+                                  <Icon size={16} />
+                                </div>
+                                <span className={cn(
+                                  "text-[10px] font-medium truncate w-full text-center leading-tight",
+                                  isSelected ? "text-foreground font-bold" : "text-muted-foreground"
+                                )}>
+                                  {sub.label}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* 2. Description Text Area (Fluid Width) */}
+            <div className="grow space-y-2">
+              <Label htmlFor="description" required={true}>
+                Description
+              </Label>
+              <Textarea
+                id="description"
+                placeholder="What is this for?"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className={cn(
+                  "min-h-[9.75rem] h-[9.75rem] resize-none"
+                  // Matches height of Category Icon & Amount Input
+                )}
+              />
+              {errors.description && (
+                <p className="text-xs text-destructive ml-1">{errors.description}</p>
+              )}
+            </div>
+          </div>
         </div>
 
-      </div>
+        {/* Second column crr+amount then paidby*/}
+        <div className="w-full sm:flex-1 flex flex-col gap-2 sm:flex-col">
 
-      {/* Row 2: Currency + Amount */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="space-y-2">
-          <Label htmlFor="currency">Currency</Label>
-          <Select value={currency} onValueChange={setCurrency}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {CURRENCIES.map((curr) => (
-                <SelectItem key={curr.code} value={curr.code}>
-                  {curr.symbol} {curr.code}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="col-span-2 space-y-2">
-          <Label htmlFor="amount" required={true}>Amount</Label>
-          <Input
-            id="amount"
-            type="number"
-            step="0.01"
-            placeholder="1.00"
-            value={amount}
-            minValue={1}
-            maxValue={99999999}
-            precision={2}
-            onChange={(e) => setAmount(e.target.value)}
-            showHelper={true}
-            aria-invalid={!!errors.amount}
-            currency={currency}
-          />
-          {errors.amount && (
-            <div className="text-xs text-destructive">{errors.amount}</div>
-          )}
-        </div>
-      </div>
+          <div className="space-y-2">
+            <Label htmlFor="amount" required>
+              Amount
+            </Label>
 
-      {/* Paid By */}
-      <div className="space-y-2">
-        <Label required={true}>Paid by</Label>
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              role="combobox"
-              aria-expanded={open}
+            {/* Currency + Amount Group */}
+            <div
               className={cn(
-                "w-full justify-between h-14 px-4 rounded-xl bg-background hover:bg-accent/50 transition-all border",
-                errors.paidBy
-                  ? "border-destructive focus-visible:ring-destructive"
-                  : "border-input focus-visible:ring-ring"
+                "flex items-stretch w-full h-14 rounded-xl overflow-hidden",
+                "border border-input bg-background",
+                "focus-within:ring-2 focus-within:ring-ring",
+                errors.amount && "border-destructive focus-within:ring-destructive"
               )}
             >
-              {paidBy ? (
-                <div className="flex items-center gap-3">
-                  <UserAvatar name={paidBy} size="sm" />
-                  <span className="text-foreground">{paidBy}</span>
-                </div>
-              ) : (
-                <span className="text-muted-foreground">Select member...</span>
-              )}
-              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
+              {/* Currency */}
+              <div className="border-border/50">
+                <Select value={currency} onValueChange={setCurrency}>
+                  <SelectTrigger className="h-full w-[88px] rounded-none focus:ring-0 focus:outline-none border-r-2">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CURRENCIES.map((curr) => (
+                      <SelectItem key={curr.code} value={curr.code}>
+                        {curr.code}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-            <Command>
-              <CommandInput placeholder="Search members..." />
-              <CommandList className="max-h-[300px] overflow-y-auto">
-                <CommandEmpty>No member found.</CommandEmpty>
-                <CommandGroup>
-                  {members.map((member) => (
-                    <CommandItem
-                      key={member}
-                      value={member}
-                      onSelect={(currentValue) => {
-                        setPaidBy(currentValue);
-                        setOpen(false);
-                      }}
-                      className="flex items-center gap-3 py-3 cursor-pointer"
-                    >
-                      <div className={cn(
-                        "flex items-center justify-center w-4 h-4 mr-2",
-                        paidBy === member ? "opacity-100" : "opacity-0"
-                      )}>
-                        <Check className="h-4 w-4 text-primary" />
-                      </div>
-                      <UserAvatar name={member} size="sm" />
-                      <span className="font-medium">{member}</span>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
-        {errors.paidBy && (
-          <div className="text-xs text-destructive">{errors.paidBy}</div>
-        )}
+              {/* Amount */}
+              <Input
+                id="amount"
+                type="number"
+                step="0.01"
+                placeholder="1.00"
+                value={amount}
+                minValue={1}
+                maxValue={99999999}
+                precision={2}
+                onChange={(e) => setAmount(e.target.value)}
+                showHelper={false}
+                aria-invalid={!!errors.amount}
+                currency={currency}
+                unstyled
+              />
+            </div>
+
+            {errors.amount && (
+              <p className="text-xs text-destructive ml-1">{errors.amount}</p>
+            )}
+          </div>
+
+          {/* Paid By */}
+          <div className="space-y-2">
+            <Label required={true}>Paid by</Label>
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={open}
+                  className={cn(
+                    "w-full justify-between h-14 px-4 rounded-xl bg-background hover:bg-accent/50 transition-all border",
+                    errors.paidBy
+                      ? "border-destructive focus-visible:ring-destructive"
+                      : "border-input focus-visible:ring-ring"
+                  )}
+                >
+                  {paidBy ? (
+                    <div className="flex items-center gap-3">
+                      <UserAvatar name={paidBy} size="sm" />
+                      <span className="text-foreground">{paidBy}</span>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground">Select member...</span>
+                  )}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Search members..." />
+                  <CommandList className="max-h-[300px] overflow-y-auto">
+                    <CommandEmpty>No member found.</CommandEmpty>
+                    <CommandGroup>
+                      {members.map((member) => (
+                        <CommandItem
+                          key={member}
+                          value={member}
+                          onSelect={(currentValue) => {
+                            setPaidBy(currentValue);
+                            setOpen(false);
+                          }}
+                          className="flex items-center gap-3 py-3 cursor-pointer"
+                        >
+                          <div className={cn(
+                            "flex items-center justify-center w-4 h-4 mr-2",
+                            paidBy === member ? "opacity-100" : "opacity-0"
+                          )}>
+                            <Check className="h-4 w-4 text-primary" />
+                          </div>
+                          <UserAvatar name={member} size="sm" />
+                          <span className="font-medium">{member}</span>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+            {errors.paidBy && (
+              <div className="text-xs text-destructive">{errors.paidBy}</div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Split Type Selector */}
@@ -655,7 +712,6 @@ export function ExpenseForm({
           </div>
         </div>
       </div>
-
 
       {/* Submit */}
       <div className="pt-3 border-t border-border">

@@ -335,78 +335,78 @@ export const EXPENSE_CATEGORIES = {
     label: "Entertainment",
     color: "category-entertainment",
     subcategories: [
-      { id: "games", label: "Games", icon: GameIcon },
-      { id: "movies", label: "Movies", icon: MovieIcon },
-      { id: "music", label: "Music", icon: MusicIcon },
-      { id: "sports", label: "Sports", icon: SportsIcon },
+      { id: "games", label: "Games", icon: GameIcon, keywords: ["game", "gaming", "console", "playstation", "xbox", "pc game", "mobile game"] },
+      { id: "movies", label: "Movies", icon: MovieIcon, keywords: ["movie", "cinema", "theatre", "film", "ticket", "imax", "netflix"] },
+      { id: "music", label: "Music", icon: MusicIcon, keywords: ["music", "song", "album", "concert", "spotify", "apple music"] },
+      { id: "sports", label: "Sports", icon: SportsIcon, keywords: ["sports", "gym", "fitness", "match", "training", "equipment"] },
     ],
   },
   food: {
     label: "Food & Drink",
     color: "category-food",
     subcategories: [
-      { id: "dining", label: "Dining Out", icon: DiningIcon },
-      { id: "groceries", label: "Groceries", icon: GroceriesIcon },
-      { id: "liquor", label: "Liquor", icon: LiquorIcon },
+      { id: "dining", label: "Dining Out", icon: DiningIcon, keywords: ["food", "restaurant", "dining", "lunch", "dinner", "cafe", "zomato", "swiggy"] },
+      { id: "groceries", label: "Groceries", icon: GroceriesIcon, keywords: ["groceries", "vegetables", "fruits", "supermarket", "ration", "daily needs", "milk"] },
+      { id: "liquor", label: "Liquor", icon: LiquorIcon, keywords: ["liquor", "alcohol", "beer", "wine", "whiskey", "vodka", "bar"] },
     ],
   },
   home: {
     label: "Home",
     color: "category-home",
     subcategories: [
-      { id: "electronics", label: "Electronics", icon: ElectronicsIcon },
-      { id: "furniture", label: "Furniture", icon: FurnitureIcon },
-      { id: "household", label: "Household", icon: HouseholdIcon },
-      { id: "maintenance", label: "Maintenance", icon: MaintenanceIcon },
-      { id: "mortgage", label: "Mortgage", icon: MortgageIcon },
-      { id: "rent", label: "Rent", icon: RentIcon },
-      { id: "pets", label: "Pets", icon: PetsIcon },
-      { id: "services", label: "Services", icon: ServicesIcon },
+      { id: "electronics", label: "Electronics", icon: ElectronicsIcon, keywords: ["electronics", "mobile", "laptop", "gadgets", "charger", "headphones"] },
+      { id: "furniture", label: "Furniture", icon: FurnitureIcon, keywords: ["furniture", "sofa", "bed", "table", "chair", "almirah"] },
+      { id: "household", label: "Household", icon: HouseholdIcon, keywords: ["household", "cleaning", "home items", "daily use", "utensils"] },
+      { id: "maintenance", label: "Maintenance", icon: MaintenanceIcon, keywords: ["maintenance", "repair", "fix", "society", "service"] },
+      { id: "mortgage", label: "Mortgage", icon: MortgageIcon, keywords: ["mortgage", "home loan", "housing loan", "emi"] },
+      { id: "rent", label: "Rent", icon: RentIcon, keywords: ["rent", "house rent", "flat rent", "monthly rent"] },
+      { id: "pets", label: "Pets", icon: PetsIcon, keywords: ["pets", "pet food", "vet", "dog", "cat"] },
+      { id: "services", label: "Services", icon: ServicesIcon, keywords: ["services", "cleaning", "plumber", "electrician", "salon"] },
     ],
   },
   life: {
     label: "Life",
     color: "category-life",
     subcategories: [
-      { id: "childcare", label: "Childcare", icon: ChildcareIcon },
-      { id: "education", label: "Education", icon: EducationIcon },
-      { id: "insurance", label: "Insurance", icon: InsuranceIcon },
-      { id: "medical", label: "Medical", icon: MedicalIcon },
-      { id: "clothing", label: "Clothing", icon: ClothingIcon },
-      { id: "gifts", label: "Gifts", icon: GiftsIcon },
-      { id: "taxes", label: "Taxes", icon: TaxesIcon },
+      { id: "childcare", label: "Childcare", icon: ChildcareIcon, keywords: ["childcare", "daycare", "baby", "nanny", "kids"] },
+      { id: "education", label: "Education", icon: EducationIcon, keywords: ["education", "school", "college", "fees", "tuition", "course"] },
+      { id: "insurance", label: "Insurance", icon: InsuranceIcon, keywords: ["insurance", "premium", "health insurance", "life insurance"] },
+      { id: "medical", label: "Medical", icon: MedicalIcon, keywords: ["medical", "hospital", "doctor", "medicine", "pharmacy", "health"] },
+      { id: "clothing", label: "Clothing", icon: ClothingIcon, keywords: ["clothing", "clothes", "shopping", "shirt", "pants", "dress"] },
+      { id: "gifts", label: "Gifts", icon: GiftsIcon, keywords: ["gifts", "present", "birthday", "anniversary", "festival"] },
+      { id: "taxes", label: "Taxes", icon: TaxesIcon, keywords: ["tax", "taxes", "gst", "income tax", "property tax"] },
     ],
   },
   utilities: {
     label: "Utilities",
     color: "category-utilities",
     subcategories: [
-      { id: "electricity", label: "Electricity", icon: ElectricityIcon },
-      { id: "gas", label: "Gas/Heat", icon: GasHeatIcon },
-      { id: "water", label: "Water", icon: WaterIcon },
-      { id: "trash", label: "Trash", icon: TrashIcon },
-      { id: "internet", label: "TV/Phone/Internet", icon: InternetIcon },
+      { id: "electricity", label: "Electricity", icon: ElectricityIcon, keywords: ["electricity", "power bill", "light bill", "current bill"] },
+      { id: "gas", label: "Gas/Heat", icon: GasHeatIcon, keywords: ["gas", "lpg", "cooking gas", "heat", "pipeline gas"] },
+      { id: "water", label: "Water", icon: WaterIcon, keywords: ["water", "water bill"] },
+      { id: "trash", label: "Trash", icon: TrashIcon, keywords: ["trash", "garbage", "waste", "municipal"] },
+      { id: "internet", label: "TV/Phone/Internet", icon: InternetIcon, keywords: ["internet", "wifi", "broadband", "mobile bill", "phone bill", "tv"] },
     ],
   },
   transportation: {
     label: "Transportation",
     color: "category-transportation",
     subcategories: [
-      { id: "bicycle", label: "Bicycle", icon: BicycleIcon },
-      { id: "bus", label: "Bus/Train", icon: BusTrainIcon },
-      { id: "car", label: "Car", icon: CarIcon },
-      { id: "fuel", label: "Gas/Fuel", icon: GasFuelIcon },
-      { id: "parking", label: "Parking", icon: ParkingIcon },
-      { id: "plane", label: "Plane", icon: PlaneIcon },
-      { id: "taxi", label: "Taxi", icon: TaxiIcon },
-      { id: "hotel", label: "Hotel", icon: HotelIcon },
+      { id: "bicycle", label: "Bicycle", icon: BicycleIcon, keywords: ["bicycle", "cycle", "bike repair"] },
+      { id: "bus", label: "Bus/Train", icon: BusTrainIcon, keywords: ["bus", "train", "metro", "public transport"] },
+      { id: "car", label: "Car", icon: CarIcon, keywords: ["car", "vehicle", "car service", "repair"] },
+      { id: "fuel", label: "Gas/Fuel", icon: GasFuelIcon, keywords: ["fuel", "petrol", "diesel", "gas"] },
+      { id: "parking", label: "Parking", icon: ParkingIcon, keywords: ["parking", "parking fee"] },
+      { id: "plane", label: "Plane", icon: PlaneIcon, keywords: ["flight", "plane", "air ticket", "airfare"] },
+      { id: "taxi", label: "Taxi", icon: TaxiIcon, keywords: ["taxi", "cab", "uber", "ola"] },
+      { id: "hotel", label: "Hotel", icon: HotelIcon, keywords: ["hotel", "stay", "lodging", "accommodation"] },
     ],
   },
   uncategorized: {
     label: "Uncategorized",
     color: "category-uncategorized",
     subcategories: [
-      { id: "general", label: "General", icon: GeneralIcon },
+      { id: "general", label: "General", icon: GeneralIcon, keywords: ["general", "misc", "other", "unknown"] },
     ],
   },
 } as const;
@@ -417,11 +417,11 @@ export type SubcategoryId = string;
 export function getCategoryIcon(categoryKey: CategoryKey, subcategoryId?: SubcategoryId) {
   const category = EXPENSE_CATEGORIES[categoryKey];
   if (!category) return GeneralIcon;
-  
+
   if (subcategoryId) {
     const subcategory = category.subcategories.find(s => s.id === subcategoryId);
     if (subcategory) return subcategory.icon;
   }
-  
+
   return category.subcategories[0]?.icon || GeneralIcon;
 }

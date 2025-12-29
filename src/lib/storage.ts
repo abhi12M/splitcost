@@ -1,4 +1,4 @@
-import type { CategoryKey, SubcategoryId } from "@/components/icons/CategoryIcons";
+import { EXPENSE_CATEGORIES, type CategoryKey, type SubcategoryId } from "@/components/icons/CategoryIcons";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 
@@ -356,151 +356,61 @@ export async function deleteExpense(groupId: string, expenseId: string): Promise
 // ========== UTILITY FUNCTIONS ==========
 
 // Auto-detect category from description
-export function detectCategoryFromDescription(description: string): { category: CategoryKey; subcategory: SubcategoryId } | null {
-  const text = description.toLowerCase();
+export function detectCategoryFromDescription(
+  description: string
+): { category: CategoryKey; subcategory: SubcategoryId } {
+  const text = description.toLowerCase().trim();
 
-  // Keywords mapping
-  const keywords: Record<string, { category: CategoryKey; subcategory: SubcategoryId }> = {
-    // Entertainment
-    game: { category: "entertainment", subcategory: "games" },
-    gaming: { category: "entertainment", subcategory: "games" },
-    movie: { category: "entertainment", subcategory: "movies" },
-    cinema: { category: "entertainment", subcategory: "movies" },
-    film: { category: "entertainment", subcategory: "movies" },
-    theater: { category: "entertainment", subcategory: "movies" },
-    theatre: { category: "entertainment", subcategory: "movies" },
-    ticket: { category: "entertainment", subcategory: "movies" },
-    concert: { category: "entertainment", subcategory: "music" },
-    music: { category: "entertainment", subcategory: "music" },
-    spotify: { category: "entertainment", subcategory: "music" },
-    netflix: { category: "entertainment", subcategory: "movies" },
-    sport: { category: "entertainment", subcategory: "sports" },
-    gym: { category: "entertainment", subcategory: "sports" },
-    fitness: { category: "entertainment", subcategory: "sports" },
+  let bestMatch: {
+    category: CategoryKey;
+    subcategory: SubcategoryId;
+    score: number;
+  } | null = null;
 
-    // Food & Drink
-    restaurant: { category: "food", subcategory: "dining" },
-    dinner: { category: "food", subcategory: "dining" },
-    lunch: { category: "food", subcategory: "dining" },
-    breakfast: { category: "food", subcategory: "dining" },
-    cafe: { category: "food", subcategory: "dining" },
-    coffee: { category: "food", subcategory: "dining" },
-    food: { category: "food", subcategory: "dining" },
-    eating: { category: "food", subcategory: "dining" },
-    pizza: { category: "food", subcategory: "dining" },
-    burger: { category: "food", subcategory: "dining" },
-    sushi: { category: "food", subcategory: "dining" },
-    grocery: { category: "food", subcategory: "groceries" },
-    groceries: { category: "food", subcategory: "groceries" },
-    supermarket: { category: "food", subcategory: "groceries" },
-    market: { category: "food", subcategory: "groceries" },
-    beer: { category: "food", subcategory: "liquor" },
-    wine: { category: "food", subcategory: "liquor" },
-    alcohol: { category: "food", subcategory: "liquor" },
-    bar: { category: "food", subcategory: "liquor" },
-    drinks: { category: "food", subcategory: "liquor" },
-    liquor: { category: "food", subcategory: "liquor" },
+  for (const [categoryKey, category] of Object.entries(EXPENSE_CATEGORIES)) {
+    const categoryLabel = category.label.toLowerCase();
 
-    // Home
-    tv: { category: "home", subcategory: "electronics" },
-    laptop: { category: "home", subcategory: "electronics" },
-    phone: { category: "home", subcategory: "electronics" },
-    electronics: { category: "home", subcategory: "electronics" },
-    computer: { category: "home", subcategory: "electronics" },
-    furniture: { category: "home", subcategory: "furniture" },
-    sofa: { category: "home", subcategory: "furniture" },
-    chair: { category: "home", subcategory: "furniture" },
-    table: { category: "home", subcategory: "furniture" },
-    desk: { category: "home", subcategory: "furniture" },
-    bed: { category: "home", subcategory: "furniture" },
-    household: { category: "home", subcategory: "household" },
-    cleaning: { category: "home", subcategory: "household" },
-    supplies: { category: "home", subcategory: "household" },
-    repair: { category: "home", subcategory: "maintenance" },
-    maintenance: { category: "home", subcategory: "maintenance" },
-    plumber: { category: "home", subcategory: "maintenance" },
-    electrician: { category: "home", subcategory: "maintenance" },
-    mortgage: { category: "home", subcategory: "mortgage" },
-    rent: { category: "home", subcategory: "rent" },
-    apartment: { category: "home", subcategory: "rent" },
-    pet: { category: "home", subcategory: "pets" },
-    dog: { category: "home", subcategory: "pets" },
-    cat: { category: "home", subcategory: "pets" },
-    vet: { category: "home", subcategory: "pets" },
+    for (const sub of category.subcategories) {
+      let score = 0;
 
-    // Life
-    childcare: { category: "life", subcategory: "childcare" },
-    babysitter: { category: "life", subcategory: "childcare" },
-    daycare: { category: "life", subcategory: "childcare" },
-    school: { category: "life", subcategory: "education" },
-    education: { category: "life", subcategory: "education" },
-    tuition: { category: "life", subcategory: "education" },
-    course: { category: "life", subcategory: "education" },
-    class: { category: "life", subcategory: "education" },
-    insurance: { category: "life", subcategory: "insurance" },
-    doctor: { category: "life", subcategory: "medical" },
-    hospital: { category: "life", subcategory: "medical" },
-    medical: { category: "life", subcategory: "medical" },
-    pharmacy: { category: "life", subcategory: "medical" },
-    medicine: { category: "life", subcategory: "medical" },
-    dentist: { category: "life", subcategory: "medical" },
-    clothes: { category: "life", subcategory: "clothing" },
-    clothing: { category: "life", subcategory: "clothing" },
-    shoes: { category: "life", subcategory: "clothing" },
-    shirt: { category: "life", subcategory: "clothing" },
-    gift: { category: "life", subcategory: "gifts" },
-    present: { category: "life", subcategory: "gifts" },
-    birthday: { category: "life", subcategory: "gifts" },
-    tax: { category: "life", subcategory: "taxes" },
-    taxes: { category: "life", subcategory: "taxes" },
+      // 1️⃣ Match subcategory keywords
+      if (sub.keywords?.length) {
+        for (const keyword of sub.keywords) {
+          const k = keyword.toLowerCase();
+          const regex = new RegExp(`\\b${k}\\b`, "i");
 
-    // Utilities
-    electric: { category: "utilities", subcategory: "electricity" },
-    electricity: { category: "utilities", subcategory: "electricity" },
-    power: { category: "utilities", subcategory: "electricity" },
-    gas: { category: "utilities", subcategory: "gas" },
-    heating: { category: "utilities", subcategory: "gas" },
-    heat: { category: "utilities", subcategory: "gas" },
-    water: { category: "utilities", subcategory: "water" },
-    trash: { category: "utilities", subcategory: "trash" },
-    garbage: { category: "utilities", subcategory: "trash" },
-    internet: { category: "utilities", subcategory: "internet" },
-    wifi: { category: "utilities", subcategory: "internet" },
-    cable: { category: "utilities", subcategory: "internet" },
+          if (regex.test(text) || text.includes(k)) {
+            score += 3; // highest priority
+          }
+        }
+      }
 
-    // Transportation
-    bike: { category: "transportation", subcategory: "bicycle" },
-    bicycle: { category: "transportation", subcategory: "bicycle" },
-    bus: { category: "transportation", subcategory: "bus" },
-    train: { category: "transportation", subcategory: "bus" },
-    metro: { category: "transportation", subcategory: "bus" },
-    subway: { category: "transportation", subcategory: "bus" },
-    transit: { category: "transportation", subcategory: "bus" },
-    car: { category: "transportation", subcategory: "car" },
-    uber: { category: "transportation", subcategory: "taxi" },
-    lyft: { category: "transportation", subcategory: "taxi" },
-    taxi: { category: "transportation", subcategory: "taxi" },
-    cab: { category: "transportation", subcategory: "taxi" },
-    fuel: { category: "transportation", subcategory: "fuel" },
-    gasoline: { category: "transportation", subcategory: "fuel" },
-    petrol: { category: "transportation", subcategory: "fuel" },
-    parking: { category: "transportation", subcategory: "parking" },
-    flight: { category: "transportation", subcategory: "plane" },
-    plane: { category: "transportation", subcategory: "plane" },
-    airport: { category: "transportation", subcategory: "plane" },
-    airline: { category: "transportation", subcategory: "plane" },
-    hotel: { category: "transportation", subcategory: "hotel" },
-    airbnb: { category: "transportation", subcategory: "hotel" },
-    hostel: { category: "transportation", subcategory: "hotel" },
-    accommodation: { category: "transportation", subcategory: "hotel" },
-    stay: { category: "transportation", subcategory: "hotel" },
-  };
+      // 2️⃣ Match subcategory label
+      const subLabel = sub.label.toLowerCase();
+      if (text.includes(subLabel)) {
+        score += 2;
+      }
 
-  for (const [keyword, result] of Object.entries(keywords)) {
-    if (text.includes(keyword)) {
-      return result;
+      // 3️⃣ Match category label
+      if (text.includes(categoryLabel)) {
+        score += 1;
+      }
+
+      // 4️⃣ Pick best scoring match
+      if (score > 0 && (!bestMatch || score > bestMatch.score)) {
+        bestMatch = {
+          category: categoryKey as CategoryKey,
+          subcategory: sub.id,
+          score,
+        };
+      }
     }
   }
 
-  return null;
+  return (
+    bestMatch ?? {
+      category: "uncategorized",
+      subcategory: "general",
+    }
+  );
 }
