@@ -382,7 +382,7 @@ export function ExpenseForm({
               </PopoverTrigger>
               <PopoverContent
                 align="start"
-                className="w-[360px] p-0 rounded-2xl shadow-2xl border-border/50"
+                className="w-[290px] p-0 rounded-2xl shadow-2xl border-border/50"
               >
                 {/* Header */}
                 <div className="sticky top-0 z-10 bg-background px-4 py-3 border-b">
@@ -392,35 +392,42 @@ export function ExpenseForm({
                   </p>
                 </div>
 
-                {/* Body */}
-                <div className="p-4 max-h-[340px] overflow-y-auto space-y-6 custom-scrollbar">
-                  {Object.entries(EXPENSE_CATEGORIES).map(([key, cat]) => (
-                    <div key={key}>
-                      <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold mb-3">
-                        {cat.label}
-                      </p>
+                {/* Search + List */}
+                <Command className="rounded-none">
+                  <CommandInput
+                    placeholder="Search categories..."
+                    className="h-11"
+                  />
 
-                      <div className="grid grid-cols-4 gap-3">
+                  <CommandList className="max-h-[320px] overflow-y-auto custom-scrollbar">
+                    <CommandEmpty>No category found.</CommandEmpty>
+
+                    {Object.entries(EXPENSE_CATEGORIES).map(([key, cat]) => (
+                      <CommandGroup
+                        key={key}
+                        heading={cat.label}
+                        className="px-2"
+                      >
                         {cat.subcategories.map((sub) => {
                           const Icon = sub.icon;
                           const isSelected =
                             category === key && subcategory === sub.id;
 
                           return (
-                            <button
+                            <CommandItem
                               key={sub.id}
-                              type="button"
-                              onClick={() => handleSubcategorySelect(key, sub.id)}
+                              value={`${cat.label} ${sub.label}`}
+                              onSelect={() => handleSubcategorySelect(key, sub.id)}
                               className={cn(
-                                "group flex flex-col items-center gap-2 p-2 rounded-xl transition",
-                                "hover:bg-muted active:scale-95",
+                                "flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition",
                                 isSelected
-                                  ? "bg-primary/10 ring-1 ring-primary/30"
-                                  : "border border-transparent hover:border-border"
+                                  ? "bg-primary/10"
+                                  : "hover:bg-muted"
                               )}
                             >
+                              {/* Icon */}
                               <div
-                                className="w-9 h-9 rounded-xl flex items-center justify-center"
+                                className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
                                 style={{
                                   backgroundColor: isSelected
                                     ? `hsl(var(--${cat.color}))`
@@ -433,24 +440,29 @@ export function ExpenseForm({
                                 <Icon size={18} />
                               </div>
 
-                              <span
-                                className={cn(
-                                  "text-[11px] text-center leading-tight truncate w-full",
-                                  isSelected
-                                    ? "font-semibold text-foreground"
-                                    : "text-muted-foreground"
-                                )}
-                              >
-                                {sub.label}
-                              </span>
-                            </button>
+                              {/* Labels */}
+                              <div className="flex flex-col">
+                                <span className="text-sm font-medium">
+                                  {sub.label}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  {cat.label}
+                                </span>
+                              </div>
+
+                              {/* Check */}
+                              {isSelected && (
+                                <Check className="ml-auto h-4 w-4 text-primary" />
+                              )}
+                            </CommandItem>
                           );
                         })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                      </CommandGroup>
+                    ))}
+                  </CommandList>
+                </Command>
               </PopoverContent>
+
             </Popover>
           </div>
 
