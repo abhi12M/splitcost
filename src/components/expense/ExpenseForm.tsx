@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/command";
 import { Users } from "lucide-react";
 import { ExpenseSchema } from "@/lib/validations/expense.schema";
-import { formatAmount } from "../ui/formatters";
+import { formatAmount, toTitleCase } from "../ui/formatters";
 import { InfoTooltip } from "../ui/info-tooltip";
 import { Textarea } from "../ui/textarea";
 // Assuming you have these UI primitives or similar standard HTML
@@ -301,101 +301,6 @@ export function ExpenseForm({
         <div className="w-full sm:flex-1">
           <div className="flex gap-3 items-start">
 
-            {/* 1. Category Trigger (Fixed Size) */}
-            <div className="shrink-0 space-y-2">
-              <Popover open={categoryPopoverOpen} onOpenChange={setCategoryPopoverOpen}>
-                <PopoverTrigger asChild>
-                  <button
-                    type="button"
-                    className={cn(
-                      "relative group w-14 h-14 rounded-2xl flex items-center justify-center border transition-all duration-200 ease-out",
-                      "focus:outline-none focus:ring-4 focus:ring-primary/20",
-                      category
-                        ? "border-transparent shadow-sm"
-                        : "border-dashed border-border bg-muted/30 hover:bg-muted hover:border-primary/50 text-muted-foreground"
-                    )}
-                    style={
-                      selectedCategory
-                        ? {
-                          backgroundColor: `hsl(var(--${selectedCategory.color}) / 0.15)`,
-                          color: `hsl(var(--${selectedCategory.color}))`
-                        }
-                        : undefined
-                    }
-                  >
-                    {selectedCategory ? (
-                      <SelectedIcon size={26} className="drop-shadow-sm" />
-                    ) : (
-                      <div className="flex flex-col items-center gap-1">
-                        <span className="text-[10px] font-semibold uppercase tracking-wider">Cat</span>
-                      </div>
-                    )}
-
-                    {/* Subtle indicator that this is clickable */}
-                    <div className="absolute -bottom-1 -right-1 bg-background rounded-full border shadow-sm p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <ChevronsUpDown size={10} className="text-muted-foreground" />
-                    </div>
-                  </button>
-                </PopoverTrigger>
-
-                {/* Popover Content - Clean Grid */}
-                <PopoverContent className="w-80 p-0 overflow-hidden rounded-xl shadow-xl border-border/50" align="start">
-                  <div className="bg-muted/30 p-3 border-b backdrop-blur-sm">
-                    <p className="text-sm font-semibold text-foreground">Select Category</p>
-                  </div>
-                  <div className="p-3 max-h-[300px] overflow-y-auto space-y-5 custom-scrollbar">
-                    {Object.entries(EXPENSE_CATEGORIES).map(([key, cat]) => (
-                      <div key={key}>
-                        <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-2 pl-1">
-                          {cat.label}
-                        </p>
-                        <div className="grid grid-cols-4 gap-2">
-                          {cat.subcategories.map((sub) => {
-                            const Icon = sub.icon;
-                            const isSelected = category === key && subcategory === sub.id;
-                            return (
-                              <button
-                                key={sub.id}
-                                type="button"
-                                onClick={() => handleSubcategorySelect(key, sub.id)}
-                                className={cn(
-                                  "flex flex-col items-center justify-center gap-1.5 p-2 rounded-xl transition-all duration-200",
-                                  "hover:bg-muted active:scale-95",
-                                  isSelected
-                                    ? "bg-primary/10 ring-1 ring-primary/20"
-                                    : "bg-transparent border border-transparent hover:border-border"
-                                )}
-                              >
-                                <div
-                                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
-                                  style={{
-                                    backgroundColor: isSelected
-                                      ? `hsl(var(--${cat.color}))`
-                                      : `hsl(var(--${cat.color}) / 0.15)`,
-                                    color: isSelected
-                                      ? "white"
-                                      : `hsl(var(--${cat.color}))`
-                                  }}
-                                >
-                                  <Icon size={16} />
-                                </div>
-                                <span className={cn(
-                                  "text-[10px] font-medium truncate w-full text-center leading-tight",
-                                  isSelected ? "text-foreground font-bold" : "text-muted-foreground"
-                                )}>
-                                  {sub.label}
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </div>
-
             {/* 2. Description Text Area (Fluid Width) */}
             <div className="grow space-y-2">
               <Label htmlFor="description" required={true}>
@@ -407,7 +312,7 @@ export function ExpenseForm({
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 className={cn(
-                  "min-h-[9.75rem] h-[9.75rem] resize-none"
+                  "min-h-[16rem] h-[16rem] resize-none"
                   // Matches height of Category Icon & Amount Input
                 )}
               />
@@ -420,6 +325,134 @@ export function ExpenseForm({
 
         {/* Second column crr+amount then paidby*/}
         <div className="w-full sm:flex-1 flex flex-col gap-2 sm:flex-col">
+
+          {/* 1. Category Trigger */}
+          {/* Category Field */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-foreground">
+              Category<span className="text-destructive">*</span>
+            </label>
+
+            <Popover open={categoryPopoverOpen} onOpenChange={setCategoryPopoverOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className={cn(
+                    "w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl border transition-all",
+                    "focus:outline-none focus:ring-4 focus:ring-primary/20",
+                    category
+                      ? "bg-background border-border hover:bg-muted/40"
+                      : "border-dashed border-border bg-muted/30 hover:bg-muted"
+                  )}
+                >
+                  {/* Left */}
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center"
+                      style={
+                        selectedCategory
+                          ? {
+                            backgroundColor: `hsl(var(--${selectedCategory.color}) / 0.15)`,
+                            color: `hsl(var(--${selectedCategory.color}))`,
+                          }
+                          : undefined
+                      }
+                    >
+                      {selectedCategory ? (
+                        <SelectedIcon size={20} />
+                      ) : (
+                        <span className="text-xs font-semibold text-muted-foreground">
+                          Cat
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="text-left">
+                      <p className="text-sm font-medium leading-tight">
+                        {toTitleCase(category) || "Choose category"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {toTitleCase(subcategory) || "Tap to select"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <ChevronsUpDown className="text-muted-foreground" size={18} />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent
+                align="start"
+                className="w-[360px] p-0 rounded-2xl shadow-2xl border-border/50"
+              >
+                {/* Header */}
+                <div className="sticky top-0 z-10 bg-background px-4 py-3 border-b">
+                  <p className="text-sm font-semibold">Choose Category</p>
+                  <p className="text-xs text-muted-foreground">
+                    Select what this expense is for
+                  </p>
+                </div>
+
+                {/* Body */}
+                <div className="p-4 max-h-[340px] overflow-y-auto space-y-6 custom-scrollbar">
+                  {Object.entries(EXPENSE_CATEGORIES).map(([key, cat]) => (
+                    <div key={key}>
+                      <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold mb-3">
+                        {cat.label}
+                      </p>
+
+                      <div className="grid grid-cols-4 gap-3">
+                        {cat.subcategories.map((sub) => {
+                          const Icon = sub.icon;
+                          const isSelected =
+                            category === key && subcategory === sub.id;
+
+                          return (
+                            <button
+                              key={sub.id}
+                              type="button"
+                              onClick={() => handleSubcategorySelect(key, sub.id)}
+                              className={cn(
+                                "group flex flex-col items-center gap-2 p-2 rounded-xl transition",
+                                "hover:bg-muted active:scale-95",
+                                isSelected
+                                  ? "bg-primary/10 ring-1 ring-primary/30"
+                                  : "border border-transparent hover:border-border"
+                              )}
+                            >
+                              <div
+                                className="w-9 h-9 rounded-xl flex items-center justify-center"
+                                style={{
+                                  backgroundColor: isSelected
+                                    ? `hsl(var(--${cat.color}))`
+                                    : `hsl(var(--${cat.color}) / 0.15)`,
+                                  color: isSelected
+                                    ? "white"
+                                    : `hsl(var(--${cat.color}))`,
+                                }}
+                              >
+                                <Icon size={18} />
+                              </div>
+
+                              <span
+                                className={cn(
+                                  "text-[11px] text-center leading-tight truncate w-full",
+                                  isSelected
+                                    ? "font-semibold text-foreground"
+                                    : "text-muted-foreground"
+                                )}
+                              >
+                                {sub.label}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="amount" required>
