@@ -1,28 +1,19 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { motion } from "framer-motion";
-import { Check, Percent, Equal, Calculator, ChevronsUpDown } from "lucide-react";
+import { Check, Percent, Equal, Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { EXPENSE_CATEGORIES, type CategoryKey, type SubcategoryId, GeneralIcon } from "@/components/icons/CategoryIcons";
 import { cn } from "@/lib/utils";
 import { detectCategoryFromDescription, type SplitType, type ExpenseSplit } from "@/lib/storage";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
 import { Users } from "lucide-react";
 import { ExpenseSchema } from "@/lib/validations/expense.schema";
-import { formatAmount, toTitleCase } from "../ui/formatters";
+import { formatAmount } from "../ui/formatters";
 import { InfoTooltip } from "../ui/info-tooltip";
 import { Textarea } from "../ui/textarea";
+import { SingleSelect } from "../ui/single-select";
 // Assuming you have these UI primitives or similar standard HTML
 const CURRENCIES = [
   { code: "USD", symbol: "$" },
@@ -83,7 +74,7 @@ export function ExpenseForm({
   const [open, setOpen] = useState(false);
   const totalAmount = parseFloat(amount) || 0;
   const [hasSubmitted, setHasSubmitted] = useState(false);
-
+  const isFirstRender = useRef(true);
   const validationState = useMemo(() => {
     if (splitType === "equal") return { isValid: true, diff: 0, currentTotal: totalAmount };
 
@@ -151,8 +142,12 @@ export function ExpenseForm({
     });
   };
 
-  // Auto-detect category from description (only if not manually selected)
+  // Auto-detect category from description
   useEffect(() => {
+     if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     if (description) {
       const detected = detectCategoryFromDescription(description);
       if (detected) {
@@ -166,6 +161,7 @@ export function ExpenseForm({
   }, [description]);
 
   const handleSubcategorySelect = (cat: any, subId: SubcategoryId) => {
+    console.log(cat, subId)
     setCategory(cat);
     setSubcategory(subId);
     setCategoryPopoverOpen(false);
@@ -333,137 +329,25 @@ export function ExpenseForm({
               Category<span className="text-destructive">*</span>
             </label>
 
-            <Popover open={categoryPopoverOpen} onOpenChange={setCategoryPopoverOpen}>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  className={cn(
-                    "w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl border transition-all",
-                    "focus:outline-none focus:ring-4 focus:ring-primary/20",
-                    category
-                      ? "bg-background border-border hover:bg-muted/40"
-                      : "border-dashed border-border bg-muted/30 hover:bg-muted"
-                  )}
-                >
-                  {/* Left */}
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center"
-                      style={
-                        selectedCategory
-                          ? {
-                            backgroundColor: `hsl(var(--${selectedCategory.color}) / 0.15)`,
-                            color: `hsl(var(--${selectedCategory.color}))`,
-                          }
-                          : undefined
-                      }
-                    >
-                      {selectedCategory ? (
-                        <SelectedIcon size={20} />
-                      ) : (
-                        <span className="text-xs font-semibold text-muted-foreground">
-                          Cat
-                        </span>
-                      )}
-                    </div>
+            <SingleSelect
+              groups={Object.entries(EXPENSE_CATEGORIES).map(([key, cat]) => ({
+                id: key,
+                label: cat.label,
+                color: cat.color,
+                subOptions: cat.subcategories.map((sub) => ({
+                  id: sub.id,
+                  label: sub.label,
+                  icon: sub.icon,
+                })),
+              }))}
+              value={{ groupId: category, itemId: subcategory }}
+              onSelect={(groupId, itemId) => handleSubcategorySelect(groupId!, itemId)}
+              placeholder="Choose category"
+              headerTitle="Choose Category"
+              headerSubtitle="Select what this expense is for"
+            />
 
-                    <div className="text-left">
-                      <p className="text-sm font-medium leading-tight">
-                        {toTitleCase(category) || "Choose category"}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {toTitleCase(subcategory) || "Tap to select"}
-                      </p>
-                    </div>
-                  </div>
 
-                  <ChevronsUpDown className="text-muted-foreground" size={18} />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent
-                align="start"
-                className="w-[290px] p-0 rounded-2xl shadow-2xl border-border/50"
-              >
-                {/* Header */}
-                <div className="sticky top-0 z-10 bg-background px-4 py-3 border-b">
-                  <p className="text-sm font-semibold">Choose Category</p>
-                  <p className="text-xs text-muted-foreground">
-                    Select what this expense is for
-                  </p>
-                </div>
-
-                {/* Search + List */}
-                <Command className="rounded-none">
-                  <CommandInput
-                    placeholder="Search categories..."
-                    className="h-11"
-                  />
-
-                  <CommandList className="max-h-[320px] overflow-y-auto custom-scrollbar">
-                    <CommandEmpty>No category found.</CommandEmpty>
-
-                    {Object.entries(EXPENSE_CATEGORIES).map(([key, cat]) => (
-                      <CommandGroup
-                        key={key}
-                        heading={cat.label}
-                        className="px-2"
-                      >
-                        {cat.subcategories.map((sub) => {
-                          const Icon = sub.icon;
-                          const isSelected =
-                            category === key && subcategory === sub.id;
-
-                          return (
-                            <CommandItem
-                              key={sub.id}
-                              value={`${cat.label} ${sub.label}`}
-                              onSelect={() => handleSubcategorySelect(key, sub.id)}
-                              className={cn(
-                                "flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition",
-                                isSelected
-                                  ? "bg-primary/10"
-                                  : "hover:bg-muted"
-                              )}
-                            >
-                              {/* Icon */}
-                              <div
-                                className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                                style={{
-                                  backgroundColor: isSelected
-                                    ? `hsl(var(--${cat.color}))`
-                                    : `hsl(var(--${cat.color}) / 0.15)`,
-                                  color: isSelected
-                                    ? "white"
-                                    : `hsl(var(--${cat.color}))`,
-                                }}
-                              >
-                                <Icon size={18} />
-                              </div>
-
-                              {/* Labels */}
-                              <div className="flex flex-col">
-                                <span className="text-sm font-medium">
-                                  {sub.label}
-                                </span>
-                                <span className="text-xs text-muted-foreground">
-                                  {cat.label}
-                                </span>
-                              </div>
-
-                              {/* Check */}
-                              {isSelected && (
-                                <Check className="ml-auto h-4 w-4 text-primary" />
-                              )}
-                            </CommandItem>
-                          );
-                        })}
-                      </CommandGroup>
-                    ))}
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-
-            </Popover>
           </div>
 
           <div className="space-y-2">
@@ -522,62 +406,17 @@ export function ExpenseForm({
           {/* Paid By */}
           <div className="space-y-2">
             <Label required={true}>Paid by</Label>
-            <Popover open={open} onOpenChange={setOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={open}
-                  className={cn(
-                    "w-full justify-between h-14 px-4 rounded-xl bg-background hover:bg-accent/50 transition-all border",
-                    errors.paidBy
-                      ? "border-destructive focus-visible:ring-destructive"
-                      : "border-input focus-visible:ring-ring"
-                  )}
-                >
-                  {paidBy ? (
-                    <div className="flex items-center gap-3">
-                      <UserAvatar name={paidBy} size="sm" />
-                      <span className="text-foreground">{paidBy}</span>
-                    </div>
-                  ) : (
-                    <span className="text-muted-foreground">Select member...</span>
-                  )}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-
-              <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                <Command>
-                  <CommandInput placeholder="Search members..." />
-                  <CommandList className="max-h-[300px] overflow-y-auto">
-                    <CommandEmpty>No member found.</CommandEmpty>
-                    <CommandGroup>
-                      {members.map((member) => (
-                        <CommandItem
-                          key={member}
-                          value={member}
-                          onSelect={(currentValue) => {
-                            setPaidBy(currentValue);
-                            setOpen(false);
-                          }}
-                          className="flex items-center gap-3 py-3 cursor-pointer"
-                        >
-                          <div className={cn(
-                            "flex items-center justify-center w-4 h-4 mr-2",
-                            paidBy === member ? "opacity-100" : "opacity-0"
-                          )}>
-                            <Check className="h-4 w-4 text-primary" />
-                          </div>
-                          <UserAvatar name={member} size="sm" />
-                          <span className="font-medium">{member}</span>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+            <SingleSelect
+              items={members.map((m) => ({
+                id: m,
+                label: m,
+                icon: <UserAvatar name={m} size="sm" />, // left icon/avatar
+              }))}
+              value={{ itemId: paidBy }}
+              onSelect={(_, itemId) => setPaidBy(itemId)}
+              placeholder="Select member..."
+              inputPlaceholder="Search members..."
+            />
             {errors.paidBy && (
               <div className="text-xs text-destructive">{errors.paidBy}</div>
             )}
