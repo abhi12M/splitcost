@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { getAvatarColor, getInitials } from "@/lib/avatar-utils";
 import { SingleSelect } from "./single-select";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type AvatarSize = "sm" | "md" | "lg" | "xl";
 
@@ -28,7 +29,7 @@ export function UserAvatar({
   return (
     <div
       className={cn(
-        "flex items-center justify-center rounded-full font-semibold select-none",
+        "flex items-center justify-center rounded-full font-semibold select-none flex-shrink-0",
         sizeClasses[size],
         className
       )}
@@ -59,9 +60,11 @@ export function AvatarGroup({
   className,
   showBelow = false,
 }: AvatarGroupProps) {
-  const visibleNames = names.slice(0, max);
-  const overflow = names.length - max;
-  const overflowNames = names.slice(max);
+  const isMobile = useIsMobile();
+  const effectiveMax = isMobile ? 2 : max;
+  const visibleNames = names.slice(0, effectiveMax);
+  const overflow = names.length - effectiveMax;
+  const overflowNames = names.slice(effectiveMax);
 
   return (
     <div

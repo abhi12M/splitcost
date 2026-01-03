@@ -113,38 +113,51 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
             aria-expanded={open}
             aria-invalid={ariaInvalid}
             className={cn(
-              "w-full justify-between h-14 px-4 rounded-xl bg-background hover:bg-accent/50 transition-all border flex items-center",
+              "w-full h-14 px-4 rounded-xl bg-background hover:bg-accent/50 transition-all border flex items-center",
               "aria-[invalid=true]:border-destructive",
               "aria-[invalid=true]:data-[state=open]:border-transparent",
               "data-[state=open]:ring-2 data-[state=open]:ring-ring",
               buttonClassName
             )}
           >
-            {selectedItem ? (
-              <div className="flex items-center gap-3">
-                {renderIcon(selectedItem.icon, selectedGroup?.color)}
-                <div className="text-left">
-                  <p className="text-sm font-medium leading-tight">
-                    {selectedItem.label}
-                  </p>
-                  {selectedGroup && (
-                    <p className="text-xs text-muted-foreground">
-                      {selectedGroup.label}
-                    </p>
-                  )}
-                </div>
+            {/* LEFT CONTENT (icon + text) */}
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              {/* Avatar / Icon */}
+              <div className="shrink-0">
+                {renderIcon(selectedItem?.icon, selectedGroup?.color)}
               </div>
-            ) : (
-              <span className="text-muted-foreground">{placeholder}</span>
-            )}
 
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </button>)}
+              {/* Text */}
+              <div className="flex-1 min-w-0 text-left">
+                {selectedItem ? (
+                  <>
+                    <p className="text-sm font-medium leading-tight truncate">
+                      {selectedItem.label}
+                    </p>
+                    {selectedGroup && (
+                      <p className="text-xs text-muted-foreground truncate">
+                        {selectedGroup.label}
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-muted-foreground truncate">
+                    {placeholder}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* RIGHT ICON (fixed width) */}
+            <div className="ml-3 shrink-0 flex items-center">
+              <ChevronsUpDown className="h-4 w-4 opacity-50" />
+            </div>
+          </button>
+        )}
       </PopoverTrigger>
 
-
       <PopoverContent
-        className="w-[--radix-popover-trigger-width] p-0 min-w-[250px]"
+        className="w-[--radix-popover-trigger-width] p-0 min-w-[202px] sm:min-w-[250px]"
         align="start"
         avoidCollisions={false}
       >
@@ -230,11 +243,9 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
                   )}
                 >
                   {renderIcon(option.icon, option.color, isSelected)}
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium">{option.label}</span>
-                  </div>
+                  <span className="text-sm font-medium truncate">{option.label}</span>
 
-                  {isSelected && <Check className="ml-auto h-4 w-4 text-primary" />}
+                  {isSelected && <Check className="ml-auto h-4 w-4 text-primary  shrink-0" />}
                 </CommandItem>
 
               );

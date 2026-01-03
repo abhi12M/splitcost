@@ -15,6 +15,7 @@ import { InfoTooltip } from "../ui/info-tooltip";
 import { Textarea } from "../ui/textarea";
 import { SingleSelect } from "../ui/single-select";
 import { CURRENCIES } from "@/constants";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ExpenseFormProps {
   members: string[];
@@ -272,12 +273,12 @@ export function ExpenseForm({
     { type: "percentage", label: "By %", icon: Percent, info: "Specify what percentage of the amount each participant should pay.\nValue must be between 1.00% and 99.00%" },
     { type: "custom", label: "Custom", icon: Calculator, info: `Specify exactly how much each selected participant owes.\nValue must be between ${formatAmount(Number(1), currency)} and ${amount ? formatAmount(Number(amount) - 1, currency) : 'the amount'}.` },
   ];
-
+  const isMobile = useIsMobile();
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <div className="flex flex-wrap w-full gap-4">
+      <div className="grid grid-cols-12 w-full gap-4">
         {/* First column */}
-        <div className="w-full sm:flex-1">
+        <div className="col-span-12 sm:col-span-6">
           <div className="flex gap-3 items-start">
 
             {/* 2. Description Text Area (Fluid Width) */}
@@ -300,7 +301,7 @@ export function ExpenseForm({
         </div>
 
         {/* Second column crr+amount then paidby*/}
-        <div className="w-full sm:flex-1 flex flex-col gap-2 sm:flex-col">
+        <div className="col-span-12 sm:col-span-6">
 
           {/* 1. Category Trigger */}
           {/* Category Field */}
@@ -514,7 +515,7 @@ export function ExpenseForm({
             )}
           </div>
 
-          <div className="grid gap-2">
+          <div className="grid gap-2 max-h-[290px] overflow-y-auto">
             {members.map((member) => {
               const isSelected = participants.includes(member);
               const split = splits.find((s) => s.member === member);
@@ -536,7 +537,7 @@ export function ExpenseForm({
                     className="flex items-center gap-3 flex-1 text-left"
                   >
                     <div className="relative">
-                      <UserAvatar name={member} size="md" />
+                      <UserAvatar name={member} size={isMobile ? "sm" : "md"} />
                       {isSelected && (
                         <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center ring-2 ring-white">
                           <div className="w-full h-full bg-green-500 rounded-full flex items-center justify-center">

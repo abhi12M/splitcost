@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Plus, Share2, Copy, Check, ArrowRight, Pencil, Loader2 } from "lucide-react";
+import { ArrowLeft, Plus, Share2, Copy, Check, ArrowRight, Pencil, Loader2, Wallet, Users } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -188,21 +188,41 @@ export default function GroupDetailsPage() {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Stats */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Total Expenses Card */}
               <Card>
-                <CardContent className="p-5">
-                  <p className="text-sm text-muted-foreground mb-1">Total Expenses</p>
-                  <p className="text-2xl font-bold text-foreground">
-                    {formatCurrency(totalExpenses, group.currency)}
-                  </p>
+                <CardContent className="p-5 flex items-center justify-between">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Total Expenses
+                    </p>
+                    <p className="text-xl sm:text-2xl font-bold text-foreground truncate">
+                      {formatCurrency(totalExpenses, group.currency)}
+                    </p>
+                  </div>
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                    <Wallet className="h-5 w-5" />
+                  </div>
                 </CardContent>
               </Card>
+
+              {/* Per Person Average Card */}
               <Card>
-                <CardContent className="p-5">
-                  <p className="text-sm text-muted-foreground mb-1">Per Person (avg)</p>
-                  <p className="text-2xl font-bold text-foreground">
-                    {formatCurrency(totalExpenses / group.members.length, group.currency)}
-                  </p>
+                <CardContent className="p-5 flex items-center justify-between">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Per Person (avg)
+                    </p>
+                    <p className="text-xl sm:text-2xl font-bold text-foreground truncate">
+                      {formatCurrency(
+                        totalExpenses / (group.members.length || 1),
+                        group.currency
+                      )}
+                    </p>
+                  </div>
+                  <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
+                    <Users className="h-5 w-5" />
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -218,7 +238,7 @@ export default function GroupDetailsPage() {
                   </Link>
                 </Button>
               </CardHeader>
-              <CardContent className="p-0">
+              <CardContent className="p-0 max-h-[31rem] overflow-y-auto">
                 {expenses.length === 0 ? (
                   <div className="p-8 text-center text-muted-foreground">
                     <p>No expenses yet</p>
@@ -306,9 +326,9 @@ export default function GroupDetailsPage() {
             {/* Who Owes Whom */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Settle Up</CardTitle>
+                <CardTitle className="text-lg test">Settle Up</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-3 max-h-[19rem] overflow-y-auto">
                 {settlements.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-4">All settled up!</p>
                 ) : (
@@ -318,15 +338,16 @@ export default function GroupDetailsPage() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.1 }}
-                      className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl"
+                      className="flex items-center gap-1 p-3 bg-muted/50 rounded-xl"
                     >
-                      <UserAvatar name={settlement.from} size="sm" />
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 text-sm">
+                        <div className="flex items-center gap-1 text-sm">
+                          <UserAvatar name={settlement.from} size="sm" />
                           <span className="font-medium text-foreground truncate">
                             {settlement.from}
                           </span>
                           <ArrowRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                          <UserAvatar name={settlement.to} size="sm" />
                           <span className="font-medium text-foreground truncate">
                             {settlement.to}
                           </span>
@@ -346,7 +367,7 @@ export default function GroupDetailsPage() {
               <CardHeader>
                 <CardTitle className="text-lg">Balances</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-3 max-h-[15rem] overflow-y-auto">
                 {group.members.map((member, index) => {
                   const balance = balances[member];
                   const isPositive = balance > 0.01;
@@ -358,20 +379,25 @@ export default function GroupDetailsPage() {
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.05 }}
-                      className="flex items-center justify-between"
+                      className="flex items-center justify-between gap-4" // Added gap for safety
                     >
-                      <div className="flex items-center gap-3">
+                      {/* Left Side: Avatar and Name */}
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
                         <UserAvatar name={member} size="sm" />
-                        <span className="font-medium text-foreground">{member}</span>
+                        {/* min-w-0 is crucial for truncate to work inside a flex container */}
+                        <span className="font-medium text-foreground truncate min-w-0">
+                          {member}
+                        </span>
                       </div>
+
+                      {/* Right Side: Balance */}
                       <span
-                        className={`font-semibold ${
-                          isPositive
-                            ? "text-success"
-                            : isNegative
+                        className={`font-semibold flex-shrink-0 ${isPositive
+                          ? "text-success"
+                          : isNegative
                             ? "text-destructive"
                             : "text-muted-foreground"
-                        }`}
+                          }`}
                       >
                         {isPositive ? "+" : ""}
                         {formatCurrency(balance, group.currency)}
