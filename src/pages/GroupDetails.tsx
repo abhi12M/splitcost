@@ -323,45 +323,6 @@ export default function GroupDetailsPage() {
 
           {/* Sidebar - Balances */}
           <div className="space-y-6">
-            {/* Who Owes Whom */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg test">Settle Up</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 max-h-[19rem] overflow-y-auto">
-                {settlements.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">All settled up!</p>
-                ) : (
-                  settlements.map((settlement, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="flex items-center gap-1 p-3 bg-muted/50 rounded-xl"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1 text-sm">
-                          <UserAvatar name={settlement.from} size="sm" />
-                          <span className="font-medium text-foreground truncate">
-                            {settlement.from}
-                          </span>
-                          <ArrowRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                          <UserAvatar name={settlement.to} size="sm" />
-                          <span className="font-medium text-foreground truncate">
-                            {settlement.to}
-                          </span>
-                        </div>
-                      </div>
-                      <span className="font-semibold text-secondary">
-                        {formatCurrency(settlement.amount, group.currency)}
-                      </span>
-                    </motion.div>
-                  ))
-                )}
-              </CardContent>
-            </Card>
-
             {/* Individual Balances */}
             <Card>
               <CardHeader>
@@ -379,10 +340,10 @@ export default function GroupDetailsPage() {
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.05 }}
-                      className="flex items-center justify-between gap-4" // Added gap for safety
+                      className="flex items-center justify-between gap-1" // Added gap for safety
                     >
                       {/* Left Side: Avatar and Name */}
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="flex items-center gap-1 min-w-0 flex-1">
                         <UserAvatar name={member} size="sm" />
                         {/* min-w-0 is crucial for truncate to work inside a flex container */}
                         <span className="font-medium text-foreground truncate min-w-0">
@@ -405,6 +366,44 @@ export default function GroupDetailsPage() {
                     </motion.div>
                   );
                 })}
+              </CardContent>
+            </Card>
+            {/* Who Owes Whom */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg test">Settle Up</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 max-h-[19rem] overflow-y-auto">
+                {settlements.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">All settled up!</p>
+                ) : (
+                  settlements.map((settlement, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="flex items-center gap-1 p-3 bg-muted/50 rounded-xl"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1 text-sm">
+                          <UserAvatar name={settlement.from} size="sm" />
+                          {/* <span className="font-medium text-foreground truncate">
+                            {settlement.from}
+                          </span> */}
+                          <ArrowRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                          <UserAvatar name={settlement.to} size="sm" />
+                          {/* <span className="font-medium text-foreground truncate">
+                            {settlement.to}
+                          </span> */}
+                        </div>
+                      </div>
+                      <span className="font-semibold text-secondary">
+                        {formatCurrency(settlement.amount, group.currency)}
+                      </span>
+                    </motion.div>
+                  ))
+                )}
               </CardContent>
             </Card>
 

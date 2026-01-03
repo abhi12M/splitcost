@@ -195,7 +195,7 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
                         setOpen(false);
                       }}
                       className={cn(
-                        "flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition my-[7px]",
+                        "flex items-center gap-3 px-1 py-1 rounded-xl cursor-pointer transition my-[5px]",
                         isSelected
                           ? "bg-primary/10"
                           : "hover:bg-muted"
@@ -237,7 +237,7 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
                     if (!onlyList) setOpen(false); // only close if onlyList is false
                   }}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-3 rounded-xl transition my-[7px]",
+                    "flex items-center gap-3 px-1 py-1 rounded-xl transition my-[5px]",
                     isSelected ? "bg-primary/10" : "hover:bg-muted",
                     onlyList ? "cursor-default hover:bg-transparent" : "cursor-pointer"
                   )}
