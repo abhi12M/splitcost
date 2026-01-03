@@ -91,7 +91,7 @@ export default function AddExpensePage() {
           <Card>
             <CardHeader className="pb-4">
               <CardTitle className="text-xl">Add Expense</CardTitle>
-              <CardDescription>Record a new expense for {group.name}</CardDescription>
+              <CardDescription className="truncate">Record a new expense for {group.name}</CardDescription>
             </CardHeader>
 
             <CardContent>

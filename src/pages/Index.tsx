@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Plus, Users, ArrowRight, Trash2, Loader2 } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
@@ -43,7 +43,7 @@ export default function HomePage() {
   const [groups, setGroups] = useState<GroupWithExpenses[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-
+  const navigate = useNavigate();
   const fetchGroups = async () => {
     setLoading(true);
     try {
@@ -161,40 +161,38 @@ export default function HomePage() {
                 const IconComponent = getGroupIcon(group.name);
                 const totalExpenses = group.expenses.reduce((sum, e) => sum + e.amount, 0);
                 return (
-                  <motion.div key={group.id} variants={itemVariants}>
-                    <Link to={`/group/${group.id}`}>
-                      <Card hover className="h-full group">
-                        <CardHeader>
-                          <div className="flex items-start justify-between">
-                            <div className="w-12 h-12 rounded-xl bg-primary-muted flex items-center justify-center">
-                              <IconComponent className="w-6 h-6 text-primary" />
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              className="opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive hover:bg-destructive/10"
-                              onClick={(e) => handleDeleteGroup(e, group.id)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                  <motion.div key={group.id} variants={itemVariants} onClick={() => navigate(`/group/${group.id}`)} >
+                    <Card hover className="h-full group">
+                      <CardHeader>
+                        <div className="flex items-start justify-between">
+                          <div className="w-12 h-12 rounded-xl bg-primary-muted flex items-center justify-center" >
+                            <IconComponent className="w-6 h-6 text-primary" />
                           </div>
-                          <CardTitle className="mt-3">{group.name}</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <AvatarGroup names={group.members} max={3}  showBelow />
-                            </div>
-                            <div className="text-right">
-                              <p className="text-lg font-semibold text-foreground">
-                                {formatCurrency(totalExpenses, group.currency)}
-                              </p>
-                              <p className="text-xs text-muted-foreground">Total</p>
-                            </div>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            className="opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={(e) => handleDeleteGroup(e, group.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        <CardTitle className="mt-3" >{group.name}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <AvatarGroup names={group.members} max={3} showBelow />
                           </div>
-                        </CardContent>
-                      </Card>
-                    </Link>
+                          <div className="text-right">
+                            <p className="text-lg font-semibold text-foreground">
+                              {formatCurrency(totalExpenses, group.currency)}
+                            </p>
+                            <p className="text-xs text-muted-foreground">Total</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </motion.div>
                 );
               })}

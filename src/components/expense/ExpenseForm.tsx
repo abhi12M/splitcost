@@ -61,8 +61,6 @@ export function ExpenseForm({
   const [splits, setSplits] = useState<ExpenseSplit[]>(
     initialData?.splits || members.map((m) => ({ member: m, value: null, amount: 0 }))
   );
-  const [categoryPopoverOpen, setCategoryPopoverOpen] = useState(false);
-  const [open, setOpen] = useState(false);
   const totalAmount = parseFloat(amount) || 0;
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const isFirstRender = useRef(true);
@@ -155,7 +153,6 @@ export function ExpenseForm({
     console.log(cat, subId)
     setCategory(cat);
     setSubcategory(subId);
-    setCategoryPopoverOpen(false);
   };
 
   // Update splits when participants change

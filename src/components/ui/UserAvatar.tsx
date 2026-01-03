@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { getAvatarColor, getInitials } from "@/lib/avatar-utils";
+import { SingleSelect } from "./single-select";
 
 type AvatarSize = "sm" | "md" | "lg" | "xl";
 
@@ -60,6 +61,7 @@ export function AvatarGroup({
 }: AvatarGroupProps) {
   const visibleNames = names.slice(0, max);
   const overflow = names.length - max;
+  const overflowNames = names.slice(max);
 
   return (
     <div
@@ -81,14 +83,27 @@ export function AvatarGroup({
         ))}
 
         {overflow > 0 && (
-          <div
-            className={cn(
-              "flex items-center justify-center rounded-full font-semibold bg-muted text-muted-foreground border-[3px] border-white",
-              sizeClasses[size]
-            )}
-          >
-            +{overflow}
-          </div>
+          <SingleSelect
+            items={overflowNames.map((m) => ({
+              id: m,
+              label: m,
+              icon: <UserAvatar name={m} size="md" />, 
+            }))}
+            onlyList
+            trigger={
+              <button
+                type="button"
+                className={cn(
+                  "flex items-center justify-center rounded-full font-semibold bg-muted text-muted-foreground border-[3px] border-white hover:bg-muted/80 transition",
+                  sizeClasses[size]
+                )}
+                aria-label={`View ${overflow} more members`}
+                onClick={(e) => e.stopPropagation()} 
+              >
+                +{overflow}
+              </button>
+            }
+          />
         )}
       </div>
 

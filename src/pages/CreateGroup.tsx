@@ -111,6 +111,10 @@ export default function CreateGroupPage() {
 
   const handleMemberChange = (value: string) => {
     setNewMember(value);
+    setErrors((prev) => ({
+      ...prev,
+      memberExists: null
+    }));
     const memberNameResult = MemberNameSchema.safeParse(newMember);
     if (!memberNameResult?.error?.issues?.[0]?.message) {
       setErrors((prev) => ({
@@ -119,10 +123,6 @@ export default function CreateGroupPage() {
       }));
       return false;
     }
-    setErrors((prev) => ({
-      ...prev,
-      memberExists: null
-    }));
     if (hasSubmitted) {
       const result = MemberNameSchema.safeParse(value);
 
