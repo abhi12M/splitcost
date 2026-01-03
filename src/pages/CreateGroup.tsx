@@ -12,24 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { createGroup } from "@/lib/storage";
 import { getEncryptedItem, setEncryptedItem } from "@/lib/localstorage";
 import { LOCAL_GROUPS_KEY } from "@/lib/constants";
-import { MEMBERS_MAX, MEMBERS_VISIBLE, GroupSchema, MemberNameSchema } from "@/lib/validations/group.schema";
-
-const CURRENCIES = [
-  { code: "USD", symbol: "$", name: "US Dollar" },
-  { code: "EUR", symbol: "€", name: "Euro" },
-  { code: "GBP", symbol: "£", name: "British Pound" },
-  { code: "JPY", symbol: "¥", name: "Japanese Yen" },
-  { code: "CAD", symbol: "C$", name: "Canadian Dollar" },
-  { code: "AUD", symbol: "A$", name: "Australian Dollar" },
-  { code: "INR", symbol: "₹", name: "Indian Rupee" },
-  { code: "CNY", symbol: "¥", name: "Chinese Yuan" },
-  { code: "SGD", symbol: "S$", name: "Singapore Dollar" },
-  { code: "AED", symbol: "د.إ", name: "UAE Dirham" },
-  { code: "SAR", symbol: "﷼", name: "Saudi Riyal" },
-  { code: "CHF", symbol: "CHF", name: "Swiss Franc" },
-  { code: "ZAR", symbol: "R", name: "South African Rand" }
-];
-
+import { MEMBERS_MAX, GroupSchema, MemberNameSchema } from "@/lib/validations/group.schema";
+import { CURRENCIES } from "@/constants";
 export default function CreateGroupPage() {
   const navigate = useNavigate();
   const [groupName, setGroupName] = useState("");

@@ -108,11 +108,11 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
 
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
         <Command>
-          <CommandInput placeholder={inputPlaceholder} />
+          {(items?.length >= 8 || groups) && <CommandInput placeholder={inputPlaceholder} />}
           <CommandList className={cn(
             "max-h-[320px] overflow-y-auto custom-scrollbar",
             // Add padding only if it's a flat list
-            items && !groups ? "px-2 pt-3" : "px-0 pt-0"
+            items && !groups ? "px-2 py-3" : "px-0 pt-0"
           )}>
             <CommandEmpty>No item found.</CommandEmpty>
 
@@ -122,7 +122,6 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
                 <CommandGroup key={group.id} heading={group.label} className="px-2">
                   {group.subOptions.map((option) => {
                     const isSelected = value?.groupId === group.id && value?.itemId === option.id;
-                    console.log("isSelected",isSelected,"value?.groupId",value?.groupId,group.id,"value?.itemId",value?.itemId,option.id)
                     return (
                       <CommandItem
                         key={option.id}
@@ -132,7 +131,7 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
                           setOpen(false);
                         }}
                         className={cn(
-                          "flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition",
+                          "flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition my-[7px] first:mt-0 last:mb-0",
                           isSelected ? "bg-primary/10" : "hover:bg-muted"
                         )}
                       >
@@ -161,7 +160,7 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
                       setOpen(false);
                     }}
                     className={cn(
-                      "flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition",
+                      "flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition my-[7px] first:mt-0 last:mb-0",
                       isSelected ? "bg-primary/10" : "hover:bg-muted"
                     )}
                   >

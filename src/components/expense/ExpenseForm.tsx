@@ -14,16 +14,7 @@ import { formatAmount } from "../ui/formatters";
 import { InfoTooltip } from "../ui/info-tooltip";
 import { Textarea } from "../ui/textarea";
 import { SingleSelect } from "../ui/single-select";
-// Assuming you have these UI primitives or similar standard HTML
-const CURRENCIES = [
-  { code: "USD", symbol: "$" },
-  { code: "EUR", symbol: "€" },
-  { code: "GBP", symbol: "£" },
-  { code: "JPY", symbol: "¥" },
-  { code: "CAD", symbol: "C$" },
-  { code: "AUD", symbol: "A$" },
-  { code: "INR", symbol: "₹" },
-];
+import { CURRENCIES } from "@/constants";
 
 interface ExpenseFormProps {
   members: string[];
@@ -144,7 +135,7 @@ export function ExpenseForm({
 
   // Auto-detect category from description
   useEffect(() => {
-     if (isFirstRender.current) {
+    if (isFirstRender.current) {
       isFirstRender.current = false;
       return;
     }
@@ -307,10 +298,6 @@ export function ExpenseForm({
                 placeholder="What is this for?"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className={cn(
-                  "min-h-[16rem] h-[16rem] resize-none"
-                  // Matches height of Category Icon & Amount Input
-                )}
               />
               {errors.description && (
                 <p className="text-xs text-destructive ml-1">{errors.description}</p>
@@ -343,8 +330,6 @@ export function ExpenseForm({
               value={{ groupId: category, itemId: subcategory }}
               onSelect={(groupId, itemId) => handleSubcategorySelect(groupId!, itemId)}
               placeholder="Choose category"
-              headerTitle="Choose Category"
-              headerSubtitle="Select what this expense is for"
             />
 
 
@@ -429,7 +414,8 @@ export function ExpenseForm({
         {/* 1. Split Type Segmented Control */}
         <div className="space-y-3">
           <Label>How should this be split?</Label>
-          <div className="flex p-1 bg-muted/50 rounded-xl border border-border/50">
+
+          <div className="flex w-full p-1 bg-muted/50 rounded-xl border border-border/50">
             {splitTypeData.map(({ type, label, icon: Icon, info }) => {
               const isActive = splitType === type;
               return (
@@ -438,17 +424,25 @@ export function ExpenseForm({
                   type="button"
                   onClick={() => handleSplitTypeChange(type)}
                   className={cn(
-                    "flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg transition-all duration-200",
+                    "flex-1 flex items-center justify-center rounded-lg transition-all duration-200 px-1 py-2 sm:px-3 sm:py-2.5",
+                    "gap-1 sm:gap-3",
                     isActive
                       ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
                       : "text-muted-foreground hover:bg-white/50 hover:text-foreground"
                   )}
                 >
-                  <Icon className={cn("w-4 h-4", isActive ? "text-primary" : "text-muted-foreground")} />
-                  {label}
-                  <InfoTooltip>
-                    {info}
-                  </InfoTooltip>
+                  {/* Icon scales down on mobile (w-3.5) */}
+                  <Icon className={cn("shrink-0 transition-colors", isActive ? "text-primary" : "text-muted-foreground", "w-3.5 h-3.5 sm:w-4 sm:h-4")} />
+
+                  {/* Text is [10px] on mobile, standard sm on desktop. leading-none helps vertical alignment */}
+                  <span className="text-[10px] xs:text-xs sm:text-sm font-medium whitespace-nowrap leading-none">
+                    {label}
+                  </span>
+
+                  {/* Tooltip wrapper stays visible but tight */}
+                  <div className="shrink-0 flex">
+                    <InfoTooltip>{info}</InfoTooltip>
+                  </div>
                 </button>
               );
             })}
@@ -480,27 +474,44 @@ export function ExpenseForm({
 
         {/* 3. Participants List */}
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <Label className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-muted-foreground" />
-              <Label required={true}>Participants</Label>
+          <div className="flex items-center justify-between gap-2">
+
+            {/* Left Side: Icon + Label + Badge */}
+            <div className="flex items-center gap-1.5 overflow-hidden">
+              <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground shrink-0" />
+
+              <Label required={true} className="text-xs sm:text-sm truncate shrink-0">
+                Participants
+              </Label>
+
               <span className={cn(
-                "text-xs font-normal px-2 py-0.5 rounded-full",
+                "text-[10px] sm:text-xs font-normal px-1.5 py-0.5 rounded-full whitespace-nowrap transition-colors",
                 participants.length === 0
                   ? "text-destructive bg-destructive/10"
                   : "text-muted-foreground bg-muted"
               )}>
-                {participants.length === 0
-                  ? "Select at least one"
-                  : `${participants.length} selected`}
+                {participants.length === 0 ? (
+                  <>
+                    {/* Mobile: Short Text */}
+                    <span className="sm:hidden">Required</span>
+                    {/* Desktop: Long Text */}
+                    <span className="hidden sm:inline">Select at least one</span>
+                  </>
+                ) : (
+                  `${participants.length} selected`
+                )}
               </span>
-            </Label>
+            </div>
+
             <Button
               type="button"
               variant="ghost"
               size="sm"
               onClick={() => selectAllParticipants()}
-              className="h-8 text-xs text-primary hover:text-primary/80 hover:bg-primary/5"
+              className={cn(
+                "h-7 sm:h-8 text-[10px] sm:text-xs px-2 shrink-0",
+                "text-primary hover:text-primary/80 hover:bg-primary/5"
+              )}
             >
               {participants.length !== members.length && "Select All"}
             </Button>

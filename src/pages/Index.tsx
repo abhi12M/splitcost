@@ -183,16 +183,13 @@ export default function HomePage() {
                         <CardContent>
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                              <AvatarGroup names={group.members} max={3} size="sm" />
-                              <span className="text-sm text-muted-foreground">
-                                {group.members.length} members
-                              </span>
+                              <AvatarGroup names={group.members} max={3}  showBelow />
                             </div>
                             <div className="text-right">
                               <p className="text-lg font-semibold text-foreground">
                                 {formatCurrency(totalExpenses, group.currency)}
                               </p>
-                              <p className="text-xs text-muted-foreground">total</p>
+                              <p className="text-xs text-muted-foreground">Total</p>
                             </div>
                           </div>
                         </CardContent>

@@ -173,8 +173,7 @@ export default function GroupDetailsPage() {
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-foreground">{group.name}</h1>
               <div className="flex items-center gap-3 mt-2">
-                <AvatarGroup names={group.members} max={4} size="sm" />
-                <span className="text-sm text-muted-foreground">{group.members.length} members</span>
+                <AvatarGroup names={group.members} max={4} />
               </div>
             </div>
           </div>
