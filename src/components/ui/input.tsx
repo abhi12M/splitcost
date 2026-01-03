@@ -29,11 +29,12 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       unstyled = false,
       onChange,
       onKeyDown,
+      inputMode,
       ...props
     },
     ref,
   ) => {
-    const isNumeric = type === "number" && minValue !== undefined;
+    const isNumeric = inputMode === "decimal" && minValue !== undefined;
 
     const regex = React.useMemo(
       () => new RegExp(`^\\d*\\.?\\d{0,${precision}}$`),
@@ -52,18 +53,20 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       <div className="space-y-1 w-full">
         <div className="relative w-full h-full">
           <input
+            inputMode="decimal"
             ref={ref}
             type={type}
             {...props}
             className={cn(
-              "w-full h-full text-base bg-transparent",
+              "w-full h-full text-base bg-background",
               "placeholder:text-muted-foreground",
               postfix ? "pr-8" : "pr-4",
               unstyled
                 ? "border-none rounded-none focus:outline-none focus:ring-0 px-4"
-                : "h-10 rounded-md border border-input px-3 py-2 focus-visible:ring-2 focus-visible:ring-ring",
+                : "h-10 rounded-md border border-input px-3 py-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
               "disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
               "aria-[invalid=true]:border-destructive",
+              "aria-[invalid=true]:focus:border-transparent",
               className,
             )}
             onKeyDown={(e) => {

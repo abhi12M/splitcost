@@ -10,6 +10,7 @@ export const ExpenseSchema = z.object({
     paidBy: trimmedNonEmpty("Paid by is required."),
     amount: z.string().nonempty("Amount is required.").transform(Number),
     participants: z.array(z.string()).min(1, "At least one participant is required."),
+    category: trimmedNonEmpty("Category is required."),
 });
 
 export type ExpenseFormValues = z.infer<typeof ExpenseSchema>;

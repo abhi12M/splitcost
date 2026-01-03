@@ -206,7 +206,7 @@ export function ExpenseForm({
 
   useEffect(() => {
     if (hasSubmitted) validate();
-  }, [description, paidBy, amount, participants]);
+  }, [description, paidBy, amount, participants, category]);
 
   // First, filter the splits
   const validSplits = splits.filter(
@@ -241,10 +241,11 @@ export function ExpenseForm({
     description?: string;
     amount?: string;
     participants?: string;
+    category?: string
   }>({});
 
   const validate = () => {
-    const result = ExpenseSchema.safeParse({ description, paidBy, amount, participants });
+    const result = ExpenseSchema.safeParse({ description, paidBy, amount, participants, category });
     if (!result.success) {
       const e = result.error.format();
       setErrors({
@@ -252,20 +253,14 @@ export function ExpenseForm({
         paidBy: e.paidBy?._errors[0] || "",
         amount: e.amount?._errors[0] || "",
         participants: e.participants?._errors[0] || "",
+        category: e.category?._errors[0] || "",
       });
       return false;
     }
 
-    setErrors({ description: "", paidBy: "", amount: "" });
+    setErrors({ description: "", paidBy: "", amount: "", participants: "", category: "" });
     return true;
   };
-
-  const selectedCategory = category ? EXPENSE_CATEGORIES[category] : null;
-  const SelectedIcon = selectedCategory
-    ? selectedCategory.subcategories.find((s) => s.id === subcategory)?.icon ||
-    selectedCategory.subcategories[0]?.icon ||
-    GeneralIcon
-    : GeneralIcon;
 
   const handleSplitTypeChange = (splitType: SplitType) => {
     setSplitType(splitType);
@@ -275,7 +270,7 @@ export function ExpenseForm({
   const splitTypeData: { type: SplitType, label: string, icon: React.ElementType, info: string }[] = [
     { type: "equal", label: "Equally", icon: Equal, info: 'The amount is divided equally among all selected participants.' },
     { type: "percentage", label: "By %", icon: Percent, info: "Specify what percentage of the amount each participant should pay.\nValue must be between 1.00% and 99.00%" },
-    { type: "custom", label: "Custom", icon: Calculator, info: `Specify exactly how much each selected participant owes.\nValue must be between ${formatAmount(Number(1), currency)} and ${amount ? formatAmount(Number(amount), currency) : 'the amount'}.` },
+    { type: "custom", label: "Custom", icon: Calculator, info: `Specify exactly how much each selected participant owes.\nValue must be between ${formatAmount(Number(1), currency)} and ${amount ? formatAmount(Number(amount) - 1, currency) : 'the amount'}.` },
   ];
 
   return (
@@ -295,6 +290,7 @@ export function ExpenseForm({
                 placeholder="What is this for?"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+                aria-invalid={!!errors.description}
               />
               {errors.description && (
                 <p className="text-xs text-destructive ml-1">{errors.description}</p>
@@ -327,9 +323,11 @@ export function ExpenseForm({
               value={{ groupId: category, itemId: subcategory }}
               onSelect={(groupId, itemId) => handleSubcategorySelect(groupId!, itemId)}
               placeholder="Choose category"
+              ariaInvalid={!!errors.category}
             />
-
-
+            {errors.category && (
+              <p className="text-xs text-destructive ml-1">{errors.category}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -365,12 +363,12 @@ export function ExpenseForm({
               {/* Amount */}
               <Input
                 id="amount"
-                type="number"
-                step="0.01"
+                type="text"
+                inputMode="decimal"
                 placeholder="1.00"
                 value={amount}
                 minValue={1}
-                maxValue={99999999}
+                maxValue={99999999.99}
                 precision={2}
                 onChange={(e) => setAmount(e.target.value)}
                 showHelper={false}
@@ -398,6 +396,7 @@ export function ExpenseForm({
               onSelect={(_, itemId) => setPaidBy(itemId)}
               placeholder="Select member..."
               inputPlaceholder="Search members..."
+              ariaInvalid={!!errors.category}
             />
             {errors.paidBy && (
               <div className="text-xs text-destructive">{errors.paidBy}</div>
@@ -500,7 +499,7 @@ export function ExpenseForm({
               </span>
             </div>
 
-            <Button
+            {participants.length !== members.length && (<Button
               type="button"
               variant="ghost"
               size="sm"
@@ -510,8 +509,9 @@ export function ExpenseForm({
                 "text-primary hover:text-primary/80 hover:bg-primary/5"
               )}
             >
-              {participants.length !== members.length && "Select All"}
+              Select All
             </Button>
+            )}
           </div>
 
           <div className="grid gap-2">
@@ -569,11 +569,11 @@ export function ExpenseForm({
                         <div className="relative">
                           {/* We prevent propagation so clicking input doesn't toggle selection */}
                           <Input
-                            type="number"
+                            type="text"
+                            inputMode="decimal"
                             onClick={(e) => e.stopPropagation()}
-                            step={splitType === "percentage" ? "0.1" : "0.01"}
                             minValue={1}
-                            maxValue={splitType === "percentage" ? 99 : Number(amount || 0)}
+                            maxValue={splitType === "percentage" ? 99 : (Number(amount) - 1 || 0)}
                             precision={2}
                             placeholder="1.00"
                             showHelper={false}

@@ -41,6 +41,7 @@ interface SingleSelectProps {
   buttonClassName?: string;
   trigger?: React.ReactNode;
   onlyList?: boolean;
+  ariaInvalid?: boolean;
 }
 
 export const SingleSelect: React.FC<SingleSelectProps> = ({
@@ -52,7 +53,8 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
   inputPlaceholder = "Search...",
   buttonClassName,
   trigger,
-  onlyList = false
+  onlyList = false,
+  ariaInvalid
 }) => {
   const [open, setOpen] = useState(false);
 
@@ -109,8 +111,12 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
             type="button"
             role="combobox"
             aria-expanded={open}
+            aria-invalid={ariaInvalid}
             className={cn(
               "w-full justify-between h-14 px-4 rounded-xl bg-background hover:bg-accent/50 transition-all border flex items-center",
+              "aria-[invalid=true]:border-destructive",
+              "aria-[invalid=true]:data-[state=open]:border-transparent",
+              "data-[state=open]:ring-2 data-[state=open]:ring-ring",
               buttonClassName
             )}
           >
@@ -140,6 +146,7 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
       <PopoverContent
         className="w-[--radix-popover-trigger-width] p-0 min-w-[250px]"
         align="start"
+        avoidCollisions={false}
       >
         <Command>
           {(items?.length >= 8 || groups) && (
