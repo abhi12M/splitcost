@@ -1,48 +1,78 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Plus, Share2, Copy, Check, ArrowRight, Pencil, Loader2, Wallet, Users } from "lucide-react";
+import {
+  ArrowLeft,
+  Plus,
+  Share2,
+  Copy,
+  Check,
+  ArrowRight,
+  Pencil,
+  Loader2,
+  Wallet,
+  Users,
+  Search,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
+
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserAvatar, AvatarGroup } from "@/components/ui/UserAvatar";
 import { formatCurrency } from "@/lib/avatar-utils";
-import { getCategoryIcon, EXPENSE_CATEGORIES, type CategoryKey } from "@/components/icons/CategoryIcons";
+import {
+  getCategoryIcon,
+  EXPENSE_CATEGORIES,
+  type CategoryKey,
+} from "@/components/icons/CategoryIcons";
 import { useToast } from "@/hooks/use-toast";
-import { getGroup, loadExpenses, type Group, type Expense, type SplitType } from "@/lib/storage";
+import {
+  getGroup,
+  loadExpenses,
+  type Group,
+  type Expense,
+} from "@/lib/storage";
+import { useIsMobile } from "@/hooks/use-mobile";
 
-// Calculate share for each participant based on split type
+/* ======================================================
+   CONSTANTS – MOVE TO CONSTANTS FILE LATER
+====================================================== */
+const GROUP_BY_OPTIONS = [
+  { value: "date", label: "Date" },
+  { value: "paidBy", label: "Paid By" },
+  { value: "category", label: "Category" },
+  { value: "splitType", label: "Split Type" },
+] as const;
+
+const SORT_OPTIONS = [
+  { value: "date_desc", label: "Newest" },
+  { value: "amount_desc", label: "Amount ↓" },
+  { value: "amount_asc", label: "Amount ↑" },
+] as const;
+
+/* ======================================================
+   UTILS – MOVE TO UTILS FILE LATER
+====================================================== */
 function calculateShare(expense: Expense, member: string): number {
   if (!expense.participants.includes(member)) return 0;
-
-  const split = expense.splits?.find((s) => s.member === member);
 
   if (expense.splitType === "equal") {
     return expense.amount / expense.participants.length;
   }
 
-  if (expense.splitType === "percentage") {
-    // Use amount directly
-    return split?.amount || 0;
-  }
-
-  if (expense.splitType === "custom") {
-    return split?.amount || 0;
-  }
-
-  // Fallback
-  return expense.amount / expense.participants.length;
+  const split = expense.splits?.find((s) => s.member === member);
+  return split?.amount || 0;
 }
 
-// Calculate balances
 function calculateBalances(expenses: Expense[], members: string[]) {
   const balances: Record<string, number> = {};
   members.forEach((m) => (balances[m] = 0));
 
   expenses.forEach((expense) => {
     expense.participants.forEach((p) => {
-      const share = calculateShare(expense, p);
-      balances[p] -= share;
+      balances[p] -= calculateShare(expense, p);
     });
     balances[expense.paidBy] += expense.amount;
   });
@@ -50,17 +80,16 @@ function calculateBalances(expenses: Expense[], members: string[]) {
   return balances;
 }
 
-// Calculate who owes whom
 function calculateSettlements(balances: Record<string, number>) {
   const settlements: { from: string; to: string; amount: number }[] = [];
 
   const debtors = Object.entries(balances)
-    .filter(([_, bal]) => bal < -0.01)
+    .filter(([, b]) => b < -0.01)
     .map(([name, balance]) => ({ name, balance }))
     .sort((a, b) => a.balance - b.balance);
 
   const creditors = Object.entries(balances)
-    .filter(([_, bal]) => bal > 0.01)
+    .filter(([, b]) => b > 0.01)
     .map(([name, balance]) => ({ name, balance }))
     .sort((a, b) => b.balance - a.balance);
 
@@ -68,76 +97,105 @@ function calculateSettlements(balances: Record<string, number>) {
     j = 0;
 
   while (i < debtors.length && j < creditors.length) {
-    const debtor = debtors[i];
-    const creditor = creditors[j];
-    const amount = Math.min(-debtor.balance, creditor.balance);
+    const amount = Math.min(-debtors[i].balance, creditors[j].balance);
 
-    if (amount > 0.01) {
-      settlements.push({
-        from: debtor.name,
-        to: creditor.name,
-        amount: Math.round(amount * 100) / 100,
-      });
-    }
+    settlements.push({
+      from: debtors[i].name,
+      to: creditors[j].name,
+      amount: Math.round(amount * 100) / 100,
+    });
 
-    debtor.balance += amount;
-    creditor.balance -= amount;
+    debtors[i].balance += amount;
+    creditors[j].balance -= amount;
 
-    if (Math.abs(debtor.balance) < 0.01) i++;
-    if (Math.abs(creditor.balance) < 0.01) j++;
+    if (Math.abs(debtors[i].balance) < 0.01) i++;
+    if (Math.abs(creditors[j].balance) < 0.01) j++;
   }
 
   return settlements;
 }
 
+function getGroupTotal(expenses: Expense[]) {
+  return expenses.reduce((sum, e) => sum + e.amount, 0);
+}
 
+/* ======================================================
+   COMPONENT
+====================================================== */
 export default function GroupDetailsPage() {
   const { groupId } = useParams();
   const { toast } = useToast();
-  const [copied, setCopied] = useState(false);
-  const [group, setGroup] = useState<Group | undefined>();
+  const isMobile = useIsMobile();
+  const [group, setGroup] = useState<Group>();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // UI state
+  const [search, setSearch] = useState("");
+  const [groupBy, setGroupBy] =
+    useState<"date" | "paidBy" | "category" | "splitType">("date");
+  const [sortBy, setSortBy] =
+    useState<"date_desc" | "amount_desc" | "amount_asc">("date_desc");
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
+    {}
+  );
+
   useEffect(() => {
-    const fetchData = async () => {
-      if (groupId) {
-        setLoading(true);
-        try {
-          const [fetchedGroup, fetchedExpenses] = await Promise.all([
-            getGroup(groupId),
-            loadExpenses(groupId),
-          ]);
-          setGroup(fetchedGroup);
-          setExpenses(fetchedExpenses);
-        } catch (error) {
-          console.error("Error fetching group data:", error);
-        } finally {
-          setLoading(false);
-        }
-      }
-    };
-    fetchData();
+    if (!groupId) return;
+    setLoading(true);
+
+    Promise.all([getGroup(groupId), loadExpenses(groupId)])
+      .then(([g, e]) => {
+        setGroup(g);
+        setExpenses(e);
+      })
+      .finally(() => setLoading(false));
   }, [groupId]);
 
-  if (loading) {
-    return (
-      <Layout>
-        <div className="container py-12 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-      </Layout>
-    );
-  }
+  /* ======================================================
+     FILTER / SORT / GROUP
+  ====================================================== */
+  const groupedExpenses = useMemo(() => {
+    let list = [...expenses];
 
-  if (!group) {
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter(
+        (e) =>
+          e.description.toLowerCase().includes(q) ||
+          e.paidBy.toLowerCase().includes(q) ||
+          e.category.toLowerCase().includes(q)
+      );
+    }
+
+    if (sortBy === "date_desc") {
+      list.sort((a, b) => +new Date(b.date) - +new Date(a.date));
+    } else if (sortBy === "amount_desc") {
+      list.sort((a, b) => b.amount - a.amount);
+    } else {
+      list.sort((a, b) => a.amount - b.amount);
+    }
+
+    const grouped: Record<string, Expense[]> = {};
+    list.forEach((e) => {
+      let key = "";
+      if (groupBy === "date") key = e.date;
+      if (groupBy === "paidBy") key = e.paidBy;
+      if (groupBy === "category") key = e.category;
+      if (groupBy === "splitType") key = e.splitType || "equal";
+
+      grouped[key] ||= [];
+      grouped[key].push(e);
+    });
+
+    return grouped;
+  }, [expenses, search, sortBy, groupBy]);
+
+  if (loading || !group) {
     return (
       <Layout>
-        <div className="container py-12 text-center">
-          <p className="text-muted-foreground">Group not found</p>
-          <Button asChild className="mt-4">
-            <Link to="/">Go Home</Link>
-          </Button>
+        <div className="container py-12 flex justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
       </Layout>
     );
@@ -145,298 +203,308 @@ export default function GroupDetailsPage() {
 
   const balances = calculateBalances(expenses, group.members);
   const settlements = calculateSettlements(balances);
-  const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
-
-  const shareLink = `${window.location.origin}/group/${groupId}`;
-
-  const copyLink = async () => {
-    await navigator.clipboard.writeText(shareLink);
-    setCopied(true);
-    toast({
-      title: "Link copied!",
-      description: "Share this link with your group members",
-    });
-    setTimeout(() => setCopied(false), 2000);
-  };
-
+  const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
+  /* ======================================================
+     UI
+  ====================================================== */
   return (
     <Layout>
-      <div className="container py-6 md:py-10">
-        {/* Header */}
-        <div className="flex items-center md:items-start gap-3 justify-between mb-8">
-          <div className="flex items-center gap-4 w-full min-w-0">
-            <Button variant="ghost" size="icon-sm" asChild className="shrink-0">
-              <Link to="/">
-                <ArrowLeft className="w-4 h-4" />
-              </Link>
-            </Button>
-
-            {/* TEXT CONTAINER */}
-            <div className="min-w-0 flex-1">
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground break-words">
-                {group.name}
-              </h1>
-
-              <div className="flex items-center gap-3 mt-2 overflow-hidden">
-                <AvatarGroup names={group.members} max={4} />
-              </div>
-            </div>
-          </div>
-          <Button variant="outline" size="sm" onClick={copyLink}>
-            {copied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
-            {copied ? "Copied!" : "Share"}
+      <div className="container py-6 space-y-6">
+        {/* HEADER */}
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon-sm" asChild>
+            <Link to="/">
+              <ArrowLeft />
+            </Link>
           </Button>
+
+          <div className="min-w-0">
+            <h1 className="text-2xl font-bold truncate">{group.name}</h1>
+            <AvatarGroup names={group.members} max={4} />
+          </div>
         </div>
 
+        {/* MAIN GRID */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Total Expenses Card */}
-              <Card>
-                <CardContent className="p-5 flex items-center justify-between">
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Total Expenses
-                    </p>
-                    <p className="text-xl sm:text-2xl font-bold text-foreground truncate">
-                      {formatCurrency(totalExpenses, group.currency)}
-                    </p>
-                  </div>
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                    <Wallet className="h-5 w-5" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Per Person Average Card */}
-              <Card>
-                <CardContent className="p-5 flex items-center justify-between">
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Per Person (avg)
-                    </p>
-                    <p className="text-xl sm:text-2xl font-bold text-foreground truncate">
-                      {formatCurrency(
-                        totalExpenses / (group.members.length || 1),
-                        group.currency
-                      )}
-                    </p>
-                  </div>
-                  <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
-                    <Users className="h-5 w-5" />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Expenses List */}
+          {/* EXPENSE LIST */}
+          <div className="lg:col-span-2 space-y-4">
+            {/* Filters */}
             <Card>
-              <CardHeader className="flex-row items-center justify-between space-y-0 pb-4">
-                <CardTitle>Expenses</CardTitle>
-                <Button asChild size="sm">
+              <CardContent className="p-4 flex flex-wrap gap-2">
+                <div className="relative flex-1 min-w-[180px]">
+                  <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                  <input
+                    className="w-full pl-9 h-10 rounded-md border bg-background"
+                    placeholder="Search expenses"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                </div>
+
+                <select
+                  className="h-10 rounded-md border bg-background px-3"
+                  value={groupBy}
+                  onChange={(e) => setGroupBy(e.target.value as any)}
+                >
+                  {GROUP_BY_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      Group: {o.label}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  className="h-10 rounded-md border bg-background px-3"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                >
+                  {SORT_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      Sort: {o.label}
+                    </option>
+                  ))}
+                </select>
+              </CardContent>
+            </Card>
+
+            {/* Expenses */}
+            <Card>
+              <CardHeader className="flex flex-row items-start justify-between gap-4">
+                {/* LEFT */}
+                <div className="space-y-1">
+                  <CardTitle className="flex items-center gap-2">
+                    <Wallet className="w-5 h-5 text-primary" />
+                    Expenses
+                  </CardTitle>
+
+                  {/* MOBILE */}
+                  {isMobile ? (
+                    <>
+                      <p className="text-sm text-muted-foreground">
+                        Total{" "}
+                        <span className="font-semibold text-foreground">
+                          {formatCurrency(totalExpenses, group.currency)}
+                        </span>
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {expenses.length} expenses
+                      </p>
+                    </>
+                  ) : (
+                    /* DESKTOP */
+                    <p className="text-sm text-muted-foreground inline-flex items-center gap-1 whitespace-nowrap">
+                      <span>Total</span>
+                      <span className="font-semibold text-foreground">
+                        {formatCurrency(totalExpenses, group.currency)}
+                      </span>
+                      <span className="opacity-60">·</span>
+                      <span>{expenses.length} expenses</span>
+                    </p>
+                  )}
+                </div>
+
+                {/* RIGHT */}
+                <Button asChild size="sm" className="shrink-0">
                   <Link to={`/group/${groupId}/add-expense`}>
                     <Plus className="w-4 h-4" />
                     Add
                   </Link>
                 </Button>
               </CardHeader>
-              <CardContent className="p-0 max-h-[31rem] overflow-y-auto">
-                {expenses.length === 0 ? (
-                  <div className="p-8 text-center text-muted-foreground">
-                    <p>No expenses yet</p>
-                    <Button asChild size="sm" className="mt-4">
-                      <Link to={`/group/${groupId}/add-expense`}>Add your first expense</Link>
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-border">
-                    {expenses.map((expense, index) => {
-                      const IconComponent = getCategoryIcon(
-                        expense.category as CategoryKey,
-                        expense.subcategory
-                      );
-                      const categoryColor =
-                        EXPENSE_CATEGORIES[expense.category as CategoryKey]?.color ||
-                        "category-uncategorized";
-
-                      return (
-                        <motion.div
-                          key={expense.id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.05 }}
-                          className="p-4 hover:bg-muted/50 transition-colors group"
-                        >
-                          {/* MAIN ROW */}
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-
-                            {/* LEFT : ICON + TEXT */}
-                            <div className="flex items-center gap-4 flex-1 min-w-0">
-                              <div
-                                className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
-                                style={{ backgroundColor: `hsl(var(--${categoryColor}) / 0.15)` }}
-                              >
-                                <IconComponent
-                                  className="w-5 h-5"
-                                  style={{ color: `hsl(var(--${categoryColor}))` }}
-                                />
-                              </div>
-
-                              <div className="min-w-0">
-                                <p className="font-medium text-foreground truncate">
-                                  {expense.description}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                  Paid by <span className="font-medium">{expense.paidBy}</span> •{" "}
-                                  {expense.date}
-                                  {expense.splitType && expense.splitType !== "equal" && (
-                                    <span className="ml-1 text-xs">
-                                      ({expense.splitType === "percentage" ? "%" : "custom"})
-                                    </span>
-                                  )}
-                                </p>
-                              </div>
-                            </div>
-
-                            {/* RIGHT : AMOUNT + EDIT */}
-                            <div className="flex items-center justify-between sm:justify-end gap-3">
-                              <div className="text-left sm:text-right">
-                                <p className="font-semibold text-foreground">
-                                  {formatCurrency(expense.amount, expense.currency)}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  {expense.participants.length} people
-                                </p>
-                              </div>
-
-                              <Button
-                                variant="ghost"
-                                size="icon-sm"
-                                asChild
-                                className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
-                              >
-                                <Link to={`/group/${groupId}/edit-expense/${expense.id}`}>
-                                  <Pencil className="w-4 h-4" />
-                                </Link>
-                              </Button>
-                            </div>
-
-                          </div>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sidebar - Balances */}
-          <div className="space-y-6">
-            {/* Individual Balances */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Balances</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 max-h-[15rem] overflow-y-auto">
-                {group.members.map((member, index) => {
-                  const balance = balances[member];
-                  const isPositive = balance > 0.01;
-                  const isNegative = balance < -0.01;
+              <CardContent className="p-0">
+                {Object.entries(groupedExpenses).map(([title, list]) => {
+                  const isOpen = expandedGroups[title] ?? true;
+                  const groupTotal = getGroupTotal(list);
 
                   return (
-                    <motion.div
-                      key={member}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="flex items-center justify-between gap-1" // Added gap for safety
-                    >
-                      {/* Left Side: Avatar and Name */}
-                      <div className="flex items-center gap-1 min-w-0 flex-1">
-                        <UserAvatar name={member} size="sm" />
-                        {/* min-w-0 is crucial for truncate to work inside a flex container */}
-                        <span className="font-medium text-foreground truncate min-w-0">
-                          {member}
-                        </span>
-                      </div>
-
-                      {/* Right Side: Balance */}
-                      <span
-                        className={`font-semibold flex-shrink-0 ${isPositive
-                          ? "text-success"
-                          : isNegative
-                            ? "text-destructive"
-                            : "text-muted-foreground"
-                          }`}
+                    <div key={title} className="border-b">
+                      <button
+                        onClick={() =>
+                          setExpandedGroups((p) => ({
+                            ...p,
+                            [title]: !isOpen,
+                          }))
+                        }
+                        className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/40cursor-pointer transition rounded-lg"
                       >
-                        {isPositive ? "+" : ""}
-                        {formatCurrency(balance, group.currency)}
-                      </span>
-                    </motion.div>
+                        <div className="flex items-center gap-2">
+                          {isOpen ? (
+                            <ChevronDown className="w-4 h-4" />
+                          ) : (
+                            <ChevronRight className="w-4 h-4" />
+                          )}
+                          <div className="text-left">
+                            <p className="font-semibold">{title}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {list.length} expenses
+                            </p>
+                          </div>
+                        </div>
+
+                        <span className="font-semibold">
+                          {formatCurrency(groupTotal, group.currency)}
+                        </span>
+                      </button>
+
+                      {isOpen &&
+                        list.map((expense, index) => {
+                          const IconComponent = getCategoryIcon(
+                            expense.category as CategoryKey,
+                            expense.subcategory
+                          );
+                          const categoryColor =
+                            EXPENSE_CATEGORIES[
+                              expense.category as CategoryKey
+                            ]?.color || "category-uncategorized";
+
+                          return (
+                            <motion.div
+                              key={expense.id}
+                              initial={{ opacity: 0, y: 6 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: index * 0.03 }}
+                              className="p-4 hover:bg-muted/50"
+                            >
+                              <div className="flex gap-3">
+                                {/* LEFT: Icon + Content */}
+                                <div className="flex gap-3 min-w-0 flex-1">
+                                  {/* Category Icon */}
+                                  <div
+                                    className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                                    style={{
+                                      backgroundColor: `hsl(var(--${categoryColor}) / 0.15)`,
+                                    }}
+                                  >
+                                    <IconComponent
+                                      className="w-5 h-5"
+                                      style={{ color: `hsl(var(--${categoryColor}))` }}
+                                    />
+                                  </div>
+
+                                  {/* Text + Participants */}
+                                  <div className="min-w-0 flex-1">
+                                    <p className="font-medium truncate">
+                                      {expense.description}
+                                    </p>
+
+                                    <AvatarGroup
+                                      names={expense.participants}
+                                      max={4}
+                                      size="sm"
+                                      className="mt-1"
+                                      showBelow={isMobile}
+                                    />
+
+                                    {/* MOBILE: Amount + Paid by inline */}
+                                    <div className="flex items-center gap-2 mt-2 sm:hidden">
+                                      <p className="font-semibold">
+                                        {formatCurrency(expense.amount, expense.currency)}
+                                      </p>
+                                      <UserAvatar
+                                        name={expense.paidBy}
+                                        size="xs"
+                                        aria-label={`Paid by ${expense.paidBy}`}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* DESKTOP ONLY: Amount + Paid by */}
+                                <div className="hidden sm:flex flex-col items-end justify-center min-w-[80px]">
+                                  <p className="font-semibold">
+                                    {formatCurrency(expense.amount, expense.currency)}
+                                  </p>
+
+                                  <UserAvatar
+                                    name={expense.paidBy}
+                                    size="xs"
+                                    aria-label={`Paid by ${expense.paidBy}`}
+                                    className="mt-1"
+                                  />
+                                </div>
+                              </div>
+                            </motion.div>
+
+                          );
+                        })}
+                    </div>
                   );
                 })}
               </CardContent>
             </Card>
-            {/* Who Owes Whom */}
+          </div>
+
+          {/* INSIGHTS – SCROLL AFTER EXPENSES ON MOBILE */}
+          <div className="space-y-4 order-2 lg:order-none">
+            {/* Balances */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg test">Settle Up</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="w-5 h-5 text-blue-500" />
+                  Balances
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3 max-h-[19rem] overflow-y-auto">
-                {settlements.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">All settled up!</p>
-                ) : (
-                  settlements.map((settlement, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="flex items-center gap-1 p-3 bg-muted/50 rounded-xl"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1 text-sm">
-                          <UserAvatar name={settlement.from} size="sm" />
-                          {/* <span className="font-medium text-foreground truncate">
-                            {settlement.from}
-                          </span> */}
-                          <ArrowRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                          <UserAvatar name={settlement.to} size="sm" />
-                          {/* <span className="font-medium text-foreground truncate">
-                            {settlement.to}
-                          </span> */}
-                        </div>
+              <CardContent className="space-y-3">
+                {group.members.map((m) => {
+                  const bal = balances[m];
+                  return (
+                    <div key={m} className="flex justify-between items-center">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <UserAvatar name={m} size="sm" />
+                        <span className="truncate">{m}</span>
                       </div>
-                      <span className="font-semibold text-secondary">
-                        {formatCurrency(settlement.amount, group.currency)}
+                      <span
+                        className={`font-semibold ${bal > 0
+                          ? "text-success"
+                          : bal < 0
+                            ? "text-destructive"
+                            : "text-muted-foreground"
+                          }`}
+                      >
+                        {bal > 0 ? "+" : ""}
+                        {formatCurrency(bal, group.currency)}
                       </span>
-                    </motion.div>
-                  ))
-                )}
+                    </div>
+                  );
+                })}
               </CardContent>
             </Card>
 
-            {/* Share Link */}
+            {/* Settle Up */}
             <Card>
-              <CardContent className="p-4">
-                <p className="text-sm font-medium text-foreground mb-2">Shareable Link</p>
-                <div className="flex gap-2">
-                  <div className="flex-1 bg-muted rounded-lg px-3 py-2 text-sm text-muted-foreground truncate">
-                    {shareLink}
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ArrowRight className="w-5 h-5 text-secondary" />
+                  Settle Up
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {settlements.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center">
+                    All settled 🎉
+                  </p>
+                )}
+
+                {settlements.map((s, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between bg-muted/50 rounded-xl p-3"
+                  >
+                    <div className="flex items-center gap-2">
+                      <UserAvatar name={s.from} size="sm" />
+                      <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                      <UserAvatar name={s.to} size="sm" />
+                    </div>
+                    <span className="font-semibold">
+                      {formatCurrency(s.amount, group.currency)}
+                    </span>
                   </div>
-                  <Button variant="outline" size="icon" onClick={copyLink}>
-                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                  </Button>
-                </div>
+                ))}
               </CardContent>
             </Card>
           </div>
         </div>
       </div>
-    </Layout>
+    </Layout >
   );
 }

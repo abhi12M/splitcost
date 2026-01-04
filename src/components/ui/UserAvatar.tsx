@@ -3,15 +3,15 @@ import { getAvatarColor, getInitials } from "@/lib/avatar-utils";
 import { SingleSelect } from "./single-select";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-type AvatarSize = "sm" | "md" | "lg" | "xl";
+type AvatarSize = "xs" | "sm" | "md" | "lg" | "xl";
 
 const sizeClasses: Record<AvatarSize, string> = {
+  xs: "w-6 h-6 text-[10px]",
   sm: "w-7 h-7 text-xs",
   md: "w-9 h-9 text-sm",
   lg: "w-11 h-11 text-base",
   xl: "w-14 h-14 text-lg",
 };
-
 interface UserAvatarProps {
   name: string;
   size?: AvatarSize;
@@ -51,6 +51,7 @@ interface AvatarGroupProps {
   size?: "sm" | "md" | "lg";
   className?: string;
   showBelow?: boolean;
+  label?: string;
 }
 
 export function AvatarGroup({
@@ -59,6 +60,7 @@ export function AvatarGroup({
   size = "md",
   className,
   showBelow = false,
+  label = 'members'
 }: AvatarGroupProps) {
   const isMobile = useIsMobile();
   const effectiveMax = isMobile ? 2 : max;
@@ -90,7 +92,7 @@ export function AvatarGroup({
             items={overflowNames.map((m) => ({
               id: m,
               label: m,
-              icon: <UserAvatar name={m} size="md" />, 
+              icon: <UserAvatar name={m} size="md" />,
             }))}
             onlyList
             trigger={
@@ -101,7 +103,7 @@ export function AvatarGroup({
                   sizeClasses[size]
                 )}
                 aria-label={`View ${overflow} more members`}
-                onClick={(e) => e.stopPropagation()} 
+                onClick={(e) => e.stopPropagation()}
               >
                 +{overflow}
               </button>
@@ -111,14 +113,16 @@ export function AvatarGroup({
       </div>
 
       {/* Member count */}
-      <span
-        className={cn(
-          "text-sm text-muted-foreground",
-          showBelow ? "mt-1" : "ml-2"
-        )}
-      >
-        {names.length} members
-      </span>
+      {label && names.length > 5 && (
+        <span
+          className={cn(
+            "text-xs text-muted-foreground",
+            showBelow ? "mt-1" : "ml-1"
+          )}
+        >
+          {names.length} {label}
+        </span>
+      )}
     </div>
   );
 }
