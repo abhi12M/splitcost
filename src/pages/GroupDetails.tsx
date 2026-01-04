@@ -163,21 +163,25 @@ export default function GroupDetailsPage() {
     <Layout>
       <div className="container py-6 md:py-10">
         {/* Header */}
-        <div className="flex items-start justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon-sm" asChild>
+        <div className="flex items-center md:items-start gap-3 justify-between mb-8">
+          <div className="flex items-center gap-4 w-full min-w-0">
+            <Button variant="ghost" size="icon-sm" asChild className="shrink-0">
               <Link to="/">
                 <ArrowLeft className="w-4 h-4" />
               </Link>
             </Button>
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground">{group.name}</h1>
-              <div className="flex items-center gap-3 mt-2">
+
+            {/* TEXT CONTAINER */}
+            <div className="min-w-0 flex-1">
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground break-words">
+                {group.name}
+              </h1>
+
+              <div className="flex items-center gap-3 mt-2 overflow-hidden">
                 <AvatarGroup names={group.members} max={4} />
               </div>
             </div>
           </div>
-
           <Button variant="outline" size="sm" onClick={copyLink}>
             {copied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
             {copied ? "Copied!" : "Share"}
@@ -265,34 +269,40 @@ export default function GroupDetailsPage() {
                           transition={{ delay: index * 0.05 }}
                           className="p-4 hover:bg-muted/50 transition-colors group"
                         >
-                          <div className="flex items-center gap-4">
-                            <div
-                              className="w-11 h-11 rounded-xl flex items-center justify-center"
-                              style={{ backgroundColor: `hsl(var(--${categoryColor}) / 0.15)` }}
-                            >
-                              <IconComponent
-                                className="w-5 h-5"
-                                style={{ color: `hsl(var(--${categoryColor}))` }}
-                              />
+                          {/* MAIN ROW */}
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+
+                            {/* LEFT : ICON + TEXT */}
+                            <div className="flex items-center gap-4 flex-1 min-w-0">
+                              <div
+                                className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+                                style={{ backgroundColor: `hsl(var(--${categoryColor}) / 0.15)` }}
+                              >
+                                <IconComponent
+                                  className="w-5 h-5"
+                                  style={{ color: `hsl(var(--${categoryColor}))` }}
+                                />
+                              </div>
+
+                              <div className="min-w-0">
+                                <p className="font-medium text-foreground truncate">
+                                  {expense.description}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  Paid by <span className="font-medium">{expense.paidBy}</span> •{" "}
+                                  {expense.date}
+                                  {expense.splitType && expense.splitType !== "equal" && (
+                                    <span className="ml-1 text-xs">
+                                      ({expense.splitType === "percentage" ? "%" : "custom"})
+                                    </span>
+                                  )}
+                                </p>
+                              </div>
                             </div>
 
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-foreground truncate">
-                                {expense.description}
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                Paid by <span className="font-medium">{expense.paidBy}</span> •{" "}
-                                {expense.date}
-                                {expense.splitType && expense.splitType !== "equal" && (
-                                  <span className="ml-1 text-xs">
-                                    ({expense.splitType === "percentage" ? "%" : "custom"})
-                                  </span>
-                                )}
-                              </p>
-                            </div>
-
-                            <div className="text-right flex items-center gap-3">
-                              <div>
+                            {/* RIGHT : AMOUNT + EDIT */}
+                            <div className="flex items-center justify-between sm:justify-end gap-3">
+                              <div className="text-left sm:text-right">
                                 <p className="font-semibold text-foreground">
                                   {formatCurrency(expense.amount, expense.currency)}
                                 </p>
@@ -300,22 +310,25 @@ export default function GroupDetailsPage() {
                                   {expense.participants.length} people
                                 </p>
                               </div>
+
                               <Button
                                 variant="ghost"
                                 size="icon-sm"
                                 asChild
-                                className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                               >
                                 <Link to={`/group/${groupId}/edit-expense/${expense.id}`}>
                                   <Pencil className="w-4 h-4" />
                                 </Link>
                               </Button>
                             </div>
+
                           </div>
                         </motion.div>
                       );
                     })}
                   </div>
+
                 )}
               </CardContent>
             </Card>
