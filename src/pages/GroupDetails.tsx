@@ -4,17 +4,20 @@ import { motion } from "framer-motion";
 import {
   ArrowLeft,
   Plus,
-  Share2,
-  Copy,
-  Check,
   ArrowRight,
-  Pencil,
   Loader2,
   Wallet,
   Users,
   Search,
   ChevronDown,
   ChevronRight,
+  Calendar,
+  User,
+  Tag,
+  Split,
+  ArrowUpDown,
+  ArrowDown,
+  ArrowUp,
 } from "lucide-react";
 
 import { Layout } from "@/components/layout/Layout";
@@ -27,7 +30,6 @@ import {
   EXPENSE_CATEGORIES,
   type CategoryKey,
 } from "@/components/icons/CategoryIcons";
-import { useToast } from "@/hooks/use-toast";
 import {
   getGroup,
   loadExpenses,
@@ -35,21 +37,23 @@ import {
   type Expense,
 } from "@/lib/storage";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { SingleSelect } from "@/components/ui/single-select";
+import { toTitleCase } from "@/components/ui/formatters";
 
 /* ======================================================
    CONSTANTS – MOVE TO CONSTANTS FILE LATER
 ====================================================== */
 const GROUP_BY_OPTIONS = [
-  { value: "date", label: "Date" },
-  { value: "paidBy", label: "Paid By" },
-  { value: "category", label: "Category" },
-  { value: "splitType", label: "Split Type" },
+  { value: "date", label: "Date", icon: Calendar },
+  { value: "paidBy", label: "Paid By", icon: User },
+  { value: "category", label: "Category", icon: Tag },
+  { value: "splitType", label: "Split Type", icon: Split },
 ] as const;
 
 const SORT_OPTIONS = [
-  { value: "date_desc", label: "Newest" },
-  { value: "amount_desc", label: "Amount ↓" },
-  { value: "amount_asc", label: "Amount ↑" },
+  { value: "date_desc", label: "Newest first", icon: ArrowUpDown },
+  { value: "amount_desc", label: "Highest amount", icon: ArrowDown },
+  { value: "amount_asc", label: "Lowest amount", icon: ArrowUp },
 ] as const;
 
 /* ======================================================
@@ -124,7 +128,6 @@ function getGroupTotal(expenses: Expense[]) {
 ====================================================== */
 export default function GroupDetailsPage() {
   const { groupId } = useParams();
-  const { toast } = useToast();
   const isMobile = useIsMobile();
   const [group, setGroup] = useState<Group>();
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -139,6 +142,7 @@ export default function GroupDetailsPage() {
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
     {}
   );
+  const shouldTitleCase = groupBy === "category" || groupBy === "splitType";
 
   useEffect(() => {
     if (!groupId) return;
@@ -230,40 +234,49 @@ export default function GroupDetailsPage() {
           <div className="lg:col-span-2 space-y-4">
             {/* Filters */}
             <Card>
-              <CardContent className="p-4 flex flex-wrap gap-2">
-                <div className="relative flex-1 min-w-[180px]">
-                  <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                  <input
-                    className="w-full pl-9 h-10 rounded-md border bg-background"
-                    placeholder="Search expenses"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                  />
+              <CardContent className="p-4">
+                <div className="grid grid-cols-12 gap-3 items-center">
+                  {/* Search */}
+                  <div className="col-span-12 sm:col-span-5 relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input
+                      className="w-full pl-9 h-10 rounded-md border bg-background"
+                      placeholder="Search expenses"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Group By */}
+                  <div className="col-span-12 sm:col-span-3">
+                    <SingleSelect
+                      items={GROUP_BY_OPTIONS.map((m) => ({
+                        id: m.value,
+                        label: m.label,
+                        icon: m.icon,
+                      }))}
+                      value={{ itemId: groupBy }}
+                      onSelect={(_, itemId) => setGroupBy(itemId as any)}
+                      placeholder="Group by"
+                      label="Group by"
+                    />
+                  </div>
+
+                  {/* Sort By */}
+                  <div className="col-span-12 sm:col-span-4">
+                    <SingleSelect
+                      items={SORT_OPTIONS.map((m) => ({
+                        id: m.value,
+                        label: m.label,
+                        icon: m.icon,
+                      }))}
+                      value={{ itemId: sortBy }}
+                      onSelect={(_, itemId) => setSortBy(itemId as any)}
+                      placeholder="Sort by"
+                      label="Sort by"
+                    />
+                  </div>
                 </div>
-
-                <select
-                  className="h-10 rounded-md border bg-background px-3"
-                  value={groupBy}
-                  onChange={(e) => setGroupBy(e.target.value as any)}
-                >
-                  {GROUP_BY_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      Group: {o.label}
-                    </option>
-                  ))}
-                </select>
-
-                <select
-                  className="h-10 rounded-md border bg-background px-3"
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as any)}
-                >
-                  {SORT_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      Sort: {o.label}
-                    </option>
-                  ))}
-                </select>
               </CardContent>
             </Card>
 
@@ -325,7 +338,7 @@ export default function GroupDetailsPage() {
                             [title]: !isOpen,
                           }))
                         }
-                        className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/40cursor-pointer transition rounded-lg"
+                        className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/40 cursor-pointer transition rounded-lg"
                       >
                         <div className="flex items-center gap-2">
                           {isOpen ? (
@@ -334,7 +347,9 @@ export default function GroupDetailsPage() {
                             <ChevronRight className="w-4 h-4" />
                           )}
                           <div className="text-left">
-                            <p className="font-semibold">{title}</p>
+                            <p className="font-semibold">
+                              {shouldTitleCase ? toTitleCase(title) : title}
+                            </p>
                             <p className="text-xs text-muted-foreground">
                               {list.length} expenses
                             </p>

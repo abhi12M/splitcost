@@ -14,11 +14,13 @@ import {
 } from "@/components/ui/command";
 import { ChevronsUpDown, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { UserAvatar } from "./UserAvatar";
 
 export interface SelectItem {
   id: string;
   label: string;
-  icon?: React.ElementType | React.ReactNode;
+  showAvatar?: boolean;
+  icon?: React.ElementType;
   color?: string;
 }
 
@@ -30,18 +32,18 @@ export interface SelectGroup {
 }
 
 interface SingleSelectProps {
+  label?: string;
   groups?: SelectGroup[];
   items?: SelectItem[];
   value?: { groupId?: string; itemId: string } | null;
   onSelect?: (groupId: string | undefined, itemId: string) => void;
   placeholder?: string;
   inputPlaceholder?: string;
-  headerTitle?: string;
-  headerSubtitle?: string;
   buttonClassName?: string;
   trigger?: React.ReactNode;
   onlyList?: boolean;
   ariaInvalid?: boolean;
+  isMinWidth?: boolean
 }
 
 export const SingleSelect: React.FC<SingleSelectProps> = ({
@@ -54,7 +56,9 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
   buttonClassName,
   trigger,
   onlyList = false,
-  ariaInvalid
+  ariaInvalid,
+  isMinWidth = false,
+  label
 }) => {
   const [open, setOpen] = useState(false);
 
@@ -71,37 +75,52 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
     selectedItem = items.find((i) => i.id === value?.itemId);
   }
 
-  const renderIcon = (
-    icon?: React.ElementType | React.ReactNode,
-    color?: string,
+  const renderLeading = (
+    item: SelectItem,
+    groupColor?: string,
     isSelected?: boolean
   ) => {
-    if (!icon) return null;
+    // 1️⃣ Avatar (uses label)
+    if (item?.showAvatar) {
+      return (
+        <UserAvatar
+          name={item.label}
+          size="sm"
+          className="shrink-0"
+        />
+      );
+    }
 
-    const iconElement = React.isValidElement(icon)
-      ? icon
-      : typeof icon === "function"
-        ? React.createElement(icon, { size: 18 })
-        : null;
+    // 2️⃣ Icon
+    if (item?.icon) {
+      const Icon = item?.icon;
 
-    return (
-      <div
-        className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-        style={
-          color
-            ? {
-              backgroundColor: isSelected
-                ? `hsl(var(--${color}))`
-                : `hsl(var(--${color}) / 0.15)`,
-              color: isSelected ? "white" : `hsl(var(--${color}))`,
-            }
-            : undefined
-        }
-      >
-        {iconElement}
-      </div>
-    );
+      return (
+        <div
+          className={cn(
+            "w-9 h-9 rounded-xl flex items-center justify-center shrink-0",
+            !groupColor && "text-muted-foreground w-4 h-4",
+            isSelected && !groupColor && "text-primary"
+          )}
+          style={
+            groupColor
+              ? {
+                backgroundColor: isSelected
+                  ? `hsl(var(--${groupColor}))`
+                  : `hsl(var(--${groupColor}) / 0.15)`,
+                color: isSelected ? "white" : `hsl(var(--${groupColor}))`,
+              }
+              : undefined
+          }
+        >
+          <Icon className="w-4 h-4" />
+        </div>
+      );
+    }
+
+    return null;
   };
+
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -124,28 +143,28 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
             <div className="flex items-center gap-3 flex-1 min-w-0">
               {/* Avatar / Icon */}
               <div className="shrink-0">
-                {renderIcon(selectedItem?.icon, selectedGroup?.color)}
+                {renderLeading(selectedItem!, selectedGroup?.color)}
               </div>
 
               {/* Text */}
               <div className="flex-1 min-w-0 text-left">
+                {label && (
+                  <p className="text-[11px] font-medium text-muted-foreground leading-none mb-1">
+                    {label}
+                  </p>
+                )}
+
                 {selectedItem ? (
-                  <>
-                    <p className="text-sm font-medium leading-tight truncate">
-                      {selectedItem.label}
-                    </p>
-                    {selectedGroup && (
-                      <p className="text-xs text-muted-foreground truncate">
-                        {selectedGroup.label}
-                      </p>
-                    )}
-                  </>
+                  <p className="text-sm font-medium leading-tight truncate">
+                    {selectedItem.label}
+                  </p>
                 ) : (
-                  <p className="text-muted-foreground truncate">
+                  <p className="text-sm text-muted-foreground truncate">
                     {placeholder}
                   </p>
                 )}
               </div>
+
             </div>
 
             {/* RIGHT ICON (fixed width) */}
@@ -157,7 +176,10 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
       </PopoverTrigger>
 
       <PopoverContent
-        className="w-[--radix-popover-trigger-width] p-0 min-w-[202px] sm:min-w-[250px]"
+        className={cn(
+          "w-[--radix-popover-trigger-width] p-0 max-w-[90vw]",
+          isMinWidth && "min-w-[202px] sm:min-w-[250px]"
+        )}
         align="start"
         avoidCollisions={false}
       >
@@ -195,14 +217,14 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
                         setOpen(false);
                       }}
                       className={cn(
-                        "flex items-center gap-3 px-1 py-1 rounded-xl cursor-pointer transition my-[5px]",
+                        "flex items-center gap-3 px-2 py-2 rounded-xl cursor-pointer transition my-[5px]",
                         isSelected
                           ? "bg-primary/10"
                           : "hover:bg-muted"
                       )}
                     >
-                      {renderIcon(
-                        option.icon,
+                      {renderLeading(
+                        option,
                         group.color,
                         isSelected
                       )}
@@ -237,12 +259,12 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
                     if (!onlyList) setOpen(false); // only close if onlyList is false
                   }}
                   className={cn(
-                    "flex items-center gap-3 px-1 py-1 rounded-xl transition my-[5px]",
+                    "flex items-center gap-3 px-2 py-2 rounded-xl transition my-[5px]",
                     isSelected ? "bg-primary/10" : "hover:bg-muted",
                     onlyList ? "cursor-default hover:bg-transparent" : "cursor-pointer"
                   )}
                 >
-                  {renderIcon(option.icon, option.color, isSelected)}
+                  {renderLeading(option, option.color, isSelected)}
                   <span className="text-sm font-medium truncate">{option.label}</span>
 
                   {isSelected && <Check className="ml-auto h-4 w-4 text-primary  shrink-0" />}

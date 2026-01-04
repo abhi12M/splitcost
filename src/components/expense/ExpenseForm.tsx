@@ -391,7 +391,7 @@ export function ExpenseForm({
               items={members.map((m) => ({
                 id: m,
                 label: m,
-                icon: <UserAvatar name={m} size="sm" />, // left icon/avatar
+                showAvatar: true // left icon/avatar
               }))}
               value={{ itemId: paidBy }}
               onSelect={(_, itemId) => setPaidBy(itemId)}

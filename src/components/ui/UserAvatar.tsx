@@ -92,9 +92,11 @@ export function AvatarGroup({
             items={overflowNames.map((m) => ({
               id: m,
               label: m,
-              icon: <UserAvatar name={m} size="md" />,
+              showAvatar: true,
             }))}
+
             onlyList
+            isMinWidth
             trigger={
               <button
                 type="button"
