@@ -168,7 +168,10 @@ export default function GroupDetailsPage() {
         (e) =>
           e.description.toLowerCase().includes(q) ||
           e.paidBy.toLowerCase().includes(q) ||
-          e.category.toLowerCase().includes(q)
+          e.category.toLowerCase().includes(q) ||
+          e.subcategory.toLowerCase().includes(q) ||
+          e.amount.toString().includes(q) ||
+          e.participants.includes(q)
       );
     }
 
@@ -208,6 +211,10 @@ export default function GroupDetailsPage() {
   const balances = calculateBalances(expenses, group.members);
   const settlements = calculateSettlements(balances);
   const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
+  const visibleCount = Object.values(groupedExpenses).reduce(
+    (sum, list) => sum + list.length,
+    0
+  );
   /* ======================================================
      UI
   ====================================================== */
@@ -325,48 +332,100 @@ export default function GroupDetailsPage() {
                 </Button>
               </CardHeader>
               <CardContent className="p-0">
+                {search && visibleCount > 0 && (
+                  <div className="px-4 py-2 text-sm text-muted-foreground border-b">
+                    Showing{" "}
+                    <span className="font-medium text-foreground">
+                      {visibleCount}
+                    </span>{" "}
+                    expense{visibleCount !== 1 && "s"} for{" "}
+                    <span className="font-medium text-foreground">
+                      “{search}”
+                    </span>
+                    <button
+                      className="ml-2 underline text-xs"
+                      onClick={() => setSearch("")}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                )}
+                {/* ✅ EMPTY STATE */}
+                {Object.keys(groupedExpenses).length === 0 && (
+                  <div className="py-20 flex flex-col items-center justify-center text-center gap-4">
+                    <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
+                      <Search className="w-6 h-6 text-muted-foreground" />
+                    </div>
+
+                    <div>
+                      <p className="font-medium text-foreground">
+                        No expenses found
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Try a different keyword or clear your search
+                      </p>
+                    </div>
+
+                    {search && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSearch("")}
+                      >
+                        Clear search
+                      </Button>
+                    )}
+                  </div>
+                )}
+
+                {/* ✅ GROUPED LIST */}
                 {Object.entries(groupedExpenses).map(([title, list]) => {
                   const isOpen = expandedGroups[title] ?? true;
                   const groupTotal = getGroupTotal(list);
 
                   return (
-                    <div key={title} className="border-b">
-                      <button
-                        onClick={() =>
-                          setExpandedGroups((p) => ({
-                            ...p,
-                            [title]: !isOpen,
-                          }))
-                        }
-                        className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/40 cursor-pointer transition rounded-lg"
-                      >
-                        <div className="flex items-center gap-2">
-                          {isOpen ? (
-                            <ChevronDown className="w-4 h-4" />
-                          ) : (
-                            <ChevronRight className="w-4 h-4" />
-                          )}
-                          <div className="text-left">
-                            <p className="font-semibold">
-                              {shouldTitleCase ? toTitleCase(title) : title}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {list.length} expenses
-                            </p>
+                    <div key={title} className="relative">
+                      {/* ✅ STICKY GROUP HEADER */}
+                      <div className="sticky top-[64px] z-10 bg-background">
+                        <button
+                          onClick={() =>
+                            setExpandedGroups((p) => ({
+                              ...p,
+                              [title]: !isOpen,
+                            }))
+                          }
+                          className="w-full flex items-center justify-between px-4 py-3 border-b hover:bg-muted/40 transition"
+                        >
+                          <div className="flex items-center gap-2">
+                            {isOpen ? (
+                              <ChevronDown className="w-4 h-4" />
+                            ) : (
+                              <ChevronRight className="w-4 h-4" />
+                            )}
+                            <div className="text-left">
+                              <p className="font-semibold">
+                                {shouldTitleCase ? toTitleCase(title) : title}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {list.length} expenses
+                              </p>
+                            </div>
                           </div>
-                        </div>
 
-                        <span className="font-semibold">
-                          {formatCurrency(groupTotal, group.currency)}
-                        </span>
-                      </button>
+                          <span className="font-semibold">
+                            {formatCurrency(groupTotal, group.currency)}
+                          </span>
+                        </button>
+                      </div>
 
+                      {/* ✅ EXPENSE ITEMS */}
                       {isOpen &&
                         list.map((expense, index) => {
                           const IconComponent = getCategoryIcon(
                             expense.category as CategoryKey,
                             expense.subcategory
                           );
+
                           const categoryColor =
                             EXPENSE_CATEGORIES[
                               expense.category as CategoryKey
@@ -378,10 +437,10 @@ export default function GroupDetailsPage() {
                               initial={{ opacity: 0, y: 6 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ delay: index * 0.03 }}
-                              className="p-4 hover:bg-muted/50"
+                              className="p-4 border-b last:border-b-0 hover:bg-muted/50 transition-colors"
                             >
                               <div className="flex gap-3">
-                                {/* LEFT: Icon + Content */}
+                                {/* LEFT */}
                                 <div className="flex gap-3 min-w-0 flex-1">
                                   {/* Category Icon */}
                                   <div
@@ -392,7 +451,9 @@ export default function GroupDetailsPage() {
                                   >
                                     <IconComponent
                                       className="w-5 h-5"
-                                      style={{ color: `hsl(var(--${categoryColor}))` }}
+                                      style={{
+                                        color: `hsl(var(--${categoryColor}))`,
+                                      }}
                                     />
                                   </div>
 
@@ -410,10 +471,13 @@ export default function GroupDetailsPage() {
                                       showBelow={isMobile}
                                     />
 
-                                    {/* MOBILE: Amount + Paid by inline */}
+                                    {/* MOBILE META */}
                                     <div className="flex items-center gap-2 mt-2 sm:hidden">
                                       <p className="font-semibold">
-                                        {formatCurrency(expense.amount, expense.currency)}
+                                        {formatCurrency(
+                                          expense.amount,
+                                          expense.currency
+                                        )}
                                       </p>
                                       <UserAvatar
                                         name={expense.paidBy}
@@ -424,10 +488,13 @@ export default function GroupDetailsPage() {
                                   </div>
                                 </div>
 
-                                {/* DESKTOP ONLY: Amount + Paid by */}
+                                {/* DESKTOP META */}
                                 <div className="hidden sm:flex flex-col items-end justify-center min-w-[80px]">
                                   <p className="font-semibold">
-                                    {formatCurrency(expense.amount, expense.currency)}
+                                    {formatCurrency(
+                                      expense.amount,
+                                      expense.currency
+                                    )}
                                   </p>
 
                                   <UserAvatar
@@ -439,13 +506,13 @@ export default function GroupDetailsPage() {
                                 </div>
                               </div>
                             </motion.div>
-
                           );
                         })}
                     </div>
                   );
                 })}
               </CardContent>
+
             </Card>
           </div>
 
