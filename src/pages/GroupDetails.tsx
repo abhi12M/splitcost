@@ -350,9 +350,9 @@ export default function GroupDetailsPage() {
                     </button>
                   </div>
                 )}
-                {/* ✅ EMPTY STATE */}
-                {Object.keys(groupedExpenses).length === 0 && (
-                  <div className="py-20 flex flex-col items-center justify-center text-center gap-4">
+                {/* ✅ EMPTY search result */}
+                {Object.keys(groupedExpenses).length === 0 && search && (
+                  <div className="py-[4rem] flex flex-col items-center justify-center text-center gap-4">
                     <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
                       <Search className="w-6 h-6 text-muted-foreground" />
                     </div>
@@ -377,6 +377,31 @@ export default function GroupDetailsPage() {
                     )}
                   </div>
                 )}
+                {/* 🟢 EMPTY GROUP STATE */}
+                {!expenses?.length && !search && (
+                  <div className="py-[4rem] flex flex-col items-center justify-center text-center gap-5">
+                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Wallet className="w-7 h-7 text-primary" />
+                    </div>
+
+                    <div className="space-y-1">
+                      <p className="font-semibold text-lg text-foreground">
+                        No expenses yet
+                      </p>
+                      <p className="text-sm text-muted-foreground max-w-xs">
+                        Start adding expenses to track who paid, who owes, and settle up easily.
+                      </p>
+                    </div>
+
+                    <Button asChild size="sm" className="shrink-0">
+                      <Link to={`/group/${groupId}/add-expense`}>
+                        <Plus className="w-4 h-4" />
+                        Add first expense
+                      </Link>
+                    </Button>
+                  </div>
+                )}
+
 
                 {/* ✅ GROUPED LIST */}
                 {Object.entries(groupedExpenses).map(([title, list]) => {
@@ -561,7 +586,15 @@ export default function GroupDetailsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {settlements.length === 0 && (
+                {/* 🚫 NO EXPENSES YET */}
+                {expenses.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center">
+                    Add expenses to see who owes whom
+                  </p>
+                )}
+
+                {/* ✅ EXPENSES EXIST BUT ALL SETTLED */}
+                {expenses.length > 0 && settlements.length === 0 && (
                   <p className="text-sm text-muted-foreground text-center">
                     All settled 🎉
                   </p>
