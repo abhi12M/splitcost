@@ -53,7 +53,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       <div className="space-y-1 w-full">
         <div className="relative w-full h-full">
           <input
-            inputMode="decimal"
+            inputMode={inputMode}
             ref={ref}
             type={type}
             {...props}
