@@ -166,6 +166,7 @@ export default function CreateGroupPage() {
                     onChange={(e) => setGroupName(e.target.value)}
                     autoFocus
                     aria-invalid={!!errors.groupName}
+                    type="text"
                   />
                   {errors.groupName && (
                     <span className="text-xs text-destructive">{errors.groupName}</span>
@@ -211,6 +212,7 @@ export default function CreateGroupPage() {
                       disabled={
                         members.length >= MEMBERS_MAX
                       }
+                      type="text"
                     />
 
                     <Button
