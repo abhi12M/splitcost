@@ -53,9 +53,9 @@ export function Footer() {
         </div>
 
         {/* Ad placeholder */}
-        <div className="mt-8 p-4 border border-dashed border-border rounded-xl text-center text-sm text-muted-foreground bg-muted/50">
+        {/* <div className="mt-8 p-4 border border-dashed border-border rounded-xl text-center text-sm text-muted-foreground bg-muted/50">
           Ad Space Placeholder
-        </div>
+        </div> */}
 
         <div className="mt-8 pt-8 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-sm text-muted-foreground">

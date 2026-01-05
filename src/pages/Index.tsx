@@ -272,13 +272,13 @@ export default function HomePage() {
       </section>
 
       {/* Ad Placeholder */}
-      <section className="py-8">
+      {/* <section className="py-8">
         <div className="container">
           <div className="p-6 border border-dashed border-border rounded-2xl text-center text-muted-foreground bg-muted/30">
             <p className="text-sm">Advertisement Space</p>
           </div>
         </div>
-      </section>
+      </section> */}
     </Layout>
   );
 }
