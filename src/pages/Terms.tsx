@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
+import { APP_NAME } from "@/lib/constants";
 
 export default function TermsPage() {
   return (
@@ -21,7 +22,7 @@ export default function TermsPage() {
             <section>
               <h2 className="text-xl font-semibold text-foreground mt-8 mb-4">1. Acceptance of Terms</h2>
               <p>
-                By accessing and using SplitEase, you accept and agree to be bound by these Terms and 
+                By accessing and using {APP_NAME}, you accept and agree to be bound by these Terms and 
                 Conditions. If you do not agree to these terms, please do not use our service.
               </p>
             </section>
@@ -29,7 +30,7 @@ export default function TermsPage() {
             <section>
               <h2 className="text-xl font-semibold text-foreground mt-8 mb-4">2. Description of Service</h2>
               <p>
-                SplitEase is a web application that helps users track and split shared expenses among 
+                {APP_NAME} is a web application that helps users track and split shared expenses among 
                 groups of people. The service is provided "as is" without warranties of any kind.
               </p>
             </section>
@@ -50,7 +51,7 @@ export default function TermsPage() {
             <section>
               <h2 className="text-xl font-semibold text-foreground mt-8 mb-4">4. Limitation of Liability</h2>
               <p>
-                SplitEase is a tool to help calculate expense splits. We are not responsible for:
+                {APP_NAME} is a tool to help calculate expense splits. We are not responsible for:
               </p>
               <ul className="list-disc pl-6 space-y-2">
                 <li>Disputes between users regarding expenses</li>
@@ -63,7 +64,7 @@ export default function TermsPage() {
             <section>
               <h2 className="text-xl font-semibold text-foreground mt-8 mb-4">5. Intellectual Property</h2>
               <p>
-                The SplitEase name, logo, and all related content are the property of SplitEase. 
+                The {APP_NAME} name, logo, and all related content are the property of {APP_NAME}. 
                 You may not use our branding without prior written permission.
               </p>
             </section>

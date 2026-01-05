@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ReceiptIcon } from "@/components/icons/CategoryIcons";
+import { APP_NAME } from "@/lib/constants";
 
 export function Footer() {
   return (
@@ -11,7 +12,7 @@ export function Footer() {
               <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
                 <ReceiptIcon className="w-4 h-4 text-primary-foreground" />
               </div>
-              <span className="text-lg font-bold text-foreground">SplitEase</span>
+              <span className="text-lg font-bold text-foreground">{APP_NAME}</span>
             </Link>
             <p className="text-sm text-muted-foreground max-w-sm">
               The simplest way to split expenses with friends, roommates, and groups.
@@ -59,7 +60,7 @@ export function Footer() {
 
         <div className="mt-8 pt-8 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} SplitEase. All rights reserved.
+            © {new Date().getFullYear()} {APP_NAME}. All rights reserved.
           </p>
           <p className="text-xs text-muted-foreground">
             Made with care for hassle-free expense splitting

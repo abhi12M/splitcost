@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
+import { APP_NAME } from "@/lib/constants";
 
 export default function PrivacyPage() {
   return (
@@ -21,7 +22,7 @@ export default function PrivacyPage() {
             <section>
               <h2 className="text-xl font-semibold text-foreground mt-8 mb-4">1. Information We Collect</h2>
               <p>
-                SplitEase is designed with privacy in mind. We collect minimal information necessary to provide our service:
+                {APP_NAME} is designed with privacy in mind. We collect minimal information necessary to provide our service:
               </p>
               <ul className="list-disc pl-6 space-y-2">
                 <li>Expense data you enter (descriptions, amounts, participants)</li>

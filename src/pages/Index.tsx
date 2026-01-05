@@ -11,7 +11,7 @@ import { ReceiptIcon, PlaneIcon, HouseholdIcon, GroceriesIcon } from "@/componen
 import { deleteGroup, loadExpenses, type Group, type Expense, loadGroupsByIds } from "@/lib/storage";
 import { useToast } from "@/hooks/use-toast";
 import { getEncryptedItem } from "@/lib/localstorage";
-import { LOCAL_GROUPS_KEY } from "@/lib/constants";
+import { APP_NAME, LOCAL_GROUPS_KEY } from "@/lib/constants";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -223,7 +223,7 @@ export default function HomePage() {
       <section className="py-12 md:py-16 bg-muted/30">
         <div className="container">
           <div className="text-center mb-12">
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">Why SplitEase?</h2>
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">Why {APP_NAME}?</h2>
             <p className="text-muted-foreground max-w-md mx-auto">
               The simplest expense splitting experience, designed for real life
             </p>

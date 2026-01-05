@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ReceiptIcon } from "@/components/icons/CategoryIcons";
+import { APP_NAME } from "@/lib/constants";
 
 export function Header() {
   return (
@@ -13,7 +14,7 @@ export function Header() {
           >
             <ReceiptIcon className="w-5 h-5 text-primary-foreground" />
           </motion.div>
-          <span className="text-xl font-bold text-foreground">SplitEase</span>
+          <span className="text-xl font-bold text-foreground">{APP_NAME}</span>
         </Link>
 
         <nav className="flex items-center gap-1">

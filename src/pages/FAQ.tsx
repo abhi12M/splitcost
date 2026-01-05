@@ -1,15 +1,16 @@
 import { motion } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { APP_NAME } from "@/lib/constants";
 
 const faqs = [
   {
     question: "Do I need to create an account?",
-    answer: "No! SplitEase doesn't require any sign-up. Simply create a group, share the link, and start adding expenses. Your data is stored locally and synced via the shareable link.",
+    answer: `No! ${APP_NAME} doesn't require any sign-up. Simply create a group, share the link, and start adding expenses. Your data is stored locally and synced via the shareable link.`,
   },
   {
     question: "How does expense splitting work?",
-    answer: "When you add an expense, you select who paid and who participated. SplitEase automatically calculates how much each person owes. You can split equally among participants or customize amounts.",
+    answer: `When you add an expense, you select who paid and who participated. ${APP_NAME} automatically calculates how much each person owes. You can split equally among participants or customize amounts.`,
   },
   {
     question: "Can I track expenses in different currencies?",
@@ -29,11 +30,11 @@ const faqs = [
   },
   {
     question: "How are settlements calculated?",
-    answer: "SplitEase uses an optimized algorithm to minimize the number of transactions needed to settle up. Instead of everyone paying everyone, we simplify to the fewest possible payments.",
+    answer: `${APP_NAME} uses an optimized algorithm to minimize the number of transactions needed to settle up. Instead of everyone paying everyone, we simplify to the fewest possible payments.`,
   },
   {
     question: "Is there a mobile app?",
-    answer: "SplitEase is a web app designed to work beautifully on mobile browsers. Add it to your home screen for an app-like experience! Native apps are on our roadmap.",
+    answer: `${APP_NAME} is a web app designed to work beautifully on mobile browsers. Add it to your home screen for an app-like experience! Native apps are on our roadmap.`,
   },
 ];
 
@@ -50,7 +51,7 @@ export default function FAQPage() {
             Frequently Asked Questions
           </h1>
           <p className="text-lg text-muted-foreground">
-            Everything you need to know about SplitEase
+            Everything you need to know about {APP_NAME}
           </p>
         </motion.div>
 
