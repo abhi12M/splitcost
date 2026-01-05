@@ -29,7 +29,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       unstyled = false,
       onChange,
       onKeyDown,
-      inputMode,
+      inputMode = "text",
       ...props
     },
     ref,
