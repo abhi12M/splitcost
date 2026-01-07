@@ -18,6 +18,8 @@ import {
   ArrowUpDown,
   ArrowDown,
   ArrowUp,
+  Check,
+  Share2,
 } from "lucide-react";
 
 import { Layout } from "@/components/layout/Layout";
@@ -39,6 +41,7 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SingleSelect } from "@/components/ui/single-select";
 import { toTitleCase } from "@/components/ui/formatters";
+import { toast } from "@/hooks/use-toast";
 
 /* ======================================================
    CONSTANTS – MOVE TO CONSTANTS FILE LATER
@@ -132,7 +135,7 @@ export default function GroupDetailsPage() {
   const [group, setGroup] = useState<Group>();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const [copied, setCopied] = useState(false);
   // UI state
   const [search, setSearch] = useState("");
   const [groupBy, setGroupBy] =
@@ -215,6 +218,19 @@ export default function GroupDetailsPage() {
     (sum, list) => sum + list.length,
     0
   );
+
+  const shareLink = `${window.location.origin}/group/${groupId}`;
+
+  const copyLink = async () => {
+    await navigator.clipboard.writeText(shareLink);
+    setCopied(true);
+    toast({
+      title: "Link copied!",
+      description: "Share this link with your group members",
+    });
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   /* ======================================================
      UI
   ====================================================== */
@@ -229,10 +245,17 @@ export default function GroupDetailsPage() {
             </Link>
           </Button>
 
-          <div className="min-w-0">
+          {/* Middle content takes remaining space */}
+          <div className="min-w-0 flex-1">
             <h1 className="text-2xl font-bold truncate">{group.name}</h1>
             <AvatarGroup names={group.members} max={4} />
           </div>
+
+          {/* Right aligned */}
+          <Button variant="outline" size="sm" onClick={copyLink}>
+            {copied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
+            {copied ? "Copied!" : "Share"}
+          </Button>
         </div>
 
         {/* MAIN GRID */}
@@ -551,13 +574,13 @@ export default function GroupDetailsPage() {
                   Balances
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-3 max-h-[170px] overflow-y-auto">
                 {group.members.map((m) => {
                   const bal = balances[m];
                   return (
                     <div key={m} className="flex justify-between items-center">
                       <div className="flex items-center gap-2 min-w-0">
-                        <UserAvatar name={m} size="sm" />
+                        <UserAvatar name={m} size="xs" />
                         <span className="truncate">{m}</span>
                       </div>
                       <span
@@ -585,7 +608,7 @@ export default function GroupDetailsPage() {
                   Settle Up
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-3 max-h-[20rem] overflow-y-auto">
                 {/* 🚫 NO EXPENSES YET */}
                 {expenses.length === 0 && (
                   <p className="text-sm text-muted-foreground text-center">
@@ -606,9 +629,9 @@ export default function GroupDetailsPage() {
                     className="flex items-center justify-between bg-muted/50 rounded-xl p-3"
                   >
                     <div className="flex items-center gap-2">
-                      <UserAvatar name={s.from} size="sm" />
+                      <UserAvatar name={s.from} size="xs" />
                       <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                      <UserAvatar name={s.to} size="sm" />
+                      <UserAvatar name={s.to} size="xs" />
                     </div>
                     <span className="font-semibold">
                       {formatCurrency(s.amount, group.currency)}

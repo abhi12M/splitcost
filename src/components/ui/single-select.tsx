@@ -212,6 +212,7 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
                     <CommandItem
                       key={option.id}
                       value={option.label}
+                      keywords={[group.label]}
                       onSelect={() => {
                         onSelect?.(group.id, option.id);
                         setOpen(false);
