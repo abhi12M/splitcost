@@ -581,10 +581,10 @@ export default function GroupDetailsPage() {
                     <div key={m} className="flex justify-between items-center">
                       <div className="flex items-center gap-2 min-w-0">
                         <UserAvatar name={m} size="xs" />
-                        <span className="truncate">{m}</span>
+                        <span className="truncate text-sm">{m}</span>
                       </div>
                       <span
-                        className={`font-semibold ${bal > 0
+                        className={`font-semibold text-sm flex-shrink-0 ${bal > 0
                           ? "text-success"
                           : bal < 0
                             ? "text-destructive"
@@ -605,9 +605,10 @@ export default function GroupDetailsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <ArrowRight className="w-5 h-5 text-secondary" />
-                  Settle Up
+                  Who pays whom
                 </CardTitle>
               </CardHeader>
+
               <CardContent className="space-y-3 max-h-[20rem] overflow-y-auto">
                 {/* 🚫 NO EXPENSES YET */}
                 {expenses.length === 0 && (
@@ -626,20 +627,25 @@ export default function GroupDetailsPage() {
                 {settlements.map((s, i) => (
                   <div
                     key={i}
-                    className="flex items-center justify-between bg-muted/50 rounded-xl p-3"
+                    className="flex items-start justify-between gap-3 border-b last:border-b-0 pb-2"
                   >
-                    <div className="flex items-center gap-2">
-                      <UserAvatar name={s.from} size="xs" />
-                      <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                      <UserAvatar name={s.to} size="xs" />
+                    {/* LEFT: Full name, wraps naturally */}
+                    <div className="flex-1 min-w-0 text-sm leading-snug break-words">
+                      <span>{s.from}</span>{" "}
+                      <span className="font-semibold">pays</span>{" "}
+                      <span>{s.to}</span>
                     </div>
-                    <span className="font-semibold">
+
+                    {/* RIGHT: Amount (never wraps) */}
+                    <span className="font-semibold text-sm whitespace-nowrap">
                       {formatCurrency(s.amount, group.currency)}
                     </span>
                   </div>
                 ))}
+
               </CardContent>
             </Card>
+
           </div>
         </div>
       </div>
