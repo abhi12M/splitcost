@@ -59,8 +59,10 @@ export function ExpenseForm({
   const [subcategory, setSubcategory] = useState<SubcategoryId>(initialData?.subcategory || "");
   const [splitType, setSplitType] = useState<any>(initialData?.splitType || "equal");
   const [splits, setSplits] = useState<ExpenseSplit[]>(
-    initialData?.splits || members.map((m) => ({ member: m, value: null, amount: 0 }))
+    initialData?.splits ||
+    members.map((m) => ({ member: m, value: "", amount: "" }))
   );
+
   const totalAmount = parseFloat(amount) || 0;
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const isFirstRender = useRef(true);
@@ -68,8 +70,13 @@ export function ExpenseForm({
     if (splitType === "equal") return { isValid: true, diff: 0, currentTotal: totalAmount };
 
     const currentTotal = splits.reduce((acc, curr) =>
-      acc + (splitType === "percentage" ? (curr.value || 0) : (curr.amount || 0)), 0
+      acc + (
+        splitType === "percentage"
+          ? Number(curr.value || 0)
+          : Number(curr.amount || 0)
+      ), 0
     );
+
 
     const target = splitType === "percentage" ? 100 : totalAmount;
     const diff = target - currentTotal;
@@ -92,6 +99,7 @@ export function ExpenseForm({
 
     const splitMap = new Map(splits.map(s => [s.member, s]));
 
+    // 1️⃣ Equal split
     if (splitType === "equal") {
       const base = Math.floor((totalAmount / participants.length) * 100) / 100;
       const remainder = +(totalAmount - base * participants.length).toFixed(2);
@@ -99,10 +107,13 @@ export function ExpenseForm({
       return participants.map((member, index) => ({
         member,
         value: "",
-        amount: +(base + (index === participants.length - 1 ? remainder : 0)).toFixed(2),
+        amount: (
+          base + (index === participants.length - 1 ? remainder : 0)
+        ).toFixed(2), // ✅ STRING
       }));
     }
 
+    // 2️⃣ Percentage split
     if (splitType === "percentage") {
       return participants.map((member) => {
         const existing = splitMap.get(member);
@@ -110,23 +121,23 @@ export function ExpenseForm({
 
         return {
           member,
-          value,
+          value, // ✅ STRING
           amount:
             value === ""
               ? ""
-              : +((totalAmount * Number(value)) / 100).toFixed(2),
+              : ((totalAmount * Number(value)) / 100).toFixed(2), // ✅ STRING
         };
       });
     }
 
-    // custom
+    // 3️⃣ Custom split
     return participants.map((member) => {
       const existing = splitMap.get(member);
 
       return {
         member,
         value: "",
-        amount: existing?.amount ?? "",
+        amount: existing?.amount ?? "", // ✅ STRING
       };
     });
   };
@@ -179,7 +190,7 @@ export function ExpenseForm({
     setParticipants([...members]);
   };
 
-  const updateSplitValue = (member: string, value: number | "") => {
+  const updateSplitValue = (member: string, value: string | "") => {
     setSplits((prev) => {
       const updated = prev.map((s) =>
         s.member === member
@@ -189,16 +200,15 @@ export function ExpenseForm({
           : s
       );
 
-      const total = Number(amount) || 0;
-
       return calculateSplits(
         splitType,
         participants,
         updated,
-        total
+        Number(amount) || 0
       );
     });
   };
+
 
   useEffect(() => {
     console.log("FINAL SPLITS →", splits);
@@ -212,7 +222,7 @@ export function ExpenseForm({
   const validSplits = splits.filter(
     (s) =>
       participants.includes(s.member) &&
-      parseFloat(s.amount?.toString() || "0") > 0
+      Number(s.amount || 0) > 0
   );
 
   // Then, filter participants to only those with a valid split
@@ -535,7 +545,7 @@ export function ExpenseForm({
                     className="flex items-center gap-3 flex-1 text-left"
                   >
                     <div className="relative">
-                      <UserAvatar name={member}  />
+                      <UserAvatar name={member} />
                       {isSelected && (
                         <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center ring-2 ring-white">
                           <div className="w-full h-full bg-green-500 rounded-full flex items-center justify-center">
@@ -551,7 +561,7 @@ export function ExpenseForm({
                       {/* Show calculated amount in Percentage Mode for better context */}
                       {isSelected && splitType === "percentage" && (
                         <span className="text-xs text-muted-foreground">
-                          {formatAmount(split?.amount || 0, currency)}
+                          {formatAmount(Number(split?.amount || 0), currency)}
                         </span>
                       )}
                     </div>
@@ -562,8 +572,9 @@ export function ExpenseForm({
                     <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-4 duration-200">
                       {splitType === "equal" ? (
                         <span className="text-sm font-semibold tabular-nums text-foreground/80 px-3">
-                          {formatAmount(split?.amount || 0, currency)}
+                          {formatAmount(Number(split?.amount || 0), currency)}
                         </span>
+
                       ) : (
                         <div className="relative">
                           {/* We prevent propagation so clicking input doesn't toggle selection */}
@@ -576,23 +587,16 @@ export function ExpenseForm({
                             precision={2}
                             placeholder="1.00"
                             showHelper={false}
-                            postfix={splitType === "percentage" && '%'}
-                            value={
-                              splitType === "percentage"
-                                ? split?.value ?? ""
-                                : split?.amount ?? ""
-                            }
+                            postfix={splitType === "percentage" && "%"}
+                            value={splitType === "percentage" ? split?.value ?? "" : split?.amount ?? ""}
                             onChange={(e) => {
-                              const v = e.target.value;
-                              updateSplitValue(
-                                member,
-                                v === "" ? "" : Number(v)
-                              );
+                              updateSplitValue(member, e.target.value);
                             }}
-                            className={cn(
+                              className={cn(
                               splitType === "percentage" ? "w-[6rem]" : "w-28"
                             )}
                           />
+
                         </div>
                       )}
                     </div>
