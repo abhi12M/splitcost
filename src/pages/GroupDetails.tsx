@@ -18,8 +18,8 @@ import {
   ArrowUpDown,
   ArrowDown,
   ArrowUp,
-  Check,
   Share2,
+  Pencil,
 } from "lucide-react";
 
 import { Layout } from "@/components/layout/Layout";
@@ -508,71 +508,66 @@ ${shareLink}
                               initial={{ opacity: 0, y: 6 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ delay: index * 0.03 }}
-                              className="p-4 border-b last:border-b-0 hover:bg-muted/50 transition-colors"
+                              className="group relative p-4 border-b last:border-b-0 hover:bg-muted/50 transition-colors"
                             >
-                              <div className="flex gap-3">
-                                {/* LEFT */}
-                                <div className="flex gap-3 min-w-0 flex-1">
-                                  {/* Category Icon */}
-                                  <div
-                                    className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                                    style={{
-                                      backgroundColor: `hsl(var(--${categoryColor}) / 0.15)`,
-                                    }}
-                                  >
-                                    <IconComponent
-                                      className="w-5 h-5"
-                                      style={{
-                                        color: `hsl(var(--${categoryColor}))`,
-                                      }}
-                                    />
-                                  </div>
+                              {/* ✏️ EDIT ICON */}
+                              <Link to={`/group/${groupId}/edit-expense/${expense.id}`}>
+                                <button
+                                  // onClick={() => onEditExpense(expense)}
+                                  className="absolute right-4 top-4 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition text-muted-foreground hover:text-foreground"
+                                  aria-label="Edit expense"
+                                >
+                                  <Pencil className="w-4 h-4" />
+                                </button>
+                              </Link>
 
-                                  {/* Text + Participants */}
-                                  <div className="min-w-0 flex-1">
-                                    <p className="font-medium truncate">
+
+                              <div className="flex gap-3">
+                                {/* CATEGORY ICON */}
+                                <div
+                                  className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                                  style={{
+                                    backgroundColor: `hsl(var(--${categoryColor}) / 0.15)`,
+                                  }}
+                                >
+                                  <IconComponent
+                                    className="w-5 h-5"
+                                    style={{ color: `hsl(var(--${categoryColor}))` }}
+                                  />
+                                </div>
+
+                                {/* CONTENT */}
+                                <div className="min-w-0 flex-1">
+                                  {/* DESCRIPTION + MOBILE EDIT */}
+                                  <div className="flex items-center gap-2">
+                                    <p className="font-medium truncate flex-1">
                                       {expense.description}
                                     </p>
 
-                                    <AvatarGroup
-                                      names={expense.participants}
-                                      className="mt-1"
-                                      label={''}
-                                    />
-
-                                    {/* MOBILE META */}
-                                    <div className="flex items-center gap-2 mt-2 sm:hidden">
-                                      <p className="font-semibold">
-                                        {formatCurrency(
-                                          expense.amount,
-                                          expense.currency
-                                        )}
-                                      </p>
-                                      <UserAvatar
-                                        name={expense.paidBy}
-                                        aria-label={`Paid by ${expense.paidBy}`}
-                                      />
-                                    </div>
                                   </div>
-                                </div>
 
-                                {/* DESKTOP META */}
-                                <div className="hidden sm:flex flex-col items-end justify-center min-w-[80px]">
-                                  <p className="font-semibold">
-                                    {formatCurrency(
-                                      expense.amount,
-                                      expense.currency
-                                    )}
+                                  {/* PAID BY */}
+                                  <p className="text-xs md:text-base text-muted-foreground truncate mt-0.5">
+                                    {expense.paidBy} paid
                                   </p>
 
-                                  <UserAvatar
-                                    name={expense.paidBy}
-                                    aria-label={`Paid by ${expense.paidBy}`}
-                                    className="mt-1"
+                                  {/* PARTICIPANTS */}
+                                  <AvatarGroup
+                                    names={expense.participants}
+                                    className="mt-2"
+                                    label=""
                                   />
+                                </div>
+
+                                {/* AMOUNT */}
+                                <div className="flex flex-col items-end justify-center shrink-0">
+                                  <p className="font-semibold whitespace-nowrap">
+                                    {formatCurrency(expense.amount, expense.currency)}
+                                  </p>
                                 </div>
                               </div>
                             </motion.div>
+
                           );
                         })}
                     </div>
