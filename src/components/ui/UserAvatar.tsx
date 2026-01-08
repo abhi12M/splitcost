@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { getAvatarColor, getInitials } from "@/lib/avatar-utils";
 import { SingleSelect } from "./single-select";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useDeviceType } from "@/hooks/useDeviceType";
 
 type AvatarSize = "xs" | "sm" | "md" | "lg" | "xl";
 
@@ -12,6 +12,24 @@ const sizeClasses: Record<AvatarSize, string> = {
   lg: "w-11 h-11 text-base",
   xl: "w-14 h-14 text-lg",
 };
+
+const defaultAvatarSize: AvatarSize = "md";
+
+/* -----------------------------------------
+   Shared responsive size resolver
+------------------------------------------ */
+function getResponsiveAvatarSize(
+  device: "mobile" | "tablet" | "desktop",
+  size: AvatarSize
+): AvatarSize {
+  if (device === "mobile") return "sm";
+  if (device === "tablet") return "md";
+  return size;
+}
+
+/* -----------------------------------------
+   UserAvatar
+------------------------------------------ */
 interface UserAvatarProps {
   name: string;
   size?: AvatarSize;
@@ -20,9 +38,12 @@ interface UserAvatarProps {
 
 export function UserAvatar({
   name,
-  size = "md",
+  size = defaultAvatarSize,
   className,
 }: UserAvatarProps) {
+  const device = useDeviceType(); // ✅ stable hook usage
+  const effectiveSize = getResponsiveAvatarSize(device, size);
+
   const colors = getAvatarColor(name);
   const initials = getInitials(name);
 
@@ -30,7 +51,7 @@ export function UserAvatar({
     <div
       className={cn(
         "flex items-center justify-center rounded-full font-semibold select-none flex-shrink-0",
-        sizeClasses[size],
+        sizeClasses[effectiveSize],
         className
       )}
       style={{
@@ -45,10 +66,13 @@ export function UserAvatar({
   );
 }
 
+/* -----------------------------------------
+   AvatarGroup
+------------------------------------------ */
 interface AvatarGroupProps {
   names: string[];
   max?: number;
-  size?: "sm" | "md" | "lg";
+  size?: AvatarSize;
   className?: string;
   showBelow?: boolean;
   label?: string;
@@ -57,13 +81,19 @@ interface AvatarGroupProps {
 export function AvatarGroup({
   names,
   max = 4,
-  size = "md",
+  size = defaultAvatarSize,
   className,
-  showBelow = false,
-  label = 'members'
+  showBelow,
+  label = "members",
 }: AvatarGroupProps) {
-  const isMobile = useIsMobile();
-  const effectiveMax = isMobile ? 2 : max;
+  const device = useDeviceType(); // ✅ hook called once, always
+
+  const effectiveSize = getResponsiveAvatarSize(device, size);
+  const effectiveMax = device === "mobile" ? 4 : max;
+
+  const resolvedShowBelow =
+    showBelow !== undefined ? showBelow : device === "mobile";
+
   const visibleNames = names.slice(0, effectiveMax);
   const overflow = names.length - effectiveMax;
   const overflowNames = names.slice(effectiveMax);
@@ -72,7 +102,7 @@ export function AvatarGroup({
     <div
       className={cn(
         "flex items-center",
-        showBelow && "flex-col items-start",
+        resolvedShowBelow && "flex-col items-start",
         className
       )}
     >
@@ -82,8 +112,8 @@ export function AvatarGroup({
           <UserAvatar
             key={`${name}-${index}`}
             name={name}
-            size={size}
-            className="border-[3px] border-white"
+            size={effectiveSize}
+            className="border-[1.5px] border-white"
           />
         ))}
 
@@ -94,15 +124,14 @@ export function AvatarGroup({
               label: m,
               showAvatar: true,
             }))}
-
             onlyList
             isMinWidth
             trigger={
               <button
                 type="button"
                 className={cn(
-                  "flex items-center justify-center rounded-full font-semibold bg-muted text-muted-foreground border-[3px] border-white hover:bg-muted/80 transition",
-                  sizeClasses[size]
+                  "flex items-center justify-center rounded-full font-semibold bg-muted text-muted-foreground border-[1.5px] border-white hover:bg-muted/80 transition",
+                  sizeClasses[effectiveSize]
                 )}
                 aria-label={`View ${overflow} more members`}
                 onClick={(e) => e.stopPropagation()}
@@ -119,7 +148,7 @@ export function AvatarGroup({
         <span
           className={cn(
             "text-xs text-muted-foreground",
-            showBelow ? "mt-1" : "ml-1"
+            resolvedShowBelow ? "mt-1" : "ml-1"
           )}
         >
           {names.length} {label}

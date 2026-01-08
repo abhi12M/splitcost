@@ -38,7 +38,6 @@ import {
   type Group,
   type Expense,
 } from "@/lib/storage";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { SingleSelect } from "@/components/ui/single-select";
 import { toTitleCase } from "@/components/ui/formatters";
 import { toast } from "@/hooks/use-toast";
@@ -131,11 +130,9 @@ function getGroupTotal(expenses: Expense[]) {
 ====================================================== */
 export default function GroupDetailsPage() {
   const { groupId } = useParams();
-  const isMobile = useIsMobile();
   const [group, setGroup] = useState<Group>();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
-  const [copied, setCopied] = useState(false);
   // UI state
   const [search, setSearch] = useState("");
   const [groupBy, setGroupBy] =
@@ -221,15 +218,53 @@ export default function GroupDetailsPage() {
 
   const shareLink = `${window.location.origin}/group/${groupId}`;
 
-  const copyLink = async () => {
-    await navigator.clipboard.writeText(shareLink);
-    setCopied(true);
+  type CopyType = "settlement" | "link";
+
+  const copyLink = async (type: CopyType) => {
+    let textToCopy = "";
+    let description = "";
+
+    switch (type) {
+      case "settlement":
+        textToCopy = getSettlementText();
+        description = "Settlement summary copied";
+        break;
+      case "link":
+        textToCopy = shareLink;
+        description = "Share this link with your group members";
+        break;
+      default:
+        textToCopy = shareLink;
+        description = "Share this link with your group members";
+    }
+
+    await navigator.clipboard.writeText(textToCopy);
     toast({
-      title: "Link copied!",
-      description: "Share this link with your group members",
+      title: "Copied!",
+      description,
     });
-    setTimeout(() => setCopied(false), 2000);
+
   };
+
+
+  const getSettlementText = () => {
+    if (settlements.length === 0) return "";
+
+    const lines = settlements.map(
+      (s) =>
+        `${s.from} pays ${s.to} ${formatCurrency(s.amount, group.currency)}`
+    );
+
+    return `
+Settlement Summary
+
+${lines.join("\n")}
+
+View full details here:
+${shareLink}
+  `.trim();
+  };
+
 
   /* ======================================================
      UI
@@ -248,13 +283,12 @@ export default function GroupDetailsPage() {
           {/* Middle content takes remaining space */}
           <div className="min-w-0 flex-1">
             <h1 className="text-2xl font-bold truncate">{group.name}</h1>
-            <AvatarGroup names={group.members} max={4} />
+            <AvatarGroup names={group.members} />
           </div>
 
           {/* Right aligned */}
-          <Button variant="outline" size="sm" onClick={copyLink}>
-            {copied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
-            {copied ? "Copied!" : "Share"}
+          <Button variant="outline" size="sm" onClick={() => copyLink("link")}>
+            <Share2 className="w-4 h-4" />
           </Button>
         </div>
 
@@ -320,30 +354,19 @@ export default function GroupDetailsPage() {
                     Expenses
                   </CardTitle>
 
-                  {/* MOBILE */}
-                  {isMobile ? (
-                    <>
-                      <p className="text-sm text-muted-foreground">
-                        Total{" "}
-                        <span className="font-semibold text-foreground">
-                          {formatCurrency(totalExpenses, group.currency)}
-                        </span>
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {expenses.length} expenses
-                      </p>
-                    </>
-                  ) : (
-                    /* DESKTOP */
-                    <p className="text-sm text-muted-foreground inline-flex items-center gap-1 whitespace-nowrap">
-                      <span>Total</span>
+                  <p className="text-sm text-muted-foreground flex flex-col sm:flex-row sm:items-center sm:gap-1">
+                    <span>
+                      Total{" "}
                       <span className="font-semibold text-foreground">
                         {formatCurrency(totalExpenses, group.currency)}
                       </span>
-                      <span className="opacity-60">·</span>
-                      <span>{expenses.length} expenses</span>
-                    </p>
-                  )}
+                    </span>
+
+                    <span className="hidden sm:inline opacity-60">·</span>
+
+                    <span>{expenses.length} expenses</span>
+                  </p>
+
                 </div>
 
                 {/* RIGHT */}
@@ -513,10 +536,8 @@ export default function GroupDetailsPage() {
 
                                     <AvatarGroup
                                       names={expense.participants}
-                                      max={4}
-                                      size="sm"
                                       className="mt-1"
-                                      showBelow={isMobile}
+                                      label={''}
                                     />
 
                                     {/* MOBILE META */}
@@ -529,7 +550,6 @@ export default function GroupDetailsPage() {
                                       </p>
                                       <UserAvatar
                                         name={expense.paidBy}
-                                        size="xs"
                                         aria-label={`Paid by ${expense.paidBy}`}
                                       />
                                     </div>
@@ -547,7 +567,6 @@ export default function GroupDetailsPage() {
 
                                   <UserAvatar
                                     name={expense.paidBy}
-                                    size="xs"
                                     aria-label={`Paid by ${expense.paidBy}`}
                                     className="mt-1"
                                   />
@@ -574,13 +593,13 @@ export default function GroupDetailsPage() {
                   Balances
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3 max-h-[170px] overflow-y-auto">
+              <CardContent className="space-y-3 max-h-[17rem] overflow-y-auto">
                 {group.members.map((m) => {
                   const bal = balances[m];
                   return (
                     <div key={m} className="flex justify-between items-center">
                       <div className="flex items-center gap-2 min-w-0">
-                        <UserAvatar name={m} size="xs" />
+                        <UserAvatar name={m} />
                         <span className="truncate text-sm">{m}</span>
                       </div>
                       <span
@@ -602,14 +621,24 @@ export default function GroupDetailsPage() {
 
             {/* Settle Up */}
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
                   <ArrowRight className="w-5 h-5 text-secondary" />
                   Who pays whom
                 </CardTitle>
+
+                {(expenses.length > 0 || settlements.length > 0) && (
+                  <button
+                    onClick={() => copyLink("settlement")}
+                    className="p-2 rounded-md hover:bg-muted transition"
+                    title="Copy settlement summary"
+                  >
+                    <Share2 className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                )}
               </CardHeader>
 
-              <CardContent className="space-y-3 max-h-[20rem] overflow-y-auto">
+              <CardContent className="space-y-3 max-h-[16rem] overflow-y-auto">
                 {/* 🚫 NO EXPENSES YET */}
                 {expenses.length === 0 && (
                   <p className="text-sm text-muted-foreground text-center">

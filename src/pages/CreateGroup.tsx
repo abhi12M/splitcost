@@ -257,7 +257,7 @@ export default function CreateGroupPage() {
                                 exit={{ scale: 0.8, opacity: 0 }}
                                 className="flex items-center gap-2 bg-background border rounded-full pl-1 pr-1.5 py-1 shadow-sm"
                               >
-                                <UserAvatar name={member} size="sm" />
+                                <UserAvatar name={member} />
                                 <span className="text-xs font-medium text-foreground max-w-[120px] truncate" title={member}>
                                   {member}
                                 </span>

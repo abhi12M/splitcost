@@ -182,7 +182,7 @@ export default function HomePage() {
                       <CardContent>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <AvatarGroup names={group.members} max={4} showBelow />
+                            <AvatarGroup names={group.members} showBelow />
                           </div>
                           <div className="text-right">
                             <p className="text-lg font-semibold text-foreground">

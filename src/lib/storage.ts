@@ -34,7 +34,7 @@ export interface Expense {
   amount: number;
   currency: string;
   paidBy: string;
-  participants: string[];
+  participants: string[];//group members
   splits: ExpenseSplit[];
   splitType: SplitType;
   category: CategoryKey;

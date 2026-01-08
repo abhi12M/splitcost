@@ -85,7 +85,6 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
       return (
         <UserAvatar
           name={item.label}
-          size="sm"
           className="shrink-0"
         />
       );
