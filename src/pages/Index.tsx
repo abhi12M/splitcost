@@ -12,6 +12,7 @@ import { deleteGroup, loadExpenses, type Group, type Expense, loadGroupsByIds } 
 import { useToast } from "@/hooks/use-toast";
 import { getEncryptedItem } from "@/lib/localstorage";
 import { APP_NAME, LOCAL_GROUPS_KEY } from "@/lib/constants";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -39,6 +40,36 @@ interface GroupWithExpenses extends Group {
   expenses: Expense[];
 }
 
+function GroupCardSkeleton() {
+  return (
+    <div className="h-full">
+      <div className="rounded-xl border bg-card p-6 space-y-4">
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <Skeleton className="w-12 h-12 rounded-xl" />
+          <Skeleton className="w-8 h-8 rounded-md" />
+        </div>
+
+        {/* Title */}
+        <Skeleton className="h-5 w-2/3" />
+
+        {/* Content */}
+        <div className="flex items-center justify-between pt-2">
+          <div className="flex items-center gap-2">
+            <Skeleton className="w-7 h-7 rounded-full" />
+            <Skeleton className="w-7 h-7 rounded-full" />
+            <Skeleton className="w-7 h-7 rounded-full" />
+          </div>
+
+          <div className="space-y-1 text-right">
+            <Skeleton className="h-5 w-20 ml-auto" />
+            <Skeleton className="h-3 w-10 ml-auto" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 export default function HomePage() {
   const [groups, setGroups] = useState<GroupWithExpenses[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,7 +80,6 @@ export default function HomePage() {
     try {
       // ✅ Get group IDs from encrypted localStorage
       const groupIds = getEncryptedItem<string[]>(LOCAL_GROUPS_KEY, []);
-      console.log(groupIds);
       // ✅ Fetch only those groups
       const loadedGroups = await loadGroupsByIds(groupIds);
       // Load expenses for each group
@@ -131,26 +161,41 @@ export default function HomePage() {
       </section>
 
       {/* Groups Section */}
-      <section className="py-12 md:py-16">
-        <div className="container">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="text-2xl font-bold text-foreground mb-1">Your Groups</h2>
-              <p className="text-muted-foreground">Recent expense groups</p>
-            </div>
-            <Button asChild variant="ghost" size="sm">
-              <Link to="/create-group">
-                <Plus className="w-4 h-4" />
-                New Group
-              </Link>
-            </Button>
-          </div>
+      {loading ? (
+        <section className="py-12 md:py-16">
+          <div className="container">
+            <div className="flex items-center justify-between mb-8">
+              {/* Left: Title + subtitle */}
+              <div className="space-y-2">
+                <Skeleton className="h-6 w-40" />
+                <Skeleton className="h-4 w-56" />
+              </div>
 
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              {/* Right: Button */}
+              <Skeleton className="h-8 w-28 rounded-md" />
             </div>
-          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <GroupCardSkeleton key={i} />
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : (
+        <section className="py-12 md:py-16">
+          <div className="container">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-2xl font-bold text-foreground mb-1">Your Groups</h2>
+                <p className="text-muted-foreground">Recent expense groups</p>
+              </div>
+              <Button asChild variant="ghost" size="sm">
+                <Link to="/create-group">
+                  <Plus className="w-4 h-4" />
+                  New Group
+                </Link>
+              </Button>
+            </div>
             <motion.div
               variants={containerVariants}
               initial="hidden"
@@ -215,9 +260,8 @@ export default function HomePage() {
                 </Link>
               </motion.div>
             </motion.div>
-          )}
-        </div>
-      </section>
+          </div>
+        </section>)}
 
       {/* Features Section */}
       <section className="py-12 md:py-16 bg-muted/30">

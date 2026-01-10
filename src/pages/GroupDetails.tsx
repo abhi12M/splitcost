@@ -41,6 +41,9 @@ import {
 import { SingleSelect } from "@/components/ui/single-select";
 import { toTitleCase } from "@/components/ui/formatters";
 import { toast } from "@/hooks/use-toast";
+import { getEncryptedItem, setEncryptedItem } from "@/lib/localstorage";
+import { LOCAL_GROUPS_KEY } from "@/lib/constants";
+import { Skeleton } from "@/components/ui/skeleton";
 
 /* ======================================================
    CONSTANTS – MOVE TO CONSTANTS FILE LATER
@@ -69,7 +72,8 @@ function calculateShare(expense: Expense, member: string): number {
   }
 
   const split = expense.splits?.find((s) => s.member === member);
-  return split?.amount || 0;
+
+  return Number(split?.amount || 0);
 }
 
 function calculateBalances(expenses: Expense[], members: string[]) {
@@ -125,6 +129,90 @@ function getGroupTotal(expenses: Expense[]) {
   return expenses.reduce((sum, e) => sum + e.amount, 0);
 }
 
+function GroupDetailsSkeleton() {
+  return (
+    <Layout>
+      <div className="container py-6 space-y-6">
+        {/* HEADER */}
+        <div className="flex items-center gap-3">
+          <Skeleton className="w-9 h-9 rounded-md" />
+
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+
+          <Skeleton className="w-9 h-9 rounded-md" />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* LEFT COLUMN */}
+          <div className="lg:col-span-2 space-y-4">
+            {/* Filters */}
+            <div className="border rounded-lg p-4 space-y-3">
+              <Skeleton className="h-10 w-full" />
+              <div className="grid grid-cols-2 gap-3">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            </div>
+
+            {/* Expense list */}
+            <div className="border rounded-lg">
+              <div className="p-4 flex justify-between">
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-9 w-20" />
+              </div>
+
+              {Array.from({ length: 2 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="flex gap-3 p-4 border-t items-center"
+                >
+                  <Skeleton className="w-10 h-10 rounded-xl" />
+
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3 w-1/3" />
+                    <Skeleton className="h-5 w-32" />
+                  </div>
+
+                  <Skeleton className="h-4 w-16" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* RIGHT COLUMN */}
+          <div className="space-y-4">
+            {/* Balances */}
+            <div className="border rounded-lg p-4 space-y-3">
+              <Skeleton className="h-5 w-32" />
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="flex justify-between items-center">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
+              ))}
+            </div>
+
+            {/* Settlements */}
+            <div className="border rounded-lg p-4 space-y-3">
+              <Skeleton className="h-5 w-40" />
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex justify-between">
+                  <Skeleton className="h-4 w-40" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </Layout>
+  );
+}
+
 /* ======================================================
    COMPONENT
 ====================================================== */
@@ -152,6 +240,11 @@ export default function GroupDetailsPage() {
       .then(([g, e]) => {
         setGroup(g);
         setExpenses(e);
+        const existingGroups = getEncryptedItem<string[]>(LOCAL_GROUPS_KEY, []);
+        const updatedGroups = Array.from(
+          new Set([groupId, ...existingGroups])
+        );
+        setEncryptedItem(LOCAL_GROUPS_KEY, updatedGroups);
       })
       .finally(() => setLoading(false));
   }, [groupId]);
@@ -199,13 +292,7 @@ export default function GroupDetailsPage() {
   }, [expenses, search, sortBy, groupBy]);
 
   if (loading || !group) {
-    return (
-      <Layout>
-        <div className="container py-12 flex justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-      </Layout>
-    );
+    return <GroupDetailsSkeleton />;
   }
 
   const balances = calculateBalances(expenses, group.members);

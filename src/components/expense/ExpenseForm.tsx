@@ -15,6 +15,7 @@ import { InfoTooltip } from "../ui/info-tooltip";
 import { Textarea } from "../ui/textarea";
 import { SingleSelect } from "../ui/single-select";
 import { CURRENCIES } from "@/constants";
+import { Skeleton } from "../ui/skeleton";
 
 interface ExpenseFormProps {
   members: string[];
@@ -43,6 +44,7 @@ interface ExpenseFormProps {
   }) => void;
   submitLabel: string;
 }
+
 export function ExpenseForm({
   members,
   defaultCurrency = "USD",
@@ -161,7 +163,6 @@ export function ExpenseForm({
   }, [description]);
 
   const handleSubcategorySelect = (cat: any, subId: SubcategoryId) => {
-    console.log(cat, subId)
     setCategory(cat);
     setSubcategory(subId);
   };
@@ -211,7 +212,7 @@ export function ExpenseForm({
 
 
   useEffect(() => {
-    console.log("FINAL SPLITS →", splits);
+    // console.log("FINAL SPLITS →", splits);
   }, [splits]);
 
   useEffect(() => {
@@ -592,7 +593,7 @@ export function ExpenseForm({
                             onChange={(e) => {
                               updateSplitValue(member, e.target.value);
                             }}
-                              className={cn(
+                            className={cn(
                               splitType === "percentage" ? "w-[6rem]" : "w-28"
                             )}
                           />
