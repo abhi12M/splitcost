@@ -180,7 +180,7 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
           isMinWidth && "min-w-[202px] sm:min-w-[250px]"
         )}
         align="start"
-        avoidCollisions={false}
+        // avoidCollisions={false}
       >
         <Command>
           {(items?.length >= 8 || groups) && (
