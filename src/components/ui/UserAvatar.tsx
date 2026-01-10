@@ -110,7 +110,7 @@ export function AvatarGroup({
       )}
     >
       {/* Avatars */}
-      <div className="flex items-center -space-x-3">
+      <div className="flex items-center -space-x-1.5">
         {visibleNames.map((name, index) => (
           <UserAvatar
             key={`${name}-${index}`}
