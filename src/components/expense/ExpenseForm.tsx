@@ -16,6 +16,7 @@ import { Textarea } from "../ui/textarea";
 import { SingleSelect } from "../ui/single-select";
 import { CURRENCIES } from "@/constants";
 import { Skeleton } from "../ui/skeleton";
+import { InfoLabel } from "../ui/InfoLabel";
 
 interface ExpenseFormProps {
   members: string[];
@@ -440,16 +441,12 @@ export function ExpenseForm({
                 >
                   {/* Icon scales down on mobile (w-3.5) */}
                   <Icon className={cn("shrink-0 transition-colors", isActive ? "text-primary" : "text-muted-foreground", "w-3.5 h-3.5 sm:w-4 sm:h-4")} />
+                  <InfoLabel
+                    label={label}
+                    info={info}
+                    className="text-[10px] xs:text-xs sm:text-sm font-medium whitespace-nowrap leading-none"
+                  />
 
-                  {/* Text is [10px] on mobile, standard sm on desktop. leading-none helps vertical alignment */}
-                  <span className="text-[10px] xs:text-xs sm:text-sm font-medium whitespace-nowrap leading-none">
-                    {label}
-                  </span>
-
-                  {/* Tooltip wrapper stays visible but tight */}
-                  <div className="shrink-0 flex">
-                    <InfoTooltip>{info}</InfoTooltip>
-                  </div>
                 </button>
               );
             })}
