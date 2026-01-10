@@ -11,14 +11,15 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createGroup } from "@/lib/storage";
 import { getEncryptedItem, setEncryptedItem } from "@/lib/localstorage";
-import { LOCAL_GROUPS_KEY } from "@/lib/constants";
+import { LOCAL_CURRENCY_KEY, LOCAL_GROUPS_KEY } from "@/lib/constants";
 import { MEMBERS_MAX, GroupSchema, MemberNameSchema } from "@/lib/validations/group.schema";
 import { CURRENCIES } from "@/constants";
 export default function CreateGroupPage() {
   const navigate = useNavigate();
   const [groupName, setGroupName] = useState("");
-  const [currency, setCurrency] = useState("USD");
-  const [members, setMembers] = useState<string[]>([]);
+  const [currency, setCurrency] = useState(() => {
+    return getEncryptedItem(LOCAL_CURRENCY_KEY, '') || "INR";
+  }); const [members, setMembers] = useState<string[]>([]);
   const [newMember, setNewMember] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{
@@ -56,6 +57,7 @@ export default function CreateGroupPage() {
     try {
       const group = await createGroup(groupName.trim(), currency, members);
       saveGroupIdToLocal(group.id);
+      setEncryptedItem(LOCAL_CURRENCY_KEY, currency);
       navigate(`/group/${group.id}`);
     } catch (error) {
       console.error("Error creating group:", error);
