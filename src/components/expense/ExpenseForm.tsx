@@ -235,6 +235,7 @@ export function ExpenseForm({
     setHasSubmitted(true);
     const isValid = validate();
     if (!isValid) return; // STOP submit
+    if ((splitType == 'custom' || splitType == 'percentage') && validationState.diff !== 0) return;
     onSubmit({
       description,
       amount: parseFloat(amount),
