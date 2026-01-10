@@ -1,11 +1,11 @@
 import { useState, useEffect, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import {
   ArrowLeft,
   Plus,
   ArrowRight,
-  Loader2,
   Wallet,
   Users,
   Search,
@@ -20,6 +20,8 @@ import {
   ArrowUp,
   Share2,
   Pencil,
+  List,
+  LayoutDashboard,
 } from "lucide-react";
 
 import { Layout } from "@/components/layout/Layout";
@@ -44,6 +46,7 @@ import { toast } from "@/hooks/use-toast";
 import { getEncryptedItem, setEncryptedItem } from "@/lib/localstorage";
 import { LOCAL_GROUPS_KEY } from "@/lib/constants";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 /* ======================================================
    CONSTANTS – MOVE TO CONSTANTS FILE LATER
@@ -221,6 +224,7 @@ export default function GroupDetailsPage() {
   const [group, setGroup] = useState<Group>();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<"list" | "chart">("list");
   // UI state
   const [search, setSearch] = useState("");
   const [groupBy, setGroupBy] =
@@ -291,6 +295,18 @@ export default function GroupDetailsPage() {
     return grouped;
   }, [expenses, search, sortBy, groupBy]);
 
+  const chartData = useMemo(() => {
+    return Object.entries(groupedExpenses).map(([key, list]) => {
+      // Format the label based on the grouping type
+      let name = key;
+      name = shouldTitleCase ? toTitleCase(key) : key
+
+      const value = list.reduce((sum, e) => sum + e.amount, 0);
+
+      return { name, value };
+    }) 
+  }, [groupedExpenses, groupBy]);
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
   if (loading || !group) {
     return <GroupDetailsSkeleton />;
   }
@@ -457,16 +473,49 @@ ${shareLink}
                 </div>
 
                 {/* RIGHT */}
-                <Button asChild size="sm" className="shrink-0">
-                  <Link to={`/group/${groupId}/add-expense`}>
-                    <Plus className="w-4 h-4" />
-                    Add
-                  </Link>
-                </Button>
+                <div className="flex items-center gap-2 shrink-0">
+                  {/* View Toggle */}
+                  <div className="flex items-center rounded-lg border bg-muted p-0.5">
+                    <button
+                      onClick={() => setViewMode("list")}
+                      className={cn(
+                        "flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md transition",
+                        viewMode === "list"
+                          ? "bg-background shadow text-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      <List className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">List</span>
+                    </button>
+
+                    <button
+                      onClick={() => setViewMode("chart")}
+                      className={cn(
+                        "flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md transition",
+                        viewMode === "chart"
+                          ? "bg-background shadow text-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      <LayoutDashboard className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Chart</span>
+                    </button>
+                  </div>
+
+                  {/* Add Button */}
+                  <Button asChild size="sm">
+                    <Link to={`/group/${groupId}/add-expense`}>
+                      <Plus className="w-4 h-4" />
+                      <span className="hidden sm:inline">Add</span>
+                    </Link>
+                  </Button>
+                </div>
+
               </CardHeader>
               <CardContent className="p-0">
                 {search && visibleCount > 0 && (
-                  <div className="px-4 py-2 text-sm text-muted-foreground border-b">
+                  <div className="px-4 py-2 text-sm text-muted-foreground">
                     Showing{" "}
                     <span className="font-medium text-foreground">
                       {visibleCount}
@@ -534,134 +583,198 @@ ${shareLink}
                     </Button>
                   </div>
                 )}
+                {viewMode === "list" ? (
+                  <>
+                    {/* ✅ GROUPED LIST  */}
+                    {Object.entries(groupedExpenses).map(([title, list]) => {
+                      const isOpen = expandedGroups[title] ?? true;
+                      const groupTotal = getGroupTotal(list);
 
-
-                {/* ✅ GROUPED LIST */}
-                {Object.entries(groupedExpenses).map(([title, list]) => {
-                  const isOpen = expandedGroups[title] ?? true;
-                  const groupTotal = getGroupTotal(list);
-
-                  return (
-                    <div key={title} className="relative">
-                      {/* ✅ STICKY GROUP HEADER */}
-                      <div className="sticky top-[64px] z-10 bg-background">
-                        <button
-                          onClick={() =>
-                            setExpandedGroups((p) => ({
-                              ...p,
-                              [title]: !isOpen,
-                            }))
-                          }
-                          className="w-full flex items-center justify-between px-4 py-3 border-b hover:bg-muted/40 transition"
-                        >
-                          <div className="flex items-center gap-2">
-                            {isOpen ? (
-                              <ChevronDown className="w-4 h-4" />
-                            ) : (
-                              <ChevronRight className="w-4 h-4" />
-                            )}
-                            <div className="text-left">
-                              <p className="font-semibold">
-                                {shouldTitleCase ? toTitleCase(title) : title}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {list.length} expenses
-                              </p>
-                            </div>
-                          </div>
-
-                          <span className="font-semibold">
-                            {formatCurrency(groupTotal, group.currency)}
-                          </span>
-                        </button>
-                      </div>
-
-                      {/* ✅ EXPENSE ITEMS */}
-                      {isOpen &&
-                        list.map((expense, index) => {
-                          const IconComponent = getCategoryIcon(
-                            expense.category as CategoryKey,
-                            expense.subcategory
-                          );
-
-                          const categoryColor =
-                            EXPENSE_CATEGORIES[
-                              expense.category as CategoryKey
-                            ]?.color || "category-uncategorized";
-
-                          return (
-                            <motion.div
-                              key={expense.id}
-                              initial={{ opacity: 0, y: 6 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: index * 0.03 }}
-                              className="group relative p-4 border-b last:border-b-0 hover:bg-muted/50 transition-colors"
+                      return (
+                        <div key={title} className="relative">
+                          {/* ✅ STICKY GROUP HEADER */}
+                          <div className="sticky top-[64px] z-10 bg-background">
+                            <button
+                              onClick={() =>
+                                setExpandedGroups((p) => ({
+                                  ...p,
+                                  [title]: !isOpen,
+                                }))
+                              }
+                              className="w-full flex items-center justify-between px-4 py-3 border-b hover:bg-muted/40 transition"
                             >
-                              {/* ✏️ EDIT ICON */}
-                              <Link to={`/group/${groupId}/edit-expense/${expense.id}`}>
-                                <button
-                                  // onClick={() => onEditExpense(expense)}
-                                  className="absolute right-4 top-4 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition text-muted-foreground hover:text-foreground"
-                                  aria-label="Edit expense"
-                                >
-                                  <Pencil className="w-4 h-4" />
-                                </button>
-                              </Link>
-
-
-                              <div className="flex gap-3">
-                                {/* CATEGORY ICON */}
-                                <div
-                                  className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                                  style={{
-                                    backgroundColor: `hsl(var(--${categoryColor}) / 0.15)`,
-                                  }}
-                                >
-                                  <IconComponent
-                                    className="w-5 h-5"
-                                    style={{ color: `hsl(var(--${categoryColor}))` }}
-                                  />
-                                </div>
-
-                                {/* CONTENT */}
-                                <div className="min-w-0 flex-1">
-                                  {/* DESCRIPTION + MOBILE EDIT */}
-                                  <div className="flex items-center gap-2">
-                                    <p className="font-medium truncate flex-1">
-                                      {expense.description}
-                                    </p>
-
-                                  </div>
-
-                                  {/* PAID BY */}
-                                  <p className="text-xs md:text-base text-muted-foreground truncate mt-0.5">
-                                    {expense.paidBy} paid
+                              <div className="flex items-center gap-2">
+                                {isOpen ? (
+                                  <ChevronDown className="w-4 h-4" />
+                                ) : (
+                                  <ChevronRight className="w-4 h-4" />
+                                )}
+                                <div className="text-left">
+                                  <p className="font-semibold">
+                                    {shouldTitleCase ? toTitleCase(title) : title}
                                   </p>
-
-                                  {/* PARTICIPANTS */}
-                                  <AvatarGroup
-                                    names={expense.participants}
-                                    className="mt-2"
-                                    label=""
-                                  />
-                                </div>
-
-                                {/* AMOUNT */}
-                                <div className="flex flex-col items-end justify-center shrink-0">
-                                  <p className="font-semibold whitespace-nowrap">
-                                    {formatCurrency(expense.amount, expense.currency)}
+                                  <p className="text-xs text-muted-foreground">
+                                    {list.length} expenses
                                   </p>
                                 </div>
                               </div>
-                            </motion.div>
 
-                          );
-                        })}
+                              <span className="font-semibold">
+                                {formatCurrency(groupTotal, group.currency)}
+                              </span>
+                            </button>
+                          </div>
+
+                          {/* ✅ EXPENSE ITEMS */}
+                          {isOpen &&
+                            list.map((expense, index) => {
+                              const IconComponent = getCategoryIcon(
+                                expense.category as CategoryKey,
+                                expense.subcategory
+                              );
+
+                              const categoryColor =
+                                EXPENSE_CATEGORIES[
+                                  expense.category as CategoryKey
+                                ]?.color || "category-uncategorized";
+
+                              return (
+                                <motion.div
+                                  key={expense.id}
+                                  initial={{ opacity: 0, y: 6 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ delay: index * 0.03 }}
+                                  className="group relative p-4 border-b last:border-b-0 hover:bg-muted/50 transition-colors"
+                                >
+                                  {/* ✏️ EDIT ICON */}
+                                  <Link to={`/group/${groupId}/edit-expense/${expense.id}`}>
+                                    <button
+                                      // onClick={() => onEditExpense(expense)}
+                                      className="absolute right-4 top-4 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition text-muted-foreground hover:text-foreground"
+                                      aria-label="Edit expense"
+                                    >
+                                      <Pencil className="w-4 h-4" />
+                                    </button>
+                                  </Link>
+
+
+                                  <div className="flex gap-3">
+                                    {/* CATEGORY ICON */}
+                                    <div
+                                      className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                                      style={{
+                                        backgroundColor: `hsl(var(--${categoryColor}) / 0.15)`,
+                                      }}
+                                    >
+                                      <IconComponent
+                                        className="w-5 h-5"
+                                        style={{ color: `hsl(var(--${categoryColor}))` }}
+                                      />
+                                    </div>
+
+                                    {/* CONTENT */}
+                                    <div className="min-w-0 flex-1">
+                                      {/* DESCRIPTION + MOBILE EDIT */}
+                                      <div className="flex items-center gap-2">
+                                        <p className="font-medium truncate flex-1">
+                                          {expense.description}
+                                        </p>
+
+                                      </div>
+
+                                      {/* PAID BY */}
+                                      <p className="text-xs md:text-base text-muted-foreground truncate mt-0.5">
+                                        {expense.paidBy} paid
+                                      </p>
+
+                                      {/* PARTICIPANTS */}
+                                      <AvatarGroup
+                                        names={expense.participants}
+                                        className="mt-2"
+                                        label=""
+                                      />
+                                    </div>
+
+                                    {/* AMOUNT */}
+                                    <div className="flex flex-col items-end justify-center shrink-0">
+                                      <p className="font-semibold whitespace-nowrap">
+                                        {formatCurrency(expense.amount, expense.currency)}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </motion.div>
+
+                              );
+                            })}
+                        </div>
+                      );
+                    })}
+                  </>
+                ) : (
+                  <div className="flex flex-col lg:flex-row lg:items-center gap-2">
+
+                    {/* THE CHART CONTAINER */}
+                    <div className="h-[200px] w-full lg:w-1/2">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={chartData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={60}
+                            outerRadius={80}
+                            paddingAngle={5}
+                            dataKey="value"
+                            animationDuration={750}
+                          >
+                            {chartData.map((_, index) => (
+                              <Cell
+                                key={`cell-${index}`}
+                                fill={COLORS[index % COLORS.length]}
+                                stroke="transparent"
+                              />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            formatter={(value: number) => formatCurrency(value, group.currency)}
+                            contentStyle={{
+                              borderRadius: '8px',
+                              border: 'none',
+                              boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'
+                            }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
                     </div>
-                  );
-                })}
-              </CardContent>
 
+                    {/* DYNAMIC LEGEND TABLE */}
+                    <div className="grid grid-cols-1 gap-2 w-full lg:w-1/2 px-[10px] sm:px-0">
+                      {chartData.map((item, i) => (
+                        <div
+                          key={item.name}
+                          className="flex justify-between items-center p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div
+                              className="w-3 h-3 rounded-full shrink-0"
+                              style={{ backgroundColor: COLORS[i % COLORS.length] }}
+                            />
+                            <span className="text-sm font-medium truncate">{item.name}</span>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-bold">
+                              {formatCurrency(item.value, group.currency)}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground">
+                              {((item.value / totalExpenses) * 100).toFixed(1)}%
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
             </Card>
           </div>
 
