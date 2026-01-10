@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import { getAvatarColor, getInitials } from "@/lib/avatar-utils";
 import { SingleSelect } from "./single-select";
 import { useDeviceType } from "@/hooks/useDeviceType";
+import { AvatarNameOverlay } from "./AvatarNameOverlay";
 
 type AvatarSize = "xs" | "sm" | "md" | "lg" | "xl";
 
@@ -41,16 +42,17 @@ export function UserAvatar({
   size = defaultAvatarSize,
   className,
 }: UserAvatarProps) {
-  const device = useDeviceType(); // ✅ stable hook usage
+  const device = useDeviceType();
   const effectiveSize = getResponsiveAvatarSize(device, size);
 
   const colors = getAvatarColor(name);
   const initials = getInitials(name);
 
-  return (
+  const avatar = (
     <div
+      onClick={(e) => e.stopPropagation()}
       className={cn(
-        "flex items-center justify-center rounded-full font-semibold select-none flex-shrink-0",
+        "flex items-center justify-center rounded-full font-semibold select-none flex-shrink-0 cursor-pointer active:scale-95 transition",
         sizeClasses[effectiveSize],
         className
       )}
@@ -59,11 +61,12 @@ export function UserAvatar({
         color: `hsl(${colors.fg})`,
       }}
       aria-label={name}
-      title={name}
     >
       {initials}
     </div>
   );
+
+  return <AvatarNameOverlay name={name}>{avatar}</AvatarNameOverlay>;
 }
 
 /* -----------------------------------------
@@ -86,7 +89,7 @@ export function AvatarGroup({
   showBelow,
   label = "members",
 }: AvatarGroupProps) {
-  const device = useDeviceType(); // ✅ hook called once, always
+  const device = useDeviceType();
 
   const effectiveSize = getResponsiveAvatarSize(device, size);
   const effectiveMax = device === "mobile" ? 4 : max;
