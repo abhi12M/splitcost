@@ -35,10 +35,8 @@ import {
   type CategoryKey,
 } from "@/components/icons/CategoryIcons";
 import {
-  getGroup,
-  loadExpenses,
-  type Group,
-  type Expense,
+  loadGroupDetails,
+  type GroupDetail,
 } from "@/lib/storage";
 import { SingleSelect } from "@/components/ui/single-select";
 import { toTitleCase } from "@/components/ui/formatters";
@@ -67,43 +65,83 @@ const SORT_OPTIONS = [
 /* ======================================================
    UTILS – MOVE TO UTILS FILE LATER
 ====================================================== */
-function calculateShare(expense: Expense, member: string): number {
-  if (!expense.participants.includes(member)) return 0;
-
-  if (expense.splitType === "equal") {
-    return expense.amount / expense.participants.length;
+function calculateShare(
+  expense: GroupDetail["expenses"][number],
+  userId: string
+): number {
+  // Equal split – divide evenly among participants if no specific splits
+  if (expense.splitType === "equal" || !expense.splits?.length) {
+    if (!expense.participants.some((p) => p.id === userId)) return 0;
+    return expense.amount / Math.max(expense.participants.length, 1);
   }
 
-  const split = expense.splits?.find((s) => s.member === member);
+  // Custom / percentage splits – look up by participantUserId
+  const split = expense.splits?.find((s) => s.participantUserId === userId);
+  if (!split) return 0;
 
-  return Number(split?.amount || 0);
+  const amount = Number(split.amount ?? 0);
+  if (Number.isNaN(amount)) return 0;
+  return amount;
 }
 
-function calculateBalances(expenses: Expense[], members: string[]) {
+function calculateBalances(
+  expenses: GroupDetail["expenses"],
+  members: GroupDetail["members"]
+) {
   const balances: Record<string, number> = {};
-  members.forEach((m) => (balances[m] = 0));
+
+  // Initialize balances for all members by userId
+  members.forEach((m) => {
+    balances[m.id] = 0;
+  });
 
   expenses.forEach((expense) => {
+    // Ensure payer is in balances map
+    if (balances[expense.paidBy.id] === undefined) {
+      balances[expense.paidBy.id] = 0;
+    }
+
     expense.participants.forEach((p) => {
-      balances[p] -= calculateShare(expense, p);
+      if (balances[p.id] === undefined) {
+        balances[p.id] = 0;
+      }
+      balances[p.id] -= calculateShare(expense, p.id);
     });
-    balances[expense.paidBy] += expense.amount;
+
+    balances[expense.paidBy.id] += expense.amount;
   });
 
   return balances;
 }
 
-function calculateSettlements(balances: Record<string, number>) {
-  const settlements: { from: string; to: string; amount: number }[] = [];
+function calculateSettlements(
+  balances: Record<string, number>,
+  members: GroupDetail["members"]
+) {
+  const settlements: {
+    fromId: string;
+    toId: string;
+    fromName: string;
+    toName: string;
+    amount: number;
+  }[] = [];
+
+  const memberById = members.reduce<Record<string, { id: string; name: string }>>(
+    (acc, m) => {
+      acc[m.id] = { id: m.id, name: m.name };
+      return acc;
+    },
+    {}
+  );
 
   const debtors = Object.entries(balances)
     .filter(([, b]) => b < -0.01)
-    .map(([name, balance]) => ({ name, balance }))
+    .map(([id, balance]) => ({ id, balance }))
     .sort((a, b) => a.balance - b.balance);
 
   const creditors = Object.entries(balances)
     .filter(([, b]) => b > 0.01)
-    .map(([name, balance]) => ({ name, balance }))
+    .map(([id, balance]) => ({ id, balance }))
     .sort((a, b) => b.balance - a.balance);
 
   let i = 0,
@@ -113,8 +151,10 @@ function calculateSettlements(balances: Record<string, number>) {
     const amount = Math.min(-debtors[i].balance, creditors[j].balance);
 
     settlements.push({
-      from: debtors[i].name,
-      to: creditors[j].name,
+      fromId: debtors[i].id,
+      toId: creditors[j].id,
+      fromName: memberById[debtors[i].id]?.name ?? debtors[i].id,
+      toName: memberById[creditors[j].id]?.name ?? creditors[j].id,
       amount: Math.round(amount * 100) / 100,
     });
 
@@ -128,7 +168,7 @@ function calculateSettlements(balances: Record<string, number>) {
   return settlements;
 }
 
-function getGroupTotal(expenses: Expense[]) {
+function getGroupTotal(expenses: GroupDetail["expenses"]) {
   return expenses.reduce((sum, e) => sum + e.amount, 0);
 }
 
@@ -221,8 +261,8 @@ function GroupDetailsSkeleton() {
 ====================================================== */
 export default function GroupDetailsPage() {
   const { groupId } = useParams();
-  const [group, setGroup] = useState<Group>();
-  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [group, setGroup] = useState<GroupDetail | null>(null);
+  const [expenses, setExpenses] = useState<GroupDetail["expenses"]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"list" | "chart">("list");
   // UI state
@@ -240,10 +280,12 @@ export default function GroupDetailsPage() {
     if (!groupId) return;
     setLoading(true);
 
-    Promise.all([getGroup(groupId), loadExpenses(groupId)])
-      .then(([g, e]) => {
-        setGroup(g);
-        setExpenses(e);
+    loadGroupDetails(groupId)
+      .then((details) => {
+        if (!details) return;
+
+        setGroup(details);
+        setExpenses(details.expenses || []);
         const existingGroups = getEncryptedItem<string[]>(LOCAL_GROUPS_KEY, []);
         const updatedGroups = Array.from(
           new Set([groupId, ...existingGroups])
@@ -264,11 +306,13 @@ export default function GroupDetailsPage() {
       list = list.filter(
         (e) =>
           e.description.toLowerCase().includes(q) ||
-          e.paidBy.toLowerCase().includes(q) ||
+          e.paidBy.name.toLowerCase().includes(q) ||
           e.category.toLowerCase().includes(q) ||
           e.subcategory.toLowerCase().includes(q) ||
           e.amount.toString().includes(q) ||
-          e.participants.includes(q)
+          e.participants.some((p) =>
+            p.name.toLowerCase().includes(q)
+          )
       );
     }
 
@@ -280,11 +324,14 @@ export default function GroupDetailsPage() {
       list.sort((a, b) => a.amount - b.amount);
     }
 
-    const grouped: Record<string, Expense[]> = {};
+    const grouped: Record<string, GroupDetail["expenses"]> = {};
     list.forEach((e) => {
       let key = "";
-      if (groupBy === "date") key = e.date;
-      if (groupBy === "paidBy") key = e.paidBy;
+      if (groupBy === "date")
+        key = e.date instanceof Date
+          ? e.date.toISOString().split("T")[0]
+          : String(e.date);
+      if (groupBy === "paidBy") key = e.paidBy.name;
       if (groupBy === "category") key = e.category;
       if (groupBy === "splitType") key = e.splitType || "equal";
 
@@ -299,20 +346,20 @@ export default function GroupDetailsPage() {
     return Object.entries(groupedExpenses).map(([key, list]) => {
       // Format the label based on the grouping type
       let name = key;
-      name = shouldTitleCase ? toTitleCase(key) : key
+      name = shouldTitleCase ? toTitleCase(key) : key;
 
       const value = list.reduce((sum, e) => sum + e.amount, 0);
 
       return { name, value };
-    }) 
-  }, [groupedExpenses, groupBy]);
+    });
+  }, [groupedExpenses, groupBy, shouldTitleCase]);
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
   if (loading || !group) {
     return <GroupDetailsSkeleton />;
   }
 
   const balances = calculateBalances(expenses, group.members);
-  const settlements = calculateSettlements(balances);
+  const settlements = calculateSettlements(balances, group.members);
   const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
   const visibleCount = Object.values(groupedExpenses).reduce(
     (sum, list) => sum + list.length,
@@ -355,7 +402,10 @@ export default function GroupDetailsPage() {
 
     const lines = settlements.map(
       (s) =>
-        `${s.from} pays ${s.to} ${formatCurrency(s.amount, group.currency)}`
+        `${s.fromName} pays ${s.toName} ${formatCurrency(
+          s.amount,
+          group.currency
+        )}`
     );
 
     return `
@@ -386,7 +436,7 @@ ${shareLink}
           {/* Middle content takes remaining space */}
           <div className="min-w-0 flex-1">
             <h1 className="text-2xl font-bold truncate">{group.name}</h1>
-            <AvatarGroup names={group.members} />
+            <AvatarGroup names={group.members.map((m) => m.name)} />
           </div>
 
           {/* Right aligned */}
@@ -684,12 +734,12 @@ ${shareLink}
 
                                       {/* PAID BY */}
                                       <p className="text-xs md:text-base text-muted-foreground truncate mt-0.5">
-                                        {expense.paidBy} paid
+                                        {expense.paidBy.name} paid
                                       </p>
 
                                       {/* PARTICIPANTS */}
                                       <AvatarGroup
-                                        names={expense.participants}
+                                        names={expense.participants.map((p) => p.name)}
                                         className="mt-2"
                                         label=""
                                       />
@@ -698,7 +748,10 @@ ${shareLink}
                                     {/* AMOUNT */}
                                     <div className="flex flex-col items-end justify-center shrink-0">
                                       <p className="font-semibold whitespace-nowrap">
-                                        {formatCurrency(expense.amount, expense.currency)}
+                                        {formatCurrency(
+                                          expense.amount,
+                                          expense.currency
+                                        )}
                                       </p>
                                     </div>
                                   </div>
@@ -790,12 +843,12 @@ ${shareLink}
               </CardHeader>
               <CardContent className="space-y-3 max-h-[17rem] overflow-y-auto">
                 {group.members.map((m) => {
-                  const bal = balances[m];
+                  const bal = balances[m.id];
                   return (
-                    <div key={m} className="flex justify-between items-center">
+                    <div key={m.id} className="flex justify-between items-center">
                       <div className="flex items-center gap-2 min-w-0">
-                        <UserAvatar name={m} />
-                        <span className="truncate text-sm">{m}</span>
+                        <UserAvatar name={m.name} />
+                        <span className="truncate text-sm">{m.name}</span>
                       </div>
                       <span
                         className={`font-semibold text-sm flex-shrink-0 ${bal > 0
@@ -855,9 +908,9 @@ ${shareLink}
                   >
                     {/* LEFT: Full name, wraps naturally */}
                     <div className="flex-1 min-w-0 text-sm leading-snug break-words">
-                      <span>{s.from}</span>{" "}
+                      <span>{s.fromName}</span>{" "}
                       <span className="font-semibold">pays</span>{" "}
-                      <span>{s.to}</span>
+                      <span>{s.toName}</span>
                     </div>
 
                     {/* RIGHT: Amount (never wraps) */}

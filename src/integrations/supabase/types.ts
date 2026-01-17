@@ -12,55 +12,129 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
+      expense_participants: {
+        Row: {
+          expense_id: string
+          id: string
+          share_amount: number | null
+          share_percent: number | null
+          user_id: string
+        }
+        Insert: {
+          expense_id: string
+          id?: string
+          share_amount?: number | null
+          share_percent?: number | null
+          user_id: string
+        }
+        Update: {
+          expense_id?: string
+          id?: string
+          share_amount?: number | null
+          share_percent?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_participants_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expense_participants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expenses: {
         Row: {
           amount: number
           category: string
-          created_at: string
+          created_at: string | null
+          created_by: string | null
           currency: string
-          date: string
           description: string
+          date: string
           group_id: string
           id: string
-          paid_by: string
-          participants: string[]
-          split_type: string
+          paid_by_user_id: string
+          split_type: Database["public"]["Enums"]["split_type"]
           splits: Json
           subcategory: string
+          updated_at: string | null
         }
         Insert: {
           amount: number
-          category?: string
-          created_at?: string
+          category: string
+          created_at?: string | null
+          created_by?: string | null
           currency: string
-          date?: string
           description: string
+          date: string
           group_id: string
           id?: string
-          paid_by: string
-          participants?: string[]
-          split_type?: string
-          splits?: Json
-          subcategory?: string
+          paid_by_user_id: string
+          split_type: Database["public"]["Enums"]["split_type"]
+          splits: Json
+          subcategory: string
+          updated_at?: string | null
         }
         Update: {
           amount?: number
           category?: string
-          created_at?: string
+          created_at?: string | null
+          created_by?: string | null
           currency?: string
-          date?: string
           description?: string
+          date?: string
           group_id?: string
           id?: string
-          paid_by?: string
-          participants?: string[]
-          split_type?: string
+          paid_by_user_id?: string
+          split_type?: Database["public"]["Enums"]["split_type"]
           splits?: Json
           subcategory?: string
+          updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "expenses_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "expenses_group_id_fkey"
             columns: ["group_id"]
@@ -68,29 +142,131 @@ export type Database = {
             referencedRelation: "groups"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "expenses_paid_by_user_id_fkey"
+            columns: ["paid_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_members: {
+        Row: {
+          created_at: string | null
+          group_id: string
+          id: string
+          is_active: boolean | null
+          joined_at: string | null
+          nickname: string | null
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          group_id: string
+          id?: string
+          is_active?: boolean | null
+          joined_at?: string | null
+          nickname?: string | null
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          group_id?: string
+          id?: string
+          is_active?: boolean | null
+          joined_at?: string | null
+          nickname?: string | null
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
         ]
       }
       groups: {
         Row: {
-          created_at: string
+          created_at: string | null
+          created_by: string | null
           currency: string
           id: string
-          members: string[]
           name: string
+          updated_at: string | null
         }
         Insert: {
-          created_at?: string
-          currency?: string
+          created_at?: string | null
+          created_by?: string | null
+          currency: string
           id?: string
-          members?: string[]
           name: string
+          updated_at?: string | null
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
+          created_by?: string | null
           currency?: string
           id?: string
-          members?: string[]
           name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "groups_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          auth_provider: Database["public"]["Enums"]["auth_provider"] | null
+          avatar_url: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          is_email_verified: boolean | null
+          name: string
+          phone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          auth_provider?: Database["public"]["Enums"]["auth_provider"] | null
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          is_email_verified?: boolean | null
+          name: string
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          auth_provider?: Database["public"]["Enums"]["auth_provider"] | null
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          is_email_verified?: boolean | null
+          name?: string
+          phone?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -102,7 +278,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      auth_provider: "email" | "google" | "apple"
+      split_type: "equal" | "percentage" | "custom"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -228,7 +405,13 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  public: {
+  graphql_public: {
     Enums: {},
+  },
+  public: {
+    Enums: {
+      auth_provider: ["email", "google", "apple"],
+      split_type: ["equal", "percentage", "custom"],
+    },
   },
 } as const

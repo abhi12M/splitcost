@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AvatarGroup } from "@/components/ui/UserAvatar";
 import { formatCurrency } from "@/lib/avatar-utils";
 import { ReceiptIcon, PlaneIcon, HouseholdIcon, GroceriesIcon } from "@/components/icons/CategoryIcons";
-import { deleteGroup, loadExpenses, type Group, type Expense, loadGroupsByIds } from "@/lib/storage";
+import { deleteGroup, type Group, type Expense, loadGroupsByIds, GroupOverviewItem } from "@/lib/storage";
 import { useToast } from "@/hooks/use-toast";
 import { getEncryptedItem } from "@/lib/localstorage";
 import { APP_NAME, LOCAL_GROUPS_KEY } from "@/lib/constants";
@@ -71,7 +71,7 @@ function GroupCardSkeleton() {
   );
 }
 export default function HomePage() {
-  const [groups, setGroups] = useState<GroupWithExpenses[]>([]);
+  const [groups, setGroups] = useState<GroupOverviewItem[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -83,13 +83,13 @@ export default function HomePage() {
       // ✅ Fetch only those groups
       const loadedGroups = await loadGroupsByIds(groupIds);
       // Load expenses for each group
-      const groupsWithExpenses = await Promise.all(
-        loadedGroups.map(async (group) => {
-          const expenses = await loadExpenses(group.id);
-          return { ...group, expenses };
-        })
-      );
-      setGroups(groupsWithExpenses);
+      // const groupsWithExpenses = await Promise.all(
+      //   loadedGroups.map(async (group) => {
+      //     const expenses = await loadExpenses(group.id);
+      //     return { ...group, expenses };
+      //   })
+      // );
+      setGroups(loadedGroups);
     } catch (error) {
       console.error("Error loading groups:", error);
     } finally {
@@ -204,7 +204,7 @@ export default function HomePage() {
             >
               {groups.map((group) => {
                 const IconComponent = getGroupIcon(group.name);
-                const totalExpenses = group.expenses.reduce((sum, e) => sum + e.amount, 0);
+                const totalExpenses = group?.expenses?.reduce((sum, e) => sum + (e?.amount || 0), 0);
                 return (
                   <motion.div key={group.id} variants={itemVariants} onClick={() => navigate(`/group/${group.id}`)} >
                     <Card hover className="h-full group">
@@ -213,21 +213,21 @@ export default function HomePage() {
                           <div className="w-12 h-12 rounded-xl bg-primary-muted flex items-center justify-center" >
                             <IconComponent className="w-6 h-6 text-primary" />
                           </div>
-                          <Button
+                          {/* <Button
                             variant="ghost"
                             size="icon-sm"
                             className="opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive hover:bg-destructive/10"
                             onClick={(e) => handleDeleteGroup(e, group.id)}
                           >
                             <Trash2 className="w-4 h-4" />
-                          </Button>
+                          </Button> */}
                         </div>
                         <CardTitle className="mt-3" >{group.name}</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <AvatarGroup names={group.members} showBelow />
+                            <AvatarGroup names={group?.members} showBelow />
                           </div>
                           <div className="text-right">
                             <p className="text-lg font-semibold text-foreground">

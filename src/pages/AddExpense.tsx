@@ -6,14 +6,14 @@ import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ExpenseForm } from "@/components/expense/ExpenseForm";
-import { getGroup, addExpense, type Group } from "@/lib/storage";
+import { getGroup, addExpense, GroupWithMembers } from "@/lib/storage";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AddExpensePage() {
   const { groupId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [group, setGroup] = useState<Group | undefined>();
+  const [group, setGroup] = useState<GroupWithMembers | undefined>();
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 

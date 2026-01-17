@@ -5,28 +5,26 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserAvatar } from "@/components/ui/UserAvatar";
-import { EXPENSE_CATEGORIES, type CategoryKey, type SubcategoryId, GeneralIcon } from "@/components/icons/CategoryIcons";
+import { EXPENSE_CATEGORIES, type CategoryKey, type SubcategoryId } from "@/components/icons/CategoryIcons";
 import { cn } from "@/lib/utils";
-import { detectCategoryFromDescription, type SplitType, type ExpenseSplit } from "@/lib/storage";
+import { detectCategoryFromDescription, type SplitType, type ExpenseSplit, User } from "@/lib/storage";
 import { Users } from "lucide-react";
 import { ExpenseSchema } from "@/lib/validations/expense.schema";
 import { formatAmount } from "../ui/formatters";
-import { InfoTooltip } from "../ui/info-tooltip";
 import { Textarea } from "../ui/textarea";
 import { SingleSelect } from "../ui/single-select";
 import { CURRENCIES } from "@/constants";
-import { Skeleton } from "../ui/skeleton";
 import { InfoLabel } from "../ui/InfoLabel";
 
 interface ExpenseFormProps {
-  members: string[];
+  members: User[];
   defaultCurrency?: string;
   initialData?: {
     description: string;
     amount: number;
     currency: string;
-    paidBy: string;
-    participants: string[];
+    paidByUserId: string;
+    participantUserIds: string[];
     splits: ExpenseSplit[];
     splitType: SplitType;
     category: CategoryKey;
@@ -36,8 +34,8 @@ interface ExpenseFormProps {
     description: string;
     amount: number;
     currency: string;
-    paidBy: string;
-    participants: string[];
+    paidByUserId: string;
+    participantUserIds: string[];
     splits: ExpenseSplit[];
     splitType: SplitType;
     category: CategoryKey;
@@ -56,14 +54,14 @@ export function ExpenseForm({
   const [description, setDescription] = useState(initialData?.description || "");
   const [amount, setAmount] = useState(initialData?.amount?.toString() || "");
   const [currency, setCurrency] = useState(initialData?.currency || defaultCurrency);
-  const [paidBy, setPaidBy] = useState(initialData?.paidBy || "");
-  const [participants, setParticipants] = useState<string[]>(initialData?.participants || [...members]);
+  const [paidByUserId, setPaidBy] = useState(initialData?.paidByUserId || "");
+  const [participantUserIds, setParticipants] = useState<string[]>(initialData?.participantUserIds || members.map(m => m.id));
   const [category, setCategory] = useState<CategoryKey | "">(initialData?.category || "");
   const [subcategory, setSubcategory] = useState<SubcategoryId>(initialData?.subcategory || "");
   const [splitType, setSplitType] = useState<any>(initialData?.splitType || "equal");
   const [splits, setSplits] = useState<ExpenseSplit[]>(
     initialData?.splits ||
-    members.map((m) => ({ member: m, value: "", amount: "" }))
+    members.map((m) => ({ participantUserId: m.id, value: "", amount: "" }))
   );
 
   const totalAmount = parseFloat(amount) || 0;
@@ -94,36 +92,36 @@ export function ExpenseForm({
 
   const calculateSplits = (
     splitType: SplitType,
-    participants: string[],
+    participantUserIds: string[],
     splits: ExpenseSplit[],
     totalAmount: number
   ): ExpenseSplit[] => {
-    if (!participants.length) return [];
+    if (!participantUserIds.length) return [];
 
-    const splitMap = new Map(splits.map(s => [s.member, s]));
+    const splitMap = new Map(splits.map(s => [s.participantUserId, s]));
 
     // 1️⃣ Equal split
     if (splitType === "equal") {
-      const base = Math.floor((totalAmount / participants.length) * 100) / 100;
-      const remainder = +(totalAmount - base * participants.length).toFixed(2);
+      const base = Math.floor((totalAmount / participantUserIds.length) * 100) / 100;
+      const remainder = +(totalAmount - base * participantUserIds.length).toFixed(2);
 
-      return participants.map((member, index) => ({
-        member,
+      return participantUserIds.map((participantUserId, index) => ({
+        participantUserId,
         value: "",
         amount: (
-          base + (index === participants.length - 1 ? remainder : 0)
+          base + (index === participantUserIds.length - 1 ? remainder : 0)
         ).toFixed(2), // ✅ STRING
       }));
     }
 
     // 2️⃣ Percentage split
     if (splitType === "percentage") {
-      return participants.map((member) => {
-        const existing = splitMap.get(member);
+      return participantUserIds.map((participantUserId) => {
+        const existing = splitMap.get(participantUserId);
         const value = existing?.value ?? "";
 
         return {
-          member,
+          participantUserId,
           value, // ✅ STRING
           amount:
             value === ""
@@ -134,11 +132,11 @@ export function ExpenseForm({
     }
 
     // 3️⃣ Custom split
-    return participants.map((member) => {
-      const existing = splitMap.get(member);
+    return participantUserIds.map((participantUserId) => {
+      const existing = splitMap.get(participantUserId);
 
       return {
-        member,
+        participantUserId,
         value: "",
         amount: existing?.amount ?? "", // ✅ STRING
       };
@@ -168,19 +166,19 @@ export function ExpenseForm({
     setSubcategory(subId);
   };
 
-  // Update splits when participants change
+  // Update splits when participantUserIds change
   useEffect(() => {
     const total = parseFloat(amount) || 0;
 
     setSplits((prev) =>
       calculateSplits(
         splitType,
-        participants,
-        prev.filter((s) => participants.includes(s.member)),
+        participantUserIds,
+        prev.filter((s) => participantUserIds.includes(s.participantUserId)),
         total
       )
     );
-  }, [amount, splitType, participants]);
+  }, [amount, splitType, participantUserIds]);
 
   const toggleParticipant = (member: string) => {
     setParticipants((prev) =>
@@ -189,13 +187,13 @@ export function ExpenseForm({
   };
 
   const selectAllParticipants = () => {
-    setParticipants([...members]);
+    setParticipants(members.map(m => m.id));
   };
 
-  const updateSplitValue = (member: string, value: string | "") => {
+  const updateSplitValue = (participantUserId: string, value: string | "") => {
     setSplits((prev) => {
       const updated = prev.map((s) =>
-        s.member === member
+        s.participantUserId === participantUserId
           ? splitType === "percentage"
             ? { ...s, value }
             : { ...s, amount: value }
@@ -204,7 +202,7 @@ export function ExpenseForm({
 
       return calculateSplits(
         splitType,
-        participants,
+        participantUserIds,
         updated,
         Number(amount) || 0
       );
@@ -218,18 +216,18 @@ export function ExpenseForm({
 
   useEffect(() => {
     if (hasSubmitted) validate();
-  }, [description, paidBy, amount, participants, category]);
+  }, [description, paidByUserId, amount, participantUserIds, category]);
 
   // First, filter the splits
   const validSplits = splits.filter(
     (s) =>
-      participants.includes(s.member) &&
+      participantUserIds.includes(s.participantUserId) &&
       Number(s.amount || 0) > 0
   );
 
-  // Then, filter participants to only those with a valid split
-  const validParticipants = participants.filter((p) =>
-    validSplits.some((s) => s.member === p)
+  // Then, filter participantUserIds to only those with a valid split
+  const validParticipants = participantUserIds.filter((p) =>
+    validSplits.some((s) => s.participantUserId === p)
   );
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -241,8 +239,8 @@ export function ExpenseForm({
       description,
       amount: parseFloat(amount),
       currency,
-      paidBy,
-      participants: validParticipants,
+      paidByUserId,
+      participantUserIds: validParticipants,
       splits: validSplits,
       splitType,
       category: category || "uncategorized",
@@ -250,28 +248,28 @@ export function ExpenseForm({
     });
   };
   const [errors, setErrors] = useState<{
-    paidBy?: string;
+    paidByUserId?: string;
     description?: string;
     amount?: string;
-    participants?: string;
+    participantUserIds?: string;
     category?: string
   }>({});
 
   const validate = () => {
-    const result = ExpenseSchema.safeParse({ description, paidBy, amount, participants, category });
+    const result = ExpenseSchema.safeParse({ description, paidByUserId, amount, participantUserIds, category });
     if (!result.success) {
       const e = result.error.format();
       setErrors({
         description: e.description?._errors[0] || "",
-        paidBy: e.paidBy?._errors[0] || "",
+        paidByUserId: e.paidByUserId?._errors[0] || "",
         amount: e.amount?._errors[0] || "",
-        participants: e.participants?._errors[0] || "",
+        participantUserIds: e.participantUserIds?._errors[0] || "",
         category: e.category?._errors[0] || "",
       });
       return false;
     }
 
-    setErrors({ description: "", paidBy: "", amount: "", participants: "", category: "" });
+    setErrors({ description: "", paidByUserId: "", amount: "", participantUserIds: "", category: "" });
     return true;
   };
 
@@ -400,18 +398,18 @@ export function ExpenseForm({
             <Label required={true}>Paid by</Label>
             <SingleSelect
               items={members.map((m) => ({
-                id: m,
-                label: m,
+                id: m?.id,
+                label: m?.name,
                 showAvatar: true // left icon/avatar
               }))}
-              value={{ itemId: paidBy }}
+              value={{ itemId: paidByUserId }}
               onSelect={(_, itemId) => setPaidBy(itemId)}
               placeholder="Select member..."
               inputPlaceholder="Search members..."
               ariaInvalid={!!errors.category}
             />
-            {errors.paidBy && (
-              <div className="text-xs text-destructive">{errors.paidBy}</div>
+            {errors.paidByUserId && (
+              <div className="text-xs text-destructive">{errors.paidByUserId}</div>
             )}
           </div>
         </div>
@@ -490,11 +488,11 @@ export function ExpenseForm({
 
               <span className={cn(
                 "text-[10px] sm:text-xs font-normal px-1.5 py-0.5 rounded-full whitespace-nowrap transition-colors",
-                participants.length === 0
+                participantUserIds.length === 0
                   ? "text-destructive bg-destructive/10"
                   : "text-muted-foreground bg-muted"
               )}>
-                {participants.length === 0 ? (
+                {participantUserIds.length === 0 ? (
                   <>
                     {/* Mobile: Short Text */}
                     <span className="sm:hidden">Required</span>
@@ -502,12 +500,12 @@ export function ExpenseForm({
                     <span className="hidden sm:inline">Select at least one</span>
                   </>
                 ) : (
-                  `${participants.length} selected`
+                  `${participantUserIds.length} selected`
                 )}
               </span>
             </div>
 
-            {participants.length !== members.length && (<Button
+            {participantUserIds.length !== members.length && (<Button
               type="button"
               variant="ghost"
               size="sm"
@@ -524,12 +522,12 @@ export function ExpenseForm({
 
           <div className="grid gap-2 max-h-[290px] overflow-y-auto">
             {members.map((member) => {
-              const isSelected = participants.includes(member);
-              const split = splits.find((s) => s.member === member);
+              const isSelected = participantUserIds.includes(member.id);
+              const split = splits.find((s) => s.participantUserId === member.id);
 
               return (
                 <div
-                  key={member}
+                  key={member.id}
                   className={cn(
                     "group relative flex items-center justify-between p-3 rounded-xl border transition-all duration-200",
                     isSelected
@@ -540,11 +538,11 @@ export function ExpenseForm({
                   {/* Clickable Area for Selection */}
                   <button
                     type="button"
-                    onClick={() => toggleParticipant(member)}
+                    onClick={() => toggleParticipant(member.id)}
                     className="flex items-center gap-3 flex-1 text-left"
                   >
                     <div className="relative">
-                      <UserAvatar name={member} />
+                      <UserAvatar name={member.name} />
                       {isSelected && (
                         <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center ring-2 ring-white">
                           <div className="w-full h-full bg-green-500 rounded-full flex items-center justify-center">
@@ -555,7 +553,7 @@ export function ExpenseForm({
                     </div>
                     <div className="flex flex-col">
                       <span className={cn("text-sm font-medium", isSelected ? "text-foreground" : "text-muted-foreground")}>
-                        {member}
+                        {member.name}
                       </span>
                       {/* Show calculated amount in Percentage Mode for better context */}
                       {isSelected && splitType === "percentage" && (
@@ -589,7 +587,7 @@ export function ExpenseForm({
                             postfix={splitType === "percentage" && "%"}
                             value={splitType === "percentage" ? split?.value ?? "" : split?.amount ?? ""}
                             onChange={(e) => {
-                              updateSplitValue(member, e.target.value);
+                              updateSplitValue(member.id, e.target.value);
                             }}
                             className={cn(
                               splitType === "percentage" ? "w-[6rem]" : "w-28"
