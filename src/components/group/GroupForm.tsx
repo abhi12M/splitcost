@@ -1,0 +1,141 @@
+import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Plus, X, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { UserAvatar } from "@/components/ui/UserAvatar";
+import { MEMBERS_MAX, GroupSchema, MemberNameSchema } from "@/lib/validations/group.schema";
+import { CURRENCIES } from "@/constants";
+
+interface GroupFormProps {
+  initialData?: {
+    name: string;
+    currency: string;
+    members: string[];
+  };
+  onSubmit: (data: { name: string; currency: string; members: string[] }) => Promise<void>;
+  submitLabel: string;
+  isSubmitting: boolean;
+}
+
+export function GroupForm({ initialData, onSubmit, submitLabel, isSubmitting }: GroupFormProps) {
+  const [groupName, setGroupName] = useState(initialData?.name || "");
+  const [currency, setCurrency] = useState(initialData?.currency || "INR");
+  const [members, setMembers] = useState<string[]>(initialData?.members || []);
+  const [newMember, setNewMember] = useState("");
+  const [errors, setErrors] = useState<{
+    groupName?: string;
+    members?: string;
+    memberName?: string;
+    memberExists?: string;
+  }>({});
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+
+  const validate = () => {
+    const result = GroupSchema.safeParse({ groupName, members });
+    if (!result.success) {
+      const e = result.error.format();
+      setErrors({
+        groupName: e.groupName?._errors[0],
+        members: e.members?._errors[0],
+      });
+      return false;
+    }
+    setErrors({});
+    return true;
+  };
+
+  useEffect(() => {
+    if (hasSubmitted) validate();
+  }, [groupName, members]);
+
+  const handleAddMember = () => {
+    const result = MemberNameSchema.safeParse(newMember);
+    if (!result.success) {
+      setErrors(prev => ({ ...prev, memberName: result.error.issues[0].message }));
+      return;
+    }
+    if (members.includes(newMember.trim())) {
+      setErrors(prev => ({ ...prev, memberExists: "Member already added." }));
+      return;
+    }
+    setMembers([...members, newMember.trim()]);
+    setNewMember("");
+    setErrors(prev => ({ ...prev, memberName: undefined, memberExists: undefined }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setHasSubmitted(true);
+    if (!validate()) return;
+    await onSubmit({ name: groupName, currency, members });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-2">
+        <Label htmlFor="groupName">Group Name<span className="text-destructive">*</span></Label>
+        <Input
+          id="groupName"
+          value={groupName}
+          onChange={(e) => setGroupName(e.target.value)}
+          placeholder="e.g., Paris Trip 2024"
+        />
+        {errors.groupName && <span className="text-xs text-destructive">{errors.groupName}</span>}
+      </div>
+
+      <div className="space-y-2">
+        <Label>Default Currency</Label>
+        <Select value={currency} onValueChange={setCurrency}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {CURRENCIES.map((curr) => (
+              <SelectItem key={curr.code} value={curr.code}>
+                {curr.symbol} - {curr.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-3">
+        <Label>Members <span className="text-destructive">*</span></Label>
+        <div className="flex gap-2">
+          <Input
+            placeholder={members.length >= MEMBERS_MAX ? "Max reached" : "Enter name"}
+            value={newMember}
+            onChange={(e) => setNewMember(e.target.value)}
+            disabled={members.length >= MEMBERS_MAX}
+          />
+          <Button type="button" variant="outline" size="icon" onClick={handleAddMember} disabled={!newMember || members.length >= MEMBERS_MAX}>
+            <Plus className="w-4 h-4" />
+          </Button>
+        </div>
+        {errors.members && <p className="text-xs text-destructive">{errors.members}</p>}
+        {errors.memberName && <p className="text-xs text-destructive">{errors.memberName}</p>}
+        {errors.memberExists && <p className="text-xs text-destructive">{errors.memberExists}</p>}
+
+        <div className="flex flex-wrap gap-2 max-h-[120px] overflow-y-auto p-1">
+          <AnimatePresence>
+            {members.map((m) => (
+              <motion.div key={m} layout initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} className="flex items-center gap-2 bg-background border rounded-full pl-1 pr-1.5 py-1">
+                <UserAvatar name={m} className="h-6 w-6" />
+                <span className="text-xs font-medium">{m}</span>
+                <button type="button" onClick={() => setMembers(members.filter(name => name !== m))} className="hover:text-destructive">
+                  <X className="w-3 h-3" />
+                </button>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+      </div>
+
+      <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+        {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+        {submitLabel}
+      </Button>
+    </form>
+  );
+}
