@@ -61,7 +61,7 @@ export function ExpenseForm({
   const [splitType, setSplitType] = useState<any>(initialData?.splitType || "equal");
   const [splits, setSplits] = useState<ExpenseSplit[]>(
     initialData?.splits ||
-    members.map((m) => ({ participantUserId: m.id, value: "", amount: "" }))
+    members.map((m) => ({ participantUserId: m.id, value: null, amount: null }))
   );
 
   const totalAmount = parseFloat(amount) || 0;
@@ -107,10 +107,10 @@ export function ExpenseForm({
 
       return participantUserIds.map((participantUserId, index) => ({
         participantUserId,
-        value: "",
-        amount: (
+        value: null,
+        amount: Number((
           base + (index === participantUserIds.length - 1 ? remainder : 0)
-        ).toFixed(2), // ✅ STRING
+        ).toFixed(2)), // ✅ STRING
       }));
     }
 
@@ -118,15 +118,15 @@ export function ExpenseForm({
     if (splitType === "percentage") {
       return participantUserIds.map((participantUserId) => {
         const existing = splitMap.get(participantUserId);
-        const value = existing?.value ?? "";
+        const value = existing?.value ?? null;
 
         return {
           participantUserId,
           value, // ✅ STRING
           amount:
-            value === ""
-              ? ""
-              : ((totalAmount * Number(value)) / 100).toFixed(2), // ✅ STRING
+            value === null
+              ? null
+              : Number(((totalAmount * Number(value)) / 100).toFixed(2)), // ✅ STRING
         };
       });
     }
@@ -137,8 +137,8 @@ export function ExpenseForm({
 
       return {
         participantUserId,
-        value: "",
-        amount: existing?.amount ?? "", // ✅ STRING
+        value: null,
+        amount: existing?.amount ?? null, // ✅ STRING
       };
     });
   };
@@ -190,7 +190,7 @@ export function ExpenseForm({
     setParticipants(members.map(m => m.id));
   };
 
-  const updateSplitValue = (participantUserId: string, value: string | "") => {
+  const updateSplitValue = (participantUserId: string, value: number | null) => {
     setSplits((prev) => {
       const updated = prev.map((s) =>
         s.participantUserId === participantUserId
@@ -587,7 +587,7 @@ export function ExpenseForm({
                             postfix={splitType === "percentage" && "%"}
                             value={splitType === "percentage" ? split?.value ?? "" : split?.amount ?? ""}
                             onChange={(e) => {
-                              updateSplitValue(member.id, e.target.value);
+                              updateSplitValue(member.id,e.target.value ? Number(e.target.value):null);
                             }}
                             className={cn(
                               splitType === "percentage" ? "w-[6rem]" : "w-28"

@@ -23,8 +23,8 @@ function parseSplits(data: Json | undefined | null): ExpenseSplit[] {
 
 export interface ExpenseSplit {
   participantUserId: string;//user id
-  value: string;
-  amount: string;
+  value: number|null;
+  amount: number|null;
 }
 
 export interface Expense {
