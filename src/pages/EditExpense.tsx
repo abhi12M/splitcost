@@ -6,7 +6,7 @@ import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ExpenseForm } from "@/components/expense/ExpenseForm";
-import { getGroup, getExpense, updateExpense, deleteExpense, GroupResponse, ExpenseResponse } from "@/lib/storage";
+import { getGroup, getExpense, updateExpense, deleteExpense, GroupResponse, ExpenseResponse, editExpense } from "@/lib/storage";
 import { useToast } from "@/hooks/use-toast";
 
 export default function EditExpensePage() {
@@ -20,24 +20,17 @@ export default function EditExpensePage() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (groupId && expenseId) {
-        setLoading(true);
-        try {
-          const [fetchedGroup, fetchedExpense] = await Promise.all([
-            getGroup(groupId),
-            getExpense(groupId, expenseId),
-          ]);
-          setGroup(fetchedGroup);
-          setExpense(fetchedExpense);
-        } catch (error) {
-          console.error("Error fetching data:", error);
-        } finally {
-          setLoading(false);
-        }
-      }
-    };
-    fetchData();
+    if (!groupId || !expenseId) return;
+    setLoading(true);
+
+    editExpense(groupId,expenseId)
+      .then((details) => {
+        if (!details) return;
+
+        setGroup(details.group);
+        setExpense(details.expense);
+      })
+      .finally(() => setLoading(false));
   }, [groupId, expenseId]);
 
   if (loading) {

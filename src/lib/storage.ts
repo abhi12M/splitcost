@@ -115,6 +115,17 @@ export interface GroupResponse {//group view i.e; dashboard
   members: User[];
 }
 
+export interface EditExpenseResponse {//group view i.e; dashboard
+  group: {
+    id: string;
+    name: string;
+    currency: string;
+    createdAt?: string;
+    members: User[];
+  };
+  expense: ExpenseResponse;
+}
+
 export interface GroupRequest {//group payload i.e; add group
   name: string;
   currency: string;
@@ -368,6 +379,89 @@ export async function loadGroupDetails(//for group dashboard
 
 // ========== EXPENSE OPERATIONS ==========
 
+export async function editExpense(
+  groupId: string,
+  expenseId: string
+): Promise<EditExpenseResponse | null> {
+
+  const { data, error } = await supabase
+    .from("groups")
+    .select(`
+      id,
+      name,
+      currency,
+      members:group_members!inner (
+        user:users (
+          id,
+          name
+        )
+      ),
+      expense:expenses (
+        id,
+        description,
+        amount,
+        currency,
+        paidByUserId:paid_by_user_id,
+        split_type,
+        category,
+        subcategory,
+        date,
+        participants:expense_participants (
+          user:users (
+            id,
+            name
+          ),
+          amount:share_amount,
+          percent:share_percent
+        )
+      )
+    `)
+    .eq("id", groupId)
+    .eq("group_members.is_active", true)
+    .eq("expenses.id", expenseId)
+    .single();
+
+  if (error || !data) {
+    console.error("Error loading group details:", error);
+    return null;
+  }
+
+  const expenseRow = data.expense?.[0];
+  if (!expenseRow) return null;
+
+  return {
+    group: {
+      id: data.id,
+      name: data.name,
+      currency: data.currency,
+      members: data.members.map((gm) => ({
+        id: gm.user.id,
+        name: gm.user.name,
+      }))
+    },
+
+    expense: {
+      id: expenseRow.id,
+      amount: expenseRow.amount,
+      description: expenseRow.description,
+      currency: expenseRow.currency,
+      paidByUserId: expenseRow.paidByUserId,
+      splitType: expenseRow.split_type,  
+      category: expenseRow.category as CategoryKey,
+      subcategory: expenseRow.subcategory,
+      date: expenseRow.date,
+      participants: expenseRow.participants.map((p) => ({
+        user: {
+          id: p.user.id,
+          name: p.user.name
+        },
+        amount: p.amount,
+        percent: p.percent
+      }))
+    }
+  };
+}
+
 // Get single expense edit expense
 // Get single expense (new schema)
 export async function getExpense(
@@ -475,7 +569,7 @@ export async function addExpense(
       category: expenseRow.category as CategoryKey,
       subcategory: expenseRow.subcategory as SubcategoryId,
       date: expenseRow.date,
-      participants, 
+      participants,
       createdAt: expenseRow.created_at,
     };
   } catch (error) {
