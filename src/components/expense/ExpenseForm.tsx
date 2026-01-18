@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { EXPENSE_CATEGORIES, type CategoryKey, type SubcategoryId } from "@/components/icons/CategoryIcons";
 import { cn } from "@/lib/utils";
-import { detectCategoryFromDescription, ExpenseParticipants, ExpenseRequest, ExpenseResponse, type SplitType, User } from "@/lib/storage";
+import { detectCategoryFromDescription, ExpenseFormInterface, ExpenseParticipantsRequest, ExpenseRequest, type SplitType, UserInterface } from "@/lib/storage";
 import { Users } from "lucide-react";
 import { ExpenseSchema } from "@/lib/validations/expense.schema";
 import { formatAmount } from "../ui/formatters";
@@ -17,9 +17,9 @@ import { CURRENCIES } from "@/constants";
 import { InfoLabel } from "../ui/InfoLabel";
 
 interface ExpenseFormProps {
-  members: User[];
+  members: UserInterface[];
   defaultCurrency?: string;
-  initialData?: ExpenseResponse;
+  initialData?: ExpenseFormInterface;
   onSubmit: (data: ExpenseRequest) => void;
   submitLabel: string;
 }
@@ -38,9 +38,9 @@ export function ExpenseForm({
   const [category, setCategory] = useState<CategoryKey | "">(initialData?.category || "");
   const [subcategory, setSubcategory] = useState<SubcategoryId>(initialData?.subcategory || "");
   const [splitType, setSplitType] = useState<any>(initialData?.splitType || "equal");
-  const [participants, setParticipants] = useState<ExpenseParticipants[]>(
+  const [participants, setParticipants] = useState<ExpenseParticipantsRequest[]>(
     initialData?.participants ||
-    members.map((m) => ({ user:{id: m.id}, percent: null, amount: null }))
+    members.map((m) => ({ userId: m.id, percent: null, amount: null }))
   );
 
   const totalAmount = parseFloat(amount) || 0;
@@ -72,12 +72,12 @@ export function ExpenseForm({
   const calculateParticipants = (
     splitType: SplitType,
     selectedUserIds: string[],
-    currentParticipants: ExpenseParticipants[],
+    currentParticipants: ExpenseParticipantsRequest[],
     totalAmount: number
-  ): ExpenseParticipants[] => {
+  ): ExpenseParticipantsRequest[] => {
     if (!selectedUserIds.length) return [];
 
-    const participantMap = new Map(currentParticipants.map(p => [p.user.id, p]));
+    const participantMap = new Map(currentParticipants.map(p => [p.userId, p]));
 
     // 1️⃣ Equal split
     if (splitType === "equal") {
@@ -85,11 +85,11 @@ export function ExpenseForm({
       const remainder = +(totalAmount - base * selectedUserIds.length).toFixed(2);
 
       return selectedUserIds.map((userId, index) => ({
-        user:{id: userId},
+        userId,
         percent: null,
         amount: Number((
           base + (index === selectedUserIds.length - 1 ? remainder : 0)
-        ).toFixed(2)), 
+        ).toFixed(2)),
       }));
     }
 
@@ -100,12 +100,12 @@ export function ExpenseForm({
         const percent = existing?.percent ?? null;
 
         return {
-          user:{id: userId},
-          percent, 
+          userId,
+          percent,
           amount:
             percent === null
               ? null
-              : Number(((totalAmount * Number(percent)) / 100).toFixed(2)), 
+              : Number(((totalAmount * Number(percent)) / 100).toFixed(2)),
         };
       });
     }
@@ -115,9 +115,9 @@ export function ExpenseForm({
       const existing = participantMap.get(userId);
 
       return {
-        user:{id: userId},
+        userId,
         percent: null,
-        amount: existing?.amount ?? null, 
+        amount: existing?.amount ?? null,
       };
     });
   };
@@ -146,19 +146,19 @@ export function ExpenseForm({
   };
 
   // Get selected participant user IDs
-  const selectedUserIds = useMemo(() => participants.map(p => p.user.id), [participants]);
+  const selectedUserIds = useMemo(() => participants.map(p => p.userId), [participants]);
 
   // Update participants when amount or splitType changes
   useEffect(() => {
     const total = parseFloat(amount) || 0;
-    const currentIds = participants.map(p => p.user.id);
+    const currentIds = participants.map(p => p.userId);
     if (!currentIds.length) return;
 
     setParticipants((prev) =>
       calculateParticipants(
         splitType,
         currentIds,
-        prev.filter((p) => currentIds.includes(p.user.id)),
+        prev.filter((p) => currentIds.includes(p.userId)),
         total
       )
     );
@@ -166,20 +166,20 @@ export function ExpenseForm({
 
   const toggleParticipant = (userId: string) => {
     setParticipants((prev) => {
-      const isSelected = prev.some(p => p.user.id === userId);
+      const isSelected = prev.some(p => p.userId === userId);
       if (isSelected) {
         // Remove participant
-        const filtered = prev.filter(p => p.user.id !== userId);
+        const filtered = prev.filter(p => p.userId !== userId);
         // Recalculate for remaining participants
         const total = parseFloat(amount) || 0;
-        return calculateParticipants(splitType, filtered.map(p => p.user.id), filtered, total);
+        return calculateParticipants(splitType, filtered.map(p => p.userId), filtered, total);
       } else {
         // Add participant
-        const newParticipant: ExpenseParticipants = { user:{id: userId}, amount: null, percent: null };
+        const newParticipant: ExpenseParticipantsRequest = { userId, amount: null, percent: null };
         const updated = [...prev, newParticipant];
         // Recalculate for all participants
         const total = parseFloat(amount) || 0;
-        return calculateParticipants(splitType, updated.map(p => p.user.id), updated, total);
+        return calculateParticipants(splitType, updated.map(p => p.userId), updated, total);
       }
     });
   };
@@ -193,7 +193,7 @@ export function ExpenseForm({
   const updateParticipantValue = (userId: string, value: number | null) => {
     setParticipants((prev) => {
       const updated = prev.map((p) =>
-        p.user.id === userId
+        p.userId === userId
           ? splitType === "percentage"
             ? { ...p, percent: value, amount: value === null ? null : Number((((parseFloat(amount) || 0) * Number(value)) / 100).toFixed(2)) }
             : { ...p, amount: value, percent: null }
@@ -516,7 +516,7 @@ export function ExpenseForm({
           <div className="grid gap-2 max-h-[290px] overflow-y-auto">
             {members.map((member) => {
               const isSelected = selectedUserIds.includes(member.id);
-              const participant = participants.find((p) => p.user.id === member.id);
+              const participant = participants.find((p) => p.userId === member.id);
 
               return (
                 <div

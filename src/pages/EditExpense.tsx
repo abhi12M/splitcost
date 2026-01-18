@@ -6,7 +6,7 @@ import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ExpenseForm } from "@/components/expense/ExpenseForm";
-import { getGroup, getExpense, updateExpense, deleteExpense, GroupResponse, ExpenseResponse, editExpense } from "@/lib/storage";
+import {  updateExpense, deleteExpense, GroupResponse, editExpense, ExpenseFormInterface } from "@/lib/storage";
 import { useToast } from "@/hooks/use-toast";
 
 export default function EditExpensePage() {
@@ -14,7 +14,7 @@ export default function EditExpensePage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [group, setGroup] = useState<GroupResponse | undefined>();
-  const [expense, setExpense] = useState<ExpenseResponse | undefined>();
+  const [expense, setExpense] = useState<ExpenseFormInterface | undefined>();
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
