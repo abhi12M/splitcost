@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AvatarGroup } from "@/components/ui/UserAvatar";
 import { formatCurrency } from "@/lib/avatar-utils";
 import { ReceiptIcon, PlaneIcon, HouseholdIcon, GroceriesIcon } from "@/components/icons/CategoryIcons";
-import { deleteGroup, loadGroupsByIds, GroupOverviewItem } from "@/lib/storage";
+import { deleteGroup, loadGroupsByIds, GroupOverviewItemInterface } from "@/lib/storage";
 import { useToast } from "@/hooks/use-toast";
 import { getEncryptedItem } from "@/lib/localstorage";
 import { APP_NAME, LOCAL_GROUPS_KEY } from "@/lib/constants";
@@ -67,7 +67,7 @@ function GroupCardSkeleton() {
   );
 }
 export default function HomePage() {
-  const [groups, setGroups] = useState<GroupOverviewItem[]>([]);
+  const [groups, setGroups] = useState<GroupOverviewItemInterface[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();

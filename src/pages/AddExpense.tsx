@@ -6,7 +6,7 @@ import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ExpenseForm } from "@/components/expense/ExpenseForm";
-import { getGroup, addExpense, GroupResponse } from "@/lib/storage";
+import { getGroup, addExpense, GroupDashboardInterface, GroupResponse } from "@/lib/storage";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AddExpensePage() {

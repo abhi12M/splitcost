@@ -57,24 +57,23 @@ export type SplitType = "equal" | "percentage" | "custom";
 //   share_percent?: number | null
 //   user_id: string//->user.id
 // }
-
 export interface ExpenseParticipantsRequest {
   userId: string;
   amount: number;
   percent: number | null;//value when splittype percent
 }
-
 export interface ExpenseParticipantsResponse {
   user: UserInterface;
   amount: number;
   percent: number | null;//value when splittype percent
 }
-
-export interface UserInterface {
+export interface GroupResponse {
   id: string;
   name: string;
+  currency: string;
+  members: UserInterface[];
+  createdAt?: string;
 }
-
 export interface ExpenseResponse {
   id: string;
   groupId?: string;
@@ -90,7 +89,17 @@ export interface ExpenseResponse {
   createdAt?: string;
   updatedAt?: string;
 }
-
+export interface ExpenseRequest {
+  amount: number;
+  description: string;
+  currency: string;
+  paidByUserId: string;
+  splitType: SplitType;
+  category: CategoryKey;
+  subcategory: SubcategoryId;
+  date: string;
+  participants: ExpenseParticipantsRequest[];
+}
 export interface ExpenseFormInterface {
   id: string;
   amount: number;
@@ -105,19 +114,7 @@ export interface ExpenseFormInterface {
   createdAt?: string;
   updatedAt?: string;
 }
-
-export interface ExpenseRequest {
-  amount: number;
-  description: string;
-  currency: string;
-  paidByUserId: string;
-  splitType: SplitType;
-  category: CategoryKey;
-  subcategory: SubcategoryId;
-  date: string;
-  participants: ExpenseParticipantsRequest[];
-}
-export interface GroupOverviewItem {//landing page
+export interface GroupOverviewItemInterface {//landing page
   id: string;
   name: string;
   currency: string;
@@ -125,36 +122,20 @@ export interface GroupOverviewItem {//landing page
   expenses: { amount: number }[];
   members: string[];
 }
-
-export interface GroupResponse {//group view i.e; dashboard
+export interface UserInterface {
   id: string;
   name: string;
-  currency: string;
-  createdAt?: string;
-  expenses?: ExpenseResponse[];
-  members: UserInterface[];
 }
-
-export interface EditExpenseResponse {//group view i.e; dashboard
-  group: {
-    id: string;
-    name: string;
-    currency: string;
-    createdAt?: string;
-    members: UserInterface[];
-  };
+export interface GroupDashboardInterface {
+  group: GroupResponse;
+  expenses: ExpenseResponse[];
+}
+export interface EditExpenseInterface {
+  group: GroupResponse;
   expense: ExpenseFormInterface;
 }
-
-export interface GroupRequest {//group payload i.e; add group
-  name: string;
-  currency: string;
-  members: string[];
-}
-
 // ========== GROUP OPERATIONS ==========
-
-// Get a single group
+// Get a single group for add expense page
 export async function getGroup(groupId: string): Promise<GroupResponse | undefined> {
   try {
     const { data, error } = await supabase
@@ -285,7 +266,7 @@ export async function deleteGroup(groupId: string): Promise<boolean> {
 // Load groups by specific IDs for landing page recent groups data
 export async function loadGroupsByIds(
   groupIds: string[]
-): Promise<GroupOverviewItem[]> {
+): Promise<GroupOverviewItemInterface[]> {
   if (groupIds.length === 0) return [];
 
   const { data, error } = await supabase
@@ -323,7 +304,7 @@ export async function loadGroupsByIds(
 
 export async function loadGroupDetails(//for group dashboard 
   groupId: string
-): Promise<GroupResponse | null> {
+): Promise<GroupDashboardInterface | null> {
 
   const { data, error } = await supabase
     .from("groups")
@@ -337,7 +318,7 @@ export async function loadGroupDetails(//for group dashboard
         description,
         amount,
         currency,
-        paidBy:users!expenses_paid_by_user_id_fkey (
+        users!expenses_paid_by_user_id_fkey (
           id,
           name
         ),
@@ -345,17 +326,17 @@ export async function loadGroupDetails(//for group dashboard
         category,
         subcategory,
         date,
-        participants:expense_participants (
-          user:users (
+        expense_participants (
+          users (
             id,
             name
           ),
-          amount:share_amount,
-          percent:share_percent
+          share_amount,
+          share_percent
         )
       ),
       group_members!inner (
-        user:users (
+        users (
           id,
           name
         )
@@ -371,28 +352,34 @@ export async function loadGroupDetails(//for group dashboard
   }
 
   return {
-    id: data.id,
-    name: data.name,
-    currency: data.currency,
-    createdAt: data.created_at,
-    members: data.group_members.map((gm) => ({
-      id: gm.user.id,
-      name: gm.user.name,
-    })),
+    group: {
+      id: data.id,
+      name: data.name,
+      currency: data.currency,
+      createdAt: data.created_at,
+      members: data.group_members.map((gm) => ({
+        id: gm.users.id,
+        name: gm.users.name,
+      })),
+    },
     expenses: (data.expenses || []).map((e) => ({
       id: e.id,
       amount: e.amount,
       description: e.description,
       currency: e.currency,
       paidBy: {
-        id: e.paidBy.id,
-        name: e.paidBy.name,
+        id: e.users.id,
+        name: e.users.name,
       },
       splitType: e.split_type as SplitType,
       category: e.category as CategoryKey,
       subcategory: e.subcategory as SubcategoryId,
       date: e.date,
-      participants: e.participants || []
+      participants: e.expense_participants.map((p) => ({
+        user: { id: p.users.id, name: p.users.name },
+        amount: p.share_amount,
+        percent: p.share_percent
+      }))
     })),
   };
 }
@@ -402,7 +389,7 @@ export async function loadGroupDetails(//for group dashboard
 export async function editExpense(
   groupId: string,
   expenseId: string
-): Promise<EditExpenseResponse | null> {
+): Promise<EditExpenseInterface | null> {
 
   const { data, error } = await supabase
     .from("groups")
@@ -475,7 +462,6 @@ export async function editExpense(
     }
   };
 }
-
 
 // Add expense to a group
 export async function addExpense(

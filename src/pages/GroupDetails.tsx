@@ -35,8 +35,10 @@ import {
   type CategoryKey,
 } from "@/components/icons/CategoryIcons";
 import {
+  GroupDashboardInterface,
   GroupResponse,
   loadGroupDetails,
+  UserInterface,
 } from "@/lib/storage";
 import { SingleSelect } from "@/components/ui/single-select";
 import { toTitleCase } from "@/components/ui/formatters";
@@ -66,7 +68,7 @@ const SORT_OPTIONS = [
    UTILS – MOVE TO UTILS FILE LATER
 ====================================================== */
 function calculateShare(
-  expense: GroupResponse["expenses"][number],
+  expense: GroupDashboardInterface["expenses"][number],
   userId: string
 ): number {
   // Equal split – divide evenly among participants
@@ -85,8 +87,8 @@ function calculateShare(
 }
 
 function calculateBalances(
-  expenses: GroupResponse["expenses"],
-  members: GroupResponse["members"]
+  expenses: GroupDashboardInterface["expenses"],
+  members: UserInterface[]
 ) {
   const balances: Record<string, number> = {};
 
@@ -116,7 +118,7 @@ function calculateBalances(
 
 function calculateSettlements(
   balances: Record<string, number>,
-  members: GroupResponse["members"]
+  members: UserInterface[]
 ) {
   const settlements: {
     fromId: string;
@@ -168,7 +170,7 @@ function calculateSettlements(
   return settlements;
 }
 
-function getGroupTotal(expenses: GroupResponse["expenses"]) {
+function getGroupTotal(expenses: GroupDashboardInterface["expenses"]) {
   return expenses.reduce((sum, e) => sum + e.amount, 0);
 }
 
@@ -261,8 +263,8 @@ function GroupResponsesSkeleton() {
 ====================================================== */
 export default function GroupResponsesPage() {
   const { groupId } = useParams();
-  const [group, setGroup] = useState<GroupResponse | null>(null);
-  const [expenses, setExpenses] = useState<GroupResponse["expenses"]>([]);
+  const [group, setGroup] = useState<GroupDashboardInterface["group"] | null>(null);
+  const [expenses, setExpenses] = useState<GroupDashboardInterface["expenses"]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"list" | "chart">("list");
   // UI state
@@ -284,7 +286,7 @@ export default function GroupResponsesPage() {
       .then((details) => {
         if (!details) return;
 
-        setGroup(details);
+        setGroup(details.group);
         setExpenses(details.expenses || []);
         const existingGroups = getEncryptedItem<string[]>(LOCAL_GROUPS_KEY, []);
         const updatedGroups = Array.from(
@@ -326,7 +328,7 @@ export default function GroupResponsesPage() {
       list.sort((a, b) => a.amount - b.amount);
     }
 
-    const grouped: Record<string, GroupResponse["expenses"]> = {};
+    const grouped: Record<string, GroupDashboardInterface["expenses"]> = {};
     list.forEach((e) => {
       let key = "";
       if (groupBy === "date")
