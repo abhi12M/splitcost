@@ -398,7 +398,7 @@ export async function editExpense(
       name,
       currency,
       group_members!inner (
-        user:users (
+        users (
           id,
           name
         )
@@ -439,8 +439,8 @@ export async function editExpense(
       name: data.name,
       currency: data.currency,
       members: data.group_members.map((gm) => ({
-        id: gm.user.id,
-        name: gm.user.name,
+        id: gm.users.id,
+        name: gm.users.name,
       }))
     },
 

@@ -74,7 +74,11 @@ export function GroupForm({ initialData, onSubmit, submitLabel, isSubmitting }: 
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6" onKeyDown={(e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+      }
+    }}>
       <div className="space-y-2">
         <Label htmlFor="groupName">Group Name<span className="text-destructive">*</span></Label>
         <Input
@@ -108,6 +112,12 @@ export function GroupForm({ initialData, onSubmit, submitLabel, isSubmitting }: 
             value={newMember}
             onChange={(e) => setNewMember(e.target.value)}
             disabled={members.length >= MEMBERS_MAX}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && newMember) {
+                e.preventDefault();
+                handleAddMember();
+              }
+            }}
           />
           <Button type="button" variant="outline" size="icon" onClick={handleAddMember} disabled={!newMember || members.length >= MEMBERS_MAX}>
             <Plus className="w-4 h-4" />
