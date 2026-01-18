@@ -60,19 +60,19 @@ export type SplitType = "equal" | "percentage" | "custom";
 
 export interface ExpenseParticipantsRequest {
   userId: string;
-  amount: number | null;
-  percent?: number | null;
+  amount: number;
+  percent: number | null;//value when splittype percent
 }
 
 export interface ExpenseParticipantsResponse {
   user: UserInterface;
-  amount: number | null;
-  percent?: number | null;
+  amount: number;
+  percent: number | null;//value when splittype percent
 }
 
 export interface UserInterface {
   id: string;
-  name?: string;//optional for paidby and participant in expenseform
+  name: string;
 }
 
 export interface ExpenseResponse {
@@ -96,7 +96,7 @@ export interface ExpenseFormInterface {
   amount: number;
   description: string;
   currency: string;
-  paidByUserId: string;// for add/edit expense i.e; expenseform
+  paidByUserId: string;
   splitType: SplitType;
   category: CategoryKey;
   subcategory: SubcategoryId;
@@ -468,7 +468,7 @@ export async function editExpense(
       subcategory: expenseRow.subcategory,
       date: expenseRow.date,
       participants: expenseRow.expense_participants.map((p) => ({
-        userId:p.user_id,
+        userId: p.user_id,
         amount: p.share_amount,
         percent: p.share_percent
       }))
