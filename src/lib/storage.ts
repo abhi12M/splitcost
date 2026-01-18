@@ -59,14 +59,14 @@ export type SplitType = "equal" | "percentage" | "custom";
 // }
 
 export interface ExpenseParticipants {
-  id: string
+  user: User
   amount: number | null
   percent?: number | null
 }
 
 export interface User {
   id: string;
-  name: string;
+  name?: string;//optional for paidby and participant in expenseform
 }
 
 export interface ExpenseResponse {
@@ -75,7 +75,7 @@ export interface ExpenseResponse {
   amount: number;
   description: string;
   currency: string;
-  paidByUserId?: string;// for edit expense
+  paidByUserId?: string;// for add/edit expense i.e; expenseform
   paidBy?: User; // for group dashboard
   splitType: SplitType;
   category: CategoryKey;
@@ -315,7 +315,10 @@ export async function loadGroupDetails(//for group dashboard
         subcategory,
         date,
         participants:expense_participants (
-          id:user_id,
+          user:users (
+            id,
+            name
+          ),
           amount:share_amount,
           percent:share_percent
         )
@@ -376,8 +379,10 @@ export async function getExpense(
       .from("expenses")
       .select(`
         *,
-        expense_participants (
-          id:user_id,
+        participants:expense_participants (
+          user:users (
+            id
+          ),
           amount:share_amount,
           percent:share_percent
         )
@@ -396,7 +401,7 @@ export async function getExpense(
       amount: Number(data.amount),
       currency: data.currency,
       paidByUserId: data.paid_by_user_id,
-      participants: data.expense_participants || [],
+      participants: data.participants ?? [],
       splitType: data.split_type as SplitType,
       category: data.category as CategoryKey,
       subcategory: data.subcategory as SubcategoryId,
@@ -441,7 +446,7 @@ export async function addExpense(
     if (data.participants?.length) {
       const participantsPayload = data.participants.map((p) => ({
         expense_id: expenseRow.id,
-        user_id: p.id,
+        user_id: p.user.id,
         share_amount: p.amount,
         share_percent: p.percent ?? null,
       }));
@@ -470,7 +475,7 @@ export async function addExpense(
       category: expenseRow.category as CategoryKey,
       subcategory: expenseRow.subcategory as SubcategoryId,
       date: expenseRow.date,
-      participants, // ✅ now included
+      participants, 
       createdAt: expenseRow.created_at,
     };
   } catch (error) {
@@ -520,7 +525,7 @@ export async function updateExpense(
     if (data.participants?.length) {
       const participantsPayload = data.participants.map((p) => ({
         expense_id: expenseId,
-        user_id: p.id,
+        user_id: p.user.id,
         share_amount: p.amount,
         share_percent: p.percent ?? null,
       }));

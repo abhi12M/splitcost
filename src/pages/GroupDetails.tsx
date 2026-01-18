@@ -71,12 +71,12 @@ function calculateShare(
 ): number {
   // Equal split – divide evenly among participants
   if (expense.splitType === "equal") {
-    if (!expense.participants.some((p) => p.id === userId)) return 0;
+    if (!expense.participants.some((p) => p.user.id === userId)) return 0;
     return expense.amount / Math.max(expense.participants.length, 1);
   }
 
   // Custom / percentage splits – look up by participant id
-  const participant = expense.participants?.find((p) => p.id === userId);
+  const participant = expense.participants?.find((p) => p.user.id === userId);
   if (!participant) return 0;
 
   const amount = Number(participant.amount ?? 0);
@@ -102,10 +102,10 @@ function calculateBalances(
     }
 
     expense.participants.forEach((p) => {
-      if (balances[p.id] === undefined) {
-        balances[p.id] = 0;
+      if (balances[p.user.id] === undefined) {
+        balances[p.user.id] = 0;
       }
-      balances[p.id] -= calculateShare(expense, p.id);
+      balances[p.user.id] -= calculateShare(expense, p.user.id);
     });
 
     balances[expense.paidBy.id] += expense.amount;
@@ -312,7 +312,7 @@ export default function GroupResponsesPage() {
           e.subcategory.toLowerCase().includes(q) ||
           e.amount.toString().includes(q) ||
           e.participants.some((p) => {
-            const name = memberMap.get(p.id);
+            const name = memberMap.get(p.user.id);
             return name?.toLowerCase().includes(q);
           })
       );
@@ -742,7 +742,7 @@ ${shareLink}
                                       {/* PARTICIPANTS */}
                                       <AvatarGroup
                                         names={expense.participants.map((p) => {
-                                          const member = group.members.find(m => m.id === p.id);
+                                          const member = group.members.find(m => m.id === p.user.id);
                                           return member?.name || "";
                                         }).filter(Boolean)}
                                         className="mt-2"
