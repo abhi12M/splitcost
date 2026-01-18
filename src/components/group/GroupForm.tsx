@@ -126,20 +126,21 @@ export function GroupForm({ initialData, onSubmit, submitLabel, isSubmitting }: 
         {errors.members && <p className="text-xs text-destructive">{errors.members}</p>}
         {errors.memberName && <p className="text-xs text-destructive">{errors.memberName}</p>}
         {errors.memberExists && <p className="text-xs text-destructive">{errors.memberExists}</p>}
-
-        <div className="flex flex-wrap gap-2 max-h-[120px] overflow-y-auto p-1">
-          <AnimatePresence>
-            {members.map((m) => (
-              <motion.div key={m} layout initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} className="flex items-center gap-2 bg-background border rounded-full pl-1 pr-1.5 py-1">
-                <UserAvatar name={m} className="h-6 w-6" />
-                <span className="text-xs font-medium">{m}</span>
-                <button type="button" onClick={() => setMembers(members.filter(name => name !== m))} className="hover:text-destructive">
-                  <X className="w-3 h-3" />
-                </button>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
+        {members?.length > 0 &&
+          <div className="flex flex-wrap gap-2 max-h-[120px] overflow-y-auto p-1">
+            <AnimatePresence>
+              {members.map((m,index) => (
+                <motion.div key={`${m}-${index}`} layout initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} className="flex items-center gap-2 bg-background border rounded-full pl-1 pr-1.5 py-1">
+                  <UserAvatar name={m} className="h-6 w-6" />
+                  <span className="text-xs font-medium">{m}</span>
+                  <button type="button" onClick={() => setMembers(members.filter(name => name !== m))} className="hover:text-destructive">
+                    <X className="w-3 h-3" />
+                  </button>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        }
       </div>
 
       <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
