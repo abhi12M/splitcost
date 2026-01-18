@@ -91,7 +91,6 @@ export type Database = {
           id: string
           paid_by_user_id: string
           split_type: Database["public"]["Enums"]["split_type"]
-          splits: Json
           subcategory: string
           updated_at: string | null
         }
@@ -107,7 +106,6 @@ export type Database = {
           id?: string
           paid_by_user_id: string
           split_type: Database["public"]["Enums"]["split_type"]
-          splits: Json
           subcategory: string
           updated_at?: string | null
         }
@@ -123,7 +121,6 @@ export type Database = {
           id?: string
           paid_by_user_id?: string
           split_type?: Database["public"]["Enums"]["split_type"]
-          splits?: Json
           subcategory?: string
           updated_at?: string | null
         }

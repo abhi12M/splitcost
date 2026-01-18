@@ -1,134 +1,130 @@
 import { EXPENSE_CATEGORIES, type CategoryKey, type SubcategoryId } from "@/components/icons/CategoryIcons";
 import { supabase } from "@/integrations/supabase/client";
-import type { Json } from "@/integrations/supabase/types";
 
 export type SplitType = "equal" | "percentage" | "custom";
 
+// export interface Expense {
+//   id: string;// UUID
+//   groupId: string;//->group.id
+//   description: string;
+//   amount: number;
+//   currency: string;
+//   paidByUserId: string;//->user.id
+//   splitType: SplitType;
+//   category: CategoryKey;
+//   subcategory: SubcategoryId;
+//   date: Date;
+//   createdBy?: string;//->user.id
+//   createdAt: Date;
+//   updatedAt?: Date;
+// }
 
-// Helper to safely parse splits from database
-function parseSplits(data: Json | undefined | null): ExpenseSplit[] {
-  if (!data) return [];
-  if (typeof data === "string") {
-    try {
-      return JSON.parse(data) as ExpenseSplit[];
-    } catch {
-      return [];
-    }
-  }
-  if (Array.isArray(data)) {
-    return data as unknown as ExpenseSplit[];
-  }
-  return [];
-}
+// export interface User {
+//   id: string;// UUID
+//   name: string;
+//   email?: string;
+//   phone?: string;
+//   avatarUrl?: string;
+//   authProvider?: 'email' | 'google' | 'apple';
+//   isEmailVerified?: boolean;
+//   createdAt: Date;
+//   updatedAt?: Date;
+// }
 
-export interface ExpenseSplit {
-  participantUserId: string;//user id
-  value: number|null;
-  amount: number|null;
-}
 
-export interface Expense {
-  id?: string;// UUID
-  groupId: string;//->group.id
-  description: string;
-  amount: number;
-  currency: string;
-  paidByUserId: string;//->user.id
-  splits: ExpenseSplit[];//jsonb in db
-  splitType: SplitType;
-  category: CategoryKey;
-  subcategory: SubcategoryId;
-  date: Date;
-  createdBy?: string;//->user.id
-  createdAt?: Date;
-  updatedAt?: Date;
+// export interface Group {
+//   id: string;// UUID
+//   name: string;
+//   currency: string;
+//   createdBy: string;//->user.id
+//   createdAt: Date;
+//   updatedAt?: Date;
+// }
+
+// export interface GroupMember {
+//   id: string;//uuid
+//   groupId: string;//->group.id
+//   userId: string;//->user.id
+//   role: 'admin' | 'member';
+//   nickname?: string;
+//   joinedAt: Date;
+//   isActive: boolean;
+// }
+// export interface ExpenseParticipants {
+//   id: string//uuid
+//   expense_id: string//->expense.id
+//   share_amount: number | null
+//   share_percent?: number | null
+//   user_id: string//->user.id
+// }
+
+export interface ExpenseParticipants {
+  id: string
+  amount: number | null
+  percent?: number | null
 }
 
 export interface User {
-  id: string;// UUID
+  id: string;
   name: string;
-  email?: string;
-  phone?: string;
-  avatarUrl?: string;
-  authProvider?: 'email' | 'google' | 'apple';
-  isEmailVerified?: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
 }
 
-export interface Group {
-  id: string;// UUID
-  name: string;
+export interface ExpenseResponse {
+  id: string;
+  groupId?: string;
+  amount: number;
+  description: string;
   currency: string;
-  createdBy: string;//->user.id
-  createdAt: Date;
-  updatedAt?: Date;
+  paidByUserId?: string;// for edit expense
+  paidBy?: User; // for group dashboard
+  splitType: SplitType;
+  category: CategoryKey;
+  subcategory: SubcategoryId;
+  date: string;
+  participants: ExpenseParticipants[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-export interface GroupMember {
-  id: string;//uuid
-  groupId: string;//->group.id
-  userId: string;//->user.id
-  role: 'admin' | 'member';
-  nickname?: string;
-  joinedAt: Date;
-  isActive: boolean;
+export interface ExpenseRequest {
+  amount: number;
+  description: string;
+  currency: string;
+  paidByUserId?: string;
+  splitType: SplitType;
+  category: CategoryKey;
+  subcategory: SubcategoryId;
+  date: string;
+  participants: ExpenseParticipants[];
 }
-export interface ExpenseParticipants {
-  expense_id: string//->expense.id
-  id: string//uuid
-  share_amount?: number | null
-  share_percent?: number | null
-  user_id: string//->user.id
-}
-
 export interface GroupOverviewItem {//landing page
   id: string;
   name: string;
   currency: string;
-  created_at: string;
+  createdAt: string;
   expenses: { amount: number }[];
   members: string[];
 }
 
-export interface GroupDetail {//group view i.e; dashboard
+export interface GroupResponse {//group view i.e; dashboard
   id: string;
   name: string;
   currency: string;
-  created_at: string;
-  expenses: {
-    id: string;
-    amount: number;
-    description: string;
-    currency: string;
-    paidBy: User;
-    splits: ExpenseSplit[];
-    splitType: SplitType;
-    category: CategoryKey;
-    subcategory: SubcategoryId;
-    date: Date;
-    participants: User[];
-  }[];
+  createdAt?: string;
+  expenses?: ExpenseResponse[];
   members: User[];
 }
 
-export interface GroupWithMembers {//for add expense
-  id: string;
+export interface GroupRequest {//group payload i.e; add group
   name: string;
   currency: string;
-  members: User[];
+  members: string[];
 }
 
-export interface EditExpenseInput extends Expense {
-  participantUserIds: string[];
-}
-export interface AddExpenseInput extends Expense {
-  participantUserIds: string[];
-}
 // ========== GROUP OPERATIONS ==========
 
 // Get a single group
-export async function getGroup(groupId: string): Promise<GroupWithMembers | undefined> {
+export async function getGroup(groupId: string): Promise<GroupResponse | undefined> {
   try {
     const { data, error } = await supabase
       .from("groups")
@@ -174,7 +170,7 @@ export async function createGroup(
   name: string,
   currency: string,
   memberNames: string[]
-): Promise<Group> {
+): Promise<GroupResponse> {
 
   // ---------------------------------------------------------
   // Step 1: Create Users (Batch Insert)
@@ -221,7 +217,7 @@ export async function createGroup(
     joined_at: new Date().toISOString()
   }));
 
-  const { error: memberError } = await supabase
+  const { data, error: memberError } = await supabase
     .from('group_members')
     .insert(memberInserts);
 
@@ -235,8 +231,7 @@ export async function createGroup(
     id: newGroup.id,
     name: newGroup.name,
     currency: newGroup.currency,
-    createdBy: newGroup.created_by || "", // Handle null if DB allows it
-    createdAt: new Date(newGroup.created_at),
+    members: data
   };
 }
 
@@ -273,7 +268,6 @@ export async function loadGroupsByIds(
       amount
     ),
     group_members!inner (
-      is_active,
       user:users (
         id,
         name
@@ -291,13 +285,14 @@ export async function loadGroupsByIds(
 
   return (data || []).map((row) => ({
     ...row,
+    createdAt: row.created_at,
     members: row.group_members.map((gm) => gm.user.name),
   }));
 }
 
 export async function loadGroupDetails(//for group dashboard 
   groupId: string
-): Promise<GroupDetail | null> {
+): Promise<GroupResponse | null> {
 
   const { data, error } = await supabase
     .from("groups")
@@ -319,17 +314,13 @@ export async function loadGroupDetails(//for group dashboard
         category,
         subcategory,
         date,
-        splits,
-        expense_participants (
-          user_id,
-          user:users (
-            id,
-            name
-          )
+        participants:expense_participants (
+          id:user_id,
+          amount:share_amount,
+          percent:share_percent
         )
       ),
       group_members!inner (
-        is_active,
         user:users (
           id,
           name
@@ -349,8 +340,11 @@ export async function loadGroupDetails(//for group dashboard
     id: data.id,
     name: data.name,
     currency: data.currency,
-    created_at: data.created_at,
-
+    createdAt: data.created_at,
+    members: data.group_members.map((gm) => ({
+      id: gm.user.id,
+      name: gm.user.name,
+    })),
     expenses: (data.expenses || []).map((e) => ({
       id: e.id,
       amount: e.amount,
@@ -360,22 +354,11 @@ export async function loadGroupDetails(//for group dashboard
         id: e.paidBy.id,
         name: e.paidBy.name,
       },
-      splits: parseSplits(e.splits) ?? [],
-
       splitType: e.split_type as SplitType,
       category: e.category as CategoryKey,
       subcategory: e.subcategory as SubcategoryId,
-      date: new Date(e.date),
-
-      participants: (e.expense_participants || []).map((p) => ({
-        id: p.user.id,
-        name: p.user.name,
-      })),
-    })),
-
-    members: data.group_members.map((gm) => ({
-      id: gm.user.id,
-      name: gm.user.name,
+      date: e.date,
+      participants: e.participants || []
     })),
   };
 }
@@ -387,14 +370,16 @@ export async function loadGroupDetails(//for group dashboard
 export async function getExpense(
   groupId: string,
   expenseId: string
-): Promise<EditExpenseInput | undefined> {
+): Promise<ExpenseResponse | undefined> {
   try {
     const { data, error } = await supabase
       .from("expenses")
       .select(`
         *,
         expense_participants (
-          user_id
+          id:user_id,
+          amount:share_amount,
+          percent:share_percent
         )
       `)
       .eq("id", expenseId)
@@ -404,9 +389,6 @@ export async function getExpense(
     if (error) throw error;
     if (!data) return undefined;
 
-    const participantUserIds =
-      data.expense_participants?.map((p: any) => p.user_id) ?? [];
-
     return {
       id: data.id,
       groupId: data.group_id,
@@ -414,15 +396,12 @@ export async function getExpense(
       amount: Number(data.amount),
       currency: data.currency,
       paidByUserId: data.paid_by_user_id,
-      participantUserIds: participantUserIds,
-      splits: parseSplits(data.splits),
+      participants: data.expense_participants || [],
       splitType: data.split_type as SplitType,
       category: data.category as CategoryKey,
       subcategory: data.subcategory as SubcategoryId,
-      date: new Date(data.date),
-      createdBy: data.created_by ?? undefined,
-      createdAt: data.created_at ? new Date(data.created_at) : undefined,
-      updatedAt: data.updated_at ? new Date(data.updated_at) : undefined,
+      date: data.date,
+      createdAt: data.created_at
     };
   } catch (error) {
     console.error("Error getting expense:", error);
@@ -433,10 +412,9 @@ export async function getExpense(
 // Add expense to a group
 export async function addExpense(
   groupId: string,
-  data: AddExpenseInput
-): Promise<Expense | undefined> {
+  data: ExpenseRequest
+): Promise<ExpenseResponse | undefined> {
   try {
-
     // 1. Insert expense
     const { data: expenseRow, error: expenseError } = await supabase
       .from("expenses")
@@ -447,12 +425,10 @@ export async function addExpense(
           amount: data.amount,
           currency: data.currency,
           paid_by_user_id: data.paidByUserId,
-          splits: data.splits as unknown as Json,
           split_type: data.splitType,
           category: data.category,
           subcategory: data.subcategory,
-          date: new Date().toISOString().split("T")[0],
-          created_by: data.createdBy ?? null,
+          date: new Date().toISOString(),
         },
       ])
       .select()
@@ -460,21 +436,29 @@ export async function addExpense(
 
     if (expenseError) throw expenseError;
 
-    // 2. Insert participants from participantUserIds
-    if (data.participantUserIds?.length) {
-      const participantsPayload = data.participantUserIds.map((userId) => ({
+    // 2. Insert participants + RETURN them
+    let participants;
+    if (data.participants?.length) {
+      const participantsPayload = data.participants.map((p) => ({
         expense_id: expenseRow.id,
-        user_id: userId,
+        user_id: p.id,
+        share_amount: p.amount,
+        share_percent: p.percent ?? null,
       }));
 
-      const { error: participantsError } = await supabase
+      const { data: participantsData, error: participantsError } = await supabase
         .from("expense_participants")
-        .insert(participantsPayload);
+        .insert(participantsPayload)
+        .select();
+
+      participants = participantsData;
 
       if (participantsError) throw participantsError;
+
+      // Map DB rows → domain objects
     }
 
-    // 3. Return domain Expense
+    // 3. Return domain object
     return {
       id: expenseRow.id,
       groupId: expenseRow.group_id,
@@ -482,18 +466,12 @@ export async function addExpense(
       amount: Number(expenseRow.amount),
       currency: expenseRow.currency,
       paidByUserId: expenseRow.paid_by_user_id,
-      splits: parseSplits(expenseRow.splits),
       splitType: expenseRow.split_type as SplitType,
       category: expenseRow.category as CategoryKey,
       subcategory: expenseRow.subcategory as SubcategoryId,
-      date: new Date(expenseRow.date),
-      createdBy: expenseRow.created_by ?? undefined,
-      createdAt: expenseRow.created_at
-        ? new Date(expenseRow.created_at)
-        : undefined,
-      updatedAt: expenseRow.updated_at
-        ? new Date(expenseRow.updated_at)
-        : undefined,
+      date: expenseRow.date,
+      participants, // ✅ now included
+      createdAt: expenseRow.created_at,
     };
   } catch (error) {
     console.error("Error adding expense:", error);
@@ -505,8 +483,8 @@ export async function addExpense(
 export async function updateExpense(
   groupId: string,
   expenseId: string,
-  data: AddExpenseInput
-): Promise<Expense | undefined> {
+  data: ExpenseRequest
+): Promise<ExpenseResponse | undefined> {
   try {
     // 1. Update expense row
     const { data: expenseRow, error: expenseError } = await supabase
@@ -516,13 +494,10 @@ export async function updateExpense(
         amount: data.amount,
         currency: data.currency,
         paid_by_user_id: data.paidByUserId,
-        splits: data.splits as unknown as Json,
         split_type: data.splitType,
         category: data.category,
         subcategory: data.subcategory,
-        date: data.date
-          ? new Date(data.date).toISOString().split("T")[0]
-          : new Date().toISOString().split("T")[0],
+        date: data.date ?? new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
       .eq("id", expenseId)
@@ -540,16 +515,22 @@ export async function updateExpense(
 
     if (deleteError) throw deleteError;
 
+    let participants;
     // 3. Insert updated participants
-    if (data.participantUserIds?.length) {
-      const participantsPayload = data.participantUserIds.map((userId) => ({
+    if (data.participants?.length) {
+      const participantsPayload = data.participants.map((p) => ({
         expense_id: expenseId,
-        user_id: userId,
+        user_id: p.id,
+        share_amount: p.amount,
+        share_percent: p.percent ?? null,
       }));
 
-      const { error: insertError } = await supabase
+      const { data: participantsData, error: insertError } = await supabase
         .from("expense_participants")
-        .insert(participantsPayload);
+        .insert(participantsPayload)
+        .select();
+
+      participants = participantsData;
 
       if (insertError) throw insertError;
     }
@@ -562,18 +543,13 @@ export async function updateExpense(
       amount: Number(expenseRow.amount),
       currency: expenseRow.currency,
       paidByUserId: expenseRow.paid_by_user_id,
-      splits: parseSplits(expenseRow.splits),
       splitType: expenseRow.split_type as SplitType,
       category: expenseRow.category as CategoryKey,
       subcategory: expenseRow.subcategory as SubcategoryId,
-      date: new Date(expenseRow.date),
-      createdBy: expenseRow.created_by ?? undefined,
-      createdAt: expenseRow.created_at
-        ? new Date(expenseRow.created_at)
-        : undefined,
+      date: expenseRow.date,
+      participants,
+      createdAt: expenseRow.created_at,
       updatedAt: expenseRow.updated_at
-        ? new Date(expenseRow.updated_at)
-        : undefined,
     };
   } catch (error) {
     console.error("Error updating expense:", error);

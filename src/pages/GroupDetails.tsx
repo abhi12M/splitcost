@@ -35,8 +35,8 @@ import {
   type CategoryKey,
 } from "@/components/icons/CategoryIcons";
 import {
+  GroupResponse,
   loadGroupDetails,
-  type GroupDetail,
 } from "@/lib/storage";
 import { SingleSelect } from "@/components/ui/single-select";
 import { toTitleCase } from "@/components/ui/formatters";
@@ -66,27 +66,27 @@ const SORT_OPTIONS = [
    UTILS – MOVE TO UTILS FILE LATER
 ====================================================== */
 function calculateShare(
-  expense: GroupDetail["expenses"][number],
+  expense: GroupResponse["expenses"][number],
   userId: string
 ): number {
-  // Equal split – divide evenly among participants if no specific splits
-  if (expense.splitType === "equal" || !expense.splits?.length) {
+  // Equal split – divide evenly among participants
+  if (expense.splitType === "equal") {
     if (!expense.participants.some((p) => p.id === userId)) return 0;
     return expense.amount / Math.max(expense.participants.length, 1);
   }
 
-  // Custom / percentage splits – look up by participantUserId
-  const split = expense.splits?.find((s) => s.participantUserId === userId);
-  if (!split) return 0;
+  // Custom / percentage splits – look up by participant id
+  const participant = expense.participants?.find((p) => p.id === userId);
+  if (!participant) return 0;
 
-  const amount = Number(split.amount ?? 0);
+  const amount = Number(participant.amount ?? 0);
   if (Number.isNaN(amount)) return 0;
   return amount;
 }
 
 function calculateBalances(
-  expenses: GroupDetail["expenses"],
-  members: GroupDetail["members"]
+  expenses: GroupResponse["expenses"],
+  members: GroupResponse["members"]
 ) {
   const balances: Record<string, number> = {};
 
@@ -116,7 +116,7 @@ function calculateBalances(
 
 function calculateSettlements(
   balances: Record<string, number>,
-  members: GroupDetail["members"]
+  members: GroupResponse["members"]
 ) {
   const settlements: {
     fromId: string;
@@ -168,11 +168,11 @@ function calculateSettlements(
   return settlements;
 }
 
-function getGroupTotal(expenses: GroupDetail["expenses"]) {
+function getGroupTotal(expenses: GroupResponse["expenses"]) {
   return expenses.reduce((sum, e) => sum + e.amount, 0);
 }
 
-function GroupDetailsSkeleton() {
+function GroupResponsesSkeleton() {
   return (
     <Layout>
       <div className="container py-6 space-y-6">
@@ -259,10 +259,10 @@ function GroupDetailsSkeleton() {
 /* ======================================================
    COMPONENT
 ====================================================== */
-export default function GroupDetailsPage() {
+export default function GroupResponsesPage() {
   const { groupId } = useParams();
-  const [group, setGroup] = useState<GroupDetail | null>(null);
-  const [expenses, setExpenses] = useState<GroupDetail["expenses"]>([]);
+  const [group, setGroup] = useState<GroupResponse | null>(null);
+  const [expenses, setExpenses] = useState<GroupResponse["expenses"]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"list" | "chart">("list");
   // UI state
@@ -303,6 +303,7 @@ export default function GroupDetailsPage() {
 
     if (search.trim()) {
       const q = search.toLowerCase();
+      const memberMap = group ? new Map(group.members.map(m => [m.id, m.name])) : new Map();
       list = list.filter(
         (e) =>
           e.description.toLowerCase().includes(q) ||
@@ -310,9 +311,10 @@ export default function GroupDetailsPage() {
           e.category.toLowerCase().includes(q) ||
           e.subcategory.toLowerCase().includes(q) ||
           e.amount.toString().includes(q) ||
-          e.participants.some((p) =>
-            p.name.toLowerCase().includes(q)
-          )
+          e.participants.some((p) => {
+            const name = memberMap.get(p.id);
+            return name?.toLowerCase().includes(q);
+          })
       );
     }
 
@@ -324,12 +326,12 @@ export default function GroupDetailsPage() {
       list.sort((a, b) => a.amount - b.amount);
     }
 
-    const grouped: Record<string, GroupDetail["expenses"]> = {};
+    const grouped: Record<string, GroupResponse["expenses"]> = {};
     list.forEach((e) => {
       let key = "";
       if (groupBy === "date")
-        key = e.date instanceof Date
-          ? e.date.toISOString().split("T")[0]
+        key = e.date
+          ? e.date
           : String(e.date);
       if (groupBy === "paidBy") key = e.paidBy.name;
       if (groupBy === "category") key = e.category;
@@ -340,7 +342,7 @@ export default function GroupDetailsPage() {
     });
 
     return grouped;
-  }, [expenses, search, sortBy, groupBy]);
+  }, [expenses, search, sortBy, groupBy, group]);
 
   const chartData = useMemo(() => {
     return Object.entries(groupedExpenses).map(([key, list]) => {
@@ -355,7 +357,7 @@ export default function GroupDetailsPage() {
   }, [groupedExpenses, groupBy, shouldTitleCase]);
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
   if (loading || !group) {
-    return <GroupDetailsSkeleton />;
+    return <GroupResponsesSkeleton />;
   }
 
   const balances = calculateBalances(expenses, group.members);
@@ -739,7 +741,10 @@ ${shareLink}
 
                                       {/* PARTICIPANTS */}
                                       <AvatarGroup
-                                        names={expense.participants.map((p) => p.name)}
+                                        names={expense.participants.map((p) => {
+                                          const member = group.members.find(m => m.id === p.id);
+                                          return member?.name || "";
+                                        }).filter(Boolean)}
                                         className="mt-2"
                                         label=""
                                       />

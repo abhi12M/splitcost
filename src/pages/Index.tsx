@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AvatarGroup } from "@/components/ui/UserAvatar";
 import { formatCurrency } from "@/lib/avatar-utils";
 import { ReceiptIcon, PlaneIcon, HouseholdIcon, GroceriesIcon } from "@/components/icons/CategoryIcons";
-import { deleteGroup, type Group, type Expense, loadGroupsByIds, GroupOverviewItem } from "@/lib/storage";
+import { deleteGroup, loadGroupsByIds, GroupOverviewItem } from "@/lib/storage";
 import { useToast } from "@/hooks/use-toast";
 import { getEncryptedItem } from "@/lib/localstorage";
 import { APP_NAME, LOCAL_GROUPS_KEY } from "@/lib/constants";
@@ -34,10 +34,6 @@ function getGroupIcon(name: string) {
   if (lower.includes("apartment") || lower.includes("house") || lower.includes("rent")) return HouseholdIcon;
   if (lower.includes("grocery") || lower.includes("food")) return GroceriesIcon;
   return ReceiptIcon;
-}
-
-interface GroupWithExpenses extends Group {
-  expenses: Expense[];
 }
 
 function GroupCardSkeleton() {
@@ -82,13 +78,6 @@ export default function HomePage() {
       const groupIds = getEncryptedItem<string[]>(LOCAL_GROUPS_KEY, []);
       // ✅ Fetch only those groups
       const loadedGroups = await loadGroupsByIds(groupIds);
-      // Load expenses for each group
-      // const groupsWithExpenses = await Promise.all(
-      //   loadedGroups.map(async (group) => {
-      //     const expenses = await loadExpenses(group.id);
-      //     return { ...group, expenses };
-      //   })
-      // );
       setGroups(loadedGroups);
     } catch (error) {
       console.error("Error loading groups:", error);

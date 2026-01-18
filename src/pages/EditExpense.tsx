@@ -6,15 +6,15 @@ import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ExpenseForm } from "@/components/expense/ExpenseForm";
-import { getGroup, getExpense, updateExpense, deleteExpense, type Group, type Expense, EditExpenseInput, GroupWithMembers } from "@/lib/storage";
+import { getGroup, getExpense, updateExpense, deleteExpense, GroupResponse, ExpenseResponse } from "@/lib/storage";
 import { useToast } from "@/hooks/use-toast";
 
 export default function EditExpensePage() {
   const { groupId, expenseId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [group, setGroup] = useState<GroupWithMembers | undefined>();
-  const [expense, setExpense] = useState<EditExpenseInput | undefined>();
+  const [group, setGroup] = useState<GroupResponse | undefined>();
+  const [expense, setExpense] = useState<ExpenseResponse | undefined>();
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -142,15 +142,7 @@ export default function EditExpensePage() {
                 members={group.members}
                 defaultCurrency={group.currency}
                 initialData={{
-                  description: expense.description,
-                  amount: expense.amount,
-                  currency: expense.currency,
-                  paidByUserId: expense.paidByUserId,
-                  participantUserIds: expense.participantUserIds,
-                  splits: expense.splits || [],
-                  splitType: expense.splitType || "equal",
-                  category: expense.category,
-                  subcategory: expense.subcategory,
+                  ...expense
                 }}
                 onSubmit={handleSubmit}
                 submitLabel={isSubmitting ? "Saving..." : "Save Changes"}
