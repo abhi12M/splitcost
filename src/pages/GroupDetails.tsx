@@ -461,7 +461,7 @@ ${shareLink}
                   <div className="col-span-12 sm:col-span-5 relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input
-                      className="w-full pl-9 h-10 rounded-md border bg-background"
+                      className="w-full pl-9 h-10 rounded-md border bg-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                       placeholder="Search expenses"
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
@@ -533,7 +533,7 @@ ${shareLink}
                     <button
                       onClick={() => setViewMode("list")}
                       className={cn(
-                        "flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md transition",
+                        "flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                         viewMode === "list"
                           ? "bg-background shadow text-foreground"
                           : "text-muted-foreground hover:text-foreground"
@@ -546,7 +546,7 @@ ${shareLink}
                     <button
                       onClick={() => setViewMode("chart")}
                       className={cn(
-                        "flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md transition",
+                        "flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                         viewMode === "chart"
                           ? "bg-background shadow text-foreground"
                           : "text-muted-foreground hover:text-foreground"

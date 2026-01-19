@@ -412,7 +412,7 @@ export function ExpenseForm({
       <div className="space-y-6">
         {/* 1. Split Type Segmented Control */}
         <div className="space-y-3">
-          <Label>How should this be split?</Label>
+          <Label required={true}>How should this be split?</Label>
 
           <div className="flex w-full p-1 bg-muted/50 rounded-xl border border-border/50">
             {splitTypeData.map(({ type, label, icon: Icon, info }) => {

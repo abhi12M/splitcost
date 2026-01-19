@@ -135,6 +135,7 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
               "aria-[invalid=true]:border-destructive",
               "aria-[invalid=true]:data-[state=open]:border-transparent",
               "data-[state=open]:ring-2 data-[state=open]:ring-ring",
+              "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
               buttonClassName
             )}
           >
