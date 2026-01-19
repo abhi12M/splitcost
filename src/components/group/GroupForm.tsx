@@ -106,41 +106,56 @@ export function GroupForm({ initialData, onSubmit, submitLabel, isSubmitting }: 
 
       <div className="space-y-3">
         <Label>Members <span className="text-destructive">*</span></Label>
-        <div className="flex gap-2">
-          <Input
-            placeholder={members.length >= MEMBERS_MAX ? "Max reached" : "Enter name"}
-            value={newMember}
-            onChange={(e) => setNewMember(e.target.value)}
-            disabled={members.length >= MEMBERS_MAX}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && newMember) {
-                e.preventDefault();
-                handleAddMember();
-              }
-            }}
-          />
-          <Button type="button" variant="outline" size="icon" onClick={handleAddMember} disabled={!newMember || members.length >= MEMBERS_MAX}>
-            <Plus className="w-4 h-4" />
-          </Button>
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <div className="flex-1 relative">
+              <Input
+                placeholder={members.length >= MEMBERS_MAX ? "Max reached" : "Enter name"}
+                value={newMember}
+                onChange={(e) => setNewMember(e.target.value)}
+                disabled={members.length >= MEMBERS_MAX}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && newMember.trim()) {
+                    e.preventDefault();
+                    handleAddMember();
+                  }
+                }}
+              />
+            </div>
+            <Button type="button" variant="outline" size="icon" onClick={handleAddMember} disabled={!newMember.trim() || members.length >= MEMBERS_MAX}>
+              <Plus className="w-4 h-4" />
+            </Button>
+          </div>
+          {errors.members && <p className="text-xs text-destructive">{errors.members}</p>}
+          {errors.memberName && <p className="text-xs text-destructive">{errors.memberName}</p>}
+          {errors.memberExists && <p className="text-xs text-destructive">{errors.memberExists}</p>}
         </div>
-        {errors.members && <p className="text-xs text-destructive">{errors.members}</p>}
-        {errors.memberName && <p className="text-xs text-destructive">{errors.memberName}</p>}
-        {errors.memberExists && <p className="text-xs text-destructive">{errors.memberExists}</p>}
-        {members?.length > 0 &&
+        {members?.length > 0 && (
           <div className="flex flex-wrap gap-2 max-h-[120px] overflow-y-auto p-1">
-            <AnimatePresence>
-              {members.map((m,index) => (
-                <motion.div key={`${m}-${index}`} layout initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} className="flex items-center gap-2 bg-background border rounded-full pl-1 pr-1.5 py-1">
+            <AnimatePresence mode="popLayout">
+              {members.map((m, index) => (
+                <motion.div
+                  key={`${m}-${index}`}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex items-center gap-2 bg-background border rounded-full pl-1 pr-1.5 py-1"
+                >
                   <UserAvatar name={m} className="h-6 w-6" />
                   <span className="text-xs font-medium">{m}</span>
-                  <button type="button" onClick={() => setMembers(members.filter(name => name !== m))} className="hover:text-destructive">
+                  <button
+                    type="button"
+                    onClick={() => setMembers(members.filter(name => name !== m))}
+                    className="hover:text-destructive transition-colors"
+                  >
                     <X className="w-3 h-3" />
                   </button>
                 </motion.div>
               ))}
             </AnimatePresence>
           </div>
-        }
+        )}
       </div>
 
       <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
