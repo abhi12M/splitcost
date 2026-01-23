@@ -44,7 +44,7 @@ import {
 import { SingleSelect } from "@/components/ui/single-select";
 import { toTitleCase } from "@/components/ui/formatters";
 import { toast } from "@/hooks/use-toast";
-import { getEncryptedItem, setEncryptedItem } from "../lib/localstorage";
+import { getEncryptedItem, setEncryptedItem } from "@/lib/localStorage";
 import { LOCAL_GROUPS_KEY } from "@/lib/constants";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";

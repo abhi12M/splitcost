@@ -1,4 +1,3 @@
-"use client";
 import CryptoJS from "crypto-js";
 
 /**
@@ -28,10 +27,8 @@ const decrypt = <T>(cipherText: string): T => {
 
 /**
  * Set encrypted item
- */const isBrowser = typeof window !== "undefined";
-
+ */
 export const setEncryptedItem = <T>(key: string, value: T): void => {
-  if (!isBrowser) return;
   try {
     const encryptedKey = CryptoJS.SHA256(key).toString();
     const encryptedValue = encrypt(value);
@@ -41,8 +38,13 @@ export const setEncryptedItem = <T>(key: string, value: T): void => {
   }
 };
 
-export const getEncryptedItem = <T>(key: string, defaultValue: T): T => {
-  if (!isBrowser) return defaultValue;
+/**
+ * Get encrypted item
+ */
+export const getEncryptedItem = <T>(
+  key: string,
+  defaultValue: T
+): T => {
   try {
     const encryptedKey = CryptoJS.SHA256(key).toString();
     const item = localStorage.getItem(encryptedKey);
@@ -53,13 +55,17 @@ export const getEncryptedItem = <T>(key: string, defaultValue: T): T => {
   }
 };
 
+/**
+ * Remove encrypted item
+ */
 export const removeEncryptedItem = (key: string): void => {
-  if (!isBrowser) return;
   const encryptedKey = CryptoJS.SHA256(key).toString();
   localStorage.removeItem(encryptedKey);
 };
 
+/**
+ * Clear all storage
+ */
 export const clearEncryptedStorage = (): void => {
-  if (!isBrowser) return;
   localStorage.clear();
 };

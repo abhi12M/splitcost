@@ -12,7 +12,7 @@ import { formatCurrency } from "@/lib/avatar-utils";
 import { ReceiptIcon, PlaneIcon, HouseholdIcon, GroceriesIcon } from "@/components/icons/CategoryIcons";
 import { deleteGroup, loadGroupsByIds, GroupOverviewItemInterface } from "@/lib/storage";
 import { useToast } from "@/hooks/use-toast";
-import { getEncryptedItem } from "../lib/localstorage";
+import { getEncryptedItem } from "@/lib/localStorage";
 import { APP_NAME, LOCAL_GROUPS_KEY } from "@/lib/constants";
 import { Skeleton } from "@/components/ui/skeleton";
 
