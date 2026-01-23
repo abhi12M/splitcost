@@ -38,7 +38,6 @@ import {
 } from "@/components/icons/CategoryIcons";
 import {
   GroupDashboardInterface,
-  GroupResponse,
   loadGroupDetails,
   UserInterface,
 } from "@/lib/storage";
@@ -73,19 +72,13 @@ function calculateShare(
   expense: GroupDashboardInterface["expenses"][number],
   userId: string
 ): number {
-  // Equal split – divide evenly among participants
-  if (expense.splitType === "equal") {
-    if (!expense.participants.some((p) => p.user.id === userId)) return 0;
-    return expense.amount / Math.max(expense.participants.length, 1);
-  }
-
-  // Custom / percentage splits – look up by participant id
-  const participant = expense.participants?.find((p) => p.user.id === userId);
+  const participant = expense.participants.find(
+    (p) => p.user.id === userId
+  );
   if (!participant) return 0;
 
-  const amount = Number(participant.amount ?? 0);
-  if (Number.isNaN(amount)) return 0;
-  return amount;
+  const amount = Number(participant.amount);
+  return Number.isNaN(amount) ? 0 : amount;
 }
 
 function calculateBalances(
@@ -94,13 +87,11 @@ function calculateBalances(
 ) {
   const balances: Record<string, number> = {};
 
-  // Initialize balances for all members by userId
   members.forEach((m) => {
     balances[m.id] = 0;
   });
 
   expenses.forEach((expense) => {
-    // Ensure payer is in balances map
     if (balances[expense.paidBy.id] === undefined) {
       balances[expense.paidBy.id] = 0;
     }
@@ -148,8 +139,8 @@ function calculateSettlements(
     .map(([id, balance]) => ({ id, balance }))
     .sort((a, b) => b.balance - a.balance);
 
-  let i = 0,
-    j = 0;
+  let i = 0;
+  let j = 0;
 
   while (i < debtors.length && j < creditors.length) {
     const amount = Math.min(-debtors[i].balance, creditors[j].balance);
@@ -171,6 +162,7 @@ function calculateSettlements(
 
   return settlements;
 }
+
 
 function getGroupTotal(expenses: GroupDashboardInterface["expenses"]) {
   return expenses.reduce((sum, e) => sum + e.amount, 0);
@@ -744,13 +736,15 @@ ${shareLink}
 
                                       {/* PARTICIPANTS */}
                                       <AvatarGroup
-                                        names={expense.participants.map((p) => {
-                                          const member = group.members.find(m => m.id === p.user.id);
-                                          return member?.name || "";
-                                        }).filter(Boolean)}
+                                        names={expense.participants
+                                          .map(p => p.user)          // get the user object
+                                          .filter((u): u is UserInterface => !!u) // type guard to remove null/undefined
+                                          .map(u => u.name)           // map to name
+                                        }
                                         className="mt-2"
                                         label=""
                                       />
+
                                     </div>
 
                                     {/* AMOUNT */}
