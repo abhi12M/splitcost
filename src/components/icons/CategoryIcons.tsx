@@ -311,6 +311,24 @@ export const HotelIcon = ({ className, size = 24, style }: IconProps) => (
   </svg>
 );
 
+export const TravelIcon = ({ className, size = 24, style }: IconProps) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    className={cn(iconStyle, className)}
+    style={style}
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <circle cx="12" cy="12" r="10" />
+    <path d="M6 18l6-12 6 12H6z" />  {/* Simple mountain/peak to represent sightseeing */}
+    <path d="M9 15h6" />              {/* Path/road detail */}
+  </svg>
+);
+
+
 // General/Uncategorized
 export const GeneralIcon = ({ className, size = 24, style }: IconProps) => (
   <svg width={size} height={size} viewBox="0 0 24 24" className={cn(iconStyle, className)} style={style} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -336,16 +354,30 @@ export const EXPENSE_CATEGORIES = {
     color: "category-entertainment",
     subcategories: [
       { id: "games", label: "Games", icon: GameIcon, keywords: ["game", "gaming", "console", "playstation", "xbox", "pc game", "mobile game"] },
-      { id: "movies", label: "Movies", icon: MovieIcon, keywords: ["movie", "cinema", "theatre", "film", "ticket", "imax", "netflix"] },
+      { id: "movies", label: "Movies", icon: MovieIcon, keywords: ["movie", "cinema", "theatre", "film", "imax", "netflix"] },
       { id: "music", label: "Music", icon: MusicIcon, keywords: ["music", "song", "album", "concert", "spotify", "apple music"] },
       { id: "sports", label: "Sports", icon: SportsIcon, keywords: ["sports", "gym", "fitness", "match", "training", "equipment"] },
+      {
+        id: "sightseeing",
+        label: "Sightseeing/Attractions",
+        icon: TravelIcon,
+        keywords: [
+          "taj mahal", "red fort", "amber fort", "gateway of india", "india gate",
+          "lotus temple", "mysore palace", "charminar", "hawa mahal", "sun temple",
+          "park", "zoo", "amusement park", "museum", "fort", "monument", "temple",
+          "historical site", "tourism", "travel", "hill station", "beach", "lake",
+          "palace", "national park", "wildlife sanctuary", "heritage site", "fortress",
+          "sightseeing", "excursion", "trip", "holiday", "vacation"
+        ]
+      }
+
     ],
   },
   food: {
     label: "Food & Drink",
     color: "category-food",
     subcategories: [
-      { id: "dining", label: "Dining Out", icon: DiningIcon, keywords: ["food", "restaurant", "dining", "lunch", "dinner", "cafe", "zomato", "swiggy"] },
+      { id: "dining", label: "Dining Out", icon: DiningIcon, keywords: ["food", "restaurant", "dining", "lunch", "dinner", "cafe", "zomato", "swiggy","tea",'coffee',"chai","samosa","pakoda","dosa","kachodi","khasta"] },
       { id: "groceries", label: "Groceries", icon: GroceriesIcon, keywords: ["groceries", "vegetables", "fruits", "supermarket", "ration", "daily needs", "milk"] },
       { id: "liquor", label: "Liquor", icon: LiquorIcon, keywords: ["liquor", "alcohol", "beer", "wine", "whiskey", "vodka", "bar"] },
     ],
@@ -397,7 +429,7 @@ export const EXPENSE_CATEGORIES = {
       { id: "car", label: "Car", icon: CarIcon, keywords: ["car", "vehicle", "car service", "repair"] },
       { id: "fuel", label: "Gas/Fuel", icon: GasFuelIcon, keywords: ["fuel", "petrol", "diesel", "gas"] },
       { id: "parking", label: "Parking", icon: ParkingIcon, keywords: ["parking", "parking fee"] },
-      { id: "plane", label: "Plane", icon: PlaneIcon, keywords: ["flight", "plane", "air ticket", "airfare"] },
+      { id: "plane", label: "Plane", icon: PlaneIcon, keywords: ["flight", "plane", "airfare"] },
       { id: "taxi", label: "Taxi", icon: TaxiIcon, keywords: ["taxi", "cab", "uber", "ola"] },
       { id: "hotel", label: "Hotel", icon: HotelIcon, keywords: ["hotel", "stay", "lodging", "accommodation"] },
     ],
