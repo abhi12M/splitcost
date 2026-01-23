@@ -22,16 +22,16 @@ export function InfoLabel({ label, info, className }: InfoLabelProps) {
             {/* Mobile */}
             <Dialog.Root>
                 <Dialog.Trigger asChild>
-                    <button
-                        type="button"
+                    <span
                         className={cn(
-                            "inline-flex sm:hidden items-center underline decoration-dotted underline-offset-4",
+                            "inline-flex sm:hidden items-center underline decoration-dotted underline-offset-4 cursor-pointer",
                             className
                         )}
                     >
                         {label}
-                    </button>
+                    </span>
                 </Dialog.Trigger>
+
 
                 <Dialog.Portal>
                     <Dialog.Overlay className="fixed inset-0 bg-black/40 z-50 animate-in fade-in" />

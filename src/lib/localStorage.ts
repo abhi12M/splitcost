@@ -3,9 +3,9 @@ import CryptoJS from "crypto-js";
 /**
  * ⚠️ IMPORTANT:
  * Move this secret to .env in real projects
- * VITE_STORAGE_SECRET=my-secret-key
+ * NEXT_PUBLIC_STORAGE_SECRET=my-secret-key
  */
-const SECRET_KEY = import.meta.env.VITE_STORAGE_SECRET || "default-secret";
+const SECRET_KEY = process.env.NEXT_PUBLIC_STORAGE_SECRET || "default-secret";
 
 /**
  * Encrypt any value

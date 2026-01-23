@@ -1,3 +1,4 @@
+"use client";
 import { motion } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
 import { APP_NAME } from "@/lib/constants";

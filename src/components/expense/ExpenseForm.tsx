@@ -461,7 +461,9 @@ export function ExpenseForm({
                   "h-full transition-all duration-500 ease-out rounded-full",
                   validationState.isValid ? "bg-green-500" : "bg-primary"
                 )}
-                style={{ width: `${Math.min(validationState.percentageOfTotal, 100)}%` }}
+                style={{
+                  width: `${Math.min(validationState.percentageOfTotal ?? 0, 100)}%`
+                }}
               />
             </div>
           </div>
@@ -577,7 +579,7 @@ export function ExpenseForm({
                             precision={2}
                             placeholder="1.00"
                             showHelper={false}
-                            postfix={splitType === "percentage" && "%"}
+                            postfix={splitType === "percentage" ? "%" : undefined}
                             value={splitType === "percentage" ? participant?.percent ?? "" : participant?.amount ?? ""}
                             onChange={(e) => {
                               updateParticipantValue(member.id, e.target.value ? Number(e.target.value) : null);

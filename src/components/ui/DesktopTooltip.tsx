@@ -6,9 +6,9 @@ export function DesktopTooltip({ content }: { content: string }) {
     <Tooltip.Provider delayDuration={150}>
       <Tooltip.Root>
         <Tooltip.Trigger asChild>
-          <button type="button">
+          <span className="inline-flex cursor-help">
             <Info className="w-3.5 h-3.5 text-muted-foreground" />
-          </button>
+          </span>
         </Tooltip.Trigger>
 
         <Tooltip.Portal>

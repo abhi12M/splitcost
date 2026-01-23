@@ -1,5 +1,7 @@
+"use client";
+
 import { useState, useEffect, useMemo } from "react";
-import { useParams, Link } from "react-router-dom";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import {
@@ -261,8 +263,7 @@ function GroupResponsesSkeleton() {
 /* ======================================================
    COMPONENT
 ====================================================== */
-export default function GroupResponsesPage() {
-  const { groupId } = useParams();
+export default function GroupResponsesPage({ groupId }: { groupId: string }) {
   const [group, setGroup] = useState<GroupDashboardInterface["group"] | null>(null);
   const [expenses, setExpenses] = useState<GroupDashboardInterface["expenses"]>([]);
   const [loading, setLoading] = useState(true);
@@ -370,7 +371,7 @@ export default function GroupResponsesPage() {
     0
   );
 
-  const shareLink = `${window.location.origin}/group/${groupId}`;
+  const shareLink = `${typeof window !== "undefined" ? window.location.origin : ""}/group/${groupId}`;
 
   type CopyType = "settlement" | "link";
 
@@ -432,7 +433,7 @@ ${shareLink}
         {/* HEADER */}
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon-sm" asChild>
-            <Link to="/">
+            <Link href="/">
               <ArrowLeft />
             </Link>
           </Button>
@@ -559,7 +560,7 @@ ${shareLink}
 
                   {/* Add Button */}
                   <Button asChild size="sm">
-                    <Link to={`/group/${groupId}/add-expense`}>
+                    <Link href={`/group/${groupId}/add-expense`}>
                       <Plus className="w-4 h-4" />
                       <span className="hidden sm:inline">Add</span>
                     </Link>
@@ -630,7 +631,7 @@ ${shareLink}
                     </div>
 
                     <Button asChild size="sm" className="shrink-0">
-                      <Link to={`/group/${groupId}/add-expense`}>
+                      <Link href={`/group/${groupId}/add-expense`}>
                         <Plus className="w-4 h-4" />
                         Add first expense
                       </Link>
@@ -701,7 +702,7 @@ ${shareLink}
                                   className="group relative p-4 border-b last:border-b-0 hover:bg-muted/50 transition-colors"
                                 >
                                   {/* ✏️ EDIT ICON */}
-                                  <Link to={`/group/${groupId}/edit-expense/${expense.id}`}>
+                                  <Link href={`/group/${groupId}/edit-expense/${expense.id}`}>
                                     <button
                                       // onClick={() => onEditExpense(expense)}
                                       className="absolute right-4 top-4 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition text-muted-foreground hover:text-foreground"

@@ -59,12 +59,12 @@ export type SplitType = "equal" | "percentage" | "custom";
 // }
 export interface ExpenseParticipantsRequest {
   userId: string;
-  amount: number;
+  amount: number | null;
   percent: number | null;//value when splittype percent
 }
 export interface ExpenseParticipantsResponse {
   user: UserInterface;
-  amount: number;
+  amount: number| null;
   percent: number | null;//value when splittype percent
 }
 export interface GroupResponse {
@@ -243,7 +243,7 @@ export async function createGroup(
     id: newGroup.id,
     name: newGroup.name,
     currency: newGroup.currency,
-    members: data
+    members: newUsers
   };
 }
 
@@ -296,8 +296,11 @@ export async function loadGroupsByIds(
   }
 
   return (data || []).map((row) => ({
-    ...row,
+    id: row.id,
+    name: row.name,
+    currency: row.currency,
     createdAt: row.created_at,
+    expenses: row.expenses,
     members: row.group_members.map((gm) => gm.user.name),
   }));
 }

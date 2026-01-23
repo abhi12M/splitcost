@@ -1,5 +1,7 @@
+"use client";
+
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Users } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
@@ -10,7 +12,7 @@ import { getEncryptedItem, setEncryptedItem } from "@/lib/localstorage";
 import { LOCAL_CURRENCY_KEY, LOCAL_GROUPS_KEY } from "@/lib/constants";
 
 export default function CreateGroupPage() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const defaultCurrency = getEncryptedItem(LOCAL_CURRENCY_KEY, "INR");
 
@@ -26,7 +28,7 @@ export default function CreateGroupPage() {
       }
       setEncryptedItem(LOCAL_CURRENCY_KEY, data.currency);
       
-      navigate(`/group/${group.id}`);
+      router.push(`/group/${group.id}`);
     } catch (error) {
       console.error(error);
       setIsSubmitting(false);
@@ -36,7 +38,7 @@ export default function CreateGroupPage() {
   return (
     <Layout>
       <div className="container py-8 max-w-xl">
-        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-6">
+        <Button variant="ghost" onClick={() => router.back()} className="mb-6">
           <ArrowLeft className="mr-2 h-4 w-4" /> Back
         </Button>
         <Card>

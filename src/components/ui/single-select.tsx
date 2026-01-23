@@ -1,3 +1,4 @@
+"use client";
 import React, { useState } from "react";
 import {
   Popover,
@@ -184,7 +185,7 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
         // avoidCollisions={false}
       >
         <Command>
-          {(items?.length >= 8 || groups) && (
+          {(items && items?.length >= 8 || groups) && (
             <CommandInput placeholder={inputPlaceholder} />
           )}
 

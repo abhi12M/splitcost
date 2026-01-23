@@ -1,5 +1,8 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Trash2, Loader2 } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
@@ -9,9 +12,8 @@ import { ExpenseForm } from "@/components/expense/ExpenseForm";
 import {  updateExpense, deleteExpense, GroupResponse, editExpense, ExpenseFormInterface } from "@/lib/storage";
 import { useToast } from "@/hooks/use-toast";
 
-export default function EditExpensePage() {
-  const { groupId, expenseId } = useParams();
-  const navigate = useNavigate();
+export default function EditExpensePage({ groupId, expenseId }: { groupId: string; expenseId: string }) {
+  const router = useRouter();
   const { toast } = useToast();
   const [group, setGroup] = useState<GroupResponse | undefined>();
   const [expense, setExpense] = useState<ExpenseFormInterface | undefined>();
@@ -49,7 +51,7 @@ export default function EditExpensePage() {
         <div className="container py-12 text-center">
           <p className="text-muted-foreground">Expense not found</p>
           <Button asChild className="mt-4">
-            <Link to="/">Go Home</Link>
+            <Link href="/">Go Home</Link>
           </Button>
         </div>
       </Layout>
@@ -64,7 +66,7 @@ export default function EditExpensePage() {
         title: "Expense updated",
         description: "Your changes have been saved",
       });
-      navigate(`/group/${groupId}`);
+      router.push(`/group/${groupId}`);
     } catch (error) {
       console.error("Error updating expense:", error);
       toast({
@@ -84,7 +86,7 @@ export default function EditExpensePage() {
         title: "Expense deleted",
         description: "The expense has been removed",
       });
-      navigate(`/group/${groupId}`);
+      router.push(`/group/${groupId}`);
     } catch (error) {
       console.error("Error deleting expense:", error);
       toast({
@@ -100,7 +102,7 @@ export default function EditExpensePage() {
     <Layout>
       <div className="container py-6 md:py-8 max-w-2xl">
         <Button variant="ghost" size="sm" asChild className="mb-4">
-          <Link to={`/group/${groupId}`}>
+          <Link href={`/group/${groupId}`}>
             <ArrowLeft className="w-4 h-4" />
             Back to group
           </Link>

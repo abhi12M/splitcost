@@ -1,5 +1,7 @@
+"use client";
+import { useRouter } from "next/navigation";
+import Link from "next/link"
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Plus, Users, ArrowRight, Trash2, Loader2 } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
@@ -70,7 +72,7 @@ export default function HomePage() {
   const [groups, setGroups] = useState<GroupOverviewItemInterface[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const navigate = useNavigate();
+  const router = useRouter();
   const fetchGroups = async () => {
     setLoading(true);
     try {
@@ -133,13 +135,13 @@ export default function HomePage() {
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild size="lg" className="text-base">
-                <Link to="/create-group">
+                <Link href="/create-group">
                   <Plus className="w-5 h-5" />
                   Create New Group
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="text-base">
-                <Link to="/faq">
+                <Link href="/faq">
                   Learn More
                   <ArrowRight className="w-5 h-5" />
                 </Link>
@@ -179,7 +181,7 @@ export default function HomePage() {
                 <p className="text-muted-foreground">Recent expense groups</p>
               </div>
               <Button asChild variant="ghost" size="sm">
-                <Link to="/create-group">
+                <Link href="/create-group">
                   <Plus className="w-4 h-4" />
                   New Group
                 </Link>
@@ -195,7 +197,7 @@ export default function HomePage() {
                 const IconComponent = getGroupIcon(group.name);
                 const totalExpenses = group?.expenses?.reduce((sum, e) => sum + (e?.amount || 0), 0);
                 return (
-                  <motion.div key={group.id} variants={itemVariants} onClick={() => navigate(`/group/${group.id}`)} >
+                  <motion.div key={group.id} variants={itemVariants} onClick={() => router.push(`/group/${group.id}`)} >
                     <Card hover className="h-full group">
                       <CardHeader>
                         <div className="flex items-start justify-between">
@@ -233,7 +235,7 @@ export default function HomePage() {
 
               {/* Create New Group Card */}
               <motion.div variants={itemVariants}>
-                <Link to="/create-group">
+                <Link href="/create-group">
                   <Card
                     hover
                     className="h-full border-dashed border-2 bg-transparent hover:bg-muted/50"

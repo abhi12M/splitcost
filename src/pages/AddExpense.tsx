@@ -1,17 +1,19 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ExpenseForm } from "@/components/expense/ExpenseForm";
-import { getGroup, addExpense, GroupDashboardInterface, GroupResponse } from "@/lib/storage";
+import { getGroup, addExpense, GroupResponse } from "@/lib/storage";
 import { useToast } from "@/hooks/use-toast";
 
-export default function AddExpensePage() {
-  const { groupId } = useParams();
-  const navigate = useNavigate();
+export default function AddExpensePage({ groupId }: { groupId: string }) {
+  const router = useRouter();
   const { toast } = useToast();
   const [group, setGroup] = useState<GroupResponse | undefined>();
   const [loading, setLoading] = useState(true);
@@ -50,7 +52,7 @@ export default function AddExpensePage() {
         <div className="container py-12 text-center">
           <p className="text-muted-foreground">Group not found</p>
           <Button asChild className="mt-4">
-            <Link to="/">Go Home</Link>
+            <Link href="/">Go Home</Link>
           </Button>
         </div>
       </Layout>
@@ -65,7 +67,7 @@ export default function AddExpensePage() {
         title: "Expense added",
         description: "Your expense has been saved",
       });
-      navigate(`/group/${groupId}`);
+      router.push(`/group/${groupId}`);
     } catch (error) {
       console.error("Error adding expense:", error);
       toast({
@@ -81,7 +83,7 @@ export default function AddExpensePage() {
     <Layout>
       <div className="container py-6 md:py-8 max-w-2xl">
         <Button variant="ghost" size="sm" asChild className="mb-4">
-          <Link to={`/group/${groupId}`}>
+          <Link href={`/group/${groupId}`}>
             <ArrowLeft className="w-4 h-4" />
             Back to group
           </Link>
