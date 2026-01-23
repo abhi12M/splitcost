@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { GroupForm } from "@/components/group/GroupForm";
 import { createGroup } from "@/lib/storage";
-import { getEncryptedItem, setEncryptedItem } from "@/lib/localstorage";
+import { getEncryptedItem, setEncryptedItem } from "../lib/localstorage";
 import { LOCAL_CURRENCY_KEY, LOCAL_GROUPS_KEY } from "@/lib/constants";
 
 export default function CreateGroupPage() {
