@@ -64,7 +64,7 @@ export interface ExpenseParticipantsRequest {
 }
 export interface ExpenseParticipantsResponse {
   user: UserInterface;
-  amount: number| null;
+  amount: number | null;
   percent: number | null;//value when splittype percent
 }
 export interface GroupResponse {
@@ -377,7 +377,7 @@ export async function loadGroupDetails(//for group dashboard
       splitType: e.split_type as SplitType,
       category: e.category as CategoryKey,
       subcategory: e.subcategory as SubcategoryId,
-      date: e.date,
+      date: String(e.date),
       participants: e.expense_participants.map((p) => ({
         user: { id: p.users.id, name: p.users.name },
         amount: p.share_amount,
@@ -485,7 +485,7 @@ export async function addExpense(
           split_type: data.splitType,
           category: data.category,
           subcategory: data.subcategory,
-          date: new Date().toISOString(),
+          date: data.date,
         },
       ])
       .select(`
@@ -528,7 +528,7 @@ export async function addExpense(
       description: expenseRow.description,
       amount: Number(expenseRow.amount),
       currency: expenseRow.currency,
-      paidBy: { id: expenseRow.users.id, name: expenseRow.users.id },
+      paidBy: { id: expenseRow.users.id, name: expenseRow.users.name },
       splitType: expenseRow.split_type as SplitType,
       category: expenseRow.category as CategoryKey,
       subcategory: expenseRow.subcategory as SubcategoryId,
@@ -549,6 +549,7 @@ export async function updateExpense(
   data: ExpenseRequest
 ): Promise<ExpenseResponse | undefined> {
   try {
+    debugger
     // 1. Update expense row
     const { data: expenseRow, error: expenseError } = await supabase
       .from("expenses")
@@ -560,7 +561,7 @@ export async function updateExpense(
         split_type: data.splitType,
         category: data.category,
         subcategory: data.subcategory,
-        date: data.date ?? new Date().toISOString(),
+        date: String(data.date),
         updated_at: new Date().toISOString(),
       })
       .eq("id", expenseId)
@@ -611,11 +612,11 @@ export async function updateExpense(
       description: expenseRow.description,
       amount: Number(expenseRow.amount),
       currency: expenseRow.currency,
-      paidBy: { id: expenseRow.users.id, name: expenseRow.users.id },
+      paidBy: { id: expenseRow.users.id, name: expenseRow.users.name },
       splitType: expenseRow.split_type as SplitType,
       category: expenseRow.category as CategoryKey,
       subcategory: expenseRow.subcategory as SubcategoryId,
-      date: expenseRow.date,
+      date: String(expenseRow.date),
       participants,
       createdAt: expenseRow.created_at,
       updatedAt: expenseRow.updated_at

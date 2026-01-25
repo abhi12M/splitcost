@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { detectCategoryFromDescription, ExpenseFormInterface, ExpenseParticipantsRequest, ExpenseRequest, type SplitType, UserInterface } from "@/lib/storage";
 import { Users } from "lucide-react";
 import { ExpenseSchema } from "@/lib/validations/expense.schema";
-import { formatAmount } from "../ui/formatters";
+import { formatAmount, formatDateForDB } from "../ui/formatters";
 import { Textarea } from "../ui/textarea";
 import { SingleSelect } from "../ui/single-select";
 import { CURRENCIES } from "@/constants";
@@ -42,7 +42,9 @@ export function ExpenseForm({
     initialData?.participants ||
     members.map((m) => ({ userId: m.id, percent: null, amount: null }))
   );
-
+  const [date, setDate] = useState<Date>(
+    initialData?.date ? new Date(initialData.date) : new Date()
+  );
   const totalAmount = parseFloat(amount) || 0;
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const isFirstRender = useRef(true);
@@ -234,7 +236,7 @@ export function ExpenseForm({
       splitType,
       category: category || "uncategorized",
       subcategory: subcategory || "general",
-      date: initialData?.date || new Date().toISOString(),
+      date: formatDateForDB(date),
     });
   };
   const [errors, setErrors] = useState<{
@@ -399,7 +401,6 @@ export function ExpenseForm({
               onSelect={(_, itemId) => setPaidBy(itemId)}
               placeholder="Select member..."
               inputPlaceholder="Search members..."
-              ariaInvalid={!!errors.category}
             />
             {errors.paidByUserId && (
               <div className="text-xs text-destructive">{errors.paidByUserId}</div>
