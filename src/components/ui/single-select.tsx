@@ -276,7 +276,7 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
                       {placeholder}
                     </span>)
                 )}
-              </button>
+              </button> 
             ) : (
               // ✅ NORMAL DESKTOP BUTTON
               <button
