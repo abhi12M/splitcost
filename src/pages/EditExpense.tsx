@@ -12,6 +12,7 @@ import { ExpenseForm } from "@/components/expense/ExpenseForm";
 import { updateExpense, deleteExpense, GroupResponse, editExpense, ExpenseFormInterface } from "@/lib/storage";
 import { useToast } from "@/hooks/use-toast";
 import ExpenseFormMobile from "@/components/expense/ExpenseFormMobile";
+import { ExpenseFormMobileSkeleton } from "@/components/expense/ExpenseFormMobileSkeleton";
 
 export default function EditExpensePage({ groupId, expenseId }: { groupId: string; expenseId: string }) {
   const router = useRouter();
@@ -38,11 +39,7 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
 
   if (loading) {
     return (
-      <Layout>
-        <div className="container py-12 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-      </Layout>
+      <ExpenseFormMobileSkeleton/>
     );
   }
 
