@@ -170,12 +170,12 @@ export default function ExpenseFormMobile({
       </div>
 
       {/* Main Content */}
-      <div className="pt-14 pb-14 overflow-y-auto flex-1 bg-background">
+      <div className="pt-14 pb-14 flex-1 bg-background">
         <div className="p-4 space-y-5">
           <div className="flex flex-col gap-3 px-5">
             {/* Row 1 */}
             <div className="grid grid-cols-[auto_1fr] gap-2">
-              v1 <SingleSelect
+              <SingleSelect
                 groups={Object.entries(EXPENSE_CATEGORIES).map(([key, cat]) => ({
                   id: key,
                   label: cat.label,
