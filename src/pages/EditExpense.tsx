@@ -63,18 +63,18 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
     setIsSubmitting(true);
     try {
       await updateExpense(groupId!, expenseId!, data);
-      toast({
-        title: "Expense updated",
-        description: "Your changes have been saved",
-      });
+      // toast({
+      //   title: "Expense updated",
+      //   description: "Your changes have been saved",
+      // });
       router.push(`/group/${groupId}`);
     } catch (error) {
       console.error("Error updating expense:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update expense",
-        variant: "destructive",
-      });
+      // toast({
+      //   title: "Error",
+      //   description: "Failed to update expense",
+      //   variant: "destructive",
+      // });
       setIsSubmitting(false);
     }
   };

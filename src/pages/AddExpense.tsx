@@ -64,18 +64,18 @@ export default function AddExpensePage({ groupId }: { groupId: string }) {
     setIsSubmitting(true);
     try {
       await addExpense(groupId!, data);
-      toast({
-        title: "Expense added",
-        description: "Your expense has been saved",
-      });
+      // toast({
+      //   title: "Expense added",
+      //   description: "Your expense has been saved",
+      // });
       router.push(`/group/${groupId}`);
     } catch (error) {
       console.error("Error adding expense:", error);
-      toast({
-        title: "Error",
-        description: "Failed to add expense",
-        variant: "destructive",
-      });
+      // toast({
+      //   title: "Error",
+      //   description: "Failed to add expense",
+      //   variant: "destructive",
+      // });
       setIsSubmitting(false);
     }
   };
