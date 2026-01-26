@@ -8,6 +8,7 @@ import { Input } from "../ui/input";
 import { ExpenseParticipantsRequest, SplitType, UserInterface } from "@/lib/storage";
 import { formatAmount } from "../ui/formatters";
 import { useKeyboardLayout } from "@/hooks/useKeyboardOffset";
+import { useSwipeable } from "react-swipeable";
 
 export interface SplitResult {
     splitType: SplitType;
@@ -281,6 +282,40 @@ export function buildSplitScreenVM(params: {
 export default function SplitScreen(props: SplitScreenProps) {
     const { onClose, amount, currency, members, initialParticipants, splitType, onConfirm } = props;
     const { keyboardOffset } = useKeyboardLayout();
+    const swipeHandlers = useSwipeable({
+        onSwipedLeft: () => {
+            setVM((prev) => ({
+                ...prev,
+                selectedTab: getNextTab(prev.selectedTab, "left"),
+            }));
+        },
+        onSwipedRight: () => {
+            setVM((prev) => ({
+                ...prev,
+                selectedTab: getNextTab(prev.selectedTab, "right"),
+            }));
+        },
+        preventScrollOnSwipe: true,
+        trackTouch: true,
+        delta: 40,
+        onTouchStartOrOnMouseDown: (e) => {
+            const el = e.event.target as HTMLElement;
+            if (el.tagName === "INPUT" || el.closest("input")) {
+                return false;
+            }
+        },
+
+    });
+    const TAB_ORDER: SplitType[] = ["equal", "custom", "percentage"];
+
+    function getNextTab(current: SplitType, dir: "left" | "right"): SplitType {
+        const index = TAB_ORDER.indexOf(current);
+
+        if (dir === "left") {
+            return TAB_ORDER[Math.min(index + 1, TAB_ORDER.length - 1)];
+        }
+        return TAB_ORDER[Math.max(index - 1, 0)];
+    }
 
     const [vm, setVM] = useState<SplitScreenVM>(() =>
         buildSplitScreenVM({
@@ -513,6 +548,7 @@ export default function SplitScreen(props: SplitScreenProps) {
             {/* Scrollable area content participants */}
             <div
                 id="split-scroll-container"
+                {...swipeHandlers}
                 className="fixed left-0 right-0 overflow-y-auto overscroll-contain p-3 space-y-2"
                 style={{
                     top: 112,                 // header + tabs height
