@@ -158,17 +158,19 @@ export default function ExpenseFormMobile({
   return (
     <>
       {/* Main Screen */}
-      <div className="min-h-screen bg-background">
-        <div className="flex items-center justify-between px-4 h-14 border-b">
-          <Link href={`/group/${groupId}`}>
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <span className="font-medium">
-            {initialData ? "Edit expense" : "Add expense"}
-          </span>
-          <Check className="w-5 h-5" onClick={handleSubmit} />
-        </div>
+      {/* Header */}
+      <div className="fixed top-0 left-0 right-0 bg-background z-50 flex items-center justify-between px-4 h-14 border-b">
+        <Link href={`/group/${groupId}`}>
+          <ArrowLeft className="w-5 h-5" />
+        </Link>
+        <span className="font-medium">
+          {initialData ? "Edit expense" : "Add expense"}
+        </span>
+        <Check className="w-5 h-5" onClick={handleSubmit} />
+      </div>
 
+      {/* Main Content */}
+      <div className="pt-14 pb-14 min-h-screen bg-background">
         <div className="p-4 space-y-5">
           <div className="flex flex-col gap-3 px-5">
             {/* Row 1 */}
