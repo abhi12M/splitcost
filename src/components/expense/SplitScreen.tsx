@@ -549,7 +549,7 @@ export default function SplitScreen(props: SplitScreenProps) {
             <div
                 id="split-scroll-container"
                 {...swipeHandlers}
-                className="fixed left-0 right-0 overflow-y-auto overscroll-contain p-3 space-y-2"
+                className="fixed left-0 right-0 overflow-y-auto overscroll-contain p-1 space-y-2"
                 style={{
                     top: 112,                 // header + tabs height
                     bottom: 56 + keyboardOffset,

@@ -157,7 +157,7 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
 
               {/* Header with search */}
               {/* Header */}
-              <div className="h-[3rem] px-2 border-b flex items-center justify-start gap-5 relative">
+              <div className="h-[3rem] px-4 border-b flex items-center justify-start gap-[1.7rem] relative">
 
                 {/* Back button */}
                 <button
@@ -222,12 +222,12 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
                         setOpen(false);
                       }}
                       className={cn(
-                        "flex items-center gap-3 px-3 py-2 rounded-xl transition-colors",
+                        "flex items-center gap-3 px-4 py-2 rounded-xl transition-colors",
                       )}
                     >
                       {renderLeading(option, undefined, isSelected)}
-                      <span className="flex-1 flex flex-col leading-tight">
-                        <span>
+                      <span className="flex-1 flex flex-col leading-tight min-w-0">
+                        <span className="truncate">
                           {option.label}
                         </span>
                         {isDisplayId && <span className="text-xs text-muted-foreground">
@@ -268,7 +268,13 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
                     ? selectedItem.showAvatar
                       ? (<span className="w-full px-3 py-2.5 text-sm border border-border border-b-2 rounded-[5px] font-medium">{selectedItem?.label}</span>)
                       : renderLeading(selectedItem)
-                    : (<span className="w-full px-3 py-2.5 text-sm border border-border border-b-2 rounded-[5px]">{placeholder}</span>)
+                    : (<span aria-invalid={ariaInvalid}
+                      className="w-full px-3 py-2.5 text-sm
+                          border border-border border-b-2 rounded-[5px]
+                          aria-[invalid=true]:border-red-500
+                          aria-[invalid=true]:border-b-red-600">
+                      {placeholder}
+                    </span>)
                 )}
               </button>
             ) : (

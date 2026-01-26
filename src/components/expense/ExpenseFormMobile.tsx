@@ -18,6 +18,8 @@ import Link from "next/link"
 import { Calendar } from "../ui/calendar"
 import SplitScreen, { SplitResult } from "./SplitScreen"
 import { useKeyboardLayout } from "@/hooks/useKeyboardOffset"
+import { toast } from "@/hooks/use-toast"
+import { ToastAction } from "../ui/toast"
 
 interface Props {
   members: any[]
@@ -90,7 +92,25 @@ export default function ExpenseFormMobile({
     e.preventDefault();
     setHasSubmitted(true);
 
-    if (!validate()) return;
+    if (!validate()) {
+      const errorMessages = Object.values(errors).filter(Boolean);
+
+      toast({
+        title: "Validation Error",
+        description: (
+          <div className="space-y-1">
+            {errorMessages.map((msg, idx) => (
+              <div key={idx}>• {msg}</div>
+            ))}
+          </div>
+        ),
+        position: "center",
+        hideClose: true,
+        duration: Infinity,
+        action: <ToastAction altText="OK">OK</ToastAction>,
+      });
+      return;
+    };
 
     let finalParticipants = participants;
     let finalSplitType = splitType;
@@ -206,6 +226,7 @@ export default function ExpenseFormMobile({
                 placeholder="Description"
                 onChange={(e) => setDescription(e.target.value)}
                 className="rounded-none focus-visible:ring-1"
+                aria-invalid={!!errors.description}
               />
             </div>
 
@@ -225,10 +246,18 @@ export default function ExpenseFormMobile({
               />
 
               <Input
-                value={amount}
+                id="amount"
+                type="text"
                 inputMode="decimal"
-                placeholder="Amount"
+                placeholder="1.00"
+                value={amount}
+                minValue={1}
+                maxValue={99999999.99}
+                precision={2}
                 onChange={(e) => setAmount(e.target.value)}
+                showHelper={false}
+                aria-invalid={!!errors.amount}
+                currency={currency}
                 className="rounded-none focus-visible:ring-1"
               />
             </div>
@@ -248,6 +277,7 @@ export default function ExpenseFormMobile({
               placeholder="select member"
               inputPlaceholder="Search or select member"
               fullscreenOnMobile
+              ariaInvalid={!!errors.paidByUserId}
             />
           </div>
 
@@ -302,7 +332,7 @@ export default function ExpenseFormMobile({
         </Popover>
       </div>
 
-       {showSplit &&
+      {showSplit &&
         <SplitScreen
           onClose={() => setShowSplit(false)}
           amount={Number(amount)}

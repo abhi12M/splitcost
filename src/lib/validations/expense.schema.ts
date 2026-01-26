@@ -6,9 +6,9 @@ const trimmedNonEmpty = (message: string): ZodString =>
     z.string().trim().nonempty(message);
 
 export const ExpenseSchema = z.object({
-    description: trimmedNonEmpty("Description is required."),
-    paidByUserId: trimmedNonEmpty("Paid by is required."),
-    amount: z.string().nonempty("Amount is required.").transform(Number),
+    description: trimmedNonEmpty("Enter a description."),
+    paidByUserId: trimmedNonEmpty("Select who paid."),
+    amount: z.string().nonempty("Enter an amount.").transform(Number),
 });
 
 export type ExpenseFormValues = z.infer<typeof ExpenseSchema>;
