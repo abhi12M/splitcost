@@ -730,9 +730,13 @@ ${shareLink}
                                       </div>
 
                                       {/* PAID BY */}
-                                      <p className="text-xs md:text-base text-muted-foreground truncate mt-0.5">
-                                        {expense.paidBy.name} paid
+                                      <p className="text-xs md:text-base text-muted-foreground mt-0.5 flex items-center gap-1">
+                                        <span className="truncate max-w-[150px] inline-block">
+                                          {expense.paidBy.name}
+                                        </span>
+                                        <span className="shrink-0">paid</span>
                                       </p>
+
 
                                       {/* PARTICIPANTS */}
                                       <AvatarGroup
@@ -749,7 +753,7 @@ ${shareLink}
 
                                     {/* AMOUNT */}
                                     <div className="flex flex-col items-end justify-center shrink-0">
-                                      <p className="font-semibold whitespace-nowrap">
+                                      <p className="font-semibold whitespace-nowrap text-sm mb-[12px]">
                                         {formatCurrency(
                                           expense.amount,
                                           expense.currency

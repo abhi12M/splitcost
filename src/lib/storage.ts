@@ -549,7 +549,7 @@ export async function updateExpense(
   data: ExpenseRequest
 ): Promise<ExpenseResponse | undefined> {
   try {
-    debugger
+    
     // 1. Update expense row
     const { data: expenseRow, error: expenseError } = await supabase
       .from("expenses")

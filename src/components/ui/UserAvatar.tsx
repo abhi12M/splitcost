@@ -21,11 +21,10 @@ const defaultAvatarSize: AvatarSize = "md";
 ------------------------------------------ */
 function getResponsiveAvatarSize(
   device: "mobile" | "tablet" | "desktop",
-  size: AvatarSize
 ): AvatarSize {
   if (device === "mobile") return "sm";
   if (device === "tablet") return "md";
-  return size;
+  return "sm";
 }
 
 /* -----------------------------------------
@@ -39,11 +38,11 @@ interface UserAvatarProps {
 
 export function UserAvatar({
   name,
-  size = defaultAvatarSize,
+  size ,
   className,
 }: UserAvatarProps) {
   const device = useDeviceType();
-  const effectiveSize = getResponsiveAvatarSize(device, size);
+  const effectiveSize = size || getResponsiveAvatarSize(device);
 
   const colors = getAvatarColor(name);
   const initials = getInitials(name);
@@ -91,7 +90,7 @@ export function AvatarGroup({
 }: AvatarGroupProps) {
   const device = useDeviceType();
 
-  const effectiveSize = getResponsiveAvatarSize(device, size);
+  const effectiveSize = getResponsiveAvatarSize(device);
   const effectiveMax = device === "mobile" ? 4 : max;
 
   const resolvedShowBelow =
@@ -127,7 +126,6 @@ export function AvatarGroup({
               label: m,
               showAvatar: true,
             }))}
-            onlyList
             isMinWidth
             trigger={
               <button

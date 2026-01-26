@@ -86,7 +86,7 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
 
     // 1️⃣ Avatar
     if (item.showAvatar) {
-      return <UserAvatar name={item.label} className="shrink-0" />;
+      return <UserAvatar name={item.label} size="md" className="shrink-0" />;
     }
 
     const baseClasses =
