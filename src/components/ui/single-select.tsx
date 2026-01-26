@@ -255,7 +255,7 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
                     ? selectedItem.showAvatar
                       ? (<span className="w-full px-3 py-2.5 text-sm border border-border border-b-2 rounded-[5px] font-medium">{selectedItem?.label}</span>)
                       : renderLeading(selectedItem)
-                    : (<span className="w-full px-3 py-2.5 text-sm text-muted-foreground border border-border border-b-2 rounded-[5px] font-medium">{placeholder}</span>)
+                    : (<span className="w-full px-3 py-2.5 text-sm border border-border border-b-2 rounded-[5px]">{placeholder}</span>)
                 )}
               </button>
             ) : (
