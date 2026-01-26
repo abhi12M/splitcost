@@ -47,6 +47,7 @@ interface SingleSelectProps {
   ariaInvalid?: boolean;
   isMinWidth?: boolean;
   fullscreenOnMobile?: boolean;
+  isDisplayId?: boolean;
 }
 
 export const SingleSelect: React.FC<SingleSelectProps> = ({
@@ -61,6 +62,7 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
   ariaInvalid,
   label,
   fullscreenOnMobile = false,
+  isDisplayId = false,
 }) => {
   const device = useDeviceType();
   const [open, setOpen] = useState(false);
@@ -225,12 +227,13 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
                     >
                       {renderLeading(option, undefined, isSelected)}
                       <span className="flex-1 flex flex-col leading-tight">
-                        <span className="font-medium">
+                        <span>
                           {option.label}
                         </span>
-                        <span className="text-xs text-muted-foreground ">
+                        {isDisplayId && <span className="text-xs text-muted-foreground">
                           {option.id}
                         </span>
+                        }
                       </span>
                       {isSelected && (
                         <Check className="w-4 h-4 text-primary" />

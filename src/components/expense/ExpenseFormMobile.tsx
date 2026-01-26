@@ -221,6 +221,7 @@ export default function ExpenseFormMobile({
                 onSelect={(_, itemId) => setCurrency(itemId)}
                 inputPlaceholder="Search or select currency..."
                 fullscreenOnMobile
+                isDisplayId
               />
 
               <Input
