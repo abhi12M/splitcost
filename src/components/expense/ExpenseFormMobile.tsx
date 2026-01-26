@@ -156,7 +156,7 @@ export default function ExpenseFormMobile({
   };
 
   return (
-    <>
+    <div className="min-h-screen flex flex-col">
       {/* Main Screen */}
       {/* Header */}
       <div className="fixed top-0 left-0 right-0 bg-background z-50 flex items-center justify-between px-4 h-14 border-b">
@@ -170,7 +170,7 @@ export default function ExpenseFormMobile({
       </div>
 
       {/* Main Content */}
-      <div className="pt-14 pb-14 flex-1 bg-background">
+      <div className="pt-14 flex-grow bg-background overflow-y-auto">
         <div className="p-4 space-y-5">
           <div className="flex flex-col gap-3 px-5">
             {/* Row 1 */}
@@ -304,6 +304,6 @@ export default function ExpenseFormMobile({
           </PopoverContent>
         </Popover>
       </div>
-    </>
+    </div>
   )
 }
