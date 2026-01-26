@@ -81,40 +81,50 @@ export default function AddExpensePage({ groupId }: { groupId: string }) {
   };
 
   return (
-    // <Layout>
-    //   <div className="container py-6 md:py-8 max-w-2xl">
-    //     <Button variant="ghost" size="sm" asChild className="mb-4">
-    //       <Link href={`/group/${groupId}`}>
-    //         <ArrowLeft className="w-4 h-4" />
-    //         Back to group
-    //       </Link>
-    //     </Button>
+    <>
+      {/* ================= DESKTOP / TABLET ================= */}
+      <div className="hidden md:block">
+        <Layout>
+          <div className="container py-6 md:py-8 max-w-2xl">
+            <Button variant="ghost" size="sm" asChild className="mb-4">
+              <Link href={`/group/${groupId}`}>
+                <ArrowLeft className="w-4 h-4 mr-1" />
+                Back to group
+              </Link>
+            </Button>
 
-    //     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-    //       <Card>
-    //         <CardHeader className="pb-4">
-    //           <CardTitle className="text-xl">Add Expense</CardTitle>
-    //           <CardDescription className="truncate">Record a new expense for {group.name}</CardDescription>
-    //         </CardHeader>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+              <Card>
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-xl">Add Expense</CardTitle>
+                  <CardDescription className="truncate">
+                    Record a new expense for {group.name}
+                  </CardDescription>
+                </CardHeader>
 
-    //         <CardContent>
-    //           <ExpenseForm
-    //             members={group.members}
-    //             defaultCurrency={group.currency}
-    //             onSubmit={handleSubmit}
-    //             submitLabel={isSubmitting ? "Adding..." : "Add Expense"}
-    //           />
-    //         </CardContent>
-    //       </Card>
-    //     </motion.div>
-    //   </div>
-    // </Layout>
+                <CardContent>
+                  <ExpenseForm
+                    members={group.members}
+                    defaultCurrency={group.currency}
+                    onSubmit={handleSubmit}
+                    submitLabel={isSubmitting ? "Adding..." : "Add Expense"}
+                  />
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+        </Layout>
+      </div>
 
-    <ExpenseFormMobile
-      members={group.members}
-      defaultCurrency={group.currency}
-      groupId={groupId}
-      onSubmit={handleSubmit}
-    />
+      {/* ================= MOBILE ONLY ================= */}
+      <div className="block md:hidden">
+        <ExpenseFormMobile
+          members={group.members}
+          defaultCurrency={group.currency}
+          groupId={groupId}
+          onSubmit={handleSubmit}
+        />
+      </div>
+    </>
   );
 }

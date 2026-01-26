@@ -17,6 +17,7 @@ import { CURRENCIES } from "@/constants"
 import Link from "next/link"
 import { Calendar } from "../ui/calendar"
 import SplitScreen, { SplitResult } from "./SplitScreen"
+import { useKeyboardLayout } from "@/hooks/useKeyboardOffset"
 
 interface Props {
   members: any[]
@@ -46,6 +47,7 @@ export default function ExpenseFormMobile({
   const [date, setDate] = useState<Date>(
     initialData?.date ? new Date(initialData.date) : new Date()
   );
+  const { keyboardOffset } = useKeyboardLayout();
 
   const [participants, setParticipants] = useState<ExpenseParticipantsRequest[]>(
     initialData?.participants ||
@@ -158,18 +160,24 @@ export default function ExpenseFormMobile({
     <>
       {/* Main Screen */}
       {/* Header */}
-      <div className="fixed top-0 left-0 right-0 bg-background z-50 flex items-center justify-between px-4 h-14 border-b">
+      <div className="fixed top-0 left-0 right-0 bg-background z-50 flex items-center justify-between px-4 h-14 border-b touch-none overscroll-none">
         <Link href={`/group/${groupId}`}>
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <span className="font-medium">
           {initialData ? "Edit expense" : "Add expense"}
         </span>
-        <Check className="w-5 h-5" onClick={handleSubmit} />
+        <Check className="w-5 h-5 text-primary" onClick={handleSubmit} />
       </div>
 
       {/* Main Content */}
-      <div className="pt-14 pb-14 flex-1 bg-background">
+      <div className="fixed left-0 right-0 bg-background overflow-y-auto overscroll-contain"
+        style={{
+          top: 56,
+          bottom: 56 + keyboardOffset, // footer + keyboard
+          WebkitOverflowScrolling: "touch",
+        }}
+      >
         <div className="p-4 space-y-5">
           <div className="flex flex-col gap-3 px-5">
             {/* Row 1 */}
@@ -251,22 +259,11 @@ export default function ExpenseFormMobile({
           </button>
         </div>
       </div>
-      {showSplit &&
-        <SplitScreen
-          onClose={() => setShowSplit(false)}
-          amount={Number(amount)}
-          currency={currency}
-          members={members}
-          initialParticipants={participants}
-          splitType={splitType}
-          onConfirm={(data) => {
-            handleSplitSubmit(data)
-          }}
-        />
-      }
 
       {/* Footer */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background border-t h-14 px-4 flex items-center justify-between z-50">
+      <div className="fixed left-0 right-0 bg-background border-t h-14 px-4 flex items-center justify-between z-50 touch-none overscroll-none"
+        style={{ bottom: keyboardOffset }}
+      >
 
         {/* Date selector */}
         <Popover modal>
@@ -303,6 +300,20 @@ export default function ExpenseFormMobile({
           </PopoverContent>
         </Popover>
       </div>
+
+       {showSplit &&
+        <SplitScreen
+          onClose={() => setShowSplit(false)}
+          amount={Number(amount)}
+          currency={currency}
+          members={members}
+          initialParticipants={participants}
+          splitType={splitType}
+          onConfirm={(data) => {
+            handleSplitSubmit(data)
+          }}
+        />
+      }
     </>
   )
 }

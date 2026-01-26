@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useState } from "react";
 import { ArrowLeft, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "../ui/UserAvatar";
 import { Input } from "../ui/input";
-import { ExpenseParticipantsRequest, ExpenseParticipantsResponse, SplitType, UserInterface } from "@/lib/storage";
+import { ExpenseParticipantsRequest, SplitType, UserInterface } from "@/lib/storage";
 import { formatAmount } from "../ui/formatters";
+import { useKeyboardLayout } from "@/hooks/useKeyboardOffset";
 
 export interface SplitResult {
     splitType: SplitType;
@@ -279,6 +280,7 @@ export function buildSplitScreenVM(params: {
 
 export default function SplitScreen(props: SplitScreenProps) {
     const { onClose, amount, currency, members, initialParticipants, splitType, onConfirm } = props;
+    const { keyboardOffset } = useKeyboardLayout();
 
     const [vm, setVM] = useState<SplitScreenVM>(() =>
         buildSplitScreenVM({
@@ -474,54 +476,70 @@ export default function SplitScreen(props: SplitScreenProps) {
 
     return (
         <div className="fixed inset-0 bg-background z-[60] flex flex-col">
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 h-14 border-b shrink-0">
-                <ArrowLeft onClick={onClose} className="w-5 h-5" />
-                <span className="font-medium">{vm.header.title}</span>
-                <Check
-                    onClick={() => onConfirm(buildResult())}
-                    className="w-5 h-5 text-primary"
-                />
-            </div>
 
-            {/* Tabs */}
-            <div className="border-b bg-background">
-                <div className="grid grid-cols-3">
-                    {vm.tabs.map((t) => {
-                        const active = vm.selectedTab === t.id;
-                        return (
-                            <button
-                                key={t.id}
-                                onClick={() => setVM({ ...vm, selectedTab: t.id })}
-                                className={cn(
-                                    "relative py-3 text-center transition-colors",
-                                    active ? "text-foreground" : "text-muted-foreground"
-                                )}
-                            >
-                                <div className="text-sm font-medium">{t.label}</div>
-                                {active && (
-                                    <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-primary rounded-full" />
-                                )}
-                            </button>
-                        );
-                    })}
+            {/* Header */}
+            <div className={"fixed top-0 left-0 right-0 bg-background z-[70] touch-none overscroll-none"}>
+                <div className="flex items-center justify-between px-4 h-14 border-b">
+                    <ArrowLeft onClick={onClose} className="w-5 h-5" />
+                    <span className="font-medium">{vm.header.title}</span>
+                    <Check onClick={() => onConfirm(buildResult())} className="w-5 h-5 text-primary" />
+                </div>
+
+                {/* Tabs */}
+                <div className="border-b bg-background">
+                    <div className="grid grid-cols-3">
+                        {vm.tabs.map((t) => {
+                            const active = vm.selectedTab === t.id;
+                            return (
+                                <button
+                                    key={t.id}
+                                    onClick={() => setVM({ ...vm, selectedTab: t.id })}
+                                    className={cn(
+                                        "relative py-3 text-center transition-colors",
+                                        active ? "text-foreground" : "text-muted-foreground"
+                                    )}
+                                >
+                                    <div className="text-sm font-medium">{t.label}</div>
+                                    {active && (
+                                        <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-primary rounded-full" />
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
 
-            {/* Participants */}
-            <div className="flex-1 overflow-y-auto space-y-2 p-3">
+            {/* Scrollable area content participants */}
+            <div
+                id="split-scroll-container"
+                className="fixed left-0 right-0 overflow-y-auto overscroll-contain p-3 space-y-2"
+                style={{
+                    top: 112,                 // header + tabs height
+                    bottom: 56 + keyboardOffset,
+                    WebkitOverflowScrolling: "touch",
+                }}
+            >
                 {activeTab.members.map((m: any) => {
                     const isSelected = activeTab.mode === "select" ? m.isSelected : !!m.value;
 
                     return (
                         <div key={m.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
                                 <UserAvatar name={m.name} size="md" />
-                                <div className="flex flex-col">
-                                    <span className={cn("text-sm font-medium", isSelected ? "text-foreground" : "text-muted-foreground")}>
+
+                                <div className="flex flex-col min-w-0">
+                                    <span
+                                        className={cn(
+                                            "text-sm font-medium truncate block",
+                                            isSelected ? "text-foreground" : "text-muted-foreground"
+                                        )}
+                                        title={m.name}
+                                    >
                                         {m.name}
                                     </span>
-                                    {vm.selectedTab == "percentage" && (
+
+                                    {vm.selectedTab === "percentage" && (
                                         <span className="text-xs text-muted-foreground">
                                             {formatAmount(m.calculatedAmount || 0, currency)}
                                         </span>
@@ -529,7 +547,7 @@ export default function SplitScreen(props: SplitScreenProps) {
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 shrink-0">
                                 {activeTab.id === "equal" && (
                                     <input type="checkbox" checked={m.isSelected} onChange={() => toggleEqualMember(m.id)} className="w-4 h-4 accent-primary" />
                                 )}
@@ -578,7 +596,10 @@ export default function SplitScreen(props: SplitScreenProps) {
             </div>
 
             {/* Footer */}
-            <div className="h-14 border-t flex items-center justify-center text-sm bg-background px-2">
+            <div
+                className={"fixed left-0 right-0 h-14 border-t bg-background z-[70] touch-none overscroll-none flex items-center justify-center text-sm"}
+                style={{ bottom: keyboardOffset }}
+            >
                 {activeTab.id === "equal" && (() => {
                     const tab = activeTab as EqualTabVM;
                     const allSelected =
@@ -655,7 +676,6 @@ export default function SplitScreen(props: SplitScreenProps) {
                         </div>
                     )
                 })()}
-
             </div>
         </div>
     );

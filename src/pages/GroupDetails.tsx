@@ -731,7 +731,7 @@ ${shareLink}
 
                                       {/* PAID BY */}
                                       <p className="text-xs md:text-base text-muted-foreground mt-0.5 flex items-center gap-1">
-                                        <span className="truncate max-w-[150px] inline-block">
+                                        <span className="truncate inline-block">
                                           {expense.paidBy.name}
                                         </span>
                                         <span className="shrink-0">paid</span>

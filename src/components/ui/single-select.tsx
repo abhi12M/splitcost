@@ -17,6 +17,7 @@ import { ChevronsUpDown, Check, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "./UserAvatar";
 import { useDeviceType } from "@/hooks/useDeviceType";
+import { createPortal } from "react-dom";
 
 export interface SelectItem {
   id: string;
@@ -148,92 +149,101 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
     <>
       {/* ================= FULLSCREEN MOBILE ================= */}
       {isFullscreenMobile && open && (
-        <div className="fixed inset-0 z-[60] bg-background !mt-0">
-          <Command className="h-full flex flex-col">
+        createPortal(
+          <div className="fixed inset-0 z-[60] bg-background !mt-0">
+            <Command className="h-full flex flex-col touch-none overscroll-none">
 
-            {/* Header with search */}
-            {/* Header */}
-            <div className="h-[3rem] px-2 border-b flex items-center justify-start gap-2 relative">
+              {/* Header with search */}
+              {/* Header */}
+              <div className="h-[3rem] px-2 border-b flex items-center justify-start gap-5 relative">
 
-              {/* Back button */}
-              <button
-                onClick={() => setOpen(false)}
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </button>
+                {/* Back button */}
+                <button
+                  onClick={() => setOpen(false)}
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
 
-              {/* Title */}
-              <CommandInput
-                placeholder={inputPlaceholder}
-                variant="header"
-                autoFocus
-              />
+                {/* Title */}
+                <CommandInput
+                  placeholder={inputPlaceholder}
+                  variant="header"
+                  autoFocus
+                />
 
-            </div>
+              </div>
 
-            <CommandList className="flex-1 overflow-y-auto">
-              <CommandEmpty>No item found.</CommandEmpty>
+              <CommandList className="flex-1 overflow-y-auto">
+                <CommandEmpty>No item found.</CommandEmpty>
 
-              {groups?.map((group) => (
-                <CommandGroup key={group.id} heading={group.label}>
-                  {group.subOptions.map((option) => {
-                    const isSelected =
-                      value?.groupId === group.id &&
-                      value?.itemId === option.id;
+                {groups?.map((group) => (
+                  <CommandGroup key={group.id} heading={group.label}>
+                    {group.subOptions.map((option) => {
+                      const isSelected =
+                        value?.groupId === group.id &&
+                        value?.itemId === option.id;
 
-                    return (
-                      <CommandItem
-                        key={option.id}
-                        value={option.label}
-                        onSelect={() => {
-                          onSelect?.(group.id, option.id);
-                          setOpen(false);
-                        }}
-                        className={cn(
-                          "flex items-center gap-3 px-3 py-2 rounded-xl transition-colors",
-                        )}
-                      >
-                        {renderLeading(option, group.color, isSelected)}
-                        <span className="flex-1 truncate">
+                      return (
+                        <CommandItem
+                          key={option.id}
+                          value={option.label}
+                          onSelect={() => {
+                            onSelect?.(group.id, option.id);
+                            setOpen(false);
+                          }}
+                          className={cn(
+                            "flex items-center gap-3 px-3 py-2 rounded-xl transition-colors",
+                          )}
+                        >
+                          {renderLeading(option, group.color, isSelected)}
+                          <span className="flex-1 truncate">
+                            {option.label}
+                          </span>
+                          {isSelected && (
+                            <Check className="w-4 h-4 text-primary" />
+                          )}
+                        </CommandItem>
+                      );
+                    })}
+                  </CommandGroup>
+                ))}
+
+                {items?.map((option) => {
+                  const isSelected = value?.itemId === option.id;
+
+                  return (
+                    <CommandItem
+                      key={option.id}
+                      value={option.label}
+                      onSelect={() => {
+                        onSelect?.(undefined, option.id);
+                        setOpen(false);
+                      }}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2 rounded-xl transition-colors",
+                      )}
+                    >
+                      {renderLeading(option, undefined, isSelected)}
+                      <span className="flex-1 flex flex-col leading-tight">
+                        <span className="font-medium">
                           {option.label}
                         </span>
-                        {isSelected && (
-                          <Check className="w-4 h-4 text-primary" />
-                        )}
-                      </CommandItem>
-                    );
-                  })}
-                </CommandGroup>
-              ))}
+                        <span className="text-xs text-muted-foreground ">
+                          {option.id}
+                        </span>
+                      </span>
+                      {isSelected && (
+                        <Check className="w-4 h-4 text-primary" />
+                      )}
+                    </CommandItem>
+                  );
+                })}
+              </CommandList>
+            </Command>
+          </div>,
+          document.body
+        )
 
-              {items?.map((option) => {
-                const isSelected = value?.itemId === option.id;
-
-                return (
-                  <CommandItem
-                    key={option.id}
-                    value={option.label}
-                    onSelect={() => {
-                      onSelect?.(undefined, option.id);
-                      setOpen(false);
-                    }}
-                    className={cn(
-                      "flex items-center gap-3 px-3 py-2 rounded-xl transition-colors",
-                    )}
-                  >
-                    {renderLeading(option, undefined, isSelected)}
-                    <span className="flex-1 truncate">
-                      {option.label}
-                    </span>
-                    {isSelected && (
-                      <Check className="w-4 h-4 text-primary" />
-                    )}
-                  </CommandItem>
-                );
-              })}
-            </CommandList>
-          </Command>
-        </div>
       )}
 
       {/* ================= DESKTOP POPOVER ================= */}

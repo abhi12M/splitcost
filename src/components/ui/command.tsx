@@ -53,7 +53,6 @@ const CommandInput = React.forwardRef<
         ref={ref}
         className={cn(
           "bg-transparent border-none outline-none shadow-none",
-          "font-medium",
           "placeholder:text-muted-foreground",
           "focus:ring-0 focus:outline-none",
           className

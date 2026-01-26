@@ -100,62 +100,70 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
   };
 
   return (
-    // <Layout>
-    //   <div className="container py-6 md:py-8 max-w-2xl">
-    //     <Button variant="ghost" size="sm" asChild className="mb-4">
-    //       <Link href={`/group/${groupId}`}>
-    //         <ArrowLeft className="w-4 h-4" />
-    //         Back to group
-    //       </Link>
-    //     </Button>
+    <>
+      <div className="hidden md:block">
+        <Layout>
+          <div className="container py-6 md:py-8 max-w-2xl">
+            <Button variant="ghost" size="sm" asChild className="mb-4">
+              <Link href={`/group/${groupId}`}>
+                <ArrowLeft className="w-4 h-4" />
+                Back to group
+              </Link>
+            </Button>
 
-    //     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-    //       <Card>
-    //         <CardHeader className="pb-4">
-    //           <div className="flex items-start justify-between">
-    //             <div>
-    //               <CardTitle className="text-xl">Edit Expense</CardTitle>
-    //               <CardDescription>Modify the expense details</CardDescription>
-    //             </div>
-    //             <Button
-    //               variant="ghost"
-    //               size="icon"
-    //               className="text-destructive hover:text-destructive hover:bg-destructive/10"
-    //               onClick={handleDelete}
-    //               disabled={isDeleting}
-    //             >
-    //               {isDeleting ? (
-    //                 <Loader2 className="w-5 h-5 animate-spin" />
-    //               ) : (
-    //                 <Trash2 className="w-5 h-5" />
-    //               )}
-    //             </Button>
-    //           </div>
-    //         </CardHeader>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+              <Card>
+                <CardHeader className="pb-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <CardTitle className="text-xl">Edit Expense</CardTitle>
+                      <CardDescription>Modify the expense details</CardDescription>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={handleDelete}
+                      disabled={isDeleting}
+                    >
+                      {isDeleting ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-5 h-5" />
+                      )}
+                    </Button>
+                  </div>
+                </CardHeader>
 
-    //         <CardContent>
-    //           <ExpenseForm
-    //             members={group.members}
-    //             defaultCurrency={group.currency}
-    //             initialData={{
-    //               ...expense
-    //             }}
-    //             onSubmit={handleSubmit}
-    //             submitLabel={isSubmitting ? "Saving..." : "Save Changes"}
-    //           />
-    //         </CardContent>
-    //       </Card>
-    //     </motion.div>
-    //   </div>
-    // </Layout>
-    <ExpenseFormMobile
-      members={group.members}
-      defaultCurrency={group.currency}
-      groupId={groupId}
-      initialData={{
-        ...expense
-      }}
-      onSubmit={handleSubmit}
-    />
+                <CardContent>
+                  <ExpenseForm
+                    members={group.members}
+                    defaultCurrency={group.currency}
+                    initialData={{
+                      ...expense
+                    }}
+                    onSubmit={handleSubmit}
+                    submitLabel={isSubmitting ? "Saving..." : "Save Changes"}
+                  />
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+        </Layout>
+      </div>
+      <div className="block md:hidden">
+        <ExpenseFormMobile
+          members={group.members}
+          defaultCurrency={group.currency}
+          groupId={groupId}
+          initialData={{
+            ...expense
+          }}
+          onSubmit={handleSubmit}
+        />
+      </div>
+    </>
+
+
   );
 }
