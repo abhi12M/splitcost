@@ -13,6 +13,7 @@ import { updateExpense, deleteExpense, GroupResponse, editExpense, ExpenseFormIn
 import { useToast } from "@/hooks/use-toast";
 import ExpenseFormMobile from "@/components/expense/ExpenseFormMobile";
 import { ExpenseFormMobileSkeleton } from "@/components/expense/ExpenseFormMobileSkeleton";
+import { Spinner } from "@/components/ui/Spinner";
 
 export default function EditExpensePage({ groupId, expenseId }: { groupId: string; expenseId: string }) {
   const router = useRouter();
@@ -39,7 +40,7 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
 
   if (loading) {
     return (
-      <ExpenseFormMobileSkeleton/>
+      <ExpenseFormMobileSkeleton />
     );
   }
 
@@ -159,8 +160,7 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
           onSubmit={handleSubmit}
         />
       </div>
+      <Spinner show={isSubmitting} message="Saving..." />
     </>
-
-
   );
 }

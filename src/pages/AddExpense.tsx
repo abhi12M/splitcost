@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { Spinner } from "@/components/ui/Spinner";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -122,6 +123,7 @@ export default function AddExpensePage({ groupId }: { groupId: string }) {
           onSubmit={handleSubmit}
         />
       </div>
+      <Spinner show={isSubmitting} message="Creating..."/>
     </>
   );
 }
