@@ -255,8 +255,6 @@ export function ExpenseForm({
         description: e.description?._errors[0] || "",
         paidByUserId: e.paidByUserId?._errors[0] || "",
         amount: e.amount?._errors[0] || "",
-        participants: e.participants?._errors[0] || "",
-        category: e.category?._errors[0] || "",
       });
       return false;
     }
