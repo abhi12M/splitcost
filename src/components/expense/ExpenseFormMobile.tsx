@@ -91,9 +91,9 @@ export default function ExpenseFormMobile({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setHasSubmitted(true);
-
-    if (!validate()) {
-      const errorMessages = Object.values(errors).filter(Boolean);
+    const validation = validate();
+    if (!validation.valid) {
+      const errorMessages = Object.values(validation.errors).filter(Boolean);
 
       toast({
         title: "Validation Error",
@@ -152,23 +152,27 @@ export default function ExpenseFormMobile({
   }>({});
 
   const validate = () => {
-    const result = ExpenseSchema.safeParse({ description, paidByUserId, amount, participants, category });
+    const result = ExpenseSchema.safeParse({ description, paidByUserId, amount });
 
     if (!result.success) {
       const e = result.error.format();
-      setErrors({
+
+      const newErrors = {
         description: e.description?._errors[0] || "",
         paidByUserId: e.paidByUserId?._errors[0] || "",
         amount: e.amount?._errors[0] || "",
-      });
-      console.log(e, errors)
+      };
 
-      return false;
+      setErrors(newErrors);
+      return { valid: false, errors: newErrors };
     }
 
-    setErrors({ description: "", paidByUserId: "", amount: "" });
-    return true;
+    const cleared = { description: "", paidByUserId: "", amount: "" };
+    setErrors(cleared);
+
+    return { valid: true, errors: cleared };
   };
+
   const handleSplitSubmit = (data) => {
     setParticipants(data.participants);
     setSplitType(data.splitType);
