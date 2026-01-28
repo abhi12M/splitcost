@@ -9,6 +9,8 @@ import { ExpenseParticipantsRequest, SplitType, UserInterface } from "@/lib/stor
 import { formatAmount } from "../ui/formatters";
 import { useKeyboardLayout } from "@/hooks/useKeyboardOffset";
 import { useSwipeable } from "react-swipeable";
+import { toast } from "@/hooks/use-toast";
+import { ToastAction } from "@radix-ui/react-toast";
 
 export interface SplitResult {
     splitType: SplitType;
@@ -21,7 +23,7 @@ type BaseTabMember = {
 
 interface SplitScreenProps {
     onClose: () => void;
-    amount: number | null;
+    amount: number;
     currency: string;
     members: UserInterface[];
     initialParticipants?: ExpenseParticipantsRequest[] | null;
@@ -222,7 +224,7 @@ export function buildSplitScreenVM(params: {
         footer: {
             selected: {
                 totalValue: customTotal,
-                difference: Math.abs(totalAmount - customTotal)
+                difference: (totalAmount - customTotal)
             },
         },
     };
@@ -265,7 +267,7 @@ export function buildSplitScreenVM(params: {
         footer: {
             selected: {
                 totalValue: percentTotal,
-                difference: Math.abs(100 - percentTotal)
+                difference: 100 - percentTotal
             },
         },
     };
@@ -436,7 +438,7 @@ export default function SplitScreen(props: SplitScreenProps) {
                             ...tab.footer,
                             selected: {
                                 totalValue: total,
-                                difference: Math.abs((amount || 0) - total)
+                                difference: ((amount || 0) - total)
                             }
                         }
                     }
@@ -469,7 +471,7 @@ export default function SplitScreen(props: SplitScreenProps) {
                         ...tab, members, footer: {
                             selected: {
                                 totalValue: total,
-                                difference: Math.abs(100 - total)
+                                difference: 100 - total
                             }
                         }
                     }
@@ -480,33 +482,91 @@ export default function SplitScreen(props: SplitScreenProps) {
         });
     }
 
-    function buildResult(): SplitResult {
+    function buildResult(): SplitResult | undefined {
         const tab = vm.tabs.find((t) => t.id === vm.selectedTab)!;
 
         if (tab.id === "equal") {
-            return {
+
+            const data: SplitResult = {
                 splitType: "equal",
                 participants: tab.members
                     .filter((m) => m.isSelected)
                     .map((m) => ({ userId: m.id, amount: m.calculatedAmount, percent: null })),
             };
+            if (!data?.participants?.length) {
+                toast({
+                    title: "Whoops!",
+                    description: tab.footer.message.error,
+                    position: "center",
+                    hideClose: true,
+                    duration: Infinity,
+                    action: <ToastAction altText="OK">OK</ToastAction>,
+                });
+                return;
+            }
+            return data;
         }
+        let errMsg, diff = tab.footer.selected.difference;
 
         if (tab.id === "custom") {
-            return {
+            const data: SplitResult = {
                 splitType: "custom",
                 participants: tab.members
                     .filter((m) => m.value)
                     .map((m) => ({ userId: m.id, amount: m.value, percent: null })),
             };
+            if (diff !== 0) {
+                const totalFormatted = formatAmount(amount, currency);
+                const diffFormatted = formatAmount(Math.abs(diff), currency);
+
+                if (diff > 0) {
+                    errMsg = `The split doesn’t add up to ${totalFormatted}. You’re ${diffFormatted} short.`;
+                }
+
+                if (diff < 0) {
+                    errMsg = `The split doesn’t add up to ${totalFormatted}. You’re ${diffFormatted} over.`;
+                }
+
+                toast({
+                    title: "Whoops!",
+                    description: errMsg,
+                    position: "center",
+                    hideClose: true,
+                    duration: Infinity,
+                    action: <ToastAction altText="OK">OK</ToastAction>,
+                });
+                return;
+            }
+            return data;
         }
 
-        return {
+        if (diff !== 0) {
+
+            if (diff > 0) {
+                errMsg = `The split doesn’t add up to 100%. You’re ${Math.abs(diff)}% short.`;
+            }
+
+            if (diff < 0) {
+                errMsg = `The split doesn’t add up to 100%. You’re ${Math.abs(diff)}% over.`;
+            }
+
+            toast({
+                title: "Whoops!",
+                description: errMsg,
+                position: "center",
+                hideClose: true,
+                duration: Infinity,
+                action: <ToastAction altText="OK">OK</ToastAction>,
+            });
+            return;
+        }
+        const data:SplitResult = {
             splitType: "percentage",
             participants: tab.members
                 .filter((m) => m.value)
                 .map((m) => ({ userId: m.id, amount: m.calculatedAmount, percent: m.value })),
         };
+        return data;
     }
 
     return (
@@ -517,7 +577,11 @@ export default function SplitScreen(props: SplitScreenProps) {
                 <div className="flex items-center justify-between px-4 h-14 border-b">
                     <ArrowLeft onClick={onClose} className="w-5 h-5" />
                     <span className="font-medium">{vm.header.title}</span>
-                    <Check onClick={() => onConfirm(buildResult())} className="w-5 h-5 text-primary" />
+                    <Check onClick={() => {
+                        const result = buildResult();
+                        if (!result) return;
+                        onConfirm(result);
+                    }} className="w-5 h-5 text-primary" />
                 </div>
 
                 {/* Tabs */}
@@ -684,7 +748,7 @@ export default function SplitScreen(props: SplitScreenProps) {
                                     isOver && "text-red-500"
                                 )}
                             >
-                                {formatAmount(difference, currency)} {isOver ? "over" : "left"}
+                                {formatAmount(Math.abs(difference), currency)} {isOver ? "over" : "left"}
                             </div>
                         </div>
                     )
@@ -707,7 +771,7 @@ export default function SplitScreen(props: SplitScreenProps) {
                                     isOver && "text-red-500"
                                 )}
                             >
-                                {difference}% {isOver ? "over" : "left"}
+                                {Math.abs(difference)}% {isOver ? "over" : "left"}
                             </div>
                         </div>
                     )

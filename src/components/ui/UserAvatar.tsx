@@ -78,6 +78,7 @@ interface AvatarGroupProps {
   className?: string;
   showBelow?: boolean;
   label?: string;
+  isShowTotalMemberText?:boolean;
 }
 
 export function AvatarGroup({
@@ -87,6 +88,7 @@ export function AvatarGroup({
   className,
   showBelow,
   label = "members",
+  isShowTotalMemberText = true
 }: AvatarGroupProps) {
   const device = useDeviceType();
 
@@ -145,7 +147,7 @@ export function AvatarGroup({
       </div>
 
       {/* Member count */}
-      {label && names.length > 5 && (
+      {isShowTotalMemberText && label && names.length > 5 && (
         <span
           className={cn(
             "text-xs text-muted-foreground",

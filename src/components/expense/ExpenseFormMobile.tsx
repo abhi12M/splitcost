@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react"
-import { ArrowLeft, CalendarIcon, Check } from "lucide-react"
+import { ArrowLeft, CalendarIcon, Check, Settings } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
@@ -11,7 +11,7 @@ import {
 } from "@/lib/storage"
 import { ExpenseSchema } from "@/lib/validations/expense.schema"
 import { CategoryKey, EXPENSE_CATEGORIES, SubcategoryId } from "../icons/CategoryIcons"
-import { formatDateForDB } from "../ui/formatters"
+import { formatAmount, formatDateForDB } from "../ui/formatters"
 import { SingleSelect } from "../ui/single-select"
 import { CURRENCIES } from "@/constants"
 import Link from "next/link"
@@ -20,6 +20,8 @@ import SplitScreen, { SplitResult } from "./SplitScreen"
 import { useKeyboardLayout } from "@/hooks/useKeyboardOffset"
 import { toast } from "@/hooks/use-toast"
 import { ToastAction } from "../ui/toast"
+import { AvatarGroup } from "../ui/UserAvatar"
+import { cn } from "@/lib/utils"
 
 interface Props {
   members: any[]
@@ -45,7 +47,6 @@ export default function ExpenseFormMobile({
   const [subcategory, setSubcategory] = useState<SubcategoryId>(initialData?.subcategory || "general");
   const [splitType, setSplitType] = useState<any>(initialData?.splitType || "equal");
   const [showSplit, setShowSplit] = useState(false)
-  const [splitScreenData, setSplitScreenData] = useState<SplitResult | null>(null);
   const [date, setDate] = useState<Date>(
     initialData?.date ? new Date(initialData.date) : new Date()
   );
@@ -85,7 +86,7 @@ export default function ExpenseFormMobile({
   }, [description, paidByUserId, amount]);
 
   useEffect(() => {
-    setSplitScreenData(null);
+    calculateParticipants();
   }, [amount]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -96,11 +97,14 @@ export default function ExpenseFormMobile({
       const errorMessages = Object.values(validation.errors).filter(Boolean);
 
       toast({
-        title: "Validation Error",
+        title: "Missing required details",
         description: (
           <div className="space-y-1">
             {errorMessages.map((msg, idx) => (
-              <div key={idx}>• {msg}</div>
+              <div key={idx}>
+                {errorMessages.length > 1 && "• "}
+                {msg}
+              </div>
             ))}
           </div>
         ),
@@ -115,23 +119,8 @@ export default function ExpenseFormMobile({
     let finalParticipants = participants;
     let finalSplitType = splitType;
 
-    if (!splitScreenData) {
-      const totalAmount = Number(amount || 0);
-      const base = Math.floor((totalAmount / members.length) * 100) / 100;
-      const remainder = +(totalAmount - base * members.length).toFixed(2);
-
-      finalParticipants = members.map((m, index) => ({
-        userId: m.id,
-        percent: null,
-        amount: Number((base + (index === members.length - 1 ? remainder : 0)).toFixed(2)),
-      }));
-
-      finalSplitType = "equal";
-
-      setParticipants(finalParticipants);
-      setSplitType(finalSplitType);
-    }
-
+    // alert(JSON.stringify(finalParticipants))
+    // return;
     onSubmit({
       description,
       amount: parseFloat(amount),
@@ -149,27 +138,67 @@ export default function ExpenseFormMobile({
     paidByUserId?: string;
     description?: string;
     amount?: string;
+    split?: string;
   }>({});
 
-  const validate = () => {
+  const validate = (from?: string) => {
     const result = ExpenseSchema.safeParse({ description, paidByUserId, amount });
 
+    // ---------- Zod validation ----------
     if (!result.success) {
       const e = result.error.format();
 
       const newErrors = {
-        description: e.description?._errors[0] || "",
-        paidByUserId: e.paidByUserId?._errors[0] || "",
-        amount: e.amount?._errors[0] || "",
+        description: e.description?._errors?.[0] ?? "",
+        paidByUserId: e.paidByUserId?._errors?.[0] ?? "",
+        amount: e.amount?._errors?.[0] ?? "",
+        split: "",
       };
 
+      setHasSubmitted(true);
       setErrors(newErrors);
+
       return { valid: false, errors: newErrors };
     }
 
-    const cleared = { description: "", paidByUserId: "", amount: "" };
-    setErrors(cleared);
+    const cleared = {
+      description: "",
+      paidByUserId: "",
+      amount: "",
+      split: "",
+    };
 
+    // ---------- Custom split validation ----------
+    const shouldValidateSplit = from !== "split-screen";
+
+    if (shouldValidateSplit && splitType === "custom") {
+      const totalCustomValue = participants.reduce(
+        (sum, p) => sum + Number(p.amount || 0),
+        0
+      );
+
+      const expenseTotal = Number(amount || 0);
+
+      if (expenseTotal !== totalCustomValue) {
+        const splitError = `Split total is ${formatAmount(
+          totalCustomValue,
+          currency
+        )} but expense is ${formatAmount(expenseTotal, currency)}. Please adjust split to continue.`;
+
+        const newErrors = {
+          ...cleared,
+          split: splitError,
+        };
+
+        setHasSubmitted(true);
+        setErrors(newErrors);
+
+        return { valid: false, errors: newErrors };
+      }
+    }
+
+    // ---------- Success ----------
+    setErrors(cleared);
     return { valid: true, errors: cleared };
   };
 
@@ -177,28 +206,108 @@ export default function ExpenseFormMobile({
     setParticipants(data.participants);
     setSplitType(data.splitType);
     setShowSplit(false);
-    setSplitScreenData(data);
   };
+
+  const handleOpenSlitScreen = () => {
+    const validation = validate("split-screen");
+    if (!validation.valid) {
+      const errorMessages = Object.values(validation.errors).filter(Boolean);
+
+      toast({
+        title: "Missing required details",
+        description: (
+          <div className="space-y-1">
+            {errorMessages.map((msg, idx) => (
+              <div key={idx}>• {msg}</div>
+            ))}
+          </div>
+        ),
+        position: "center",
+        hideClose: true,
+        duration: Infinity,
+        action: <ToastAction altText="OK">OK</ToastAction>,
+      });
+      return;
+    };
+    setShowSplit(true);
+  };
+
+  const calculateParticipants = () => {
+    const totalAmount = Number(amount || 0);
+    if (splitType === "equal") {
+      const count = participants.length;
+
+      const base = Math.round((totalAmount / count) * 100) / 100;
+
+      const distributed = base * count;
+      const remainder = Math.round((totalAmount - distributed) * 100) / 100;
+
+      const finalParticipants = participants.map((m, index) => ({
+        userId: m.userId,
+        percent: null,
+        amount:
+          index === count - 1
+            ? Math.round((base + remainder) * 100) / 100
+            : base,
+      }));
+
+      setParticipants(finalParticipants);
+    }
+
+    if (splitType === "percentage") {
+      const finalParticipants = participants.map((p) => ({
+        ...p,
+        amount: Number(((totalAmount * Number(p.percent)) / 100).toFixed(2)),
+      }));
+      setParticipants(finalParticipants);
+    }
+
+  };
+
+  const userNamesFromParticipants = participants
+    .map(p => members.find(m => m.id === p.userId)?.name)
+    .filter((name): name is string => Boolean(name));
 
   return (
     <>
       {/* Main Screen */}
       {/* Header */}
-      <div className="fixed top-0 left-0 right-0 bg-background z-50 flex items-center justify-between px-4 h-14 border-b touch-none overscroll-none">
-        <Link href={`/group/${groupId}`}>
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
-        <span className="font-medium">
-          {initialData ? "Edit expense" : "Add expense"}
-        </span>
-        <Check className="w-5 h-5 text-primary" onClick={handleSubmit} />
+      <div className="fixed top-0 left-0 right-0 bg-background z-50 touch-none overscroll-none">
+        {/* Top row */}
+        <div className="flex items-center justify-between px-4 h-[2.7rem] border-b">
+          <Link href={`/group/${groupId}`}>
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+
+          <span className="font-medium">
+            {initialData ? "Edit expense" : "Add expense"}
+          </span>
+
+          <Check className="w-5 h-5 text-primary" onClick={handleSubmit} />
+        </div>
+
+        {/* Avatar row */}
+        <div className="flex items-center gap-2 px-4 py-1 border-b">
+          <span className="text-sm text-muted-foreground">With:</span>
+          <AvatarGroup names={userNamesFromParticipants} isShowTotalMemberText={false} />
+          <Settings
+            className={cn(
+              "w-4 h-4 cursor-pointer transition-colors",
+              errors.split
+                ? "text-red-500 hover:text-red-600"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+            onClick={handleOpenSlitScreen}
+          />
+        </div>
       </div>
+
 
       {/* Main Content */}
       <div className="fixed left-0 right-0 bg-background overflow-y-auto overscroll-contain"
         style={{
-          top: 56,
-          bottom: 56 + keyboardOffset, // footer + keyboard
+          top: 75,
+          bottom: 75 + keyboardOffset, // footer + keyboard
           WebkitOverflowScrolling: "touch",
         }}
       >
@@ -286,11 +395,11 @@ export default function ExpenseFormMobile({
           </div>
 
           <button
-            onClick={() => setShowSplit(true)}
+
             className="flex justify-center gap-2 items-center w-full"
           >
             <span className="text-sm text-muted-foreground">and split</span>
-            <span className="px-3 py-2.5 text-sm border border-border border-b-2 rounded-[5px] font-medium">{splitType == 'equal' ? "equally" : "unequally"}</span>
+            <span className="px-3 py-2.5 text-sm border border-border border-b-2 rounded-[5px] font-medium" onClick={() => handleOpenSlitScreen()}>{splitType == 'equal' ? "equally" : "unequally"}</span>
           </button>
         </div>
       </div>
