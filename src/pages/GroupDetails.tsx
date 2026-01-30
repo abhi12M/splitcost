@@ -24,6 +24,9 @@ import {
   Pencil,
   List,
   LayoutDashboard,
+  MoreVertical,
+  Trash2,
+  Loader2,
 } from "lucide-react";
 
 import { Layout } from "@/components/layout/Layout";
@@ -37,6 +40,7 @@ import {
   type CategoryKey,
 } from "@/components/icons/CategoryIcons";
 import {
+  deleteExpense,
   GroupDashboardInterface,
   loadGroupDetails,
   UserInterface,
@@ -48,6 +52,8 @@ import { getEncryptedItem, setEncryptedItem } from "@/lib/localStorage";
 import { LOCAL_GROUPS_KEY } from "@/lib/constants";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 /* ======================================================
    CONSTANTS – MOVE TO CONSTANTS FILE LATER
@@ -270,7 +276,21 @@ export default function GroupResponsesPage({ groupId }: { groupId: string }) {
     {}
   );
   const shouldTitleCase = groupBy === "category" || groupBy === "splitType";
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
+  const handleDelete = async (expenseId: string) => {
+    try {
+      setIsDeleting(expenseId);
+      await deleteExpense(groupId!, expenseId);
+      const details = await loadGroupDetails(groupId!);
+      setExpenses(details?.expenses || []);
+    } catch (error) {
+      console.error("Failed to delete:", error);
+      // toast.error("Failed to delete expense");
+    } finally {
+      setIsDeleting(null);
+    }
+  };
   useEffect(() => {
     if (!groupId) return;
     setLoading(true);
@@ -406,13 +426,13 @@ export default function GroupResponsesPage({ groupId }: { groupId: string }) {
     );
 
     return `
-Settlement Summary
+          Settlement Summary
 
-${lines.join("\n")}
+          ${lines.join("\n")}
 
-View full details here:
-${shareLink}
-  `.trim();
+          View full details here:
+          ${shareLink}
+      `.trim();
   };
 
 
@@ -693,17 +713,64 @@ ${shareLink}
                                   transition={{ delay: index * 0.03 }}
                                   className="group relative p-4 border-b last:border-b-0 hover:bg-muted/50 transition-colors"
                                 >
-                                  {/* ✏️ EDIT ICON */}
-                                  <Link href={`/group/${groupId}/edit-expense/${expense.id}`}>
-                                    <button
-                                      // onClick={() => onEditExpense(expense)}
-                                      className="absolute right-4 top-4 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition text-muted-foreground hover:text-foreground"
-                                      aria-label="Edit expense"
-                                    >
-                                      <Pencil className="w-4 h-4" />
-                                    </button>
-                                  </Link>
 
+                                  <div className="absolute right-4 top-4">
+                                    <AlertDialog>
+                                      <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                          <button
+                                            disabled={isDeleting === expense.id}
+                                            className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-muted transition-colors outline-none disabled:opacity-50"
+                                          >
+                                            {isDeleting === expense.id ? (
+                                              <Loader2 className="w-4 h-4 animate-spin" />
+                                            ) : (
+                                              <MoreVertical className="w-4 h-4 text-muted-foreground" />
+                                            )}
+                                          </button>
+                                        </DropdownMenuTrigger>
+
+                                        <DropdownMenuContent
+                                          align="end"
+                                          className="w-36 rounded-xl p-1.5 border-muted shadow-lg"
+                                        >
+                                          <Link href={`/group/${groupId}/edit-expense/${expense.id}`}>
+                                            <DropdownMenuItem className="rounded-lg cursor-pointer gap-2 py-2">
+                                              <Pencil className="w-4 h-4 text-muted-foreground" />
+                                              <span className="text-sm">Edit</span>
+                                            </DropdownMenuItem>
+                                          </Link>
+
+                                          <AlertDialogTrigger asChild>
+                                            <DropdownMenuItem className="rounded-lg cursor-pointer gap-2 py-2 text-destructive focus:text-destructive focus:bg-destructive/10">
+                                              <Trash2 className="w-4 h-4" />
+                                              <span className="text-sm">Delete</span>
+                                            </DropdownMenuItem>
+                                          </AlertDialogTrigger>
+                                        </DropdownMenuContent>
+                                      </DropdownMenu>
+
+                                      <AlertDialogContent className="max-w-[290px] rounded-2xl">
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle className="text-lg">Delete expense?</AlertDialogTitle>
+                                          <AlertDialogDescription className="text-xs">
+                                            Are you sure you want to delete  this expense?
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter className="flex-row gap-2 mt-4">
+                                          <AlertDialogCancel className="flex-1 mt-0 rounded-xl border-none bg-muted hover:bg-muted/80">
+                                            Cancel
+                                          </AlertDialogCancel>
+                                          <AlertDialogAction
+                                            onClick={() => handleDelete(expense.id)}
+                                            className="flex-1 rounded-xl bg-destructive hover:bg-destructive/90 text-white"
+                                          >
+                                            Delete
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
+                                  </div>
 
                                   <div className="flex gap-3">
                                     {/* CATEGORY ICON */}
