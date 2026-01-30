@@ -918,7 +918,7 @@ export default function GroupResponsesPage({ groupId }: { groupId: string }) {
           </div>
 
           {/* INSIGHTS – SCROLL AFTER EXPENSES ON MOBILE */}
-          <div className="space-y-4 order-2 lg:order-none">
+          <div className="space-y-4 order-2 lg:order-none sticky top-[80px] self-start">
             {/* Balances */}
             <Card>
               <CardHeader>
