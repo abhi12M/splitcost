@@ -12,7 +12,7 @@ import { ExpenseForm } from "@/components/expense/ExpenseForm";
 import { updateExpense, deleteExpense, GroupResponse, editExpense, ExpenseFormInterface } from "@/lib/storage";
 import { useToast } from "@/hooks/use-toast";
 import ExpenseFormMobile from "@/components/expense/ExpenseFormMobile";
-import { ExpenseFormMobileSkeleton } from "@/components/expense/ExpenseFormMobileSkeleton";
+import { ExpenseFormSkeleton } from "@/components/expense/ExpenseFormSkeleton";
 import { Spinner } from "@/components/ui/Spinner";
 
 export default function EditExpensePage({ groupId, expenseId }: { groupId: string; expenseId: string }) {
@@ -40,7 +40,7 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
 
   if (loading) {
     return (
-      <ExpenseFormMobileSkeleton />
+      <ExpenseFormSkeleton />
     );
   }
 

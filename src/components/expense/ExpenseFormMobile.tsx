@@ -405,7 +405,7 @@ export default function ExpenseFormMobile({
       </div>
 
       {/* Footer */}
-      <div className="fixed left-0 right-0 bg-background border-t h-14 px-4 flex items-center justify-between z-50 touch-none overscroll-none"
+      <div className="fixed left-0 right-0 bg-background border-t h-[2.7rem] px-4 flex items-center justify-between z-50 touch-none overscroll-none"
         style={{ bottom: keyboardOffset }}
       >
 

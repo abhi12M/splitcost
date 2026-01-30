@@ -13,7 +13,7 @@ import { ExpenseForm } from "@/components/expense/ExpenseForm";
 import { getGroup, addExpense, GroupResponse } from "@/lib/storage";
 import { useToast } from "@/hooks/use-toast";
 import ExpenseFormMobile from "@/components/expense/ExpenseFormMobile";
-import { ExpenseFormMobileSkeleton } from "@/components/expense/ExpenseFormMobileSkeleton";
+import { ExpenseFormSkeleton } from "@/components/expense/ExpenseFormSkeleton";
 
 export default function AddExpensePage({ groupId }: { groupId: string }) {
   const router = useRouter();
@@ -41,7 +41,7 @@ export default function AddExpensePage({ groupId }: { groupId: string }) {
 
   if (loading) {
     return (
-      <ExpenseFormMobileSkeleton />
+      <ExpenseFormSkeleton />
     );
   }
 
