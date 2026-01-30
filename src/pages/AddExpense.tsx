@@ -123,7 +123,7 @@ export default function AddExpensePage({ groupId }: { groupId: string }) {
           onSubmit={handleSubmit}
         />
       </div>
-      <Spinner show={isSubmitting} message="Creating..."/>
+      <Spinner show={isSubmitting} message="Creating..." />
     </>
   );
 }
