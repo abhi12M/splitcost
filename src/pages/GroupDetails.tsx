@@ -693,9 +693,9 @@ export default function GroupResponsesPage({ groupId }: { groupId: string }) {
 
                                 <div className="text-left min-w-0 flex-1">
                                   <div
-                                    className="font-semibold"
+                                    className="font-semibold truncate"
                                   >
-                                    {shouldTitleCase ? toTitleCase(title) : <SmartTooltip text={title} />}
+                                    {shouldTitleCase ? toTitleCase(title) : title}
                                   </div>
                                   <p className="text-xs text-muted-foreground">
                                     {list.length} expenses
