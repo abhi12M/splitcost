@@ -54,6 +54,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { SmartTooltip } from "@/components/ui/smartTooltip";
 
 /* ======================================================
    CONSTANTS – MOVE TO CONSTANTS FILE LATER
@@ -334,7 +335,18 @@ export default function GroupResponsesPage({ groupId }: { groupId: string }) {
     }
 
     if (sortBy === "date_desc") {
-      list.sort((a, b) => +new Date(b.date) - +new Date(a.date));
+      list.sort((a, b) => {
+        if (a.date !== b.date) {
+          return b.date.localeCompare(a.date);
+        }
+
+        return (
+          new Date(b.createdAt).getTime() -
+          new Date(a.createdAt).getTime()
+        );
+      });
+
+
     } else if (sortBy === "amount_desc") {
       list.sort((a, b) => b.amount - a.amount);
     } else {
@@ -452,7 +464,9 @@ export default function GroupResponsesPage({ groupId }: { groupId: string }) {
 
           {/* Middle content takes remaining space */}
           <div className="min-w-0 flex-1">
-            <h1 className="text-2xl font-bold truncate">{group.name}</h1>
+            <div className="flex items-center">
+              <SmartTooltip text={group.name} className="text-2xl font-bold" />
+            </div>
             <AvatarGroup names={group.members.map((m) => m.name)} />
           </div>
 
@@ -601,7 +615,7 @@ export default function GroupResponsesPage({ groupId }: { groupId: string }) {
                 )}
                 {/* ✅ EMPTY search result */}
                 {Object.keys(groupedExpenses).length === 0 && search && (
-                  <div className="py-[4rem] flex flex-col items-center justify-center text-center gap-4">
+                  <div className="py-[4rem] px-2 flex flex-col items-center justify-center text-center gap-4">
                     <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
                       <Search className="w-6 h-6 text-muted-foreground" />
                     </div>
@@ -628,7 +642,7 @@ export default function GroupResponsesPage({ groupId }: { groupId: string }) {
                 )}
                 {/* 🟢 EMPTY GROUP STATE */}
                 {!expenses?.length && !search && (
-                  <div className="py-[4rem] flex flex-col items-center justify-center text-center gap-5">
+                  <div className="py-[4rem] px-2 flex flex-col items-center justify-center text-center gap-5">
                     <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
                       <Wallet className="w-7 h-7 text-primary" />
                     </div>
@@ -670,23 +684,26 @@ export default function GroupResponsesPage({ groupId }: { groupId: string }) {
                               }
                               className="w-full flex items-center justify-between px-4 py-3 border-b hover:bg-muted/40 transition"
                             >
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 min-w-0 flex-1">
                                 {isOpen ? (
-                                  <ChevronDown className="w-4 h-4" />
+                                  <ChevronDown className="w-4 h-4 shrink-0" />
                                 ) : (
-                                  <ChevronRight className="w-4 h-4" />
+                                  <ChevronRight className="w-4 h-4 shrink-0" />
                                 )}
-                                <div className="text-left">
-                                  <p className="font-semibold">
-                                    {shouldTitleCase ? toTitleCase(title) : title}
-                                  </p>
+
+                                <div className="text-left min-w-0 flex-1">
+                                  <div
+                                    className="font-semibold"
+                                  >
+                                    {shouldTitleCase ? toTitleCase(title) : <SmartTooltip text={title} />}
+                                  </div>
                                   <p className="text-xs text-muted-foreground">
                                     {list.length} expenses
                                   </p>
                                 </div>
                               </div>
 
-                              <span className="font-semibold">
+                              <span className="font-semibold shrink-0 ml-2">
                                 {formatCurrency(groupTotal, group.currency)}
                               </span>
                             </button>
@@ -790,19 +807,14 @@ export default function GroupResponsesPage({ groupId }: { groupId: string }) {
                                     <div className="min-w-0 flex-1">
                                       {/* DESCRIPTION + MOBILE EDIT */}
                                       <div className="flex items-center gap-2">
-                                        <p className="font-medium truncate flex-1">
-                                          {expense.description}
-                                        </p>
-
+                                        <SmartTooltip text={expense.description} />
                                       </div>
 
                                       {/* PAID BY */}
-                                      <p className="text-xs md:text-base text-muted-foreground mt-0.5 flex items-center gap-1">
-                                        <span className="truncate inline-block">
-                                          {expense.paidBy.name}
-                                        </span>
+                                      <div className="text-xs md:text-base text-muted-foreground mt-0.5 flex items-center gap-1">
+                                        <SmartTooltip text={expense.paidBy.name} />
                                         <span className="shrink-0">paid</span>
-                                      </p>
+                                      </div>
 
 
                                       {/* PARTICIPANTS */}
@@ -878,17 +890,18 @@ export default function GroupResponsesPage({ groupId }: { groupId: string }) {
                       {chartData.map((item, i) => (
                         <div
                           key={item.name}
-                          className="flex justify-between items-center p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                          className="flex justify-between items-center p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors my-2"
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             <div
                               className="w-3 h-3 rounded-full shrink-0"
                               style={{ backgroundColor: COLORS[i % COLORS.length] }}
                             />
-                            <span className="text-sm font-medium truncate">{item.name}</span>
+                            {/* <span className="text-sm font-medium truncate">{item.name}</span> */}
+                            <SmartTooltip text={item.name} />
                           </div>
                           <div className="text-right">
-                            <p className="text-sm font-bold">
+                            <p className="text-sm font-medium">
                               {formatCurrency(item.value, group.currency)}
                             </p>
                             <p className="text-[10px] text-muted-foreground">
@@ -921,7 +934,7 @@ export default function GroupResponsesPage({ groupId }: { groupId: string }) {
                     <div key={m.id} className="flex justify-between items-center">
                       <div className="flex items-center gap-2 min-w-0">
                         <UserAvatar name={m.name} />
-                        <span className="truncate text-sm">{m.name}</span>
+                        <SmartTooltip text={m.name} />
                       </div>
                       <span
                         className={`font-semibold text-sm flex-shrink-0 ${bal > 0

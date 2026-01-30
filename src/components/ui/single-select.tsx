@@ -331,7 +331,7 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
         {!isFullscreenMobile && (
           <PopoverContent
             className={cn(
-              "w-[--radix-popover-trigger-width] p-0",
+              "w-[--radix-popover-trigger-width] p-0 min-w-[190px]",
             )}
             align="start"
           // avoidCollisions={false}

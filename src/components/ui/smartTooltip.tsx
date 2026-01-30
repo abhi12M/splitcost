@@ -1,0 +1,65 @@
+"use client";
+
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
+import { useDeviceType } from "@/hooks/useDeviceType";
+
+interface SmartTooltipProps {
+    text: string;
+    maxWidth?: string;
+    className?: string;
+}
+
+export function SmartTooltip({
+    text,
+    className = "",
+}: SmartTooltipProps) {
+
+    const device = useDeviceType();
+    if (!text) return null;
+
+    // 📱 MOBILE → Popover (tap)
+    if (device != 'desktop') {
+        return (
+            <Popover>
+                <PopoverTrigger asChild>
+                    <span
+                        className={`truncate block max-w-full cursor-pointer ${className}`}
+                    >
+                        {text}
+                    </span>
+                </PopoverTrigger>
+
+                <PopoverContent className="max-w-[240px] max-h-[160px] text-xs p-2 break-all overflow-y-auto">
+                    {text}
+                </PopoverContent>
+            </Popover>
+        );
+    }
+
+    // 🖥 DESKTOP → Tooltip (hover)
+    return (
+        <TooltipProvider delayDuration={0}>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <span
+                        className={`truncate block max-w-full cursor-pointer ${className}`}
+                    >
+                        {text}
+                    </span>
+                </TooltipTrigger>
+
+                <TooltipContent className="max-w-[240px] max-h-[160px] overflow-y-auto text-xs p-2 break-all">{text}</TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+    );
+}

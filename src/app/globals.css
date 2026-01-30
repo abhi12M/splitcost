@@ -3,6 +3,12 @@
 @tailwind utilities;
 
 
+* {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 @layer base {
   :root {
     /* Warm teal-green palette for trust and money */

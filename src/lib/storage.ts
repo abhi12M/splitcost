@@ -86,7 +86,7 @@ export interface ExpenseResponse {
   subcategory: SubcategoryId;
   date: string;
   participants: ExpenseParticipantsResponse[];
-  createdAt?: string;
+  createdAt: string;
   updatedAt?: string;
 }
 export interface ExpenseRequest {
@@ -329,6 +329,7 @@ export async function loadGroupDetails(//for group dashboard
         category,
         subcategory,
         date,
+        created_at,
         expense_participants (
           users (
             id,
@@ -378,6 +379,7 @@ export async function loadGroupDetails(//for group dashboard
       category: e.category as CategoryKey,
       subcategory: e.subcategory as SubcategoryId,
       date: String(e.date),
+      createdAt:e.created_at,
       participants: e.expense_participants.map((p) => ({
         user: { id: p.users.id, name: p.users.name },
         amount: p.share_amount,
