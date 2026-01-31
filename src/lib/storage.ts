@@ -184,67 +184,18 @@ export async function createGroup(
   memberNames: string[]
 ): Promise<GroupResponse> {
 
-  // ---------------------------------------------------------
-  // Step 1: Create Users (Batch Insert)
-  // ---------------------------------------------------------
-  // We turn the array of names strings into an array of objects for the DB
-  const userInserts = memberNames.map(memberName => ({
-    name: memberName,
-  }));
+  const { data, error } = await supabase.rpc(
+    'create_group_with_members',
+    {
+      group_name: name,
+      group_currency: currency,
+      member_names: memberNames,
+    }
+  );
 
-  // Insert them and IMMEDIATELY select to get their new UUIDs
-  const { data: newUsers, error: userError } = await supabase
-    .from('users')
-    .insert(userInserts)
-    .select('id, name'); // We only need ID and Name back
+  if (error) throw error;
+  return data;
 
-  if (userError) throw userError;
-  if (!newUsers) throw new Error("Failed to create users");
-
-
-  // ---------------------------------------------------------
-  // Step 2: Create Group
-  // ---------------------------------------------------------
-  const { data: newGroup, error: groupError } = await supabase
-    .from('groups')
-    .insert({
-      name,
-      currency,
-    })
-    .select()
-    .single();
-
-  if (groupError) throw groupError;
-
-
-  // ---------------------------------------------------------
-  // Step 3: Link Users to Group (Create Members)
-  // ---------------------------------------------------------
-  // Now we have `newUsers` (with IDs) and `newGroup` (with ID).
-  // We map them to the intersection table.
-  const memberInserts = newUsers.map(user => ({
-    group_id: newGroup.id,   // The group we just made
-    user_id: user.id,        // The user we just made
-    role: 'member',         // Default role since we have no logic yet
-    joined_at: new Date().toISOString()
-  }));
-
-  const { data, error: memberError } = await supabase
-    .from('group_members')
-    .insert(memberInserts);
-
-  if (memberError) {
-    // Optional: If linking fails, you might want to delete the group to keep DB clean
-    console.error("Failed to link members", memberError);
-    throw memberError;
-  }
-
-  return {
-    id: newGroup.id,
-    name: newGroup.name,
-    currency: newGroup.currency,
-    members: newUsers
-  };
 }
 
 // Delete a group (expenses will be cascade deleted)
@@ -379,7 +330,7 @@ export async function loadGroupDetails(//for group dashboard
       category: e.category as CategoryKey,
       subcategory: e.subcategory as SubcategoryId,
       date: String(e.date),
-      createdAt:e.created_at,
+      createdAt: e.created_at,
       participants: e.expense_participants.map((p) => ({
         user: { id: p.users.id, name: p.users.name },
         amount: p.share_amount,
@@ -471,73 +422,26 @@ export async function editExpense(
 // Add expense to a group
 export async function addExpense(
   groupId: string,
-  data: ExpenseRequest
+  expenseData: ExpenseRequest
 ): Promise<ExpenseResponse | undefined> {
   try {
-    // 1. Insert expense
-    const { data: expenseRow, error: expenseError } = await supabase
-      .from("expenses")
-      .insert([
-        {
-          group_id: groupId,
-          description: data.description,
-          amount: data.amount,
-          currency: data.currency,
-          paid_by_user_id: data.paidByUserId,
-          split_type: data.splitType,
-          category: data.category,
-          subcategory: data.subcategory,
-          date: data.date,
-        },
-      ])
-      .select(`
-        *,
-        users!expenses_paid_by_user_id_fkey (
-          id,
-          name
-        )
-      `)
-      .single();
+    const { data, error } = await supabase.rpc("add_expense", {
+      p_group_id: groupId,
+      p_description: expenseData.description,
+      p_amount: expenseData.amount,
+      p_currency: expenseData.currency,
+      p_paid_by_user_id: expenseData.paidByUserId,
+      p_split_type: expenseData.splitType,
+      p_category: expenseData.category,
+      p_subcategory: expenseData.subcategory,
+      p_date: expenseData.date,
+      p_participants: expenseData.participants,
+    });
 
-    if (expenseError) throw expenseError;
+    if (error) throw error;
 
-    // 2. Insert participants + RETURN them
-    let participants;
-    if (data.participants?.length) {
-      const participantsPayload = data.participants.map((p) => ({
-        expense_id: expenseRow.id,
-        user_id: p.userId,
-        share_amount: p.amount,
-        share_percent: p.percent ?? null,
-      }));
+    return data;
 
-      const { data: participantsData, error: participantsError } = await supabase
-        .from("expense_participants")
-        .insert(participantsPayload)
-        .select();
-
-      participants = participantsData;
-
-      if (participantsError) throw participantsError;
-
-      // Map DB rows → domain objects
-    }
-
-    // 3. Return domain object
-    return {
-      id: expenseRow.id,
-      groupId: expenseRow.group_id,
-      description: expenseRow.description,
-      amount: Number(expenseRow.amount),
-      currency: expenseRow.currency,
-      paidBy: { id: expenseRow.users.id, name: expenseRow.users.name },
-      splitType: expenseRow.split_type as SplitType,
-      category: expenseRow.category as CategoryKey,
-      subcategory: expenseRow.subcategory as SubcategoryId,
-      date: expenseRow.date,
-      participants,
-      createdAt: expenseRow.created_at,
-    };
   } catch (error) {
     console.error("Error adding expense:", error);
     return undefined;
@@ -551,7 +455,7 @@ export async function updateExpense(
   data: ExpenseRequest
 ): Promise<ExpenseResponse | undefined> {
   try {
-    
+
     // 1. Update expense row
     const { data: expenseRow, error: expenseError } = await supabase
       .from("expenses")

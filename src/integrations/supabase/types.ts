@@ -1,3 +1,5 @@
+import { ExpenseResponse, GroupResponse } from "@/lib/storage"
+
 export type Json =
   | string
   | number
@@ -85,8 +87,8 @@ export type Database = {
           created_at: string
           created_by: string | null
           currency: string
-          description: string
           date: string
+          description: string
           group_id: string
           id: string
           paid_by_user_id: string
@@ -97,32 +99,32 @@ export type Database = {
         Insert: {
           amount: number
           category: string
-          created_at?: string | null
+          created_at?: string
           created_by?: string | null
           currency: string
-          description: string
           date: string
+          description: string
           group_id: string
           id?: string
           paid_by_user_id: string
           split_type: Database["public"]["Enums"]["split_type"]
           subcategory: string
-          updated_at?: string | null
+          updated_at?: string
         }
         Update: {
           amount?: number
           category?: string
-          created_at?: string | null
+          created_at?: string
           created_by?: string | null
           currency?: string
-          description?: string
           date?: string
+          description?: string
           group_id?: string
           id?: string
           paid_by_user_id?: string
           split_type?: Database["public"]["Enums"]["split_type"]
           subcategory?: string
-          updated_at?: string | null
+          updated_at?: string
         }
         Relationships: [
           {
@@ -272,7 +274,33 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_group_with_members: {
+        Args: {
+          group_currency: string
+          group_name: string
+          member_names: string[]
+        }
+        Returns: GroupResponse
+      },
+      add_expense: {
+        Args: {
+          p_group_id: string
+          p_description: string
+          p_amount: number
+          p_currency: string
+          p_paid_by_user_id: string
+          p_split_type: string
+          p_category: string
+          p_subcategory: string
+          p_date: string
+          p_participants: {
+            userId: string
+            amount?: number | null
+            percent?: number | null
+          }[]
+        }
+        Returns: ExpenseResponse
+      }
     }
     Enums: {
       auth_provider: "email" | "google" | "apple"
