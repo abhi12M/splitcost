@@ -82,7 +82,6 @@ export default function HomePage() {
       const loadedGroups = await loadGroupsByIds(groupIds);
       setGroups(loadedGroups);
     } catch (error) {
-      console.error("Error loading groups:", error);
     } finally {
       setLoading(false);
     }

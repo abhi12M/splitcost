@@ -286,7 +286,6 @@ export default function GroupResponsesPage({ groupId }: { groupId: string }) {
       const details = await loadGroupDetails(groupId!);
       setExpenses(details?.expenses || []);
     } catch (error) {
-      console.error("Failed to delete:", error);
       // toast.error("Failed to delete expense");
     } finally {
       setIsDeleting(null);

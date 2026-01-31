@@ -30,7 +30,6 @@ export default function CreateGroupPage() {
       
       router.push(`/group/${group.id}`);
     } catch (error) {
-      console.error(error);
       setIsSubmitting(false);
     }
   };

@@ -67,7 +67,6 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
       // });
       router.push(`/group/${groupId}`);
     } catch (error) {
-      console.error("Error updating expense:", error);
       // toast({
       //   title: "Error",
       //   description: "Failed to update expense",
@@ -87,7 +86,6 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
       });
       router.push(`/group/${groupId}`);
     } catch (error) {
-      console.error("Error deleting expense:", error);
       toast({
         title: "Error",
         description: "Failed to delete expense",

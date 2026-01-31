@@ -30,7 +30,6 @@ export default function AddExpensePage({ groupId }: { groupId: string }) {
           const fetchedGroup = await getGroup(groupId);
           setGroup(fetchedGroup);
         } catch (error) {
-          console.error("Error fetching group:", error);
         } finally {
           setLoading(false);
         }
@@ -68,7 +67,6 @@ export default function AddExpensePage({ groupId }: { groupId: string }) {
       // });
       router.push(`/group/${groupId}`);
     } catch (error) {
-      console.error("Error adding expense:", error);
       // toast({
       //   title: "Error",
       //   description: "Failed to add expense",
