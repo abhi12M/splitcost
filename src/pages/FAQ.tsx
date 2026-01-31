@@ -1,5 +1,3 @@
-"use client";
-import { motion } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { APP_NAME } from "@/lib/constants";
@@ -43,24 +41,16 @@ export default function FAQPage() {
   return (
     <Layout>
       <div className="container py-12 md:py-20 max-w-3xl">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
-        >
+        <div >
           <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
             Frequently Asked Questions
           </h1>
           <p className="text-lg text-muted-foreground">
             Everything you need to know about {APP_NAME}
           </p>
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
+        <div>
           <Accordion type="single" collapsible className="space-y-3">
             {faqs.map((faq, index) => (
               <AccordionItem
@@ -77,7 +67,7 @@ export default function FAQPage() {
               </AccordionItem>
             ))}
           </Accordion>
-        </motion.div>
+        </div>
       </div>
     </Layout>
   );

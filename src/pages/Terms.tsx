@@ -1,5 +1,3 @@
-"use client";
-import { motion } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
 import { APP_NAME } from "@/lib/constants";
 
@@ -7,10 +5,7 @@ export default function TermsPage() {
   return (
     <Layout>
       <div className="container py-12 md:py-20 max-w-3xl">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
+        <div>
           <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-8">
             Terms & Conditions
           </h1>
@@ -93,7 +88,7 @@ export default function TermsPage() {
               </p>
             </section>
           </div>
-        </motion.div>
+        </div>
       </div>
     </Layout>
   );
