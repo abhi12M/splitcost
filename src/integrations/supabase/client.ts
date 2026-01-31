@@ -4,8 +4,8 @@ import type { Database } from './types';
 
 
 export const supabase = createClient<Database>(
-  process.env.NEXT_SUPABASE_URL||'',
-  process.env.NEXT_SUPABASE_PUBLISHABLE_KEY||'',
+  process.env.NEXT_SUPABASE_URL!,
+  process.env.NEXT_SUPABASE_PUBLISHABLE_KEY!,
   {
     auth: {
       storage: typeof window !== 'undefined' ? window.localStorage : undefined,
