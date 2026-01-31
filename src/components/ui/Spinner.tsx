@@ -18,7 +18,7 @@ export const Spinner: React.FC<SpinnerProps> = ({
   return (
     <div
       className={cn(
-        "fixed inset-0 z-50 flex flex-col items-center justify-center gap-1 backdrop-blur-[3px]",
+        "fixed inset-0 z-50 flex flex-col items-center justify-center gap-1 backdrop-blur-[5px]",
         className
       )}
     >
