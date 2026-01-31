@@ -265,3 +265,97 @@ CREATE INDEX idx_expenses_group_id ON public.expenses(group_id);
 --   );
 -- end;
 -- $$;
+
+-- create or replace function edit_expense(
+--   p_group_id uuid,
+--   p_expense_id uuid,
+--   p_description text,
+--   p_amount numeric,
+--   p_currency text,
+--   p_paid_by_user_id uuid,
+--   p_split_type text,
+--   p_category text,
+--   p_subcategory text,
+--   p_date date,
+--   p_participants jsonb
+-- )
+-- returns table (
+--   id uuid,
+--   group_id uuid,
+--   description text,
+--   amount numeric,
+--   currency text,
+--   paid_by_user_id uuid,
+--   paid_by_name text,
+--   split_type text,
+--   category text,
+--   subcategory text,
+--   date date,
+--   created_at timestamptz,
+--   updated_at timestamptz
+-- )
+-- language plpgsql
+-- as $$
+-- begin
+--   -- 1. Update expense
+--   update expenses e
+--   set
+--     description = p_description,
+--     amount = p_amount,
+--     currency = p_currency,
+--     paid_by_user_id = p_paid_by_user_id,
+--     split_type = p_split_type::split_type,
+--     category = p_category,
+--     subcategory = p_subcategory,
+--     date = p_date,
+--     updated_at = now()
+--   where e.id = p_expense_id
+--     and e.group_id = p_group_id;
+
+--   if not found then
+--     raise exception 'Expense not found';
+--   end if;
+
+--   -- 2. Delete existing participants
+--   delete from expense_participants ep
+--   where ep.expense_id = p_expense_id;
+
+--   -- 3. Insert updated participants
+--   if p_participants is not null then
+--     insert into expense_participants (
+--       expense_id,
+--       user_id,
+--       share_amount,
+--       share_percent
+--     )
+--     select
+--       p_expense_id,
+--       (item->>'userId')::uuid,
+--       (item->>'amount')::numeric,
+--       (item->>'percent')::numeric
+--     from jsonb_array_elements(p_participants) as item;
+--   end if;
+
+--   -- 4. Return updated expense
+--   return query
+--   select
+--     e.id           as id,
+--     e.group_id     as group_id,
+--     e.description  as description,
+--     e.amount       as amount,
+--     e.currency     as currency,
+--     e.paid_by_user_id as paid_by_user_id,
+--     u.name         as paid_by_name,
+--     e.split_type::text      as split_type,
+--     e.category     as category,
+--     e.subcategory  as subcategory,
+--     e.date         as date,
+--     e.created_at   as created_at,
+--     e.updated_at   as updated_at
+--   from expenses e
+--   join users u on u.id = e.paid_by_user_id
+--   where e.id = p_expense_id;
+
+-- end;
+-- $$;
+

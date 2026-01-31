@@ -455,77 +455,49 @@ export async function updateExpense(
   data: ExpenseRequest
 ): Promise<ExpenseResponse | undefined> {
   try {
+    const { data: result, error } = await supabase.rpc(
+      "edit_expense",
+      {
+        p_group_id: groupId,
+        p_expense_id: expenseId,
+        p_description: data.description,
+        p_amount: data.amount,
+        p_currency: data.currency,
+        p_paid_by_user_id: data.paidByUserId,
+        p_split_type: data.splitType,
+        p_category: data.category,
+        p_subcategory: data.subcategory,
+        p_date: data.date,
+        p_participants: data.participants.map((p) => ({
+          userId: p.userId,
+          amount: p.amount,
+          percent: p.percent ?? null,
+        }))
+      }
+    );
 
-    // 1. Update expense row
-    const { data: expenseRow, error: expenseError } = await supabase
-      .from("expenses")
-      .update({
-        description: data.description,
-        amount: data.amount,
-        currency: data.currency,
-        paid_by_user_id: data.paidByUserId,
-        split_type: data.splitType,
-        category: data.category,
-        subcategory: data.subcategory,
-        date: String(data.date),
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", expenseId)
-      .eq("group_id", groupId)
-      .select(`
-        *,
-        users!expenses_paid_by_user_id_fkey (
-          id,
-          name
-        )
-      `)
-      .single();
+    if (error) throw error;
+    if (!result) return undefined;
 
-    if (expenseError) throw expenseError;
+    const row = result[0];
 
-    // 2. Delete existing participants
-    const { error: deleteError } = await supabase
-      .from("expense_participants")
-      .delete()
-      .eq("expense_id", expenseId);
-
-    if (deleteError) throw deleteError;
-
-    let participants;
-    // 3. Insert updated participants
-    if (data.participants?.length) {
-      const participantsPayload = data.participants.map((p) => ({
-        expense_id: expenseId,
-        user_id: p.userId,
-        share_amount: p.amount,
-        share_percent: p.percent ?? null,
-      }));
-
-      const { data: participantsData, error: insertError } = await supabase
-        .from("expense_participants")
-        .insert(participantsPayload)
-        .select();
-
-      participants = participantsData;
-
-      if (insertError) throw insertError;
-    }
-
-    // 4. Return domain object
     return {
-      id: expenseRow.id,
-      groupId: expenseRow.group_id,
-      description: expenseRow.description,
-      amount: Number(expenseRow.amount),
-      currency: expenseRow.currency,
-      paidBy: { id: expenseRow.users.id, name: expenseRow.users.name },
-      splitType: expenseRow.split_type as SplitType,
-      category: expenseRow.category as CategoryKey,
-      subcategory: expenseRow.subcategory as SubcategoryId,
-      date: String(expenseRow.date),
-      participants,
-      createdAt: expenseRow.created_at,
-      updatedAt: expenseRow.updated_at
+      id: row.id,
+      groupId: row.group_id,
+      description: row.description,
+      amount: Number(row.amount),
+      currency: row.currency,
+      paidBy: {
+        id: row.paid_by_user_id,
+        name: row.paid_by_name,
+      },
+      splitType: row.split_type as SplitType,
+      category: row.category as CategoryKey,
+      subcategory: row.subcategory as SubcategoryId,
+      date: String(row.date),
+      participants: row.participants,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
     };
   } catch (error) {
     console.error("Error updating expense:", error);

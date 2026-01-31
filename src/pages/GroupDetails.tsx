@@ -88,7 +88,6 @@ function calculateShare(
   if (!participant) return 0;
 
   const amount = Number(participant.amount);
-  debugger
   return Number.isNaN(amount) ? 0 : amount;
 }
 
@@ -103,18 +102,25 @@ function calculateBalances(
   });
 
   expenses.forEach((expense) => {
-    if (balances[expense.paidBy.id] === undefined) {
-      balances[expense.paidBy.id] = 0;
+    const payerId = expense.paidBy.id;
+
+    if (balances[payerId] === undefined) {
+      balances[payerId] = 0;
     }
 
     expense.participants.forEach((p) => {
-      if (balances[p.user.id] === undefined) {
-        balances[p.user.id] = 0;
+      const pId = p.user.id;
+      if (balances[pId] === undefined) {
+        balances[pId] = 0;
       }
-      balances[p.user.id] -= calculateShare(expense, p.user.id);
+      balances[pId] -= calculateShare(expense, pId);
     });
 
-    balances[expense.paidBy.id] += expense.amount;
+    balances[payerId] += expense.amount;
+  });
+
+  Object.keys(balances).forEach((key) => {
+    balances[key] = Math.round(balances[key] * 100) / 100;
   });
 
   return balances;
@@ -965,7 +971,7 @@ export default function GroupResponsesPage({ groupId }: { groupId: string }) {
               <CardContent className="space-y-3 max-h-[17rem] overflow-y-auto">
                 {group.members.map((m) => {
                   const bal = balances[m.id];
-                  debugger
+
                   return (
                     <div key={m.id} className="flex justify-between items-center">
                       <div className="flex items-center gap-2 min-w-0">

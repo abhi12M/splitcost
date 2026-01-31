@@ -300,6 +300,25 @@ export type Database = {
           }[]
         }
         Returns: ExpenseResponse
+      },
+      edit_expense: {
+        Args: {
+          p_group_id: string
+          p_description: string
+          p_amount: number
+          p_currency: string
+          p_paid_by_user_id: string
+          p_split_type: string
+          p_category: string
+          p_subcategory: string
+          p_date: string
+          p_participants: {
+            userId: string
+            amount?: number | null
+            percent?: number | null
+          }[]
+        }
+        Returns: ExpenseResponse
       }
     }
     Enums: {
