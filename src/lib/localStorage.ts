@@ -7,7 +7,7 @@ import CryptoJS from "crypto-js";
  * NEXT_PUBLIC_STORAGE_SECRET=my-secret-key
  */
 const SECRET_KEY = process.env.NEXT_PUBLIC_STORAGE_SECRET || "default-secret";
-
+const isBrowser = typeof window !== "undefined";
 /**
  * Encrypt any value
  */
@@ -26,10 +26,9 @@ const decrypt = <T>(cipherText: string): T => {
   return JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
 };
 
-/**
- * Set encrypted item
- */
+
 export const setEncryptedItem = <T>(key: string, value: T): void => {
+  if (!isBrowser) return; // Prevent server-side execution
   try {
     const encryptedKey = CryptoJS.SHA256(key).toString();
     const encryptedValue = encrypt(value);
@@ -39,13 +38,8 @@ export const setEncryptedItem = <T>(key: string, value: T): void => {
   }
 };
 
-/**
- * Get encrypted item
- */
-export const getEncryptedItem = <T>(
-  key: string,
-  defaultValue: T
-): T => {
+export const getEncryptedItem = <T>(key: string, defaultValue: T): T => {
+  if (!isBrowser) return defaultValue; // Return default on server
   try {
     const encryptedKey = CryptoJS.SHA256(key).toString();
     const item = localStorage.getItem(encryptedKey);
