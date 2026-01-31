@@ -48,6 +48,7 @@ interface SingleSelectProps {
   isMinWidth?: boolean;
   fullscreenOnMobile?: boolean;
   isDisplayId?: boolean;
+  disabled?: boolean;
 }
 
 export const SingleSelect: React.FC<SingleSelectProps> = ({
@@ -63,6 +64,7 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
   label,
   fullscreenOnMobile = false,
   isDisplayId = false,
+  disabled = false
 }) => {
   const device = useDeviceType();
   const [open, setOpen] = useState(false);
@@ -150,7 +152,7 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
   return (
     <>
       {/* ================= FULLSCREEN MOBILE ================= */}
-      {isFullscreenMobile && open && (
+      {isFullscreenMobile && open && !disabled && (
         createPortal(
           <div className="fixed inset-0 z-[60] bg-background !mt-0">
             <Command className="h-full flex flex-col touch-none overscroll-none">
@@ -257,7 +259,11 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
               // ✅ MOBILE SQUARE ICON BUTTON
               <button
                 type="button"
+                disabled={disabled}
                 onClick={() => setOpen(true)}
+                // className={cn(
+                //   disabled && "opacity-50 cursor-not-allowed pointer-events-none"
+                // )}
               >
                 {groups?.length ? (
                   // GROUP MODE → show selected item icon/avatar
@@ -276,18 +282,20 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
                       {placeholder}
                     </span>)
                 )}
-              </button> 
+              </button>
             ) : (
               // ✅ NORMAL DESKTOP BUTTON
               <button
                 type="button"
                 role="combobox"
                 aria-invalid={ariaInvalid}
+                disabled={disabled}
                 className={cn(
                   "w-full h-14 px-4 rounded-xl bg-background hover:bg-accent/50 transition-all border flex items-center",
                   "aria-[invalid=true]:border-destructive",
                   "aria-[invalid=true]:border-transparent",
                   "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                  // disabled && "opacity-50 cursor-not-allowed bg-muted hover:bg-muted border-border",
                   buttonClassName
                 )}
               >

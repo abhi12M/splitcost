@@ -349,7 +349,7 @@ export function ExpenseForm({
             >
               {/* Currency */}
               <div className="border-border/50">
-                <Select value={currency} onValueChange={setCurrency}>
+                <Select value={currency} onValueChange={setCurrency} disabled>
                   <SelectTrigger className="h-full w-[88px] rounded-none focus:ring-0 focus:outline-none border-r-2">
                     <SelectValue />
                   </SelectTrigger>

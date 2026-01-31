@@ -356,6 +356,7 @@ export default function ExpenseFormMobile({
                 inputPlaceholder="Search or select currency..."
                 fullscreenOnMobile
                 isDisplayId
+                disabled
               />
 
               <Input
