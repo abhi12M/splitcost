@@ -387,7 +387,7 @@ export const EXPENSE_CATEGORIES = {
           "park", "zoo", "amusement park", "museum", "fort", "monument", "temple",
           "historical site", "tourism", "travel", "hill station", "beach", "lake",
           "palace", "national park", "wildlife sanctuary", "heritage site", "fortress",
-          "sightseeing", "excursion", "trip", "holiday", "vacation"
+          "sightseeing", "excursion", "trip", "holiday", "vacation","visit","ticket"
         ]
       }
 
@@ -397,7 +397,7 @@ export const EXPENSE_CATEGORIES = {
     label: "Food & Drink",
     color: "category-food",
     subcategories: [
-      { id: "dining", label: "Dining Out", icon: DiningIcon, keywords: ["food", "restaurant", "dining", "lunch", "dinner", "cafe", "zomato", "swiggy", "tea", 'coffee', "chai", "samosa", "pakoda", "dosa", "kachodi", "khasta"] },
+      { id: "dining", label: "Dining Out", icon: DiningIcon, keywords: ["food", "restaurant", "dining", "lunch", "dinner", "cafe", "zomato", "swiggy", "tea", 'coffee', "chai", "samosa", "pakoda", "dosa", "kachodi", "khasta","batashe","pani puri","gol gappe"] },
       { id: "groceries", label: "Groceries", icon: GroceriesIcon, keywords: ["groceries", "vegetables", "fruits", "supermarket", "ration", "daily needs", "milk"] },
       { id: "liquor", label: "Liquor", icon: LiquorIcon, keywords: ["liquor", "alcohol", "beer", "wine", "whiskey", "vodka", "bar"] },
     ],
@@ -450,7 +450,7 @@ export const EXPENSE_CATEGORIES = {
       { id: "fuel", label: "Gas/Fuel", icon: GasFuelIcon, keywords: ["fuel", "petrol", "diesel", "gas"] },
       { id: "parking", label: "Parking", icon: ParkingIcon, keywords: ["parking", "parking fee"] },
       { id: "plane", label: "Plane", icon: PlaneIcon, keywords: ["flight", "plane", "airfare"] },
-      { id: "taxi", label: "Taxi", icon: TaxiIcon, keywords: ["taxi", "cab", "uber", "ola"] },
+      { id: "taxi", label: "Taxi", icon: TaxiIcon, keywords: ["taxi", "cab", "uber", "ola","auto"] },
       { id: "hotel", label: "Hotel", icon: HotelIcon, keywords: ["hotel", "stay", "lodging", "accommodation"] },
     ],
   },
