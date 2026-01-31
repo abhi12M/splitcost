@@ -136,3 +136,132 @@ CREATE INDEX idx_expenses_group_id ON public.expenses(group_id);
 
 -- -- expenses
 -- CREATE INDEX idx_expenses_group_id ON public.expenses(group_id);
+
+-- create or replace function add_expense(
+--   p_group_id uuid,
+--   p_description text,
+--   p_amount numeric,
+--   p_currency text,
+--   p_paid_by_user_id uuid,
+--   p_split_type text,
+--   p_category text,
+--   p_subcategory text,
+--   p_date date,
+--   p_participants jsonb default '[]'
+-- )
+-- returns json
+-- language plpgsql
+-- as $$
+-- declare
+--   v_expense expenses;
+-- begin
+--   -- 1. Insert expense
+--   insert into expenses (
+--     group_id,
+--     description,
+--     amount,
+--     currency,
+--     paid_by_user_id,
+--     split_type,
+--     category,
+--     subcategory,
+--     date
+--   )
+--   values (
+--     p_group_id,
+--     p_description,
+--     p_amount,
+--     p_currency,
+--     p_paid_by_user_id,
+--     p_split_type::split_type,
+--     p_category,
+--     p_subcategory,
+--     p_date
+--   )
+--   returning * into v_expense;
+
+--   -- 2. Insert participants (if any)
+--   if jsonb_array_length(p_participants) > 0 then
+--     insert into expense_participants (
+--       expense_id,
+--       user_id,
+--       share_amount,
+--       share_percent
+--     )
+--     select
+--       v_expense.id,
+--       (p->>'userId')::uuid,
+--       (p->>'amount')::numeric,
+--       nullif(p->>'percent','')::numeric
+--     from jsonb_array_elements(p_participants) as p;
+--   end if;
+
+--   -- 3. Return full response
+--   return json_build_object(
+--     'id', v_expense.id,
+--     'groupId', v_expense.group_id,
+--     'description', v_expense.description,
+--     'amount', v_expense.amount,
+--     'currency', v_expense.currency,
+--     'splitType', v_expense.split_type,
+--     'category', v_expense.category,
+--     'subcategory', v_expense.subcategory,
+--     'date', v_expense.date,
+--     'createdAt', v_expense.created_at,
+--     'paidBy', (
+--       select json_build_object('id', u.id, 'name', u.name)
+--       from users u
+--       where u.id = v_expense.paid_by_user_id
+--     ),
+--     'participants', (
+--       select coalesce(json_agg(ep), '[]'::json)
+--       from expense_participants ep
+--       where ep.expense_id = v_expense.id
+--     )
+--   );
+-- end;
+-- $$;
+
+
+-- create or replace function create_group_with_members(
+--   group_name text,
+--   group_currency text,
+--   member_names text[]
+-- )
+-- returns json
+-- language plpgsql
+-- as $$
+-- declare
+--   new_group_id uuid;
+-- begin
+--   -- Create group
+--   insert into groups (name, currency)
+--   values (group_name, group_currency)
+--   returning id into new_group_id;
+
+--   -- Create users + members in one go
+--   with inserted_users as (
+--     insert into users (name)
+--     select unnest(member_names)
+--     returning id, name
+--   )
+--   insert into group_members (group_id, user_id, role)
+--   select new_group_id, id, 'member'
+--   from inserted_users;
+
+--   return json_build_object(
+--     'id', new_group_id,
+--     'name', group_name,
+--     'currency', group_currency,
+--     'members', (
+--       select json_agg(json_build_object(
+--         'id', u.id,
+--         'name', u.name
+--       ))
+--       from users u
+--       join group_members gm on gm.user_id = u.id
+--       where gm.group_id = new_group_id
+--     )
+--   );
+-- end;
+-- $$;
