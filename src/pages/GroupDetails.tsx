@@ -399,7 +399,6 @@ export default function GroupResponsesPage({ groupId }: { groupId: string }) {
   }
 
   const balances = calculateBalances(expenses, group.members);
-  debugger
   const settlements = calculateSettlements(balances, group.members);
   const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
   const visibleCount = Object.values(groupedExpenses).reduce(
