@@ -59,6 +59,7 @@
     --category-utilities: 45 85% 50%;
     --category-transportation: 170 60% 45%;
     --category-uncategorized: 220 15% 55%;
+    --category-cash: 142 45% 45%;
 
     /* Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(168 55% 42%), hsl(168 55% 52%));

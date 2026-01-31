@@ -347,6 +347,26 @@ export const ReceiptIcon = ({ className, size = 24, style }: IconProps) => (
   </svg>
 );
 
+export const CashIcon = ({ className, size = 24, style }: IconProps) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    className={cn(iconStyle, className)}
+    style={style}
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <rect x="3" y="6" width="18" height="12" rx="2" />
+    <circle cx="12" cy="12" r="2.5" />
+    <path d="M7 9h.01" />
+    <path d="M17 15h.01" />
+  </svg>
+);
+
+
 // Category mapping with subcategories
 export const EXPENSE_CATEGORIES = {
   entertainment: {
@@ -377,7 +397,7 @@ export const EXPENSE_CATEGORIES = {
     label: "Food & Drink",
     color: "category-food",
     subcategories: [
-      { id: "dining", label: "Dining Out", icon: DiningIcon, keywords: ["food", "restaurant", "dining", "lunch", "dinner", "cafe", "zomato", "swiggy","tea",'coffee',"chai","samosa","pakoda","dosa","kachodi","khasta"] },
+      { id: "dining", label: "Dining Out", icon: DiningIcon, keywords: ["food", "restaurant", "dining", "lunch", "dinner", "cafe", "zomato", "swiggy", "tea", 'coffee', "chai", "samosa", "pakoda", "dosa", "kachodi", "khasta"] },
       { id: "groceries", label: "Groceries", icon: GroceriesIcon, keywords: ["groceries", "vegetables", "fruits", "supermarket", "ration", "daily needs", "milk"] },
       { id: "liquor", label: "Liquor", icon: LiquorIcon, keywords: ["liquor", "alcohol", "beer", "wine", "whiskey", "vodka", "bar"] },
     ],
@@ -432,6 +452,13 @@ export const EXPENSE_CATEGORIES = {
       { id: "plane", label: "Plane", icon: PlaneIcon, keywords: ["flight", "plane", "airfare"] },
       { id: "taxi", label: "Taxi", icon: TaxiIcon, keywords: ["taxi", "cab", "uber", "ola"] },
       { id: "hotel", label: "Hotel", icon: HotelIcon, keywords: ["hotel", "stay", "lodging", "accommodation"] },
+    ],
+  },
+  settlement: {
+    label: "Settlement",
+    color: "category-cash",
+    subcategories: [
+      { id: "settle_up", label: "Settle up", icon: CashIcon, keywords: ["settle up", "Record payment"] },
     ],
   },
   uncategorized: {

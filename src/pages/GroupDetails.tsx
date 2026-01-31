@@ -27,6 +27,7 @@ import {
   MoreVertical,
   Trash2,
   Loader2,
+  ChevronUp,
 } from "lucide-react";
 
 import { Layout } from "@/components/layout/Layout";
@@ -40,7 +41,9 @@ import {
   type CategoryKey,
 } from "@/components/icons/CategoryIcons";
 import {
+  addExpense,
   deleteExpense,
+  ExpenseRequest,
   GroupDashboardInterface,
   loadGroupDetails,
   UserInterface,
@@ -85,6 +88,7 @@ function calculateShare(
   if (!participant) return 0;
 
   const amount = Number(participant.amount);
+  debugger
   return Number.isNaN(amount) ? 0 : amount;
 }
 
@@ -278,6 +282,8 @@ export default function GroupResponsesPage({ groupId }: { groupId: string }) {
   );
   const shouldTitleCase = groupBy === "category" || groupBy === "splitType";
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [openRow, setOpenRow] = useState<number | null>(null);
+  const [settlingIndex, setSettlingIndex] = useState<number | null>(null);
 
   const handleDelete = async (expenseId: string) => {
     try {
@@ -387,6 +393,7 @@ export default function GroupResponsesPage({ groupId }: { groupId: string }) {
   }
 
   const balances = calculateBalances(expenses, group.members);
+  debugger
   const settlements = calculateSettlements(balances, group.members);
   const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
   const visibleCount = Object.values(groupedExpenses).reduce(
@@ -446,6 +453,35 @@ export default function GroupResponsesPage({ groupId }: { groupId: string }) {
       `.trim();
   };
 
+  const handleSettle = async (setlementData: any, index: number) => {
+    try {
+      setSettlingIndex(index);
+      const data: ExpenseRequest = {
+        description: `Settlement between ${setlementData.fromName} and ${setlementData.toName}`,
+        category: "settlement",
+        subcategory: "settle_up",
+        amount: setlementData.amount,
+        currency: group.currency,
+        paidByUserId: setlementData.fromId,
+        splitType: "equal",
+        date: new Date().toISOString().split("T")[0],
+        participants: [
+          {
+            userId: setlementData.toId,
+            amount: setlementData.amount,
+            percent: null
+          }
+        ]
+      }
+      await addExpense(groupId!, data);
+      const details = await loadGroupDetails(groupId!);
+      setExpenses(details?.expenses || []);
+    } catch (error) {
+      // toast.error("Failed to delete expense");
+    } finally {
+      setSettlingIndex(null);
+    }
+  };
 
   /* ======================================================
      UI
@@ -929,6 +965,7 @@ export default function GroupResponsesPage({ groupId }: { groupId: string }) {
               <CardContent className="space-y-3 max-h-[17rem] overflow-y-auto">
                 {group.members.map((m) => {
                   const bal = balances[m.id];
+                  debugger
                   return (
                     <div key={m.id} className="flex justify-between items-center">
                       <div className="flex items-center gap-2 min-w-0">
@@ -986,24 +1023,63 @@ export default function GroupResponsesPage({ groupId }: { groupId: string }) {
                   </p>
                 )}
 
-                {settlements.map((s, i) => (
-                  <div
-                    key={i}
-                    className="flex items-start justify-between gap-3 border-b last:border-b-0 pb-2"
-                  >
-                    {/* LEFT: Full name, wraps naturally */}
-                    <div className="flex-1 min-w-0 text-sm leading-snug break-words">
-                      <span>{s.fromName}</span>{" "}
-                      <span className="font-semibold">pays</span>{" "}
-                      <span>{s.toName}</span>
-                    </div>
+                {/* ✅ SETTLEMENTS */}
+                {settlements.map((s, i) => {
+                  const isOpen = openRow === i;
+                  const isLoading = settlingIndex === i;
 
-                    {/* RIGHT: Amount (never wraps) */}
-                    <span className="font-semibold text-sm whitespace-nowrap">
-                      {formatCurrency(s.amount, group.currency)}
-                    </span>
-                  </div>
-                ))}
+                  return (
+                    <div key={i} className="border-b last:border-b-0">
+                      {/* ROW */}
+                      <div className="flex items-start justify-between gap-3 py-2">
+                        <div className="flex-1 min-w-0 text-sm leading-snug break-words">
+                          <span>{s.fromName}</span>{" "}
+                          <span className="font-semibold">pays</span>{" "}
+                          <span>{s.toName}</span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm whitespace-nowrap">
+                            {formatCurrency(s.amount, group.currency)}
+                          </span>
+
+                          <button
+                            onClick={() => setOpenRow(isOpen ? null : i)}
+                            className="p-1 rounded-md hover:bg-muted transition"
+                          >
+                            {isOpen ? (
+                              <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                            ) : (
+                              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* TOGGLED ACTION */}
+                      {isOpen && (
+                        <div className="flex justify-center pb-2">
+                          <button
+                            disabled={isLoading}
+                            onClick={() => handleSettle(s, i)}
+                            className={`
+              text-sm font-medium px-4 py-2 rounded-sm
+              bg-primary/10 text-primary
+              hover:bg-primary/20 transition
+              disabled:opacity-50 disabled:cursor-not-allowed
+              flex items-center gap-2
+            `}
+                          >
+                            {isLoading && (
+                              <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                            )}
+                            {isLoading ? "Settling…" : "Settle up"}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
 
               </CardContent>
             </Card>
