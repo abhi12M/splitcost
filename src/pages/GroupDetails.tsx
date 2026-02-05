@@ -294,7 +294,7 @@ export default function GroupResponsesPage({ groupId }: { groupId: string }) {
   const handleDelete = async (expenseId: string) => {
     try {
       setIsDeleting(expenseId);
-      await deleteExpense(groupId!, expenseId);
+      await deleteExpense(expenseId);
       const details = await loadGroupDetails(groupId!);
       setExpenses(details?.expenses || []);
     } catch (error) {

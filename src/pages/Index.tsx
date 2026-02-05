@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AvatarGroup } from "@/components/ui/UserAvatar";
 import { formatCurrency } from "@/lib/avatar-utils";
 import { ReceiptIcon, PlaneIcon, HouseholdIcon, GroceriesIcon } from "@/components/icons/CategoryIcons";
-import { deleteGroup, loadGroupsByIds, GroupOverviewItemInterface } from "@/lib/storage";
+import {  deleteGroup, GroupOverviewItemInterface, loadGroupsByIds } from "@/lib/storage";
 import { useToast } from "@/hooks/use-toast";
 import { getEncryptedItem } from "@/lib/localStorage";
 import { APP_NAME, LOCAL_GROUPS_KEY } from "@/lib/constants";
@@ -91,16 +91,16 @@ export default function HomePage() {
     fetchGroups();
   }, []);
 
-  const handleDeleteGroup = async (e: React.MouseEvent, groupId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    await deleteGroup(groupId);
-    await fetchGroups();
-    toast({
-      title: "Group deleted",
-      description: "The group has been removed",
-    });
-  };
+  // const handleDeleteGroup = async (e: React.MouseEvent, groupId: string) => {
+  //   e.preventDefault();
+  //   e.stopPropagation();
+  //   await deleteGroup(groupId);
+  //   await fetchGroups();
+  //   toast({
+  //     title: "Group deleted",
+  //     description: "The group has been removed",
+  //   });
+  // };
 
   return (
     <Layout>

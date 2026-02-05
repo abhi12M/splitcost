@@ -28,7 +28,7 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
     if (!groupId || !expenseId) return;
     setLoading(true);
 
-    editExpense(groupId, expenseId)
+    editExpense(expenseId)
       .then((details) => {
         if (!details) return;
 
@@ -79,7 +79,7 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      await deleteExpense(groupId!, expenseId!);
+      await deleteExpense(expenseId!);
       toast({
         title: "Expense deleted",
         description: "The expense has been removed",

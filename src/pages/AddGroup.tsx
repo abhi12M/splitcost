@@ -20,15 +20,17 @@ export default function CreateGroupPage() {
     setIsSubmitting(true);
     try {
       const group = await createGroup(data.name, data.currency, data.members);
-      
+
       // Save to local list
-      const existing = getEncryptedItem<string[]>(LOCAL_GROUPS_KEY, []);
-      if (!existing.includes(group.id)) {
-        setEncryptedItem(LOCAL_GROUPS_KEY, [...existing, group.id]);
+      if (group) {
+        const existing = getEncryptedItem<string[]>(LOCAL_GROUPS_KEY, []);
+        if (!existing.includes(group.id)) {
+          setEncryptedItem(LOCAL_GROUPS_KEY, [...existing, group.id]);
+        }
+        setEncryptedItem(LOCAL_CURRENCY_KEY, data.currency);
+
+        router.push(`/group/${group.id}`);
       }
-      setEncryptedItem(LOCAL_CURRENCY_KEY, data.currency);
-      
-      router.push(`/group/${group.id}`);
     } catch (error) {
       setIsSubmitting(false);
     }
@@ -49,9 +51,9 @@ export default function CreateGroupPage() {
             <CardDescription>Start tracking shared expenses with friends.</CardDescription>
           </CardHeader>
           <CardContent>
-            <GroupForm 
-              onSubmit={handleCreate} 
-              isSubmitting={isSubmitting} 
+            <GroupForm
+              onSubmit={handleCreate}
+              isSubmitting={isSubmitting}
               submitLabel="Create Group"
               initialData={{ name: "", currency: defaultCurrency, members: [] }}
             />
