@@ -1,4 +1,4 @@
-import { ExpenseResponse, GroupResponse } from "@/lib/storage"
+import { ExpenseResponse, GroupDashboardInterface, GroupResponse } from "@/lib/storage"
 
 export type Json =
   | string
@@ -319,7 +319,13 @@ export type Database = {
           }[]
         }
         Returns: ExpenseResponse
-      }
+      },
+      load_group_details: {
+        Args: {
+          group_id: string
+        }
+        Returns: GroupDashboardInterface
+      },
     }
     Enums: {
       auth_provider: "email" | "google" | "apple"

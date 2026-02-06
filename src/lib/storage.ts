@@ -136,390 +136,158 @@ export interface EditExpenseInterface {
 }
 // ========== GROUP OPERATIONS ==========
 // Get a single group for add expense page
-export async function getGroup(groupId: string): Promise<GroupResponse | undefined> {
-  try {
-    const { data, error } = await supabase
-      .from("groups")
-      .select(`
-        id,
-        name,
-        currency,
-        group_members (
-          is_active,
-          users (
-            name,
-            id
-          )
-        )
-      `)
-      .eq("id", groupId)
-      .eq("group_members.is_active", true)
-      .maybeSingle();
-
-    if (error) throw error;
-    if (!data) return undefined;
-
-    const members =
-      data.group_members.map((m: any) => ({
-        id: m.users.id,
-        name: m.users.name,
-      })) || [];
-
-    return {
-      id: data.id,
-      name: data.name,
-      currency: data.currency,
-      members,
-    };
-  } catch (error) {
-    console.error("Error getting group:", error);
-    return undefined;
-  }
+export async function getGroup(groupId: string) {
+  return fetch(`/api/groups/${groupId}`).then(r => r.json());
 }
 
-// Create a new group ie; add group
 export async function createGroup(
   name: string,
   currency: string,
   memberNames: string[]
-): Promise<GroupResponse> {
+): Promise<GroupResponse | undefined> {
+  const res = await fetch("/api/groups", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      name,
+      currency,
+      memberNames,
+    }),
+  });
 
-  const { data, error } = await supabase.rpc(
-    'create_group_with_members',
-    {
-      group_name: name,
-      group_currency: currency,
-      member_names: memberNames,
-    }
-  );
-
-  if (error) throw error;
-  return data;
-
-}
-
-// Delete a group (expenses will be cascade deleted)
-export async function deleteGroup(groupId: string): Promise<boolean> {
-  try {
-    const { error } = await supabase
-      .from("groups")
-      .delete()
-      .eq("id", groupId);
-
-    if (error) throw error;
-    return true;
-  } catch (error) {
-    console.error("Error deleting group:", error);
-    return false;
+  if (!res.ok) {
+    console.error("Failed to create group");
+    return undefined;
   }
+
+  return res.json();
 }
 
-// Load groups by specific IDs for landing page recent groups data
+export async function loadGroupDetails(groupId: string) {
+  const res = await fetch(`/api/groups/${groupId}/dashboard`, {
+    method: "POST",
+  })
+
+  if (!res.ok) {
+    return null
+  }
+
+  return res.json()
+}
+
+
 export async function loadGroupsByIds(
   groupIds: string[]
 ): Promise<GroupOverviewItemInterface[]> {
   if (groupIds.length === 0) return [];
 
-  const { data, error } = await supabase
-    .from("groups")
-    .select(`
-    id,
-    name,
-    currency,
-    created_at,
-    expenses (
-      amount
-    ),
-    group_members!inner (
-      user:users (
-        id,
-        name
-      )
-    )
-  `)
-    .in("id", groupIds)
-    .eq("group_members.is_active", true)
-    .order("created_at", { ascending: false });
+  const res = await fetch("/api/groups/batch", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ groupIds }),
+  });
 
-  if (error) {
-    console.error("Error loading groups by ids:", error);
+  if (!res.ok) {
+    console.error("Failed to load groups");
     return [];
   }
 
-  return (data || []).map((row) => ({
-    id: row.id,
-    name: row.name,
-    currency: row.currency,
-    createdAt: row.created_at,
-    expenses: row.expenses,
-    members: row.group_members.map((gm) => gm.user.name),
-  }));
+  return res.json();
 }
 
-export async function loadGroupDetails(//for group dashboard 
-  groupId: string
-): Promise<GroupDashboardInterface | null> {
+export async function deleteGroup(groupId: string): Promise<boolean> {
+  const res = await fetch(`/api/groups/${groupId}`, {
+    method: "DELETE",
+  });
 
-  const { data, error } = await supabase
-    .from("groups")
-    .select(`
-      id,
-      name,
-      currency,
-      created_at,
-      expenses (
-        id,
-        description,
-        amount,
-        currency,
-        users!expenses_paid_by_user_id_fkey (
-          id,
-          name
-        ),
-        split_type,
-        category,
-        subcategory,
-        date,
-        created_at,
-        expense_participants (
-          users (
-            id,
-            name
-          ),
-          share_amount,
-          share_percent
-        )
-      ),
-      group_members!inner (
-        users (
-          id,
-          name
-        )
-      )
-    `)
-    .eq("id", groupId)
-    .eq("group_members.is_active", true)
-    .single();
-
-  if (error) {
-    console.error("Error loading group details:", error);
-    return null;
+  if (!res.ok) {
+    console.error("Failed to delete group");
+    return false;
   }
 
-  return {
-    group: {
-      id: data.id,
-      name: data.name,
-      currency: data.currency,
-      createdAt: data.created_at,
-      members: data.group_members.map((gm) => ({
-        id: gm.users.id,
-        name: gm.users.name,
-      })),
-    },
-    expenses: (data.expenses || []).map((e) => ({
-      id: e.id,
-      amount: e.amount,
-      description: e.description,
-      currency: e.currency,
-      paidBy: {
-        id: e.users.id,
-        name: e.users.name,
-      },
-      splitType: e.split_type as SplitType,
-      category: e.category as CategoryKey,
-      subcategory: e.subcategory as SubcategoryId,
-      date: String(e.date),
-      createdAt: e.created_at,
-      participants: e.expense_participants.map((p) => ({
-        user: { id: p.users.id, name: p.users.name },
-        amount: p.share_amount,
-        percent: p.share_percent
-      }))
-    })),
-  };
+  return true;
 }
 
-// ========== EXPENSE OPERATIONS ==========
-
-export async function editExpense(
-  groupId: string,
-  expenseId: string
-): Promise<EditExpenseInterface | null> {
-
-  const { data, error } = await supabase
-    .from("groups")
-    .select(`
-      id,
-      name,
-      currency,
-      group_members!inner (
-        users (
-          id,
-          name
-        )
-      ),
-      expenses (
-        id,
-        description,
-        amount,
-        currency,
-        paid_by_user_id,
-        split_type,
-        category,
-        subcategory,
-        date,
-        expense_participants (
-          user_id,
-          share_amount,
-          share_percent
-        )
-      )
-    `)
-    .eq("id", groupId)
-    .eq("group_members.is_active", true)
-    .eq("expenses.id", expenseId)
-    .single();
-
-  if (error || !data) {
-    console.error("Error loading group details:", error);
-    return null;
-  }
-
-  const expenseRow = data.expenses?.[0];
-  if (!expenseRow) return null;
-
-  return {
-    group: {
-      id: data.id,
-      name: data.name,
-      currency: data.currency,
-      members: data.group_members.map((gm) => ({
-        id: gm.users.id,
-        name: gm.users.name,
-      }))
-    },
-
-    expense: {
-      id: expenseRow.id,
-      amount: expenseRow.amount,
-      description: expenseRow.description,
-      currency: expenseRow.currency,
-      paidByUserId: expenseRow.paid_by_user_id,
-      splitType: expenseRow.split_type,
-      category: expenseRow.category as CategoryKey,
-      subcategory: expenseRow.subcategory,
-      date: expenseRow.date,
-      participants: expenseRow.expense_participants.map((p) => ({
-        userId: p.user_id,
-        amount: p.share_amount,
-        percent: p.share_percent
-      }))
-    }
-  };
-}
-
-// Add expense to a group
 export async function addExpense(
   groupId: string,
   expenseData: ExpenseRequest
 ): Promise<ExpenseResponse | undefined> {
-  try {
-    const { data, error } = await supabase.rpc("add_expense", {
-      p_group_id: groupId,
-      p_description: expenseData.description,
-      p_amount: expenseData.amount,
-      p_currency: expenseData.currency,
-      p_paid_by_user_id: expenseData.paidByUserId,
-      p_split_type: expenseData.splitType,
-      p_category: expenseData.category,
-      p_subcategory: expenseData.subcategory,
-      p_date: expenseData.date,
-      p_participants: expenseData.participants,
-    });
+  const res = await fetch("/api/expenses", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      groupId,
+      ...expenseData,
+    }),
+  });
 
-    if (error) throw error;
-
-    return data;
-
-  } catch (error) {
-    console.error("Error adding expense:", error);
+  if (!res.ok) {
+    console.error("Failed to add expense");
     return undefined;
   }
+
+  return res.json();
 }
 
-// Update expense
+
+export async function editExpense(
+  expenseId: string
+): Promise<EditExpenseInterface | null> {
+  const res = await fetch(`/api/expenses/${expenseId}`, {
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    console.error("Failed to load expense for edit");
+    return null;
+  }
+
+  return res.json();
+}
+
 export async function updateExpense(
   groupId: string,
   expenseId: string,
   data: ExpenseRequest
 ): Promise<ExpenseResponse | undefined> {
-  try {
-    const { data: result, error } = await supabase.rpc(
-      "edit_expense",
-      {
-        p_group_id: groupId,
-        p_expense_id: expenseId,
-        p_description: data.description,
-        p_amount: data.amount,
-        p_currency: data.currency,
-        p_paid_by_user_id: data.paidByUserId,
-        p_split_type: data.splitType,
-        p_category: data.category,
-        p_subcategory: data.subcategory,
-        p_date: data.date,
-        p_participants: data.participants.map((p) => ({
-          userId: p.userId,
-          amount: p.amount,
-          percent: p.percent ?? null,
-        }))
-      }
-    );
+  const res = await fetch(`/api/expenses/${expenseId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      groupId,
+      ...data,
+    }),
+  });
 
-    if (error) throw error;
-    if (!result) return undefined;
-
-    const row = result[0];
-
-    return {
-      id: row.id,
-      groupId: row.group_id,
-      description: row.description,
-      amount: Number(row.amount),
-      currency: row.currency,
-      paidBy: {
-        id: row.paid_by_user_id,
-        name: row.paid_by_name,
-      },
-      splitType: row.split_type as SplitType,
-      category: row.category as CategoryKey,
-      subcategory: row.subcategory as SubcategoryId,
-      date: String(row.date),
-      participants: row.participants,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    };
-  } catch (error) {
-    console.error("Error updating expense:", error);
+  if (!res.ok) {
+    console.error("Failed to update expense");
     return undefined;
   }
+
+  return res.json();
 }
 
-// Delete expense
-export async function deleteExpense(groupId: string, expenseId: string): Promise<boolean> {
-  try {
-    const { error } = await supabase
-      .from("expenses")
-      .delete()
-      .eq("id", expenseId)
-      .eq("group_id", groupId);
+export async function deleteExpense(
+  expenseId: string
+): Promise<boolean> {
+  const res = await fetch(`/api/expenses/${expenseId}`, {
+    method: "DELETE",
+  });
 
-    if (error) throw error;
-    return true;
-  } catch (error) {
-    console.error("Error deleting expense:", error);
+  if (!res.ok) {
+    console.error("Failed to delete expense");
     return false;
   }
+
+  return true;
 }
 
 // ========== UTILITY FUNCTIONS ==========

@@ -10,9 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AvatarGroup } from "@/components/ui/UserAvatar";
 import { formatCurrency } from "@/lib/avatar-utils";
 import { ReceiptIcon, PlaneIcon, HouseholdIcon, GroceriesIcon } from "@/components/icons/CategoryIcons";
-import { deleteGroup, loadGroupsByIds, GroupOverviewItemInterface } from "@/lib/storage";
-import { useToast } from "@/hooks/use-toast";
-import { getEncryptedItem } from "@/lib/localStorage";
+import { GroupOverviewItemInterface, loadGroupsByIds } from "@/lib/storage";
+import { getEncryptedItem, setEncryptedItem } from "@/lib/localStorage";
 import { APP_NAME, LOCAL_GROUPS_KEY } from "@/lib/constants";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -71,7 +70,6 @@ function GroupCardSkeleton() {
 export default function HomePage() {
   const [groups, setGroups] = useState<GroupOverviewItemInterface[]>([]);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
   const router = useRouter();
   const fetchGroups = async () => {
     setLoading(true);
@@ -81,6 +79,8 @@ export default function HomePage() {
       // ✅ Fetch only those groups
       const loadedGroups = await loadGroupsByIds(groupIds);
       setGroups(loadedGroups);
+      const validGroupIds = loadedGroups.map(g => g.id);
+      setEncryptedItem(LOCAL_GROUPS_KEY, validGroupIds);
     } catch (error) {
     } finally {
       setLoading(false);
@@ -91,16 +91,16 @@ export default function HomePage() {
     fetchGroups();
   }, []);
 
-  const handleDeleteGroup = async (e: React.MouseEvent, groupId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    await deleteGroup(groupId);
-    await fetchGroups();
-    toast({
-      title: "Group deleted",
-      description: "The group has been removed",
-    });
-  };
+  // const handleDeleteGroup = async (e: React.MouseEvent, groupId: string) => {
+  //   e.preventDefault();
+  //   e.stopPropagation();
+  //   await deleteGroup(groupId);
+  //   await fetchGroups();
+  //   toast({
+  //     title: "Group deleted",
+  //     description: "The group has been removed",
+  //   });
+  // };
 
   return (
     <Layout>

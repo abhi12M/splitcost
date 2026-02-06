@@ -1,16 +1,7 @@
-"use client";
 import CryptoJS from "crypto-js";
 
-/**
- * ⚠️ IMPORTANT:
- * Move this secret to .env in real projects
- * NEXT_PUBLIC_STORAGE_SECRET=my-secret-key
- */
-const SECRET_KEY = process.env.NEXT_PUBLIC_STORAGE_SECRET || "default-secret";
-const isBrowser = typeof window !== "undefined";
-/**
- * Encrypt any value
- */
+const SECRET_KEY = "local-storage-v1"; // static, non-secret
+
 const encrypt = (value: unknown): string => {
   return CryptoJS.AES.encrypt(
     JSON.stringify(value),
@@ -18,17 +9,20 @@ const encrypt = (value: unknown): string => {
   ).toString();
 };
 
-/**
- * Decrypt stored value
- */
-const decrypt = <T>(cipherText: string): T => {
-  const bytes = CryptoJS.AES.decrypt(cipherText, SECRET_KEY);
-  return JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+const decrypt = <T>(cipherText: string): T | null => {
+  try {
+    const bytes = CryptoJS.AES.decrypt(cipherText, SECRET_KEY);
+    const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+
+    if (!decrypted) return null; // 👈 IMPORTANT
+
+    return JSON.parse(decrypted) as T;
+  } catch {
+    return null;
+  }
 };
 
-
 export const setEncryptedItem = <T>(key: string, value: T): void => {
-  if (!isBrowser) return; // Prevent server-side execution
   try {
     const encryptedKey = CryptoJS.SHA256(key).toString();
     const encryptedValue = encrypt(value);
@@ -38,29 +32,35 @@ export const setEncryptedItem = <T>(key: string, value: T): void => {
   }
 };
 
-export const getEncryptedItem = <T>(key: string, defaultValue: T): T => {
-  if (!isBrowser) return defaultValue; // Return default on server
+export const getEncryptedItem = <T>(
+  key: string,
+  defaultValue: T
+): T => {
   try {
     const encryptedKey = CryptoJS.SHA256(key).toString();
     const item = localStorage.getItem(encryptedKey);
-    return item ? decrypt<T>(item) : defaultValue;
-  } catch (error) {
-    console.error("Encrypted get error:", error);
+
+    if (!item) return defaultValue;
+
+    const decrypted = decrypt<T>(item);
+
+    if (decrypted === null) {
+      // 🧹 clean corrupted data
+      localStorage.removeItem(encryptedKey);
+      return defaultValue;
+    }
+
+    return decrypted;
+  } catch {
     return defaultValue;
   }
 };
 
-/**
- * Remove encrypted item
- */
 export const removeEncryptedItem = (key: string): void => {
   const encryptedKey = CryptoJS.SHA256(key).toString();
   localStorage.removeItem(encryptedKey);
 };
 
-/**
- * Clear all storage
- */
 export const clearEncryptedStorage = (): void => {
   localStorage.clear();
 };
