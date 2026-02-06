@@ -394,8 +394,21 @@ export default function GroupResponsesPage({ groupId }: { groupId: string }) {
     });
   }, [groupedExpenses, groupBy, shouldTitleCase]);
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
-  if (loading || !group) {
+  if (loading) {
     return <GroupResponsesSkeleton />;
+  }
+
+  if (!group) {
+    return (
+      <Layout>
+        <div className="container py-12 text-center">
+          <p className="text-muted-foreground">Group not found</p>
+          <Button asChild className="mt-4">
+            <Link href="/">Go Home</Link>
+          </Button>
+        </div>
+      </Layout>
+    );
   }
 
   const balances = calculateBalances(expenses, group.members);
