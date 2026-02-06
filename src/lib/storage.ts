@@ -166,9 +166,12 @@ export async function createGroup(
 }
 
 export async function loadGroupDetails(groupId: string) {
-  return fetch(`/api/groups/${groupId}/dashboard`).then(r => r.json());
+  return fetch(`/api/groups/${groupId}/dashboard`, {
+    headers: {
+      'Cache-Control': 'no-cache'
+    }
+  }).then(r => r.json());
 }
-
 export async function loadGroupsByIds(
   groupIds: string[]
 ): Promise<GroupOverviewItemInterface[]> {
