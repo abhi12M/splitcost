@@ -12,8 +12,13 @@ import { formatCurrency } from "@/lib/avatar-utils";
 import { ReceiptIcon, PlaneIcon, HouseholdIcon, GroceriesIcon } from "@/components/icons/CategoryIcons";
 import { GroupOverviewItemInterface, loadGroupsByIds } from "@/lib/storage";
 import { getEncryptedItem, setEncryptedItem } from "@/lib/localStorage";
-import { APP_NAME, LOCAL_GROUPS_KEY } from "@/lib/constants";
+import { ADMIN_BASE_PATH, APP_NAME, LOCAL_GROUPS_KEY } from "@/lib/constants";
 import { Skeleton } from "@/components/ui/skeleton";
+
+type HomeGroup = GroupOverviewItemInterface & {
+  totalExpenses?: number;
+  expenseCount?: number;
+};
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -67,20 +72,28 @@ function GroupCardSkeleton() {
     </div>
   );
 }
-export default function HomePage() {
-  const [groups, setGroups] = useState<GroupOverviewItemInterface[]>([]);
+export default function HomePage({ adminMode = false }: { adminMode?: boolean }) {
+  const [groups, setGroups] = useState<HomeGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const fetchGroups = async () => {
     setLoading(true);
     try {
-      // ✅ Get group IDs from encrypted localStorage
-      const groupIds = getEncryptedItem<string[]>(LOCAL_GROUPS_KEY, []);
-      // ✅ Fetch only those groups
-      const loadedGroups = await loadGroupsByIds(groupIds);
-      setGroups(loadedGroups);
-      const validGroupIds = loadedGroups.map(g => g.id);
-      setEncryptedItem(LOCAL_GROUPS_KEY, validGroupIds);
+      if (adminMode) {
+        const res = await fetch("/api/groups", { cache: "no-store" });
+        if (!res.ok) {
+          setGroups([]);
+          return;
+        }
+        const allGroups = (await res.json()) as HomeGroup[];
+        setGroups(allGroups);
+      } else {
+        const groupIds = getEncryptedItem<string[]>(LOCAL_GROUPS_KEY, []);
+        const loadedGroups = await loadGroupsByIds(groupIds);
+        setGroups(loadedGroups);
+        const validGroupIds = loadedGroups.map(g => g.id);
+        setEncryptedItem(LOCAL_GROUPS_KEY, validGroupIds);
+      }
     } catch (error) {
     } finally {
       setLoading(false);
@@ -89,7 +102,7 @@ export default function HomePage() {
 
   useEffect(() => {
     fetchGroups();
-  }, []);
+  }, [adminMode]);
 
   // const handleDeleteGroup = async (e: React.MouseEvent, groupId: string) => {
   //   e.preventDefault();
@@ -105,7 +118,7 @@ export default function HomePage() {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="gradient-hero py-16 md:py-24">
+      {!adminMode && <section className="gradient-hero py-16 md:py-24">
         <div className="container">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -148,7 +161,7 @@ export default function HomePage() {
             </div>
           </motion.div>
         </div>
-      </section>
+      </section>}
 
       {/* Groups Section */}
       {loading ? (
@@ -176,15 +189,15 @@ export default function HomePage() {
           <div className="container">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h2 className="text-2xl font-bold text-foreground mb-1">Your Groups</h2>
-                <p className="text-muted-foreground">Recent expense groups</p>
+                <h2 className="text-2xl font-bold text-foreground mb-1">{adminMode ? "All Groups" : "Your Groups"}</h2>
+                <p className="text-muted-foreground">{adminMode ? "Admin view of all expense groups" : "Recent expense groups"}</p>
               </div>
-              <Button asChild variant="ghost" size="sm">
+              {!adminMode && <Button asChild variant="ghost" size="sm">
                 <Link href="/create-group">
                   <Plus className="w-4 h-4" />
                   New Group
                 </Link>
-              </Button>
+              </Button>}
             </div>
             <motion.div
               variants={containerVariants}
@@ -194,9 +207,9 @@ export default function HomePage() {
             >
               {groups.map((group) => {
                 const IconComponent = getGroupIcon(group.name);
-                const totalExpenses = group?.expenses?.reduce((sum, e) => sum + (e?.amount || 0), 0);
+                const totalExpenses = group.totalExpenses ?? group?.expenses?.reduce((sum, e) => sum + (e?.amount || 0), 0);
                 return (
-                  <motion.div key={group.id} variants={itemVariants} onClick={() => router.push(`/group/${group.id}`)} >
+                  <motion.div key={group.id} variants={itemVariants} onClick={() => router.push(adminMode ? `${ADMIN_BASE_PATH}/group/${group.id}` : `/group/${group.id}`)} >
                     <Card hover className="h-full group">
                       <CardHeader>
                         <div className="flex items-start justify-between">
@@ -233,7 +246,7 @@ export default function HomePage() {
               })}
 
               {/* Create New Group Card */}
-              <motion.div variants={itemVariants}>
+              {!adminMode && <motion.div variants={itemVariants}>
                 <Link href="/create-group">
                   <Card
                     hover
@@ -248,13 +261,13 @@ export default function HomePage() {
                     </CardContent>
                   </Card>
                 </Link>
-              </motion.div>
+              </motion.div>}
             </motion.div>
           </div>
         </section>)}
 
       {/* Features Section */}
-      <section className="py-12 md:py-16 bg-muted/30">
+      {!adminMode && <section className="py-12 md:py-16 bg-muted/30">
         <div className="container">
           <div className="text-center mb-12">
             <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">Why {APP_NAME}?</h2>
@@ -303,7 +316,7 @@ export default function HomePage() {
             ))}
           </motion.div>
         </div>
-      </section>
+      </section>}
 
       {/* Ad Placeholder */}
       {/* <section className="py-8">
@@ -316,3 +329,4 @@ export default function HomePage() {
     </Layout>
   );
 }
+

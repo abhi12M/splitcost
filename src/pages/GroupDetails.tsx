@@ -52,7 +52,7 @@ import { SingleSelect } from "@/components/ui/single-select";
 import { toTitleCase } from "@/components/ui/formatters";
 import { toast } from "@/hooks/use-toast";
 import { getEncryptedItem, setEncryptedItem } from "@/lib/localStorage";
-import { LOCAL_GROUPS_KEY } from "@/lib/constants";
+import { ADMIN_BASE_PATH, LOCAL_GROUPS_KEY } from "@/lib/constants";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -272,7 +272,13 @@ function GroupResponsesSkeleton() {
 /* ======================================================
    COMPONENT
 ====================================================== */
-export default function GroupResponsesPage({ groupId }: { groupId: string }) {
+export default function GroupResponsesPage({
+  groupId,
+  isAdminView = false,
+}: {
+  groupId: string;
+  isAdminView?: boolean;
+}) {
   const [group, setGroup] = useState<GroupDashboardInterface["group"] | null>(null);
   const [expenses, setExpenses] = useState<GroupDashboardInterface["expenses"]>([]);
   const [loading, setLoading] = useState(true);
@@ -313,14 +319,16 @@ export default function GroupResponsesPage({ groupId }: { groupId: string }) {
 
         setGroup(details.group);
         setExpenses(details.expenses || []);
-        const existingGroups = getEncryptedItem<string[]>(LOCAL_GROUPS_KEY, []);
-        const updatedGroups = Array.from(
-          new Set([groupId, ...existingGroups])
-        );
-        setEncryptedItem(LOCAL_GROUPS_KEY, updatedGroups);
+        if (!isAdminView) {
+          const existingGroups = getEncryptedItem<string[]>(LOCAL_GROUPS_KEY, []);
+          const updatedGroups = Array.from(
+            new Set([groupId, ...existingGroups])
+          );
+          setEncryptedItem(LOCAL_GROUPS_KEY, updatedGroups);
+        }
       })
       .finally(() => setLoading(false));
-  }, [groupId]);
+  }, [groupId, isAdminView]);
 
   /* ======================================================
      FILTER / SORT / GROUP
@@ -510,7 +518,7 @@ export default function GroupResponsesPage({ groupId }: { groupId: string }) {
         {/* HEADER */}
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon-sm" asChild>
-            <Link href="/">
+            <Link href={isAdminView ? ADMIN_BASE_PATH : "/"}>
               <ArrowLeft />
             </Link>
           </Button>
