@@ -18,7 +18,6 @@ export async function generateMetadata({
     description: "Track balances, expenses, and settlements for this expense group.",
     path: `/group/${groupId}`,
     noIndex: true,
-    imageAlt: "Splitcost group preview",
   });
 
   const { data, error } = await supabaseAdmin
@@ -36,7 +35,6 @@ export async function generateMetadata({
     description: `View ${data.name} expenses, balances, and settlements in ${data.currency}.`,
     path: `/group/${groupId}`,
     noIndex: true,
-    imageAlt: `${data.name} group preview`,
   });
 }
 
