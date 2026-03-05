@@ -1,6 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import Link from "next/link"
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Plus, Users, ArrowRight, Trash2, Loader2 } from "lucide-react";
@@ -144,6 +145,18 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
               Create a group, add expenses, and see who owes whom. No signup required. Share a link
               and settle up instantly.
             </p>
+
+            {/* <div className="mb-8 overflow-hidden rounded-2xl border border-border/60 bg-card/40 p-2 shadow-card">
+              <Image
+                src="/og-image.png"
+                alt="Splitcost app dashboard preview"
+                width={1200}
+                height={630}
+                className="h-auto w-full rounded-xl"
+                priority
+                sizes="(max-width: 768px) 100vw, 720px"
+              />
+            </div> */}
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild size="lg" className="text-base">

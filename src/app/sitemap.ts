@@ -1,0 +1,40 @@
+import type { MetadataRoute } from "next";
+
+import { getCanonicalUrl } from "@/lib/seo";
+
+export default function sitemap(): MetadataRoute.Sitemap {
+  const now = new Date();
+
+  return [
+    {
+      url: getCanonicalUrl("/"),
+      lastModified: now,
+      changeFrequency: "daily",
+      priority: 1,
+    },
+    {
+      url: getCanonicalUrl("/faq"),
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    {
+      url: getCanonicalUrl("/contact"),
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
+      url: getCanonicalUrl("/privacy"),
+      lastModified: now,
+      changeFrequency: "yearly",
+      priority: 0.4,
+    },
+    {
+      url: getCanonicalUrl("/terms"),
+      lastModified: now,
+      changeFrequency: "yearly",
+      priority: 0.4,
+    },
+  ];
+}

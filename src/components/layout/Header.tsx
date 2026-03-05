@@ -18,7 +18,7 @@ export function Header() {
           <span className="text-xl font-bold text-foreground">{APP_NAME}</span>
         </Link>
 
-        <nav className="flex items-center gap-1">
+        <nav className="flex items-center gap-1" aria-label="Primary">
           <Link
             href="/faq"
             className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
