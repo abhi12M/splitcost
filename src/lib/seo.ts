@@ -4,7 +4,7 @@ export const SITE_NAME = "Splitcost";
 export const SITE_TITLE = "Splitcost | Split expenses with friends and groups";
 export const SITE_DESCRIPTION =
   "Splitcost helps groups split expenses quickly with shareable links, smart balances, and simple settlements.";
-export const DEFAULT_OG_IMAGE = "/opengraph-image";
+export const DEFAULT_OG_IMAGE = "/og-image.png";
 
 const FALLBACK_SITE_URL = "https://splitcost.in";
 
@@ -37,8 +37,6 @@ type BuildMetadataArgs = {
   description: string;
   path: string;
   noIndex?: boolean;
-  imagePath?: string;
-  imageAlt?: string;
 };
 
 export function buildMetadata({
@@ -46,8 +44,6 @@ export function buildMetadata({
   description,
   path,
   noIndex = false,
-  imagePath = DEFAULT_OG_IMAGE,
-  imageAlt = `${SITE_NAME} preview`,
 }: BuildMetadataArgs): Metadata {
   const canonicalPath = normalizePath(path);
   const canonicalUrl = getCanonicalUrl(canonicalPath);
@@ -77,10 +73,8 @@ export function buildMetadata({
       type: "website",
       images: [
         {
-          url: imagePath,
-          width: 1200,
-          height: 630,
-          alt: imageAlt,
+          url: DEFAULT_OG_IMAGE,
+          alt: `${SITE_NAME} preview`,
         },
       ],
     },
@@ -88,7 +82,7 @@ export function buildMetadata({
       card: "summary_large_image",
       title,
       description,
-      images: [imagePath],
+      images: [DEFAULT_OG_IMAGE],
     },
   };
 }

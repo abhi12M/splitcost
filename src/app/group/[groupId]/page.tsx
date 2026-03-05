@@ -18,7 +18,6 @@ export async function generateMetadata({
     description: "Track balances, expenses, and settlements for this expense group.",
     path: `/group/${groupId}`,
     noIndex: true,
-    imagePath: `/group/${groupId}/opengraph-image`,
     imageAlt: "Splitcost group preview",
   });
 
@@ -37,7 +36,6 @@ export async function generateMetadata({
     description: `View ${data.name} expenses, balances, and settlements in ${data.currency}.`,
     path: `/group/${groupId}`,
     noIndex: true,
-    imagePath: `/group/${groupId}/opengraph-image`,
     imageAlt: `${data.name} group preview`,
   });
 }
