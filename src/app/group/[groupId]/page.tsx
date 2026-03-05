@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 
 import { buildMetadata } from "@/lib/seo";
+import { supabaseAdmin } from "@/lib/supabase/server";
 
 const GroupResponsesPage = dynamic(() => import("@/pages/GroupDetails"));
 
@@ -12,11 +13,32 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { groupId } = await params;
 
-  return buildMetadata({
+  const fallback = buildMetadata({
     title: "Group expenses",
     description: "Track balances, expenses, and settlements for this expense group.",
     path: `/group/${groupId}`,
     noIndex: true,
+    imagePath: `/group/${groupId}/opengraph-image`,
+    imageAlt: "Splitcost group preview",
+  });
+
+  const { data, error } = await supabaseAdmin
+    .from("groups")
+    .select("name,currency")
+    .eq("id", groupId)
+    .maybeSingle();
+
+  if (error || !data?.name) {
+    return fallback;
+  }
+
+  return buildMetadata({
+    title: `${data.name} | Group expenses`,
+    description: `View ${data.name} expenses, balances, and settlements in ${data.currency}.`,
+    path: `/group/${groupId}`,
+    noIndex: true,
+    imagePath: `/group/${groupId}/opengraph-image`,
+    imageAlt: `${data.name} group preview`,
   });
 }
 
