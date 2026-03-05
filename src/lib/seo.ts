@@ -6,7 +6,7 @@ export const SITE_DESCRIPTION =
   "Splitcost helps groups split expenses quickly with shareable links, smart balances, and simple settlements.";
 export const DEFAULT_OG_IMAGE = "/og-image.png";
 
-const FALLBACK_SITE_URL = "https://splitcost.app";
+const FALLBACK_SITE_URL = "https://splitcost.in";
 
 function normalizeBaseUrl(url: string): string {
   return url.endsWith("/") ? url.slice(0, -1) : url;
