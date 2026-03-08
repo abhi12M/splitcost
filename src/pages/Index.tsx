@@ -318,7 +318,7 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
               <motion.div key={index} variants={itemVariants}>
                 <Card className="text-center h-full">
                   <CardContent className="pt-8">
-                    <div className="w-14 h-14 rounded-2xl gradient-coral flex items-center justify-center mx-auto mb-5">
+                    <div className="w-14 h-14 rounded-2xl gradient-primary flex items-center justify-center mx-auto mb-5">
                       <feature.icon className="w-7 h-7 text-secondary-foreground" />
                     </div>
                     <h3 className="text-lg font-semibold text-foreground mb-2">{feature.title}</h3>
