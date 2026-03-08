@@ -8,7 +8,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: ["/", "/faq", "/contact", "/privacy", "/terms"],
-        disallow: ["/admin-ajdsahsh3", "/group/", "/create-group"],
+        disallow: ["/group/", "/create-group"],
       },
     ],
     sitemap: getCanonicalUrl("/sitemap.xml"),
