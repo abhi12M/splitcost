@@ -10,15 +10,17 @@ export function Footer() {
       <div className="container py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="md:col-span-2">
-            <Link href="/" className="flex items-center gap-2.5 mb-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg">
-              {/* <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center"> */}
-                <BrandIcon className="w-11 h-11" />
-              {/* </div> */}
+            <Link
+              href="/"
+              className="flex items-center gap-2.5 mb-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
+            >
+              <BrandIcon className="w-11 h-11" />
               <span className="text-lg font-bold text-foreground">{APP_NAME}</span>
             </Link>
             <p className="text-sm text-muted-foreground max-w-sm">
-              The simplest way to split expenses with friends, roommates, and groups.
-              No signup required.
+              A free expense splitting app for friends, roommates, couples, and
+              travel groups. Track shared bills, balances, and settlements
+              without sign-up.
             </p>
           </div>
 
@@ -26,12 +28,18 @@ export function Footer() {
             <h4 className="font-semibold text-foreground mb-4">Product</h4>
             <ul className="space-y-2.5">
               <li>
-                <Link href="/faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg">
+                <Link
+                  href="/faq"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
+                >
                   FAQ
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg">
+                <Link
+                  href="/contact"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
+                >
                   Contact
                 </Link>
               </li>
@@ -42,12 +50,18 @@ export function Footer() {
             <h4 className="font-semibold text-foreground mb-4">Legal</h4>
             <ul className="space-y-2.5">
               <li>
-                <Link href="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg">
+                <Link
+                  href="/privacy"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
+                >
                   Privacy Policy
                 </Link>
               </li>
               <li>
-                <Link href="/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg">
+                <Link
+                  href="/terms"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
+                >
                   Terms & Conditions
                 </Link>
               </li>
@@ -55,17 +69,12 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Ad placeholder */}
-        {/* <div className="mt-8 p-4 border border-dashed border-border rounded-xl text-center text-sm text-muted-foreground bg-muted/50">
-          Ad Space Placeholder
-        </div> */}
-
         <div className="mt-8 pt-8 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-sm text-muted-foreground">
             © {new Date().getFullYear()} {APP_NAME}. All rights reserved.
           </p>
           <p className="text-xs text-muted-foreground">
-            Made with care for hassle-free expense splitting
+            Split bills clearly, track balances accurately, and settle up faster
           </p>
         </div>
       </div>

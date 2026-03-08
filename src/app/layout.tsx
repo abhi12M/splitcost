@@ -10,6 +10,7 @@ import AppProviders from "@/components/providers/AppProviders";
 import {
   DEFAULT_OG_IMAGE,
   SITE_DESCRIPTION,
+  SITE_KEYWORDS,
   SITE_NAME,
   SITE_TITLE,
   getSiteUrl,
@@ -36,6 +37,7 @@ export const metadata: Metadata = {
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
+  keywords: SITE_KEYWORDS,
   alternates: {
     canonical: "/",
   },
@@ -98,6 +100,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     applicationCategory: "FinanceApplication",
     operatingSystem: "Web",
     description: SITE_DESCRIPTION,
+    featureList: [
+      "Create shared expense groups",
+      "Split bills equally, by percentage, or with custom amounts",
+      "Track balances for trips, roommates, and group events",
+      "Share group links without sign-up",
+      "Settle balances with simplified payouts",
+    ],
     offers: {
       "@type": "Offer",
       price: "0",

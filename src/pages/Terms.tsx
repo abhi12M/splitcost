@@ -4,16 +4,13 @@ import { APP_NAME } from "@/lib/constants";
 export default function TermsPage() {
   return (
     <Layout>
-      <div className="container py-12 md:py-20 max-w-3xl">
+      <div className="container py-12 md:py-[3rem] max-w-3xl">
         <div>
           <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-8">
             Terms & Conditions
           </h1>
 
           <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6 text-muted-foreground">
-            <p>
-              <strong className="text-foreground">Last updated:</strong> {new Date().toLocaleDateString()}
-            </p>
 
             <section>
               <h2 className="text-xl font-semibold text-foreground mt-8 mb-4">1. Acceptance of Terms</h2>

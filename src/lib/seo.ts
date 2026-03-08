@@ -1,9 +1,22 @@
 import type { Metadata } from "next";
 
 export const SITE_NAME = "Splitcost";
-export const SITE_TITLE = "Splitcost | Split expenses with friends and groups";
+export const SITE_TITLE =
+  "Splitcost | Split expenses with friends, trips, roommates, and groups";
 export const SITE_DESCRIPTION =
-  "Splitcost helps groups split expenses quickly with shareable links, smart balances, and simple settlements.";
+  "Splitcost is a free group expense tracker that helps friends, roommates, and travel groups split bills, track balances, and settle up faster.";
+export const SITE_KEYWORDS = [
+  "split expenses",
+  "expense splitter",
+  "group expense tracker",
+  "trip expense tracker",
+  "roommate expense tracker",
+  "bill split calculator",
+  "shared expense app",
+  "settle up app",
+  "split bills with friends",
+  "travel expense app",
+];
 export const DEFAULT_OG_IMAGE = "/og-image.png";
 
 const FALLBACK_SITE_URL = "https://splitcost.in";
@@ -51,6 +64,7 @@ export function buildMetadata({
   return {
     title,
     description,
+    keywords: SITE_KEYWORDS,
     alternates: {
       canonical: canonicalPath,
     },

@@ -1,20 +1,27 @@
 "use client";
+
 import { useRouter } from "next/navigation";
-import Link from "next/link"
-import Image from "next/image";
-import { useState, useEffect } from "react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, Users, ArrowRight, Trash2, Loader2 } from "lucide-react";
+import { ArrowRight, Plus, Users } from "lucide-react";
+
 import { Layout } from "@/components/layout/Layout";
+import {
+  BrandIcon,
+  GroceriesIcon,
+  HouseholdIcon,
+  PlaneIcon,
+  ReceiptIcon,
+} from "@/components/icons/CategoryIcons";
+import { AvatarGroup } from "@/components/ui/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AvatarGroup } from "@/components/ui/UserAvatar";
-import { formatCurrency } from "@/lib/avatar-utils";
-import { ReceiptIcon, PlaneIcon, HouseholdIcon, GroceriesIcon, BrandIcon } from "@/components/icons/CategoryIcons";
-import { GroupOverviewItemInterface, loadGroupsByIds } from "@/lib/storage";
-import { getEncryptedItem, setEncryptedItem } from "@/lib/localStorage";
-import { ADMIN_BASE_PATH, APP_NAME, LOCAL_GROUPS_KEY } from "@/lib/constants";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatCurrency } from "@/lib/avatar-utils";
+import { ADMIN_BASE_PATH, APP_NAME, LOCAL_GROUPS_KEY } from "@/lib/constants";
+import { getEncryptedItem, setEncryptedItem } from "@/lib/localStorage";
+import { GroupOverviewItemInterface, loadGroupsByIds } from "@/lib/storage";
 
 type HomeGroup = GroupOverviewItemInterface & {
   totalExpenses?: number;
@@ -34,12 +41,64 @@ const itemVariants = {
   visible: { opacity: 1, y: 0 },
 };
 
-// Icon mapping by group name keywords
+const features = [
+  {
+    icon: Users,
+    title: "No sign-up required",
+    description:
+      "Create a shared expense group, send the link, and start tracking bills immediately.",
+  },
+  {
+    icon: ReceiptIcon,
+    title: "Flexible bill splitting",
+    description:
+      "Split expenses equally, by percentage, or with custom amounts for real-world group spending.",
+  },
+  {
+    icon: PlaneIcon,
+    title: "Built for trips and roommates",
+    description:
+      "Use one expense tracker for vacations, apartment bills, dinners, events, and shared shopping.",
+  },
+];
+
+const useCases = [
+  {
+    title: "Trip expense tracker",
+    description:
+      "Track flights, hotels, food, taxis, and activities in one shared travel expense app.",
+  },
+  {
+    title: "Roommate bill splitter",
+    description:
+      "Split rent, groceries, utilities, and household costs without messy spreadsheets.",
+  },
+  {
+    title: "Group event expenses",
+    description:
+      "Keep wedding parties, weekend outings, office lunches, and friend groups aligned on who owes what.",
+  },
+];
+
 function getGroupIcon(name: string) {
   const lower = name.toLowerCase();
-  if (lower.includes("trip") || lower.includes("travel") || lower.includes("vacation")) return PlaneIcon;
-  if (lower.includes("apartment") || lower.includes("house") || lower.includes("rent")) return HouseholdIcon;
-  if (lower.includes("grocery") || lower.includes("food")) return GroceriesIcon;
+  if (
+    lower.includes("trip") ||
+    lower.includes("travel") ||
+    lower.includes("vacation")
+  ) {
+    return PlaneIcon;
+  }
+  if (
+    lower.includes("apartment") ||
+    lower.includes("house") ||
+    lower.includes("rent")
+  ) {
+    return HouseholdIcon;
+  }
+  if (lower.includes("grocery") || lower.includes("food")) {
+    return GroceriesIcon;
+  }
   return ReceiptIcon;
 }
 
@@ -47,23 +106,17 @@ function GroupCardSkeleton() {
   return (
     <div className="h-full">
       <div className="rounded-xl border bg-card p-6 space-y-4">
-        {/* Header */}
         <div className="flex items-start justify-between">
           <Skeleton className="w-12 h-12 rounded-xl" />
           <Skeleton className="w-8 h-8 rounded-md" />
         </div>
-
-        {/* Title */}
         <Skeleton className="h-5 w-2/3" />
-
-        {/* Content */}
         <div className="flex items-center justify-between pt-2">
           <div className="flex items-center gap-2">
             <Skeleton className="w-7 h-7 rounded-full" />
             <Skeleton className="w-7 h-7 rounded-full" />
             <Skeleton className="w-7 h-7 rounded-full" />
           </div>
-
           <div className="space-y-1 text-right">
             <Skeleton className="h-5 w-20 ml-auto" />
             <Skeleton className="h-3 w-10 ml-auto" />
@@ -73,12 +126,15 @@ function GroupCardSkeleton() {
     </div>
   );
 }
+
 export default function HomePage({ adminMode = false }: { adminMode?: boolean }) {
   const [groups, setGroups] = useState<HomeGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+
   const fetchGroups = async () => {
     setLoading(true);
+
     try {
       if (adminMode) {
         const res = await fetch("/api/groups", { cache: "no-store" });
@@ -92,10 +148,11 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
         const groupIds = getEncryptedItem<string[]>(LOCAL_GROUPS_KEY, []);
         const loadedGroups = await loadGroupsByIds(groupIds);
         setGroups(loadedGroups);
-        const validGroupIds = loadedGroups.map(g => g.id);
+        const validGroupIds = loadedGroups.map((group) => group.id);
         setEncryptedItem(LOCAL_GROUPS_KEY, validGroupIds);
       }
-    } catch (error) {
+    } catch {
+      setGroups([]);
     } finally {
       setLoading(false);
     }
@@ -105,89 +162,70 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
     fetchGroups();
   }, [adminMode]);
 
-  // const handleDeleteGroup = async (e: React.MouseEvent, groupId: string) => {
-  //   e.preventDefault();
-  //   e.stopPropagation();
-  //   await deleteGroup(groupId);
-  //   await fetchGroups();
-  //   toast({
-  //     title: "Group deleted",
-  //     description: "The group has been removed",
-  //   });
-  // };
-
   return (
     <Layout>
-      {/* Hero Section */}
-      {!adminMode && <section className="gradient-hero py-16 md:py-24">
-        <div className="container">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="max-w-2xl mx-auto text-center"
-          >
-           <motion.div
-  initial={{ scale: 0 }}
-  animate={{ scale: 1 }}
-  transition={{ type: "spring", delay: 0.2 }}
-  className="flex justify-center mb-6"
->
-  <BrandIcon className="w-20 h-20" />
-</motion.div>
+      {!adminMode && (
+        <section className="gradient-hero py-16 md:py-[3rem]">
+          <div className="container">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="max-w-3xl mx-auto text-center"
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", delay: 0.2 }}
+                className="flex justify-center mb-6"
+              >
+                <BrandIcon className="w-20 h-20" />
+              </motion.div>
 
-            <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4 text-balance">
-              Split expenses
-              <span className="block text-primary">the easy way</span>
-            </h1>
+              <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4 text-balance">
+                Split expenses with friends,
+                <span className="block text-primary">
+                  roommates, trips, and groups
+                </span>
+              </h1>
 
-            <p className="text-lg text-muted-foreground mb-8 text-balance">
-              Create a group, add expenses, and see who owes whom. No signup required. Share a link
-              and settle up instantly.
-            </p>
+              <p className="text-lg text-muted-foreground mb-4 text-balance">
+                {APP_NAME} is a free expense splitter that helps groups track
+                shared bills, balances, and settlements in one place.
+              </p>
+              <p className="text-base text-muted-foreground mb-8 text-balance max-w-2xl mx-auto">
+                Create a group, add expenses, choose who paid, and instantly see
+                who owes whom. No sign-up required, no spreadsheet cleanup, and
+                no confusion when it is time to settle up.
+              </p>
 
-            {/* <div className="mb-8 overflow-hidden rounded-2xl border border-border/60 bg-card/40 p-2 shadow-card">
-              <Image
-                src="/og-image.png"
-                alt="Splitcost app dashboard preview"
-                width={1200}
-                height={630}
-                className="h-auto w-full rounded-xl"
-                priority
-                sizes="(max-width: 768px) 100vw, 720px"
-              />
-            </div> */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button asChild size="lg" className="text-base">
+                  <Link href="/create-group">
+                    <Plus className="w-5 h-5" />
+                    Create New Group
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" size="lg" className="text-base">
+                  <Link href="/faq">
+                    Learn More
+                    <ArrowRight className="w-5 h-5" />
+                  </Link>
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+      )}
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button asChild size="lg" className="text-base">
-                <Link href="/create-group">
-                  <Plus className="w-5 h-5" />
-                  Create New Group
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="lg" className="text-base">
-                <Link href="/faq">
-                  Learn More
-                  <ArrowRight className="w-5 h-5" />
-                </Link>
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-      </section>}
-
-      {/* Groups Section */}
       {loading ? (
         <section className="py-12 md:py-16">
           <div className="container">
             <div className="flex items-center justify-between mb-8">
-              {/* Left: Title + subtitle */}
               <div className="space-y-2">
                 <Skeleton className="h-6 w-40" />
                 <Skeleton className="h-4 w-56" />
               </div>
-
-              {/* Right: Button */}
               <Skeleton className="h-8 w-28 rounded-md" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -202,16 +240,25 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
           <div className="container">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h2 className="text-2xl font-bold text-foreground mb-1">{adminMode ? "All Groups" : "Your Groups"}</h2>
-                <p className="text-muted-foreground">{adminMode ? "Admin view of all expense groups" : "Recent expense groups"}</p>
+                <h2 className="text-2xl font-bold text-foreground mb-1">
+                  {adminMode ? "All Groups" : "Your Groups"}
+                </h2>
+                <p className="text-muted-foreground">
+                  {adminMode
+                    ? "Admin view of all expense groups"
+                    : "Open a recent expense group and keep tracking shared bills"}
+                </p>
               </div>
-              {!adminMode && <Button asChild variant="ghost" size="sm">
-                <Link href="/create-group">
-                  <Plus className="w-4 h-4" />
-                  New Group
-                </Link>
-              </Button>}
+              {!adminMode && (
+                <Button asChild variant="ghost" size="sm">
+                  <Link href="/create-group">
+                    <Plus className="w-4 h-4" />
+                    New Group
+                  </Link>
+                </Button>
+              )}
             </div>
+
             <motion.div
               variants={containerVariants}
               initial="hidden"
@@ -220,25 +267,30 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
             >
               {groups.map((group) => {
                 const IconComponent = getGroupIcon(group.name);
-                const totalExpenses = group.totalExpenses ?? group?.expenses?.reduce((sum, e) => sum + (e?.amount || 0), 0);
+                const totalExpenses =
+                  group.totalExpenses ??
+                  group?.expenses?.reduce((sum, expense) => sum + (expense?.amount || 0), 0);
+
                 return (
-                  <motion.div key={group.id} variants={itemVariants} onClick={() => router.push(adminMode ? `${ADMIN_BASE_PATH}/group/${group.id}` : `/group/${group.id}`)} >
+                  <motion.div
+                    key={group.id}
+                    variants={itemVariants}
+                    onClick={() =>
+                      router.push(
+                        adminMode
+                          ? `${ADMIN_BASE_PATH}/group/${group.id}`
+                          : `/group/${group.id}`
+                      )
+                    }
+                  >
                     <Card hover className="h-full group">
                       <CardHeader>
                         <div className="flex items-start justify-between">
-                          <div className="w-12 h-12 rounded-xl bg-primary-muted flex items-center justify-center" >
+                          <div className="w-12 h-12 rounded-xl bg-primary-muted flex items-center justify-center">
                             <IconComponent className="w-6 h-6 text-primary" />
                           </div>
-                          {/* <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            className="opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive hover:bg-destructive/10"
-                            onClick={(e) => handleDeleteGroup(e, group.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button> */}
                         </div>
-                        <CardTitle className="mt-3" >{group.name}</CardTitle>
+                        <CardTitle className="mt-3">{group.name}</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="flex items-center justify-between">
@@ -258,88 +310,140 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
                 );
               })}
 
-              {/* Create New Group Card */}
-              {!adminMode && <motion.div variants={itemVariants}>
-                <Link href="/create-group">
-                  <Card
-                    hover
-                    className="h-full border-dashed border-2 bg-transparent hover:bg-muted/50"
-                  >
-                    <CardContent className="flex flex-col items-center justify-center h-full min-h-[200px] text-center">
-                      <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mb-4">
-                        <Plus className="w-7 h-7 text-muted-foreground" />
-                      </div>
-                      <p className="font-medium text-foreground mb-1">Create New Group</p>
-                      <p className="text-sm text-muted-foreground">Start tracking shared expenses</p>
-                    </CardContent>
-                  </Card>
-                </Link>
-              </motion.div>}
+              {!adminMode && (
+                <motion.div variants={itemVariants}>
+                  <Link href="/create-group">
+                    <Card
+                      hover
+                      className="h-full border-dashed border-2 bg-transparent hover:bg-muted/50"
+                    >
+                      <CardContent className="flex flex-col items-center justify-center h-full min-h-[200px] text-center">
+                        <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mb-4">
+                          <Plus className="w-7 h-7 text-muted-foreground" />
+                        </div>
+                        <p className="font-medium text-foreground mb-1">
+                          Create New Group
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Start tracking shared expenses
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                </motion.div>
+              )}
             </motion.div>
           </div>
-        </section>)}
+        </section>
+      )}
 
-      {/* Features Section */}
-      {!adminMode && <section className="py-12 md:py-16 bg-muted/30">
-        <div className="container">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">Why {APP_NAME}?</h2>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              The simplest expense splitting experience, designed for real life
-            </p>
+      {!adminMode && (
+        <section className="py-12 md:py-16 bg-muted/30">
+          <div className="container">
+            <div className="text-center mb-12 max-w-2xl mx-auto">
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
+                Why use {APP_NAME} as your expense splitter?
+              </h2>
+              <p className="text-muted-foreground">
+                Built for the everyday situations where a group expense tracker
+                saves time: travel, rent, groceries, nights out, and shared
+                events.
+              </p>
+            </div>
+
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              className="grid grid-cols-1 md:grid-cols-3 gap-6"
+            >
+              {features.map((feature, index) => (
+                <motion.div key={index} variants={itemVariants}>
+                  <Card className="text-center h-full">
+                    <CardContent className="pt-8">
+                      <div className="w-14 h-14 rounded-2xl gradient-primary flex items-center justify-center mx-auto mb-5">
+                        <feature.icon className="w-7 h-7 text-secondary-foreground" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-foreground mb-2">
+                        {feature.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {feature.description}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </motion.div>
           </div>
+        </section>
+      )}
 
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-6"
-          >
-            {[
-              {
-                icon: Users,
-                title: "No Sign-up Required",
-                description:
-                  "Just create a group and share the link. Anyone can join and add expenses.",
-              },
-              {
-                icon: ReceiptIcon,
-                title: "Smart Splitting",
-                description:
-                  "Split equally, by percentage, or custom amounts. We handle the math.",
-              },
-              {
-                icon: PlaneIcon,
-                title: "Multi-Currency",
-                description: "Perfect for trips abroad. Track expenses in any currency.",
-              },
-            ].map((feature, index) => (
-              <motion.div key={index} variants={itemVariants}>
-                <Card className="text-center h-full">
-                  <CardContent className="pt-8">
-                    <div className="w-14 h-14 rounded-2xl gradient-primary flex items-center justify-center mx-auto mb-5">
-                      <feature.icon className="w-7 h-7 text-secondary-foreground" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-foreground mb-2">{feature.title}</h3>
-                    <p className="text-sm text-muted-foreground">{feature.description}</p>
+      {!adminMode && (
+        <section className="py-12 md:py-16">
+          <div className="container">
+            <div className="max-w-3xl mb-10">
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
+                One shared bill tracker for every group plan
+              </h2>
+              <p className="text-muted-foreground">
+                Whether you need a roommate expense tracker, a trip expense
+                splitter, or a simple way to divide everyday bills with friends,
+                {` ${APP_NAME} `} keeps balances clear and settlements simple.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {useCases.map((useCase) => (
+                <Card key={useCase.title} className="h-full">
+                  <CardContent className="pt-6">
+                    <h3 className="text-lg font-semibold text-foreground mb-2">
+                      {useCase.title}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {useCase.description}
+                    </p>
                   </CardContent>
                 </Card>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>}
-
-      {/* Ad Placeholder */}
-      {/* <section className="py-8">
-        <div className="container">
-          <div className="p-6 border border-dashed border-border rounded-2xl text-center text-muted-foreground bg-muted/30">
-            <p className="text-sm">Advertisement Space</p>
+              ))}
+            </div>
           </div>
-        </div>
-      </section> */}
+        </section>
+      )}
+
+      {!adminMode && (
+        <section className="py-12 md:py-16 bg-muted/30">
+          <div className="container max-w-4xl">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
+                How to split expenses in minutes
+              </h2>
+              <p className="text-muted-foreground">
+                The workflow is intentionally simple so your group spends less
+                time managing bills and more time moving on.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[
+                "Create a group and add the people involved.",
+                "Log each expense with the payer and participants.",
+                "Review balances and settle up with fewer payments.",
+              ].map((step, index) => (
+                <Card key={step} className="h-full">
+                  <CardContent className="pt-6 text-center">
+                    <p className="text-sm font-semibold text-primary mb-2">
+                      Step {index + 1}
+                    </p>
+                    <p className="text-sm text-muted-foreground">{step}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
     </Layout>
   );
 }
-

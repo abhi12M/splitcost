@@ -39,7 +39,7 @@ export default function ContactPage() {
 
   return (
     <Layout>
-      <div className="container py-12 md:py-20 max-w-xl">
+      <div className="container py-12 md:py-[3rem] max-w-xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

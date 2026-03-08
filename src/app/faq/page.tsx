@@ -4,8 +4,9 @@ import { buildMetadata } from "@/lib/seo";
 import FAQPage from "@/pages/FAQ";
 
 export const metadata: Metadata = buildMetadata({
-  title: "FAQ",
-  description: "Read answers to common questions about Splitcost and expense sharing.",
+  title: "Expense Splitting FAQ",
+  description:
+    "Read common questions about Splitcost, including how to split expenses, track group bills, and settle balances.",
   path: "/faq",
 });
 

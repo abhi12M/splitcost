@@ -4,7 +4,7 @@ import { APP_NAME } from "@/lib/constants";
 export default function PrivacyPage() {
   return (
     <Layout>
-      <div className="container py-12 md:py-20 max-w-3xl">
+      <div className="container py-12 md:py-[3rem] max-w-3xl">
         <div>
           <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-8">
             Privacy Policy
