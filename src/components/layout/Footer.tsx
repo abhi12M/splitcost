@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ReceiptIcon } from "@/components/icons/CategoryIcons"
+import { BrandIcon } from "@/components/icons/CategoryIcons"
 import { APP_NAME } from "@/lib/constants"
 
 export function Footer() {
@@ -11,9 +11,9 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="md:col-span-2">
             <Link href="/" className="flex items-center gap-2.5 mb-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg">
-              <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
-                <ReceiptIcon className="w-4 h-4 text-primary-foreground" />
-              </div>
+              {/* <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center"> */}
+                <BrandIcon className="w-11 h-11" />
+              {/* </div> */}
               <span className="text-lg font-bold text-foreground">{APP_NAME}</span>
             </Link>
             <p className="text-sm text-muted-foreground max-w-sm">

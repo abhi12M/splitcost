@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" role="img" aria-label="Splitcost apple touch icon">
+  <defs>
+    <linearGradient id="splitcost-apple-bg" x1="18" y1="16" x2="160" y2="164" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3dbb9a" />
+      <stop offset="1" stop-color="#20896f" />
+    </linearGradient>
+  </defs>
+  <rect width="180" height="180" rx="48" fill="url(#splitcost-apple-bg)" />
+  <path d="M58 44c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v7H58v-7Z" fill="#dff8ef" />
+  <path d="M46 61c0-10.5 8.5-19 19-19h50c10.5 0 19 8.5 19 19v47c0 18.8-15.2 34-34 34H80c-18.8 0-34-15.2-34-34V61Z" fill="#fffaf1" />
+  <path d="M67 82h46M67 101h28" stroke="#249678" stroke-linecap="round" stroke-width="9" />
+  <circle cx="121" cy="121" r="24" fill="#ff8a4c" />
+  <path d="M111 121h20M121 111v20" stroke="#fff" stroke-linecap="round" stroke-width="8" />
+</svg>

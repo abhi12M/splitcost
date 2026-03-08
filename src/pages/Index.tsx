@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AvatarGroup } from "@/components/ui/UserAvatar";
 import { formatCurrency } from "@/lib/avatar-utils";
-import { ReceiptIcon, PlaneIcon, HouseholdIcon, GroceriesIcon } from "@/components/icons/CategoryIcons";
+import { ReceiptIcon, PlaneIcon, HouseholdIcon, GroceriesIcon, BrandIcon } from "@/components/icons/CategoryIcons";
 import { GroupOverviewItemInterface, loadGroupsByIds } from "@/lib/storage";
 import { getEncryptedItem, setEncryptedItem } from "@/lib/localStorage";
 import { ADMIN_BASE_PATH, APP_NAME, LOCAL_GROUPS_KEY } from "@/lib/constants";
@@ -127,14 +127,14 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
             transition={{ duration: 0.5 }}
             className="max-w-2xl mx-auto text-center"
           >
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", delay: 0.2 }}
-              className="w-20 h-20 rounded-3xl gradient-primary flex items-center justify-center mx-auto mb-6 shadow-glow"
-            >
-              <ReceiptIcon className="w-10 h-10 text-primary-foreground" />
-            </motion.div>
+           <motion.div
+  initial={{ scale: 0 }}
+  animate={{ scale: 1 }}
+  transition={{ type: "spring", delay: 0.2 }}
+  className="flex justify-center mb-6"
+>
+  <BrandIcon className="w-20 h-20" />
+</motion.div>
 
             <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4 text-balance">
               Split expenses
