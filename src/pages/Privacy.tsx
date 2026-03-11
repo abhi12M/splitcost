@@ -1,29 +1,70 @@
 import { Layout } from "@/components/layout/Layout";
 import { APP_NAME } from "@/lib/constants";
+import { getCanonicalUrl } from "@/lib/seo";
 
 export default function PrivacyPage() {
+  const privacyJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: `${APP_NAME} Privacy Policy`,
+    url: getCanonicalUrl("/privacy"),
+    isPartOf: {
+      "@type": "WebSite",
+      name: APP_NAME,
+      url: getCanonicalUrl("/"),
+    },
+    breadcrumb: {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Home",
+          item: getCanonicalUrl("/"),
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: "Privacy Policy",
+          item: getCanonicalUrl("/privacy"),
+        },
+      ],
+    },
+  };
+
   return (
     <Layout>
       <div className="container py-12 md:py-[3rem] max-w-3xl">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(privacyJsonLd) }}
+        />
+
         <div>
           <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-8">
             Privacy Policy
           </h1>
 
           <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6 text-muted-foreground">
+            <p className="text-base leading-7">
+              This Privacy Policy explains what information {APP_NAME} uses to
+              run shared expense groups, how that data is stored, and what
+              choices you have. We aim to collect only the information needed
+              to help groups track expenses, balances, and settlements.
+            </p>
 
             <section>
               <h2 className="text-xl font-semibold text-foreground mt-8 mb-4">
                 1. Information We Collect
               </h2>
               <p>
-                {APP_NAME} is designed with privacy in mind. We collect minimal
-                information necessary to provide our service:
+                {APP_NAME} collects the information required to create and
+                manage shared expense groups:
               </p>
               <ul className="list-disc pl-6 space-y-2">
-                <li>Expense data you enter (descriptions, amounts, participants)</li>
-                <li>Group names and member names you provide</li>
-                <li>Anonymous usage analytics to improve our service</li>
+                <li>Group names, member names, and currency preferences</li>
+                <li>Expense entries such as descriptions, amounts, payers, and participants</li>
+                <li>Technical and analytics data that helps us improve performance and usability</li>
               </ul>
             </section>
 
@@ -32,10 +73,11 @@ export default function PrivacyPage() {
                 2. How We Store Your Data
               </h2>
               <p>
-                Your expense data is primarily stored locally on your device.
-                When you share a group link, the data is encrypted and
-                transmitted securely. We do not store personal identification
-                information on our servers.
+                Group and expense data may be stored locally on your device and
+                on secure third-party infrastructure so shared group links work
+                across devices and sessions. We use reasonable technical
+                safeguards to protect data in transit and at rest, but no
+                internet-based system can be guaranteed to be completely secure.
               </p>
             </section>
 
@@ -43,14 +85,15 @@ export default function PrivacyPage() {
               <h2 className="text-xl font-semibold text-foreground mt-8 mb-4">
                 3. Third-Party Services
               </h2>
-              <p>We may use third-party services for:</p>
+              <p>We may use third-party services that support the product, such as:</p>
               <ul className="list-disc pl-6 space-y-2">
                 <li>Analytics (Google Analytics)</li>
-                <li>Advertising (Google Ads)</li>
+                <li>Hosting, database, and infrastructure providers</li>
+                <li>Email and support tooling when you contact us</li>
               </ul>
               <p>
-                These services may collect anonymous usage data as described in
-                their respective privacy policies.
+                These providers may process limited technical or usage data on
+                our behalf as described in their own privacy policies.
               </p>
             </section>
 
@@ -59,9 +102,9 @@ export default function PrivacyPage() {
                 4. Cookies
               </h2>
               <p>
-                We use cookies to enhance your experience and for analytics
-                purposes. You can control cookie preferences through your
-                browser settings.
+                {APP_NAME} may use cookies or similar technologies for analytics,
+                session continuity, and product functionality. You can manage
+                many of these preferences through your browser settings.
               </p>
             </section>
 
@@ -69,21 +112,33 @@ export default function PrivacyPage() {
               <h2 className="text-xl font-semibold text-foreground mt-8 mb-4">
                 5. Your Rights
               </h2>
-              <p>You have the right to:</p>
+              <p>Depending on your location, you may have the right to:</p>
               <ul className="list-disc pl-6 space-y-2">
-                <li>Access the data you've entered</li>
-                <li>Delete your groups and expense data</li>
-                <li>Opt out of analytics tracking</li>
+                <li>Request access to the data associated with your use of the service</li>
+                <li>Delete expense data that you control</li>
+                <li>Limit analytics through browser controls or privacy tools</li>
               </ul>
             </section>
 
             <section>
               <h2 className="text-xl font-semibold text-foreground mt-8 mb-4">
-                6. Contact Us
+                6. Policy Updates
               </h2>
               <p>
-                If you have questions about this Privacy Policy, please contact
-                us through our Contact page.
+                We may update this Privacy Policy when the product, legal
+                requirements, or data practices change. Continued use of the
+                service after an update means the revised policy applies.
+              </p>
+            </section>
+
+            <section>
+              <h2 className="text-xl font-semibold text-foreground mt-8 mb-4">
+                7. Contact Us
+              </h2>
+              <p>
+                If you have questions about this Privacy Policy or want to
+                request help related to your data, please contact us through the
+                Contact page.
               </p>
             </section>
           </div>

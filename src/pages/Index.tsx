@@ -46,7 +46,7 @@ const features = [
     icon: Users,
     title: "No sign-up required",
     description:
-      "Create a shared expense group, send the link, and start tracking bills immediately.",
+      "Create a shared expense group, send the link, and start tracking expenses right away.",
   },
   {
     icon: ReceiptIcon,
@@ -185,7 +185,7 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
               <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4 text-balance">
                 Split expenses with friends,
                 <span className="block text-primary">
-                  roommates, trips, and groups
+                  roommates, travel groups, and shared plans
                 </span>
               </h1>
 
@@ -389,7 +389,7 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
               </h2>
               <p className="text-muted-foreground">
                 Whether you need a roommate expense tracker, a trip expense
-                splitter, or a simple way to divide everyday bills with friends,
+                tracker, or a simple way to divide everyday bills with friends,
                 {` ${APP_NAME} `} keeps balances clear and settlements simple.
               </p>
             </div>

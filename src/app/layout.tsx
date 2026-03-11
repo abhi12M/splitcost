@@ -87,27 +87,43 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "WebApplication",
-    name: SITE_NAME,
-    url: siteUrl,
-    applicationCategory: "FinanceApplication",
-    operatingSystem: "Web",
-    description: SITE_DESCRIPTION,
-    featureList: [
-      "Create shared expense groups",
-      "Split bills equally, by percentage, or with custom amounts",
-      "Track balances for trips, roommates, and group events",
-      "Share group links without sign-up",
-      "Settle balances with simplified payouts",
-    ],
-    offers: {
-      "@type": "Offer",
-      price: "0",
-      priceCurrency: "USD",
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: SITE_NAME,
+      url: siteUrl,
+      description: SITE_DESCRIPTION,
     },
-  };
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      name: SITE_NAME,
+      url: siteUrl,
+      logo: `${siteUrl}/icon.svg`,
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      name: SITE_NAME,
+      url: siteUrl,
+      applicationCategory: "FinanceApplication",
+      operatingSystem: "Web",
+      description: SITE_DESCRIPTION,
+      featureList: [
+        "Create shared expense groups",
+        "Split bills equally, by percentage, or with custom amounts",
+        "Track balances for trips, roommates, and group events",
+        "Share group links without sign-up",
+        "Settle balances with simplified payouts",
+      ],
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "USD",
+      },
+    },
+  ];
 
   return (
     <html lang="en">

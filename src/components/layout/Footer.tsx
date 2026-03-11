@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+
 import { BrandIcon } from "@/components/icons/CategoryIcons"
 import { APP_NAME } from "@/lib/constants"
 
@@ -62,7 +63,7 @@ export function Footer() {
                   href="/terms"
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
                 >
-                  Terms & Conditions
+                  Terms of Service
                 </Link>
               </li>
             </ul>
@@ -71,7 +72,7 @@ export function Footer() {
 
         <div className="mt-8 pt-8 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} {APP_NAME}. All rights reserved.
+            {"(c)"} {new Date().getFullYear()} {APP_NAME}. All rights reserved.
           </p>
           <p className="text-xs text-muted-foreground">
             Split bills clearly, track balances accurately, and settle up faster

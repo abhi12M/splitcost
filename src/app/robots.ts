@@ -7,8 +7,8 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/faq", "/contact", "/privacy", "/terms"],
-        disallow: ["/group/", "/create-group"],
+        allow: "/",
+        disallow: [],
       },
     ],
     sitemap: getCanonicalUrl("/sitemap.xml"),

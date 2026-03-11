@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const SITE_NAME = "Splitcost";
 export const SITE_TITLE =
-  "Splitcost | Split expenses with friends, trips, roommates, and groups";
+  "Splitcost | Split expenses with friends, roommates, and travel groups";
 export const SITE_DESCRIPTION =
   "Splitcost is a free group expense tracker that helps friends, roommates, and travel groups split bills, track balances, and settle up faster.";
 export const SITE_KEYWORDS = [

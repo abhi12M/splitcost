@@ -4,9 +4,9 @@ import { buildMetadata } from "@/lib/seo";
 import PrivacyPage from "@/pages/Privacy";
 
 export const metadata: Metadata = buildMetadata({
-  title: "Privacy policy",
+  title: "Privacy Policy",
   description:
-    "Learn how Splitcost handles your data, privacy choices, and analytics usage.",
+    "Learn how Splitcost handles expense data, analytics, storage, and privacy choices.",
   path: "/privacy",
 });
 

@@ -4,8 +4,9 @@ import { buildMetadata } from "@/lib/seo";
 import TermsPage from "@/pages/Terms";
 
 export const metadata: Metadata = buildMetadata({
-  title: "Terms and conditions",
-  description: "Review Splitcost terms and conditions for using the platform.",
+  title: "Terms of Service",
+  description:
+    "Review the Splitcost terms of service for using the expense tracker and shared group features.",
   path: "/terms",
 });
 

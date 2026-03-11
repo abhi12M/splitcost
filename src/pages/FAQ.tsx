@@ -42,7 +42,7 @@ const faqs = [
   },
   {
     question: "Is my expense data secure?",
-    answer: "Your expense data is stored locally on your device and synced through shareable group links. The product is designed to avoid unnecessary personal data collection. See the Privacy Policy for the full details.",
+    answer: "Splitcost uses a mix of local storage and secure third-party infrastructure so shared groups can work across devices and sessions. We aim to collect only the information needed to run the product. See the Privacy Policy for full details.",
   },
   {
     question: "Is there a mobile app?",
