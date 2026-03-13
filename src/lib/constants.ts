@@ -1,4 +1,9 @@
 export const APP_NAME = "Splitcost";
 export const LOCAL_GROUPS_KEY = "my_groups";
 export const LOCAL_CURRENCY_KEY = "my_currecny";
-export const ADMIN_BASE_PATH = "/admin-ajdsahsh3";
+export const ADMIN_PARENT_PATH = "/portal";
+export const ADMIN_CHILD_PATH = "x7k2p9";
+export const ADMIN_BASE_PATH = `${ADMIN_PARENT_PATH}/${ADMIN_CHILD_PATH}`;
+export const ADMIN_SESSION_KEY = "admin_session";
+export const ADMIN_LOGIN_ID = "admin";
+export const ADMIN_LOGIN_PASSWORD = "thj#Aw:V}%f-76G";

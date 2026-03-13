@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 
+import { ADMIN_PARENT_PATH } from "@/lib/constants";
 import { getCanonicalUrl } from "@/lib/seo";
 
 export default function robots(): MetadataRoute.Robots {
@@ -8,7 +9,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: [],
+        disallow: [ADMIN_PARENT_PATH, `${ADMIN_PARENT_PATH}/`, "/group/", "/group/*"],
       },
     ],
     sitemap: getCanonicalUrl("/sitemap.xml"),
