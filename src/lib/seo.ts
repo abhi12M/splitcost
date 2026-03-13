@@ -19,7 +19,7 @@ export const SITE_KEYWORDS = [
 ];
 export const DEFAULT_OG_IMAGE = "/og-image.png";
 
-const FALLBACK_SITE_URL = "https://splitcost.in";
+const FALLBACK_SITE_URL = "https://www.splitcost.in";
 
 function normalizeBaseUrl(url: string): string {
   return url.endsWith("/") ? url.slice(0, -1) : url;
