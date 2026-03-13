@@ -50,7 +50,12 @@ export function ActionMenu({
 }: ActionMenuProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const stopEvent = (event: SyntheticEvent) => {
+  const stopClickPropagation = (event: SyntheticEvent) => {
+    if (!stopPropagation) return;
+    event.stopPropagation();
+  };
+
+  const stopTriggerEvent = (event: SyntheticEvent) => {
     if (!stopPropagation) return;
     event.preventDefault();
     event.stopPropagation();
@@ -76,7 +81,7 @@ export function ActionMenu({
             type="button"
             aria-label="Open actions"
             disabled={isDeleting}
-            onClick={stopEvent}
+            onClick={stopTriggerEvent}
             className={cn(
               "flex h-8 w-8 items-center justify-center rounded-full hover:bg-muted transition-colors outline-none disabled:opacity-50",
               triggerClassName
@@ -97,7 +102,7 @@ export function ActionMenu({
         >
           {editHref ? (
             <DropdownMenuItem asChild className="rounded-lg cursor-pointer gap-2 py-2">
-              <Link href={editHref} onClick={stopPropagation ? stopEvent : undefined}>
+              <Link href={editHref} onClick={stopPropagation ? stopClickPropagation : undefined}>
                 <Pencil className="w-4 h-4 text-muted-foreground" />
                 <span className="text-sm">Edit</span>
               </Link>
