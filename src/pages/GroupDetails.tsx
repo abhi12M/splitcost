@@ -21,12 +21,8 @@ import {
   ArrowDown,
   ArrowUp,
   Share2,
-  Pencil,
   List,
   LayoutDashboard,
-  MoreVertical,
-  Trash2,
-  Loader2,
   ChevronUp,
 } from "lucide-react";
 
@@ -55,8 +51,7 @@ import { getEncryptedItem, setEncryptedItem } from "@/lib/localStorage";
 import { ADMIN_BASE_PATH, LOCAL_GROUPS_KEY } from "@/lib/constants";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { ActionMenu } from "@/components/ui/action-menu";
 import { SmartTooltip } from "@/components/ui/smartTooltip";
 
 /* ======================================================
@@ -74,6 +69,9 @@ const SORT_OPTIONS = [
   { value: "amount_desc", label: "Highest amount", icon: ArrowDown },
   { value: "amount_asc", label: "Lowest amount", icon: ArrowUp },
 ] as const;
+
+type GroupByValue = (typeof GROUP_BY_OPTIONS)[number]["value"];
+type SortByValue = (typeof SORT_OPTIONS)[number]["value"];
 
 /* ======================================================
    UTILS – MOVE TO UTILS FILE LATER
@@ -286,9 +284,9 @@ export default function GroupResponsesPage({
   // UI state
   const [search, setSearch] = useState("");
   const [groupBy, setGroupBy] =
-    useState<"date" | "paidBy" | "category" | "splitType">("date");
+    useState<GroupByValue>("date");
   const [sortBy, setSortBy] =
-    useState<"date_desc" | "amount_desc" | "amount_asc">("date_desc");
+    useState<SortByValue>("date_desc");
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
     {}
   );
@@ -400,7 +398,7 @@ export default function GroupResponsesPage({
 
       return { name, value };
     });
-  }, [groupedExpenses, groupBy, shouldTitleCase]);
+  }, [groupedExpenses, shouldTitleCase]);
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
   if (loading) {
     return <GroupResponsesSkeleton />;
@@ -479,7 +477,10 @@ export default function GroupResponsesPage({
       `.trim();
   };
 
-  const handleSettle = async (setlementData: any, index: number) => {
+  const handleSettle = async (
+    setlementData: ReturnType<typeof calculateSettlements>[number],
+    index: number
+  ) => {
     try {
       setSettlingIndex(index);
       const data: ExpenseRequest = {
@@ -565,7 +566,7 @@ export default function GroupResponsesPage({
                         icon: m.icon,
                       }))}
                       value={{ itemId: groupBy }}
-                      onSelect={(_, itemId) => setGroupBy(itemId as any)}
+                      onSelect={(_, itemId) => setGroupBy(itemId as GroupByValue)}
                       placeholder="Group by"
                       label="Group by"
                     />
@@ -580,7 +581,7 @@ export default function GroupResponsesPage({
                         icon: m.icon,
                       }))}
                       value={{ itemId: sortBy }}
-                      onSelect={(_, itemId) => setSortBy(itemId as any)}
+                      onSelect={(_, itemId) => setSortBy(itemId as SortByValue)}
                       placeholder="Sort by"
                       label="Sort by"
                     />
@@ -793,61 +794,14 @@ export default function GroupResponsesPage({
                                 >
 
                                   <div className="absolute right-4 top-4">
-                                    <AlertDialog>
-                                      <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                          <button
-                                            disabled={isDeleting === expense.id}
-                                            className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-muted transition-colors outline-none disabled:opacity-50"
-                                          >
-                                            {isDeleting === expense.id ? (
-                                              <Loader2 className="w-4 h-4 animate-spin" />
-                                            ) : (
-                                              <MoreVertical className="w-4 h-4 text-muted-foreground" />
-                                            )}
-                                          </button>
-                                        </DropdownMenuTrigger>
-
-                                        <DropdownMenuContent
-                                          align="end"
-                                          className="w-36 rounded-xl p-1.5 border-muted shadow-lg"
-                                        >
-                                          <Link href={`/group/${groupId}/edit-expense/${expense.id}`}>
-                                            <DropdownMenuItem className="rounded-lg cursor-pointer gap-2 py-2">
-                                              <Pencil className="w-4 h-4 text-muted-foreground" />
-                                              <span className="text-sm">Edit</span>
-                                            </DropdownMenuItem>
-                                          </Link>
-
-                                          <AlertDialogTrigger asChild>
-                                            <DropdownMenuItem className="rounded-lg cursor-pointer gap-2 py-2 text-destructive focus:text-destructive focus:bg-destructive/10">
-                                              <Trash2 className="w-4 h-4" />
-                                              <span className="text-sm">Delete</span>
-                                            </DropdownMenuItem>
-                                          </AlertDialogTrigger>
-                                        </DropdownMenuContent>
-                                      </DropdownMenu>
-
-                                      <AlertDialogContent className="max-w-[290px] rounded-2xl">
-                                        <AlertDialogHeader>
-                                          <AlertDialogTitle className="text-lg">Delete expense?</AlertDialogTitle>
-                                          <AlertDialogDescription className="text-xs">
-                                            Are you sure you want to delete  this expense?
-                                          </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter className="flex-row gap-2 mt-4">
-                                          <AlertDialogCancel className="flex-1 mt-0 rounded-xl border-none bg-muted hover:bg-muted/80">
-                                            Cancel
-                                          </AlertDialogCancel>
-                                          <AlertDialogAction
-                                            onClick={() => handleDelete(expense.id)}
-                                            className="flex-1 rounded-xl bg-destructive hover:bg-destructive/90 text-white"
-                                          >
-                                            Delete
-                                          </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                      </AlertDialogContent>
-                                    </AlertDialog>
+                                    <ActionMenu
+                                      editHref={`/group/${groupId}/edit-expense/${expense.id}`}
+                                      onDelete={() => handleDelete(expense.id)}
+                                      isDeleting={isDeleting === expense.id}
+                                      deleteTitle="Delete expense?"
+                                      deleteDescription="Are you sure you want to delete this expense?"
+                                      stopPropagation
+                                    />
                                   </div>
 
                                   <div className="flex gap-3">

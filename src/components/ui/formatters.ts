@@ -33,3 +33,17 @@ export const formatDateForDB = (d: Date): string => {
 
   return `${year}-${month}-${day}`;
 };
+
+export const formatDisplayDate = (date: string | Date) => {
+  const value = typeof date === "string" ? new Date(date) : date;
+
+  if (Number.isNaN(value.getTime())) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(value);
+};

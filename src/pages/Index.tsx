@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, Plus, Users } from "lucide-react";
 
@@ -18,10 +18,12 @@ import { AvatarGroup } from "@/components/ui/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ActionMenu } from "@/components/ui/action-menu";
+import { formatDisplayDate } from "@/components/ui/formatters";
 import { formatCurrency } from "@/lib/avatar-utils";
 import { ADMIN_BASE_PATH, APP_NAME, LOCAL_GROUPS_KEY } from "@/lib/constants";
 import { getEncryptedItem, setEncryptedItem } from "@/lib/localStorage";
-import { GroupOverviewItemInterface, loadGroupsByIds } from "@/lib/storage";
+import { deleteGroup, GroupOverviewItemInterface, loadGroupsByIds } from "@/lib/storage";
 
 type HomeGroup = GroupOverviewItemInterface & {
   totalExpenses?: number;
@@ -130,9 +132,10 @@ function GroupCardSkeleton() {
 export default function HomePage({ adminMode = false }: { adminMode?: boolean }) {
   const [groups, setGroups] = useState<HomeGroup[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingGroupId, setDeletingGroupId] = useState<string | null>(null);
   const router = useRouter();
 
-  const fetchGroups = async () => {
+  const fetchGroups = useCallback(async () => {
     setLoading(true);
 
     try {
@@ -156,11 +159,25 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
     } finally {
       setLoading(false);
     }
-  };
+  }, [adminMode]);
 
   useEffect(() => {
-    fetchGroups();
-  }, [adminMode]);
+    void fetchGroups();
+  }, [fetchGroups]);
+
+  const handleDeleteGroup = async (groupId: string) => {
+    try {
+      setDeletingGroupId(groupId);
+      const deleted = await deleteGroup(groupId);
+      if (!deleted) {
+        return;
+      }
+
+      setGroups((current) => current.filter((group) => group.id !== groupId));
+    } finally {
+      setDeletingGroupId(null);
+    }
+  };
 
   return (
     <Layout>
@@ -248,6 +265,12 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
                     ? "Admin view of all expense groups"
                     : "Open a recent expense group and keep tracking shared bills"}
                 </p>
+                {adminMode ? (
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Total groups:{" "}
+                    <span className="font-semibold text-foreground">{groups.length}</span>
+                  </p>
+                ) : null}
               </div>
               {!adminMode && (
                 <Button asChild variant="ghost" size="sm">
@@ -289,8 +312,20 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
                           <div className="w-12 h-12 rounded-xl bg-primary-muted flex items-center justify-center">
                             <IconComponent className="w-6 h-6 text-primary" />
                           </div>
+                          {adminMode ? (
+                            <ActionMenu
+                              onDelete={() => handleDeleteGroup(group.id)}
+                              isDeleting={deletingGroupId === group.id}
+                              deleteTitle="Delete group?"
+                              deleteDescription={`Are you sure you want to delete ${group.name}? This will remove the group and its expenses.`}
+                              stopPropagation
+                            />
+                          ) : null}
                         </div>
                         <CardTitle className="mt-3">{group.name}</CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                          Created {formatDisplayDate(group.createdAt)}
+                        </p>
                       </CardHeader>
                       <CardContent>
                         <div className="flex items-center justify-between">
