@@ -7,7 +7,6 @@ export const metadata: Metadata = buildMetadata({
   title: "Create group",
   description: "Start a new expense group and invite members with a shareable link.",
   path: "/create-group",
-  noIndex: true,
 });
 
 export default function Page() {
