@@ -114,6 +114,16 @@ export default function ContactPage() {
               Send bug reports, feedback, partnership inquiries, or questions about how
               the product works for friends, roommates, travel groups, and events.
             </p>
+            <p className="mt-4 text-sm text-muted-foreground">
+              Prefer email? Reach us directly at{" "}
+              <a
+                href="mailto:contact@splitcost.in"
+                className="font-medium text-secondary underline underline-offset-4 transition-colors hover:text-secondary/80"
+              >
+                contact@splitcost.in
+              </a>
+              .
+            </p>
           </div>
 
           <div className="relative grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
