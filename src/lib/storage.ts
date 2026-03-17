@@ -74,6 +74,19 @@ export interface GroupResponse {
   members: UserInterface[];
   createdAt?: string;
 }
+export interface GroupFormMember {
+  id?: string;
+  name: string;
+}
+export interface GroupFormRequest {
+  name: string;
+  currency: string;
+  members: GroupFormMember[];
+}
+export interface MemberRemovalCheckResponse {
+  canRemove: boolean;
+  message?: string;
+}
 export interface ExpenseResponse {
   id: string;
   groupId?: string;
@@ -137,7 +150,9 @@ export interface EditExpenseInterface {
 // ========== GROUP OPERATIONS ==========
 // Get a single group for add expense page
 export async function getGroup(groupId: string) {
-  return fetch(`/api/groups/${groupId}`).then(r => r.json());
+  return fetch(`/api/groups/${groupId}`, {
+    cache: "no-store",
+  }).then(r => r.json());
 }
 
 export async function createGroup(
@@ -163,6 +178,55 @@ export async function createGroup(
   }
 
   return res.json();
+}
+
+export async function updateGroup(
+  groupId: string,
+  data: GroupFormRequest
+): Promise<GroupResponse> {
+  const res = await fetch(`/api/groups/${groupId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      name: data.name,
+      currency: data.currency,
+      members: data.members,
+    }),
+  });
+
+  const payload = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    throw new Error(payload?.error || "Failed to update group");
+  }
+
+  return payload;
+}
+
+export async function checkGroupMemberRemoval(
+  groupId: string,
+  member: GroupFormMember
+): Promise<MemberRemovalCheckResponse> {
+  const res = await fetch(`/api/groups/${groupId}/members/check-removal`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      memberId: member.id,
+      memberName: member.name,
+    }),
+  });
+
+  const payload = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    throw new Error(payload?.error || "Failed to validate member removal");
+  }
+
+  return payload;
 }
 
 export async function loadGroupDetails(groupId: string) {

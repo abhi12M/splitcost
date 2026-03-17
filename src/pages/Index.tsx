@@ -314,6 +314,7 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
                           </div>
                           {adminMode ? (
                             <ActionMenu
+                              editHref={`/group/${group.id}/edit`}
                               onDelete={() => handleDeleteGroup(group.id)}
                               isDeleting={deletingGroupId === group.id}
                               deleteTitle="Delete group?"

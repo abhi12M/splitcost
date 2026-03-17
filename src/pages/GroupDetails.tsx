@@ -21,6 +21,7 @@ import {
   ArrowDown,
   ArrowUp,
   Share2,
+  Pencil,
   List,
   LayoutDashboard,
   ChevronUp,
@@ -533,9 +534,16 @@ export default function GroupResponsesPage({
           </div>
 
           {/* Right aligned */}
-          <Button variant="outline" size="sm" onClick={() => copyLink("link")}>
-            <Share2 className="w-4 h-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/group/${groupId}/edit`}>
+                <Pencil className="w-4 h-4" />
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => copyLink("link")}>
+              <Share2 className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
 
         {/* MAIN GRID */}
