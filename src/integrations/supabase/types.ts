@@ -282,6 +282,18 @@ export type Database = {
         }
         Returns: GroupResponse
       },
+      cleanup_orphan_users: {
+        Args: {
+          p_user_ids: string[]
+        }
+        Returns: undefined
+      },
+      delete_group_and_cleanup_users: {
+        Args: {
+          p_group_id: string
+        }
+        Returns: undefined
+      },
       add_expense: {
         Args: {
           p_group_id: string

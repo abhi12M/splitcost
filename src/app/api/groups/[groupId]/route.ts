@@ -248,6 +248,17 @@ export async function PUT(
       if (deactivateError) {
         throw deactivateError;
       }
+
+      const { error: cleanupError } = await supabaseAdmin.rpc(
+        "cleanup_orphan_users",
+        {
+          p_user_ids: membersToRemove.map((member) => member.userId),
+        }
+      );
+
+      if (cleanupError) {
+        throw cleanupError;
+      }
     }
 
     if (membersToAdd.length > 0) {
@@ -300,10 +311,12 @@ export async function DELETE(
   _req: Request,
   { params }: { params: { groupId: string } }
 ) {
-  const { error } = await supabaseAdmin
-    .from("groups")
-    .delete()
-    .eq("id", params.groupId);
+  const { error } = await supabaseAdmin.rpc(
+    "delete_group_and_cleanup_users",
+    {
+      p_group_id: params.groupId,
+    }
+  );
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
