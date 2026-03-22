@@ -115,7 +115,7 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
                       <CardTitle className="text-xl">Edit Expense</CardTitle>
                       <CardDescription>Modify the expense details</CardDescription>
                     </div>
-                    <Button
+                    {/* <Button
                       variant="ghost"
                       size="icon"
                       className="text-destructive hover:text-destructive hover:bg-destructive/10"
@@ -127,7 +127,7 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
                       ) : (
                         <Trash2 className="w-5 h-5" />
                       )}
-                    </Button>
+                    </Button> */}
                   </div>
                 </CardHeader>
 
