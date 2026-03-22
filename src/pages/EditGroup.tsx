@@ -595,11 +595,11 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                       <Users className="text-orange-600" />
                     </div>
                     <Badge variant="outline" className="mb-3 w-fit border-orange-200 bg-white/70 text-orange-700">
-                      Balance-aware member management
+                      Manage members with confidence
                     </Badge>
                     <CardTitle className="text-2xl">Edit group</CardTitle>
                     <CardDescription>
-                      Update the group basics, then manage each member with debt-aware actions that avoid accidental breakage.
+                      Update your group details and manage members safely without affecting unsettled balances.
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="grid gap-4 md:grid-cols-2">
@@ -633,7 +633,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                     Group snapshot
                   </CardTitle>
                   <CardDescription>
-                    Quick context before you remove anyone from the group.
+                    A quick overview before you make any member changes.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-3 sm:grid-cols-3">
@@ -650,7 +650,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                     <p className="mt-2 text-2xl font-semibold text-rose-700">{summary.oweCount}</p>
                   </div>
                   <div className="rounded-2xl border bg-amber-50 p-4 sm:col-span-3">
-                    <p className="text-sm text-amber-800">Tracked unsettled amount</p>
+                    <p className="text-sm text-amber-800">Total unsettled amount</p>
                     <p className="mt-2 text-2xl font-semibold text-amber-900">
                       {formatCurrency(unsettledTotal, currency)}
                     </p>
@@ -667,7 +667,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                     Members
                   </CardTitle>
                   <CardDescription>
-                    Tap a member to rename them or remove them safely from the group.
+                    Select a member to rename them or remove them when it is safe to do so.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -704,9 +704,9 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                         <ShieldCheck className="w-4 h-4" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium">Removal stays safe</p>
+                        <p className="text-sm font-medium">Member removal is protected</p>
                         <p className="text-sm text-muted-foreground">
-                          Members with active expense involvement stay disabled here until debts are settled.
+                          Members involved in any expense in this group cannot be removed.
                         </p>
                       </div>
                     </div>
@@ -741,7 +741,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                               ) : null}
                             </div>
                             <p className="mt-1 text-xs text-muted-foreground">
-                              {member.isExisting ? "Tap to rename or remove" : "New member waiting to be saved"}
+                              {member.isExisting ? "Tap to edit or remove" : "New member, ready to save"}
                             </p>
                           </div>
                           <div className="flex min-w-0 items-center gap-3 justify-self-end">
@@ -856,10 +856,10 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                       <p className="font-medium">Remove from group</p>
                       <p className="mt-1 text-sm text-muted-foreground">
                         {removalState.loading
-                          ? "Checking whether this member is still connected to expenses..."
+                          ? "Checking whether this member is linked to any expense..."
                           : removalState.canRemove
-                            ? "This member can be removed now. Their expenses are clear."
-                            : removalState.message || "This member cannot be removed until debts are settled."}
+                            ? "This member can be removed now."
+                            : removalState.message || "This member is involved in an expense in this group and cannot be removed."}
                       </p>
                     </div>
                   </div>
