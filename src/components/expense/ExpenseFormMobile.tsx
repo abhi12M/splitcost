@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react"
-import { ArrowLeft, CalendarIcon, Check, Settings } from "lucide-react"
+import { ArrowLeft, CalendarIcon, Check, Settings, Users } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
@@ -17,10 +17,11 @@ import { CURRENCIES } from "@/constants"
 import Link from "next/link"
 import { Calendar } from "../ui/calendar"
 import SplitScreen from "./SplitScreen"
+import PaidBySheet from "./PaidBySheet"
 import { useKeyboardLayout } from "@/hooks/useKeyboardOffset"
 import { toast } from "@/hooks/use-toast"
 import { ToastAction } from "../ui/toast"
-import { AvatarGroup } from "../ui/UserAvatar"
+import { AvatarGroup, UserAvatar } from "../ui/UserAvatar"
 import { cn } from "@/lib/utils"
 
 interface Props {
@@ -38,11 +39,16 @@ export default function ExpenseFormMobile({
   groupId,
   onSubmit
 }: Props) {
+  const initialPayers = initialData?.payers || [];
+  const hasInitialMultiplePayers = initialPayers.length > 0;
+
   /* ---------------- state ---------------- */
   const [description, setDescription] = useState(initialData?.description || "");
   const [amount, setAmount] = useState(initialData?.amount?.toString() || "");
   const [currency, setCurrency] = useState(initialData?.currency || defaultCurrency);
-  const [paidByUserId, setPaidBy] = useState(initialData?.paidByUserId || "");
+  const [paidByUserId, setPaidBy] = useState(
+    hasInitialMultiplePayers ? "" : (initialData?.paidByUserId || "")
+  );
   const [category, setCategory] = useState<CategoryKey>(initialData?.category || "uncategorized");
   const [subcategory, setSubcategory] = useState<SubcategoryId>(initialData?.subcategory || "general");
   const [splitType, setSplitType] = useState<any>(initialData?.splitType || "equal");
@@ -56,6 +62,22 @@ export default function ExpenseFormMobile({
     initialData?.participants ||
     members.map((m) => ({ userId: m.id, percent: null, amount: null }))
   );
+
+  const [isMultiplePayers, setIsMultiplePayers] = useState(hasInitialMultiplePayers);
+  const [payers, setPayers] = useState<{ userId: string; amount: number | null }[]>(initialPayers);
+  const [showPaidBy, setShowPaidBy] = useState(false);
+
+  const handleSelectSinglePayer = (userId: string) => {
+    setIsMultiplePayers(false);
+    setPaidBy(userId);
+    setPayers([]);
+  };
+
+  const handleConfirmMultiplePayers = (confirmedPayers: { userId: string; amount: number | null }[]) => {
+    setIsMultiplePayers(true);
+    setPaidBy("");
+    setPayers(confirmedPayers);
+  };
 
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const isFirstRender = useRef(true);
@@ -116,18 +138,16 @@ export default function ExpenseFormMobile({
       return;
     };
 
-    let finalParticipants = participants;
-    let finalSplitType = splitType;
-
-    // alert(JSON.stringify(finalParticipants))
-    // return;
     onSubmit({
       description,
       amount: parseFloat(amount),
       currency,
-      paidByUserId,
-      participants: finalParticipants,
-      splitType: finalSplitType,
+      paidByUserId: isMultiplePayers ? null : paidByUserId,
+      payers: isMultiplePayers
+        ? payers.filter(p => p.amount && p.amount > 0).map(p => ({ userId: p.userId, amount: p.amount! }))
+        : undefined,
+      participants,
+      splitType,
       category,
       subcategory,
       date: formatDateForDB(date),
@@ -142,7 +162,7 @@ export default function ExpenseFormMobile({
   }>({});
 
   const validate = (from?: string) => {
-    const result = ExpenseSchema.safeParse({ description, paidByUserId, amount });
+    const result = ExpenseSchema.safeParse({ description, paidByUserId, amount, isMultiplePayers });
 
     // ---------- Zod validation ----------
     if (!result.success) {
@@ -380,19 +400,21 @@ export default function ExpenseFormMobile({
 
           <div className="flex justify-center gap-2 items-center">
             <span className="text-sm text-muted-foreground">Paid by</span>
-            <SingleSelect
-              items={members.map((m) => ({
-                id: m?.id,
-                label: m?.name,
-                showAvatar: true // left icon/avatar
-              }))}
-              value={{ itemId: paidByUserId }}
-              onSelect={(_, itemId) => setPaidBy(itemId)}
-              placeholder="select member"
-              inputPlaceholder="Search or select member"
-              fullscreenOnMobile
-              ariaInvalid={!!errors.paidByUserId}
-            />
+            <button
+              type="button"
+              onClick={() => setShowPaidBy(true)}
+              aria-invalid={!!errors.paidByUserId}
+              className={cn(
+                "px-3 py-2.5 text-sm border border-border border-b-2 rounded-[5px] font-medium",
+                "aria-[invalid=true]:border-red-500 aria-[invalid=true]:border-b-red-600"
+              )}
+            >
+              {isMultiplePayers
+                ? `${payers.filter(p => p.amount && p.amount > 0).length} people`
+                : paidByUserId
+                  ? members.find((m) => m.id === paidByUserId)?.name || "select member"
+                  : "select member"}
+            </button>
           </div>
 
           <button
@@ -459,6 +481,19 @@ export default function ExpenseFormMobile({
           }}
         />
       }
+
+      <PaidBySheet
+        open={showPaidBy}
+        onClose={() => setShowPaidBy(false)}
+        members={members}
+        currency={currency}
+        expenseAmount={Number(amount || 0)}
+        paidByUserId={paidByUserId}
+        isMultiplePayers={isMultiplePayers}
+        payers={payers}
+        onSelectSingle={handleSelectSinglePayer}
+        onConfirmMultiple={handleConfirmMultiplePayers}
+      />
     </>
   )
 }

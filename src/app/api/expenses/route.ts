@@ -10,6 +10,7 @@ export async function POST(req: Request) {
     amount,
     currency,
     paidByUserId,
+    payers,
     splitType,
     category,
     subcategory,
@@ -18,7 +19,8 @@ export async function POST(req: Request) {
   } = body;
 
   // 🔐 Basic abuse protection
-  if (!groupId || !description || !amount || !paidByUserId) {
+  const hasPayer = paidByUserId || (payers && payers.length > 2);
+  if (!groupId || !description || !amount || !hasPayer) {
     return NextResponse.json(
       { error: "Invalid payload" },
       { status: 400 }
@@ -37,12 +39,13 @@ export async function POST(req: Request) {
     p_description: description,
     p_amount: amount,
     p_currency: currency,
-    p_paid_by_user_id: paidByUserId,
+    p_paid_by_user_id: paidByUserId || null,
     p_split_type: splitType,
     p_category: category,
     p_subcategory: subcategory,
     p_date: date,
     p_participants: participants,
+    p_payers: payers || null,
   });
 
   if (error) {

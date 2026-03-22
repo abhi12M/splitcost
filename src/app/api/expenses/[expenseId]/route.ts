@@ -14,6 +14,7 @@ export async function PUT(
     amount,
     currency,
     paidByUserId,
+    payers,
     splitType,
     category,
     subcategory,
@@ -44,7 +45,7 @@ export async function PUT(
       p_description: description,
       p_amount: amount,
       p_currency: currency,
-      p_paid_by_user_id: paidByUserId,
+      p_paid_by_user_id: paidByUserId || null,
       p_split_type: splitType,
       p_category: category,
       p_subcategory: subcategory,
@@ -54,6 +55,7 @@ export async function PUT(
         amount: p.amount,
         percent: p.percent ?? null,
       })),
+      p_payers: payers || null,
     }
   );
 
@@ -163,6 +165,19 @@ export async function GET(
     return NextResponse.json(null, { status: 404 });
   }
 
+  // Fetch payers from expense_payers table
+  const { data: payersData } = await supabaseAdmin
+    .from("expense_payers")
+    .select(`
+      amount,
+      user_id,
+      users (
+        id,
+        name
+      )
+    `)
+    .eq("expense_id", expenseId);
+
   return NextResponse.json({
     group: {
       id: data.groups.id,
@@ -179,6 +194,10 @@ export async function GET(
       description: data.description,
       currency: data.currency,
       paidByUserId: data.paid_by_user_id,
+      payers: payersData?.map((p: any) => ({
+        userId: p.user_id,
+        amount: Number(p.amount),
+      })) || [],
       splitType: data.split_type,
       category: data.category,
       subcategory: data.subcategory,

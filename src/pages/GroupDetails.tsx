@@ -90,6 +90,28 @@ function calculateShare(
   return Number.isNaN(amount) ? 0 : amount;
 }
 
+function getExpensePayers(
+  expense: GroupDashboardInterface["expenses"][number]
+): UserInterface[] {
+  if (expense.payers?.length) {
+    return expense.payers
+      .map((payer) => payer.user)
+      .filter((payer): payer is UserInterface => !!payer);
+  }
+
+  return expense.paidBy ? [expense.paidBy] : [];
+}
+
+function getExpensePaidByLabel(
+  expense: GroupDashboardInterface["expenses"][number]
+) {
+  const payerNames = getExpensePayers(expense).map((payer) => payer.name);
+
+  if (payerNames.length === 0) return "Unknown payer";
+  if (payerNames.length === 1) return payerNames[0];
+  return `${payerNames.length} people`;
+}
+
 function calculateBalances(
   expenses: GroupDashboardInterface["expenses"],
   members: UserInterface[]
@@ -101,12 +123,6 @@ function calculateBalances(
   });
 
   expenses.forEach((expense) => {
-    const payerId = expense.paidBy.id;
-
-    if (balances[payerId] === undefined) {
-      balances[payerId] = 0;
-    }
-
     expense.participants.forEach((p) => {
       const pId = p.user.id;
       if (balances[pId] === undefined) {
@@ -114,6 +130,27 @@ function calculateBalances(
       }
       balances[pId] -= calculateShare(expense, pId);
     });
+
+    if (expense.payers?.length) {
+      expense.payers.forEach((payer) => {
+        const payerId = payer.user?.id;
+        if (!payerId) return;
+
+        if (balances[payerId] === undefined) {
+          balances[payerId] = 0;
+        }
+
+        balances[payerId] += Number(payer.amount) || 0;
+      });
+      return;
+    }
+
+    const payerId = expense.paidBy?.id;
+    if (!payerId) return;
+
+    if (balances[payerId] === undefined) {
+      balances[payerId] = 0;
+    }
 
     balances[payerId] += expense.amount;
   });
@@ -341,7 +378,7 @@ export default function GroupResponsesPage({
       list = list.filter(
         (e) =>
           e.description.toLowerCase().includes(q) ||
-          e.paidBy.name.toLowerCase().includes(q) ||
+          getExpensePaidByLabel(e).toLowerCase().includes(q) ||
           e.category.toLowerCase().includes(q) ||
           e.subcategory.toLowerCase().includes(q) ||
           e.amount.toString().includes(q) ||
@@ -378,7 +415,7 @@ export default function GroupResponsesPage({
         key = e.date
           ? e.date
           : String(e.date);
-      if (groupBy === "paidBy") key = e.paidBy.name;
+      if (groupBy === "paidBy") key = getExpensePaidByLabel(e);
       if (groupBy === "category") key = e.category;
       if (groupBy === "splitType") key = e.splitType || "equal";
 
@@ -835,7 +872,7 @@ export default function GroupResponsesPage({
 
                                       {/* PAID BY */}
                                       <div className="text-xs md:text-base text-muted-foreground mt-0.5 flex items-center gap-1">
-                                        <SmartTooltip text={expense.paidBy.name} />
+                                        <SmartTooltip text={getExpensePaidByLabel(expense)} />
                                         <span className="shrink-0">paid</span>
                                       </div>
 

@@ -7,8 +7,17 @@ const trimmedNonEmpty = (message: string): ZodString =>
 
 export const ExpenseSchema = z.object({
     description: trimmedNonEmpty("Enter a description."),
-    paidByUserId: trimmedNonEmpty("Select who paid."),
+    paidByUserId: z.string().optional(),
+    isMultiplePayers: z.boolean().optional(),
     amount: z.string().nonempty("Enter an amount.").transform(Number),
-});
+}).refine(
+    (data) => {
+        // If multiple payers mode, paidByUserId is not required
+        if (data.isMultiplePayers) return true;
+        // Otherwise, paidByUserId must be a non-empty string
+        return !!data.paidByUserId?.trim();
+    },
+    { message: "Select who paid.", path: ["paidByUserId"] }
+);
 
 export type ExpenseFormValues = z.infer<typeof ExpenseSchema>;

@@ -15,6 +15,7 @@ import { Textarea } from "../ui/textarea";
 import { SingleSelect } from "../ui/single-select";
 import { CURRENCIES } from "@/constants";
 import { InfoLabel } from "../ui/InfoLabel";
+import PaidBySheet from "./PaidBySheet";
 
 interface ExpenseFormProps {
   members: UserInterface[];
@@ -24,6 +25,11 @@ interface ExpenseFormProps {
   submitLabel: string;
 }
 
+type EditablePayer = {
+  userId: string;
+  amount: number | null;
+};
+
 export function ExpenseForm({
   members,
   defaultCurrency = "USD",
@@ -31,10 +37,15 @@ export function ExpenseForm({
   onSubmit,
   submitLabel,
 }: ExpenseFormProps) {
+  const initialPayers = initialData?.payers || [];
+  const hasInitialMultiplePayers = initialPayers.length > 0;
+
   const [description, setDescription] = useState(initialData?.description || "");
   const [amount, setAmount] = useState(initialData?.amount?.toString() || "");
   const [currency, setCurrency] = useState(initialData?.currency || defaultCurrency);
-  const [paidByUserId, setPaidBy] = useState(initialData?.paidByUserId || "");
+  const [paidByUserId, setPaidBy] = useState(
+    hasInitialMultiplePayers ? "" : (initialData?.paidByUserId || "")
+  );
   const [category, setCategory] = useState<CategoryKey | "">(initialData?.category || "");
   const [subcategory, setSubcategory] = useState<SubcategoryId>(initialData?.subcategory || "");
   const [splitType, setSplitType] = useState<any>(initialData?.splitType || "equal");
@@ -45,6 +56,9 @@ export function ExpenseForm({
   const [date, setDate] = useState<Date>(
     initialData?.date ? new Date(initialData.date) : new Date()
   );
+  const [isMultiplePayers, setIsMultiplePayers] = useState(hasInitialMultiplePayers);
+  const [payers, setPayers] = useState<EditablePayer[]>(initialPayers);
+  const [showPaidBy, setShowPaidBy] = useState(false);
   const totalAmount = parseFloat(amount) || 0;
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const isFirstRender = useRef(true);
@@ -147,6 +161,20 @@ export function ExpenseForm({
     setSubcategory(subId);
   };
 
+  const handleSelectSinglePayer = (userId: string) => {
+    setIsMultiplePayers(false);
+    setPaidBy(userId);
+    setPayers([]);
+  };
+
+  const handleConfirmMultiplePayers = (
+    confirmedPayers: EditablePayer[]
+  ) => {
+    setIsMultiplePayers(true);
+    setPaidBy("");
+    setPayers(confirmedPayers);
+  };
+
   // Get selected participant user IDs
   const selectedUserIds = useMemo(() => participants.map(p => p.userId), [participants]);
 
@@ -214,7 +242,7 @@ export function ExpenseForm({
 
   useEffect(() => {
     if (hasSubmitted) validate();
-  }, [description, paidByUserId, amount, selectedUserIds, category]);
+  }, [description, paidByUserId, amount, selectedUserIds, category, isMultiplePayers, payers]);
 
   // Filter participants to only those with valid amounts
   const validParticipants = participants.filter(
@@ -231,7 +259,12 @@ export function ExpenseForm({
       description,
       amount: parseFloat(amount),
       currency,
-      paidByUserId,
+      paidByUserId: isMultiplePayers ? null : paidByUserId,
+      payers: isMultiplePayers
+        ? payers
+          .filter((payer) => payer.amount && payer.amount > 0)
+          .map((payer) => ({ userId: payer.userId, amount: payer.amount! }))
+        : undefined,
       participants: validParticipants,
       splitType,
       category: category || "uncategorized",
@@ -248,7 +281,14 @@ export function ExpenseForm({
   }>({});
 
   const validate = () => {
-    const result = ExpenseSchema.safeParse({ description, paidByUserId, amount, participants: selectedUserIds, category });
+    const result = ExpenseSchema.safeParse({
+      description,
+      paidByUserId,
+      amount,
+      participants: selectedUserIds,
+      category,
+      isMultiplePayers,
+    });
     if (!result.success) {
       const e = result.error.format();
       setErrors({
@@ -389,17 +429,22 @@ export function ExpenseForm({
           {/* Paid By */}
           <div className="space-y-2">
             <Label required={true}>Paid by</Label>
-            <SingleSelect
-              items={members.map((m) => ({
-                id: m?.id,
-                label: m?.name,
-                showAvatar: true // left icon/avatar
-              }))}
-              value={{ itemId: paidByUserId }}
-              onSelect={(_, itemId) => setPaidBy(itemId)}
-              placeholder="Select member..."
-              inputPlaceholder="Search members..."
-            />
+            <button
+              type="button"
+              onClick={() => setShowPaidBy(true)}
+              aria-invalid={!!errors.paidByUserId}
+              className={cn(
+                "flex h-11 w-full items-center rounded-md border border-input bg-background px-3 text-sm text-left",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                "aria-[invalid=true]:border-destructive"
+              )}
+            >
+              {isMultiplePayers
+                ? `${payers.filter((payer) => payer.amount && payer.amount > 0).length} people`
+                : paidByUserId
+                  ? members.find((m) => m.id === paidByUserId)?.name || "Select member..."
+                  : "Select member..."}
+            </button>
             {errors.paidByUserId && (
               <div className="text-xs text-destructive">{errors.paidByUserId}</div>
             )}
@@ -605,6 +650,19 @@ export function ExpenseForm({
           {submitLabel}
         </Button>
       </div>
+
+      <PaidBySheet
+        open={showPaidBy}
+        onClose={() => setShowPaidBy(false)}
+        members={members}
+        currency={currency}
+        expenseAmount={Number(amount || 0)}
+        paidByUserId={paidByUserId}
+        isMultiplePayers={isMultiplePayers}
+        payers={payers}
+        onSelectSingle={handleSelectSinglePayer}
+        onConfirmMultiple={handleConfirmMultiplePayers}
+      />
     </form>
   );
 }

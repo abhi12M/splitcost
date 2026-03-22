@@ -67,6 +67,14 @@ export interface ExpenseParticipantsResponse {
   amount: number | null;
   percent: number | null;//value when splittype percent
 }
+export interface ExpensePayerRequest {
+  userId: string;
+  amount: number;
+}
+export interface ExpensePayerResponse {
+  user: UserInterface;
+  amount: number;
+}
 export interface GroupResponse {
   id: string;
   name: string;
@@ -93,7 +101,8 @@ export interface ExpenseResponse {
   amount: number;
   description: string;
   currency: string;
-  paidBy: UserInterface;
+  paidBy: UserInterface | null;
+  payers?: ExpensePayerResponse[];
   splitType: SplitType;
   category: CategoryKey;
   subcategory: SubcategoryId;
@@ -106,7 +115,8 @@ export interface ExpenseRequest {
   amount: number;
   description: string;
   currency: string;
-  paidByUserId: string;
+  paidByUserId: string | null;
+  payers?: ExpensePayerRequest[];
   splitType: SplitType;
   category: CategoryKey;
   subcategory: SubcategoryId;
@@ -118,7 +128,8 @@ export interface ExpenseFormInterface {
   amount: number;
   description: string;
   currency: string;
-  paidByUserId: string;
+  paidByUserId: string | null;
+  payers?: ExpensePayerRequest[];
   splitType: SplitType;
   category: CategoryKey;
   subcategory: SubcategoryId;

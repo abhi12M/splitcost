@@ -74,6 +74,16 @@ function calculateShare(
   return Number.isNaN(amount) ? 0 : amount;
 }
 
+function getExpensePayers(
+  expense: GroupDashboardInterface["expenses"][number]
+) {
+  if (expense.payers?.length) {
+    return expense.payers.filter((payer) => !!payer.user);
+  }
+
+  return expense.paidBy ? [{ user: expense.paidBy, amount: expense.amount }] : [];
+}
+
 function calculateBalances(
   expenses: GroupDashboardInterface["expenses"],
   members: GroupDashboardInterface["group"]["members"]
@@ -85,8 +95,10 @@ function calculateBalances(
   });
 
   expenses.forEach((expense) => {
-    const payerId = expense.paidBy.id;
-    balances[payerId] = (balances[payerId] ?? 0) + expense.amount;
+    getExpensePayers(expense).forEach((payer) => {
+      const payerId = payer.user.id;
+      balances[payerId] = (balances[payerId] ?? 0) + (Number(payer.amount) || 0);
+    });
 
     expense.participants.forEach((participant) => {
       const participantId = participant.user.id;

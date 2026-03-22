@@ -41,6 +41,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      expense_payers: {
+        Row: {
+          amount: number
+          expense_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          expense_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          expense_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_payers_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expense_payers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expense_participants: {
         Row: {
           expense_id: string
@@ -91,7 +127,7 @@ export type Database = {
           description: string
           group_id: string
           id: string
-          paid_by_user_id: string
+          paid_by_user_id: string | null
           split_type: Database["public"]["Enums"]["split_type"]
           subcategory: string
           updated_at: string
@@ -106,7 +142,7 @@ export type Database = {
           description: string
           group_id: string
           id?: string
-          paid_by_user_id: string
+          paid_by_user_id?: string | null
           split_type: Database["public"]["Enums"]["split_type"]
           subcategory: string
           updated_at?: string
@@ -121,7 +157,7 @@ export type Database = {
           description?: string
           group_id?: string
           id?: string
-          paid_by_user_id?: string
+          paid_by_user_id?: string | null
           split_type?: Database["public"]["Enums"]["split_type"]
           subcategory?: string
           updated_at?: string
@@ -300,7 +336,7 @@ export type Database = {
           p_description: string
           p_amount: number
           p_currency: string
-          p_paid_by_user_id: string
+          p_paid_by_user_id?: string | null
           p_split_type: string
           p_category: string
           p_subcategory: string
@@ -310,16 +346,21 @@ export type Database = {
             amount?: number | null
             percent?: number | null
           }[]
+          p_payers?: {
+            userId: string
+            amount: number
+          }[] | null
         }
         Returns: ExpenseResponse
       },
       edit_expense: {
         Args: {
+          p_expense_id: string
           p_group_id: string
           p_description: string
           p_amount: number
           p_currency: string
-          p_paid_by_user_id: string
+          p_paid_by_user_id?: string | null
           p_split_type: string
           p_category: string
           p_subcategory: string
@@ -329,6 +370,10 @@ export type Database = {
             amount?: number | null
             percent?: number | null
           }[]
+          p_payers?: {
+            userId: string
+            amount: number
+          }[] | null
         }
         Returns: ExpenseResponse
       },
