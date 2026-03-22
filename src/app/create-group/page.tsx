@@ -5,7 +5,7 @@ import CreateGroupPage from "@/pages/AddGroup";
 
 export const metadata: Metadata = buildMetadata({
   title: "Create group",
-  description: "Start a new expense group and invite members with a shareable link.",
+  description: "Start a new expense group, invite members with a shareable link, and track shared bills with flexible splits and multiple payer support.",
   path: "/create-group",
 });
 

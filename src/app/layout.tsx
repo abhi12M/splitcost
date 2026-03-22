@@ -112,6 +112,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       description: SITE_DESCRIPTION,
       featureList: [
         "Create shared expense groups",
+        "Edit group name, currency, and members",
+        "Track expenses with one payer or multiple payers",
         "Split bills equally, by percentage, or with custom amounts",
         "Track balances for trips, roommates, and group events",
         "Share group links without sign-up",

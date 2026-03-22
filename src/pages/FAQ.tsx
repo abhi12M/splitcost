@@ -10,7 +10,7 @@ import { APP_NAME } from "@/lib/constants";
 const faqs = [
   {
     question: "What is Splitcost and how does it help split expenses?",
-    answer: `${APP_NAME} is a free expense splitting app for friends, roommates, couples, and travel groups. Create a shared group, add bills, choose who paid, and ${APP_NAME} automatically calculates balances and the simplest way to settle up.`,
+    answer: `${APP_NAME} is a free expense splitting app for friends, roommates, couples, and travel groups. Create a shared group, add bills, choose who paid, including multiple payers for the same expense, and ${APP_NAME} automatically calculates balances and the simplest way to settle up.`,
   },
   {
     question: "Do I need to create an account to use Splitcost?",
@@ -18,15 +18,15 @@ const faqs = [
   },
   {
     question: "How does the expense split calculator work?",
-    answer: `${APP_NAME} lets you choose who paid and who joined each expense. You can split the amount equally, by percentage, or with custom shares, and the app updates each person's balance automatically.`,
+    answer: `${APP_NAME} lets you choose who paid and who joined each expense. You can use a single payer or multiple payers, then split the amount equally, by percentage, or with custom shares, and the app updates each person's balance automatically.`,
+  },
+  {
+    question: "Can multiple people pay for the same expense?",
+    answer: `Yes. ${APP_NAME} supports multiple payers on one expense, so you can record shared upfront payments accurately and keep balances correct without creating duplicate entries.`,
   },
   {
     question: "Can I use Splitcost for trips, vacations, or roommate bills?",
     answer: `Yes. ${APP_NAME} works well for travel expenses, apartment costs, household bills, event planning, and any other shared spending where a group needs a simple expense tracker.`,
-  },
-  {
-    question: "Can I track expenses in different currencies?",
-    answer: "Yes. Each group has a default currency, and you can keep expenses organized for travel or international spending. This is especially useful when a trip includes payments in more than one currency.",
   },
   {
     question: "How do I share a group with friends or roommates?",
@@ -34,7 +34,11 @@ const faqs = [
   },
   {
     question: "Can I edit or delete an expense later?",
-    answer: "Yes. Open an expense to update the amount, participants, split details, or payer. You can also delete expenses, and balances recalculate immediately.",
+    answer: "Yes. Open an expense to update the amount, participants, split details, single payer or multiple payer details, or other information. You can also delete expenses, and balances recalculate immediately.",
+  },
+  {
+    question: "Can I edit a group after creating it?",
+    answer: `Yes. You can edit a group's name, currency, and members after creation, which is useful when plans change or new people join the expense tracker.`,
   },
   {
     question: "How does Splitcost calculate settlements?",
@@ -78,8 +82,8 @@ export default function FAQPage() {
           </h1>
           <p className="text-lg text-muted-foreground">
             Answers about using {APP_NAME} to split bills, track shared
-            expenses, and settle balances with friends, roommates, and travel
-            groups.
+            expenses, manage group updates, use multiple payers, and settle
+            balances with friends, roommates, and travel groups.
           </p>
         </div>
 

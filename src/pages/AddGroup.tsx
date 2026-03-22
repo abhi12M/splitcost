@@ -48,7 +48,10 @@ export default function CreateGroupPage() {
               <Users className="text-primary" />
             </div>
             <CardTitle>Create a Group</CardTitle>
-            <CardDescription>Start tracking shared expenses with friends.</CardDescription>
+            <CardDescription>
+              Start tracking shared expenses with flexible splits, multiple payer
+              support, and a shareable group link.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <GroupForm

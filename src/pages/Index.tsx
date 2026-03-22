@@ -54,13 +54,19 @@ const features = [
     icon: ReceiptIcon,
     title: "Flexible bill splitting",
     description:
-      "Split expenses equally, by percentage, or with custom amounts for real-world group spending.",
+      "Split expenses equally, by percentage, or with custom amounts, including expenses paid by one person or shared across multiple payers.",
   },
   {
     icon: PlaneIcon,
     title: "Built for trips and roommates",
     description:
       "Use one expense tracker for vacations, apartment bills, dinners, events, and shared shopping.",
+  },
+  {
+    icon: Users,
+    title: "Easy group updates",
+    description:
+      "Edit group names, members, and currency whenever plans change, without rebuilding the whole expense tracker.",
   },
 ];
 
@@ -211,9 +217,10 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
                 shared bills, balances, and settlements in one place.
               </p>
               <p className="text-base text-muted-foreground mb-8 text-balance max-w-2xl mx-auto">
-                Create a group, add expenses, choose who paid, and instantly see
-                who owes whom. No sign-up required, no spreadsheet cleanup, and
-                no confusion when it is time to settle up.
+                Create a group, add expenses, choose one payer or split the payment
+                across multiple people, and instantly see who owes whom. No sign-up
+                required, no spreadsheet cleanup, and no confusion when it is time
+                to settle up.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -382,8 +389,9 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
               </h2>
               <p className="text-muted-foreground">
                 Built for the everyday situations where a group expense tracker
-                saves time: travel, rent, groceries, nights out, and shared
-                events.
+                saves time: travel, rent, groceries, nights out, shared
+                events, and plans where group members need to update people or
+                payment details later.
               </p>
             </div>
 
@@ -426,7 +434,8 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
               <p className="text-muted-foreground">
                 Whether you need a roommate expense tracker, a trip expense
                 tracker, or a simple way to divide everyday bills with friends,
-                {` ${APP_NAME} `} keeps balances clear and settlements simple.
+                {` ${APP_NAME} `} keeps balances clear with flexible splits,
+                multiple paid-by support, and simple settlements.
               </p>
             </div>
 
@@ -464,8 +473,8 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
                 "Create a group and add the people involved.",
-                "Log each expense with the payer and participants.",
-                "Review balances and settle up with fewer payments.",
+                "Log each expense with one payer or multiple payers plus the right participants.",
+                "Edit the group or expense details any time, then review balances and settle up with fewer payments.",
               ].map((step, index) => (
                 <Card key={step} className="h-full">
                   <CardContent className="pt-6 text-center">
