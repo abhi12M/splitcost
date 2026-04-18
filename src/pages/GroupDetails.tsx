@@ -25,6 +25,8 @@ import {
   List,
   LayoutDashboard,
   ChevronUp,
+  Download,
+  FileSpreadsheet,
 } from "lucide-react";
 
 import { Layout } from "@/components/layout/Layout";
@@ -54,6 +56,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { ActionMenu } from "@/components/ui/action-menu";
 import { SmartTooltip } from "@/components/ui/smartTooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 /* ======================================================
    CONSTANTS – MOVE TO CONSTANTS FILE LATER
@@ -219,6 +227,162 @@ function calculateSettlements(
 
 function getGroupTotal(expenses: GroupDashboardInterface["expenses"]) {
   return expenses.reduce((sum, e) => sum + e.amount, 0);
+}
+
+function getLocalExportDate() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function formatExportAmount(amount: number) {
+  return amount.toFixed(2);
+}
+
+function escapeCsvValue(value: string) {
+  if (/[",\n]/.test(value)) {
+    return `"${value.replace(/"/g, "\"\"")}"`;
+  }
+
+  return value;
+}
+
+function downloadBlob(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function buildExpenseMemberAmounts(
+  expense: GroupDashboardInterface["expenses"][number],
+  members: UserInterface[]
+) {
+  const values = new Map<string, number>();
+
+  members.forEach((member) => {
+    values.set(member.id, 0);
+  });
+
+  expense.participants.forEach((participant) => {
+    const share = Number(participant.amount) || 0;
+    values.set(
+      participant.user.id,
+      (values.get(participant.user.id) || 0) - share
+    );
+  });
+
+  if (expense.payers?.length) {
+    expense.payers.forEach((payer) => {
+      const payerId = payer.user?.id;
+      if (!payerId) return;
+
+      values.set(payerId, (values.get(payerId) || 0) + (Number(payer.amount) || 0));
+    });
+  } else if (expense.paidBy?.id) {
+    values.set(
+      expense.paidBy.id,
+      (values.get(expense.paidBy.id) || 0) + expense.amount
+    );
+  }
+
+  return values;
+}
+
+function buildCsvContent(
+  group: GroupDashboardInterface["group"],
+  expenses: GroupDashboardInterface["expenses"]
+) {
+  const headers = [
+    "Date",
+    "Description",
+    "Category",
+    "Cost",
+    "Currency",
+    ...group.members.map((member) => member.name),
+  ];
+  const memberAmountGuideRow = [
+    "",
+    "",
+    "",
+    "",
+    "",
+    ...group.members.map(() => "Net amount (+ gets back, - owes)"),
+  ];
+
+  const currencyBalances = new Map<string, Map<string, number>>();
+  const lines: string[] = [
+    headers.map(escapeCsvValue).join(","),
+    memberAmountGuideRow.map((value) => escapeCsvValue(String(value))).join(","),
+  ];
+
+  expenses.forEach((expense) => {
+    const memberAmounts = buildExpenseMemberAmounts(expense, group.members);
+    const balanceForCurrency =
+      currencyBalances.get(expense.currency) ||
+      new Map(group.members.map((member) => [member.id, 0]));
+
+    group.members.forEach((member) => {
+      balanceForCurrency.set(
+        member.id,
+        (balanceForCurrency.get(member.id) || 0) + (memberAmounts.get(member.id) || 0)
+      );
+    });
+
+    currencyBalances.set(expense.currency, balanceForCurrency);
+
+    const row = [
+      expense.date,
+      expense.description,
+      toTitleCase(expense.category),
+      formatExportAmount(expense.amount),
+      expense.currency,
+      ...group.members.map((member) =>
+        formatExportAmount(memberAmounts.get(member.id) || 0)
+      ),
+    ];
+
+    lines.push(row.map((value) => escapeCsvValue(String(value))).join(","));
+  });
+
+  if (currencyBalances.size > 0) {
+    lines.push("");
+  }
+
+  const exportDate = getLocalExportDate();
+
+  Array.from(currencyBalances.entries()).forEach(([currency, balances]) => {
+    const row = [
+      exportDate,
+      "Total balance",
+      "",
+      "",
+      currency,
+      ...group.members.map((member) =>
+        formatExportAmount(balances.get(member.id) || 0)
+      ),
+    ];
+
+    lines.push(row.map((value) => escapeCsvValue(String(value))).join(","));
+  });
+
+  return lines.join("\n");
+}
+
+function buildExportFileBaseName(groupName: string) {
+  const safeGroupName = groupName
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "group";
+
+  return `${safeGroupName}-${getLocalExportDate()}`;
 }
 
 function GroupResponsesSkeleton() {
@@ -515,6 +679,19 @@ export default function GroupResponsesPage({
       `.trim();
   };
 
+  const handleDownloadCsv = () => {
+    const csvContent = buildCsvContent(group, expenses);
+    const blob = new Blob([csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
+
+    downloadBlob(blob, `${buildExportFileBaseName(group.name)}.csv`);
+    toast({
+      title: "CSV downloaded",
+      description: "The CSV includes a helper row explaining the member amount columns.",
+    });
+  };
+
   const handleSettle = async (
     setlementData: ReturnType<typeof calculateSettlements>[number],
     index: number
@@ -662,6 +839,30 @@ export default function GroupResponsesPage({
 
                 {/* RIGHT */}
                 <div className="flex items-center gap-2 shrink-0">
+                  <DropdownMenu modal={false}>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" aria-label="Open export options">
+                        <Download className="w-4 h-4" />
+                        <span className="hidden sm:inline">Export</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48 rounded-xl p-1.5">
+                      <DropdownMenuItem
+                        onSelect={handleDownloadCsv}
+                        className="rounded-lg cursor-pointer gap-2 py-2"
+                      >
+                        <FileSpreadsheet className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm">Download CSV</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        disabled
+                        className="rounded-lg gap-2 py-2 text-xs text-muted-foreground opacity-100"
+                      >
+                        Member columns show who should receive or pay
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
                   {/* View Toggle */}
                   <div className="flex items-center rounded-lg border bg-muted p-0.5">
                     <button
