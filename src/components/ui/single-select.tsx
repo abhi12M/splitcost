@@ -161,7 +161,10 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
       {/* ================= FULLSCREEN MOBILE ================= */}
       {isFullscreenMobile && open && !disabled && (
         createPortal(
-          <div className="fixed inset-0 z-[60] bg-background !mt-0">
+          <div
+            className="fixed inset-0 z-[60] bg-background !mt-0"
+            data-allow-overlay-scroll="true"
+          >
             <Command className="h-full flex flex-col touch-none overscroll-none">
 
               {/* Header with search */}
@@ -195,7 +198,10 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
 
               </div>
 
-              <CommandList className="flex-1 overflow-y-auto">
+              <CommandList
+                className="flex-1 overflow-y-auto"
+                data-allow-overlay-scroll="true"
+              >
                 <CommandEmpty>No item found.</CommandEmpty>
 
                 {groups?.map((group) => (
