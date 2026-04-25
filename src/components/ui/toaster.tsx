@@ -1,4 +1,5 @@
 import { useToast } from "@/hooks/use-toast";
+import { useBackButtonClose } from "@/hooks/useBackButtonClose";
 import { Toast, ToastClose, ToastDescription, ToastProvider, ToastTitle, ToastViewport } from "@/components/ui/toast";
 const positionClasses = {
   "top-right": "fixed top-4 right-4",
@@ -9,7 +10,13 @@ const positionClasses = {
 }
 
 export function Toaster() {
-  const { toasts } = useToast();
+  const { toasts, dismiss } = useToast();
+  const openToast = toasts.find((toast) => toast.open);
+
+  useBackButtonClose(Boolean(openToast), () => {
+    if (openToast) dismiss(openToast.id);
+  });
+
   const grouped = toasts.reduce((acc, t) => {
     const pos = t.position ?? "top-right"
     acc[pos] ??= []

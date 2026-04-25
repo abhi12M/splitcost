@@ -19,6 +19,7 @@ import { Calendar } from "../ui/calendar"
 import SplitScreen from "./SplitScreen"
 import PaidBySheet from "./PaidBySheet"
 import { useKeyboardLayout } from "@/hooks/useKeyboardOffset"
+import { useBackButtonClose } from "@/hooks/useBackButtonClose"
 import { toast } from "@/hooks/use-toast"
 import { ToastAction } from "../ui/toast"
 import { AvatarGroup, UserAvatar } from "../ui/UserAvatar"
@@ -53,6 +54,7 @@ export default function ExpenseFormMobile({
   const [subcategory, setSubcategory] = useState<SubcategoryId>(initialData?.subcategory || "general");
   const [splitType, setSplitType] = useState<any>(initialData?.splitType || "equal");
   const [showSplit, setShowSplit] = useState(false)
+  const [showCalendar, setShowCalendar] = useState(false)
   const [date, setDate] = useState<Date>(
     initialData?.date ? new Date(initialData.date) : new Date()
   );
@@ -66,6 +68,9 @@ export default function ExpenseFormMobile({
   const [isMultiplePayers, setIsMultiplePayers] = useState(hasInitialMultiplePayers);
   const [payers, setPayers] = useState<{ userId: string; amount: number | null }[]>(initialPayers);
   const [showPaidBy, setShowPaidBy] = useState(false);
+  useBackButtonClose(showPaidBy, () => setShowPaidBy(false));
+  useBackButtonClose(showSplit, () => setShowSplit(false));
+  useBackButtonClose(showCalendar, () => setShowCalendar(false));
 
   const handleSelectSinglePayer = (userId: string) => {
     setIsMultiplePayers(false);
@@ -105,7 +110,7 @@ export default function ExpenseFormMobile({
 
   useEffect(() => {
     if (hasSubmitted) validate();
-  }, [description, paidByUserId, amount]);
+  }, [description, paidByUserId, amount, isMultiplePayers]);
 
   useEffect(() => {
     calculateParticipants();
@@ -155,14 +160,16 @@ export default function ExpenseFormMobile({
   };
 
   const [errors, setErrors] = useState<{
-    paidByUserId?: string;
     description?: string;
     amount?: string;
+    paidByUserId?: string;
     split?: string;
   }>({});
 
   const validate = (from?: string) => {
     const result = ExpenseSchema.safeParse({ description, paidByUserId, amount, isMultiplePayers });
+    const paidByError =
+      !isMultiplePayers && !paidByUserId?.trim() ? "Select who paid." : "";
 
     // ---------- Zod validation ----------
     if (!result.success) {
@@ -170,8 +177,22 @@ export default function ExpenseFormMobile({
 
       const newErrors = {
         description: e.description?._errors?.[0] ?? "",
-        paidByUserId: e.paidByUserId?._errors?.[0] ?? "",
         amount: e.amount?._errors?.[0] ?? "",
+        paidByUserId: e.paidByUserId?._errors?.[0] ?? paidByError,
+        split: "",
+      };
+
+      setHasSubmitted(true);
+      setErrors(newErrors);
+
+      return { valid: false, errors: newErrors };
+    }
+
+    if (paidByError) {
+      const newErrors = {
+        description: "",
+        amount: "",
+        paidByUserId: paidByError,
         split: "",
       };
 
@@ -183,8 +204,8 @@ export default function ExpenseFormMobile({
 
     const cleared = {
       description: "",
-      paidByUserId: "",
       amount: "",
+      paidByUserId: "",
       split: "",
     };
 
@@ -428,12 +449,12 @@ export default function ExpenseFormMobile({
       </div>
 
       {/* Footer */}
-      <div className="fixed left-0 right-0 bg-background border-t h-[2.7rem] px-4 flex items-center justify-between z-50 touch-none overscroll-none"
+      <div className="fixed left-0 right-0 bg-background border-t h-[3rem] px-4 flex items-center justify-between z-50 touch-none overscroll-none"
         style={{ bottom: keyboardOffset }}
       >
 
         {/* Date selector */}
-        <Popover modal>
+        <Popover modal open={showCalendar} onOpenChange={setShowCalendar}>
           <PopoverTrigger asChild>
             <button className="flex items-center gap-2 text-sm font-medium">
               <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">

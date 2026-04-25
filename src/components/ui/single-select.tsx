@@ -17,6 +17,7 @@ import { ChevronsUpDown, Check, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "./UserAvatar";
 import { useDeviceType } from "@/hooks/useDeviceType";
+import { useBackButtonClose } from "@/hooks/useBackButtonClose";
 import { createPortal } from "react-dom";
 
 export interface SelectItem {
@@ -68,7 +69,13 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
 }) => {
   const device = useDeviceType();
   const [open, setOpen] = useState(false);
+  const [allowMobileKeyboard, setAllowMobileKeyboard] = useState(false);
+  const mobileSearchInputRef = React.useRef<HTMLInputElement>(null);
   const isFullscreenMobile = fullscreenOnMobile && device == 'mobile';
+  useBackButtonClose(open && isFullscreenMobile && !disabled, () => setOpen(false));
+  React.useEffect(() => {
+    if (!open) setAllowMobileKeyboard(false);
+  }, [open]);
   // Determine selected item (safe even if value is undefined)
   let selectedGroup: SelectGroup | undefined;
   let selectedItem: SelectItem | undefined;
@@ -170,9 +177,20 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
 
                 {/* Title */}
                 <CommandInput
+                  ref={mobileSearchInputRef}
                   placeholder={inputPlaceholder}
                   variant="header"
                   autoFocus
+                  inputMode={allowMobileKeyboard ? "search" : "none"}
+                  onPointerDown={() => {
+                    const input = mobileSearchInputRef.current;
+                    if (!input || allowMobileKeyboard) return;
+
+                    setAllowMobileKeyboard(true);
+                    input.inputMode = "search";
+                    input.blur();
+                    input.focus();
+                  }}
                 />
 
               </div>

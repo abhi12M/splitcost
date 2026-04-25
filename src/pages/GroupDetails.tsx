@@ -54,6 +54,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { ActionMenu } from "@/components/ui/action-menu";
 import { SmartTooltip } from "@/components/ui/smartTooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 /* ======================================================
    CONSTANTS – MOVE TO CONSTANTS FILE LATER
@@ -332,6 +342,10 @@ export default function GroupResponsesPage({
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [openRow, setOpenRow] = useState<number | null>(null);
   const [settlingIndex, setSettlingIndex] = useState<number | null>(null);
+  const [settleConfirmation, setSettleConfirmation] = useState<{
+    settlement: ReturnType<typeof calculateSettlements>[number];
+    index: number;
+  } | null>(null);
 
   const handleDelete = async (expenseId: string) => {
     try {
@@ -1086,7 +1100,9 @@ export default function GroupResponsesPage({
                         <div className="flex justify-center pb-2">
                           <button
                             disabled={isLoading}
-                            onClick={() => handleSettle(s, i)}
+                            onClick={() =>
+                              setSettleConfirmation({ settlement: s, index: i })
+                            }
                             className={`
               text-sm font-medium px-4 py-2 rounded-sm
               bg-primary/10 text-primary
@@ -1108,6 +1124,48 @@ export default function GroupResponsesPage({
 
               </CardContent>
             </Card>
+
+            <AlertDialog
+              open={settleConfirmation !== null}
+              onOpenChange={(open) => {
+                if (!open) setSettleConfirmation(null);
+              }}
+            >
+              <AlertDialogContent className="max-w-[310px] rounded-2xl">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="text-lg">
+                    Record this settlement?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription className="text-xs">
+                    {settleConfirmation
+                      ? `This will mark that ${settleConfirmation.settlement.fromName} paid ${settleConfirmation.settlement.toName} ${formatCurrency(settleConfirmation.settlement.amount, group.currency)} by adding a settlement entry to the group.`
+                      : ""}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="flex-row gap-2 mt-4">
+                  <AlertDialogCancel className="flex-1 mt-0 rounded-xl border-none bg-muted hover:bg-muted/80">
+                    Cancel
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => {
+                      if (!settleConfirmation) return;
+                      handleSettle(
+                        settleConfirmation.settlement,
+                        settleConfirmation.index
+                      );
+                    }}
+                    disabled={
+                      settleConfirmation
+                        ? settlingIndex === settleConfirmation.index
+                        : false
+                    }
+                    className="flex-1 rounded-xl"
+                  >
+                    Yes, settle up
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
 
           </div>
         </div>
