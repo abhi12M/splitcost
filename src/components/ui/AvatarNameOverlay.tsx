@@ -1,6 +1,10 @@
 import * as Tooltip from "@radix-ui/react-tooltip";
-import * as Popover from "@radix-ui/react-popover";
 import { useDeviceType } from "@/hooks/useDeviceType";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 const overlayClass =
   "z-50 max-w-xs rounded-md border bg-popover px-3 py-2 text-xs text-popover-foreground shadow-md whitespace-pre-line";
@@ -17,14 +21,12 @@ export function AvatarNameOverlay({
 
   if (isMobile) {
     return (
-      <Popover.Root>
-        <Popover.Trigger asChild>{children}</Popover.Trigger>
-        <Popover.Portal>
-          <Popover.Content className={overlayClass} sideOffset={6}>
-            {name}
-          </Popover.Content>
-        </Popover.Portal>
-      </Popover.Root>
+      <Popover>
+        <PopoverTrigger asChild>{children}</PopoverTrigger>
+        <PopoverContent className={overlayClass} sideOffset={6}>
+          {name}
+        </PopoverContent>
+      </Popover>
     );
   }
 
