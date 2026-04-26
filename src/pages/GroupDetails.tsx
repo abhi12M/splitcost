@@ -25,6 +25,7 @@ import {
   List,
   LayoutDashboard,
   ChevronUp,
+  Download,
 } from "lucide-react";
 
 import { Layout } from "@/components/layout/Layout";
@@ -229,6 +230,100 @@ function calculateSettlements(
 
 function getGroupTotal(expenses: GroupDashboardInterface["expenses"]) {
   return expenses.reduce((sum, e) => sum + e.amount, 0);
+}
+
+function escapeCsvCell(value: string | number | null | undefined) {
+  const text = value === null || value === undefined ? "" : String(value);
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
+function slugifyFilename(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60) || "group";
+}
+
+function formatExportDate(value: string | Date) {
+  const date = typeof value === "string" ? new Date(value) : value;
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+
+  return `${day}-${month}-${year}`;
+}
+
+function buildExpensesCsv(
+  group: GroupDashboardInterface["group"],
+  expenses: GroupDashboardInterface["expenses"],
+  balances: Record<string, number>
+) {
+  const headers: Array<string | number> = [
+    "Date",
+    "Description",
+    "Category",
+    "Cost",
+    "Currency",
+    ...group.members.map((member) => member.name),
+  ];
+
+  const memberMeaningRow: Array<string | number> = [
+    "",
+    "",
+    "",
+    "",
+    "",
+    ...group.members.map(() => "Net amount (+ gets back, - owes)"),
+  ];
+
+  const rows = expenses.map((expense) => {
+    const memberValues = group.members.map((member) => {
+      let net = 0;
+
+      if (expense.payers?.length) {
+        const payer = expense.payers.find((item) => item.user?.id === member.id);
+        net += Number(payer?.amount ?? 0);
+      } else if (expense.paidBy?.id === member.id) {
+        net += Number(expense.amount) || 0;
+      }
+
+      const participant = expense.participants.find(
+        (item) => item.user.id === member.id
+      );
+      net -= Number(participant?.amount ?? 0);
+
+      return Math.round(net * 100) / 100;
+    });
+
+    return [
+      formatExportDate(expense.date),
+      expense.description,
+      toTitleCase(expense.category.replace(/_/g, " ")),
+      expense.amount,
+      expense.currency || group.currency,
+      ...memberValues,
+    ];
+  });
+
+  const totalBalanceRow: Array<string | number> = [
+    formatExportDate(new Date()),
+    "Total balance",
+    "",
+    "",
+    group.currency,
+    ...group.members.map((member) => Math.round((balances[member.id] ?? 0) * 100) / 100),
+  ];
+
+  return [headers, memberMeaningRow, ...rows, [], totalBalanceRow]
+    .map((row) => row.map(escapeCsvCell).join(","))
+    .join("\r\n");
 }
 
 function GroupResponsesSkeleton() {
@@ -529,6 +624,41 @@ export default function GroupResponsesPage({
       `.trim();
   };
 
+  const handleExportExpenses = () => {
+    const exportExpenses = Object.values(groupedExpenses).flat();
+
+    if (!exportExpenses.length) {
+      toast({
+        title: "Nothing to export",
+        description: search
+          ? "No expenses match the current search."
+          : "Add an expense before exporting.",
+      });
+      return;
+    }
+
+    const exportBalances = calculateBalances(exportExpenses, group.members);
+    const csv = buildExpensesCsv(group, exportExpenses, exportBalances);
+    const blob = new Blob([`\uFEFF${csv}`], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const today = new Date().toISOString().split("T")[0];
+
+    link.href = url;
+    link.download = `${slugifyFilename(group.name)}-expenses-${today}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Export ready",
+      description: `${exportExpenses.length} expense${exportExpenses.length === 1 ? "" : "s"} exported.`,
+    });
+  };
+
   const handleSettle = async (
     setlementData: ReturnType<typeof calculateSettlements>[number],
     index: number
@@ -704,6 +834,18 @@ export default function GroupResponsesPage({
                       <span className="hidden sm:inline">Chart</span>
                     </button>
                   </div>
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleExportExpenses}
+                    disabled={!expenses.length}
+                    title="Export expenses"
+                    className="h-auto px-0"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span className="hidden sm:inline">Export</span>
+                  </Button>
 
                   {/* Add Button */}
                   <Button asChild size="sm">
