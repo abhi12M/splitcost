@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ActionMenu } from "@/components/ui/action-menu";
-import { formatDisplayDate } from "@/components/ui/formatters";
+import { formatDisplayDate, formatDisplayDateTime } from "@/components/ui/formatters";
 import { formatCurrency } from "@/lib/avatar-utils";
 import { ADMIN_BASE_PATH, APP_NAME, LOCAL_GROUPS_KEY } from "@/lib/constants";
 import { getEncryptedItem, setEncryptedItem } from "@/lib/localStorage";
@@ -28,6 +28,8 @@ import { deleteGroup, GroupOverviewItemInterface, loadGroupsByIds } from "@/lib/
 type HomeGroup = GroupOverviewItemInterface & {
   totalExpenses?: number;
   expenseCount?: number;
+  updatedAt?: string | null;
+  latestExpenseActivityAt?: string | null;
 };
 
 const containerVariants = {
@@ -331,9 +333,22 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
                           ) : null}
                         </div>
                         <CardTitle className="mt-3">{group.name}</CardTitle>
-                        <p className="text-sm text-muted-foreground">
-                          Created {formatDisplayDate(group.createdAt)}
-                        </p>
+                        {adminMode ? (
+                          <div className="space-y-1 text-sm text-muted-foreground">
+                            <p>Created {formatDisplayDateTime(group.createdAt)}</p>
+                            <p>
+                              Updated {formatDisplayDateTime(group.updatedAt ?? group.createdAt)}
+                            </p>
+                            <p>
+                              Latest expense activity{" "}
+                              {formatDisplayDateTime(group.latestExpenseActivityAt)}
+                            </p>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">
+                            Created {formatDisplayDate(group.createdAt)}
+                          </p>
+                        )}
                       </CardHeader>
                       <CardContent>
                         <div className="flex items-center justify-between">

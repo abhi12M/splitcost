@@ -47,3 +47,23 @@ export const formatDisplayDate = (date: string | Date) => {
     year: "numeric",
   }).format(value);
 };
+
+export const formatDisplayDateTime = (date?: string | Date | null) => {
+  if (!date) {
+    return "N/A";
+  }
+
+  const value = typeof date === "string" ? new Date(date) : date;
+
+  if (Number.isNaN(value.getTime())) {
+    return "N/A";
+  }
+
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(value);
+};
