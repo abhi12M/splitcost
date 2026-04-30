@@ -274,7 +274,7 @@ export default function PaidBySheet({
                       inputMode="decimal"
                       placeholder="1.00"
                       minValue={1}
-                      maxValue={Math.max(expenseAmount - 1, 0)}
+                      maxValue={expenseAmount}
                       precision={2}
                       showHelper={false}
                       value={p.amount ?? ""}

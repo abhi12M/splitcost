@@ -222,7 +222,7 @@ export function buildSplitScreenVM(params: {
         input: {
             type: "text",
             inputMode: "decimal",
-            minValue: 0,
+            minValue: 1,
             maxValue: totalAmount,
             precision: 2,
             placeholder: "1.00",
@@ -264,7 +264,7 @@ export function buildSplitScreenVM(params: {
         input: {
             type: "text",
             inputMode: "decimal",
-            minValue: 0,
+            minValue: 1,
             maxValue: 100,
             precision: 2,
             placeholder: "1.00",
