@@ -11,11 +11,19 @@ import { useKeyboardLayout } from "@/hooks/useKeyboardOffset";
 import { useSwipeable } from "react-swipeable";
 import { toast } from "@/hooks/use-toast";
 import { ToastAction } from "@radix-ui/react-toast";
+import { InfoSheetButton } from "../ui/InfoSheetButton";
+import { getSplitInfoText } from "./expenseInfo";
 
 export interface SplitResult {
     splitType: SplitType;
     participants: ExpenseParticipantsRequest[];
 }
+
+const SPLIT_HEADER_TITLES: Record<SplitType, string> = {
+    equal: "Split Equally",
+    custom: "Custom Amounts",
+    percentage: "Split by Percentage",
+};
 type BaseTabMember = {
     id: string;
     name: string;
@@ -214,8 +222,8 @@ export function buildSplitScreenVM(params: {
         input: {
             type: "text",
             inputMode: "decimal",
-            minValue: 1,
-            maxValue: Math.max(totalAmount - 1, 0),
+            minValue: 0,
+            maxValue: totalAmount,
             precision: 2,
             placeholder: "1.00",
             showHelper: false,
@@ -256,8 +264,8 @@ export function buildSplitScreenVM(params: {
         input: {
             type: "text",
             inputMode: "decimal",
-            minValue: 1,
-            maxValue: 99,
+            minValue: 0,
+            maxValue: 100,
             precision: 2,
             placeholder: "1.00",
             showHelper: false,
@@ -329,6 +337,7 @@ export default function SplitScreen(props: SplitScreenProps) {
     );
 
     const activeTab = vm.tabs.find((t) => t.id === vm.selectedTab)!;
+    const headerTitle = SPLIT_HEADER_TITLES[vm.selectedTab];
 
     function updateVM(updater: (prev: SplitScreenVM) => SplitScreenVM) {
         setVM((prev) => updater(prev));
@@ -506,7 +515,8 @@ export default function SplitScreen(props: SplitScreenProps) {
             }
             return data;
         }
-        let errMsg, diff = tab.footer.selected.difference;
+        let errMsg: string | undefined;
+        const diff = tab.footer.selected.difference;
 
         if (tab.id === "custom") {
             const data: SplitResult = {
@@ -576,7 +586,13 @@ export default function SplitScreen(props: SplitScreenProps) {
             <div className={"fixed top-0 left-0 right-0 bg-background z-[70] touch-none overscroll-none"}>
                 <div className="flex items-center justify-between px-4 h-14 border-b">
                     <ArrowLeft onClick={onClose} className="w-5 h-5" />
-                    <span className="font-medium">{vm.header.title}</span>
+                    <div className="flex items-center gap-1">
+                        <span className="font-medium">{headerTitle}</span>
+                        <InfoSheetButton
+                            title={headerTitle}
+                            description={getSplitInfoText(vm.selectedTab, amount, currency)}
+                        />
+                    </div>
                     <Check onClick={() => {
                         const result = buildResult();
                         if (!result) return;
@@ -620,79 +636,115 @@ export default function SplitScreen(props: SplitScreenProps) {
                     WebkitOverflowScrolling: "touch",
                 }}
             >
-                {activeTab.members.map((m: any) => {
-                    const isSelected = activeTab.mode === "select" ? m.isSelected : !!m.value;
+                {activeTab.id === "equal" && activeTab.members.map((m) => (
+                    <div key={m.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <UserAvatar name={m.name} size="md" />
 
-                    return (
-                        <div key={m.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
-                            <div className="flex items-center gap-2 min-w-0 flex-1">
-                                <UserAvatar name={m.name} size="md" />
-
-                                <div className="flex flex-col min-w-0">
-                                    <span
-                                        className={cn(
-                                            "text-sm font-medium truncate block",
-                                            isSelected ? "text-foreground" : "text-muted-foreground"
-                                        )}
-                                        title={m.name}
-                                    >
-                                        {m.name}
-                                    </span>
-
-                                    {vm.selectedTab === "percentage" && (
-                                        <span className="text-xs text-muted-foreground">
-                                            {formatAmount(m.calculatedAmount || 0, currency)}
-                                        </span>
+                            <div className="flex flex-col min-w-0">
+                                <span
+                                    className={cn(
+                                        "text-sm font-medium truncate block",
+                                        m.isSelected ? "text-foreground" : "text-muted-foreground"
                                     )}
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-2 shrink-0">
-                                {activeTab.id === "equal" && (
-                                    <input type="checkbox" checked={m.isSelected} onChange={() => toggleEqualMember(m.id)} className="w-4 h-4 accent-primary" />
-                                )}
-
-                                {activeTab.id === "custom" && (
-                                    <>
-                                        <Input
-                                            type={activeTab.input.type}
-                                            inputMode={activeTab.input.inputMode}
-                                            onClick={(e) => e.stopPropagation()}
-                                            minValue={activeTab.input.minValue}
-                                            maxValue={activeTab.input.maxValue}
-                                            precision={activeTab.input.precision}
-                                            placeholder={activeTab.input.placeholder}
-                                            showHelper={activeTab.input.showHelper}
-                                            value={m.value ?? ''}
-                                            onChange={(e) => {
-                                                updateCustomValue(m.id, e.target.value ? +e.target.value : null)
-                                            }}
-                                            className={activeTab.input.className} />
-                                        {/* <input type="number" className="w-28 border rounded px-2 py-1" value={m.value ?? ""} onChange={(e) => updateCustomValue(m.id, e.target.value ? +e.target.value : null)} /> */}
-                                    </>
-                                )}
-
-                                {activeTab.id === "percentage" && (
-                                    <Input
-                                        type={activeTab.input.type}
-                                        inputMode={activeTab.input.inputMode}
-                                        onClick={(e) => e.stopPropagation()}
-                                        minValue={activeTab.input.minValue}
-                                        maxValue={activeTab.input.maxValue}
-                                        precision={activeTab.input.precision}
-                                        placeholder={activeTab.input.placeholder}
-                                        showHelper={activeTab.input.showHelper}
-                                        postfix={activeTab.input.postfix}
-                                        value={m.value ?? ''}
-                                        onChange={(e) => {
-                                            updatePercentValue(m.id, e.target.value ? +e.target.value : null)
-                                        }}
-                                        className={activeTab.input.className} />
-                                )}
+                                    title={m.name}
+                                >
+                                    {m.name}
+                                </span>
                             </div>
                         </div>
-                    );
-                })}
+
+                        <div className="flex items-center gap-2 shrink-0">
+                            <input
+                                type="checkbox"
+                                checked={m.isSelected}
+                                onChange={() => toggleEqualMember(m.id)}
+                                className="w-4 h-4 accent-primary"
+                            />
+                        </div>
+                    </div>
+                ))}
+
+                {activeTab.id === "custom" && activeTab.members.map((m) => (
+                    <div key={m.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <UserAvatar name={m.name} size="md" />
+
+                            <div className="flex flex-col min-w-0">
+                                <span
+                                    className={cn(
+                                        "text-sm font-medium truncate block",
+                                        m.value ? "text-foreground" : "text-muted-foreground"
+                                    )}
+                                    title={m.name}
+                                >
+                                    {m.name}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                            <Input
+                                type={activeTab.input.type}
+                                inputMode={activeTab.input.inputMode}
+                                onClick={(e) => e.stopPropagation()}
+                                minValue={activeTab.input.minValue}
+                                maxValue={activeTab.input.maxValue}
+                                precision={activeTab.input.precision}
+                                placeholder={activeTab.input.placeholder}
+                                showHelper={activeTab.input.showHelper}
+                                value={m.value ?? ""}
+                                onChange={(e) => {
+                                    updateCustomValue(m.id, e.target.value ? +e.target.value : null);
+                                }}
+                                className={activeTab.input.className}
+                            />
+                        </div>
+                    </div>
+                ))}
+
+                {activeTab.id === "percentage" && activeTab.members.map((m) => (
+                    <div key={m.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <UserAvatar name={m.name} size="md" />
+
+                            <div className="flex flex-col min-w-0">
+                                <span
+                                    className={cn(
+                                        "text-sm font-medium truncate block",
+                                        m.value ? "text-foreground" : "text-muted-foreground"
+                                    )}
+                                    title={m.name}
+                                >
+                                    {m.name}
+                                </span>
+
+                                <span className="text-xs text-muted-foreground">
+                                    {formatAmount(m.calculatedAmount || 0, currency)}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                            <Input
+                                type={activeTab.input.type}
+                                inputMode={activeTab.input.inputMode}
+                                onClick={(e) => e.stopPropagation()}
+                                minValue={activeTab.input.minValue}
+                                maxValue={activeTab.input.maxValue}
+                                precision={activeTab.input.precision}
+                                placeholder={activeTab.input.placeholder}
+                                showHelper={activeTab.input.showHelper}
+                                postfix={activeTab.input.postfix}
+                                value={m.value ?? ""}
+                                onChange={(e) => {
+                                    updatePercentValue(m.id, e.target.value ? +e.target.value : null);
+                                }}
+                                className={activeTab.input.className}
+                            />
+                        </div>
+                    </div>
+                ))}
             </div>
 
             {/* Footer */}
