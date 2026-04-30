@@ -27,6 +27,15 @@ export function useBackButtonClose(isOpen: boolean, onClose: () => void) {
     );
 
     const handlePopState = () => {
+      const activeEntryId = window.history.state?.[BACK_CLOSE_KEY];
+
+      // When multiple overlays are stacked, a back navigation from the top
+      // layer should not also close the layer underneath if its history entry
+      // just became active again.
+      if (activeEntryId === entryIdRef.current) {
+        return;
+      }
+
       closedByBackButton = true;
       onCloseRef.current();
     };
