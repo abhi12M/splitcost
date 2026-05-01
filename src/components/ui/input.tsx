@@ -41,6 +41,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ) => {
     const isNumeric = inputMode === "decimal" && minValue !== undefined;
     const [isFocused, setIsFocused] = React.useState(false);
+    const [draftValue, setDraftValue] = React.useState<string | null>(null);
 
     const regex = React.useMemo(
       () => new RegExp(`^\\d*\\.?\\d{0,${precision}}$`),
@@ -55,7 +56,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           : "";
 
     const displayValue =
-      formatOnBlur && !isFocused
+      isFocused && draftValue !== null
+        ? draftValue
+        : formatOnBlur && !isFocused
         ? formatInputDisplayValue(rawValue, formatOnBlur, currency)
         : rawValue;
 
@@ -95,17 +98,22 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             }}
             onFocus={(e) => {
               setIsFocused(true);
+              setDraftValue(rawValue);
               onFocus?.(e);
             }}
             onBlur={(e) => {
               setIsFocused(false);
+              setDraftValue(null);
               onBlur?.(e);
             }}
             onChange={(e) => {
               if (!isNumeric) return onChange?.(e);
 
               const nextValue = e.target.value;
-              if (nextValue === "") return onChange?.(e);
+              if (nextValue === "") {
+                setDraftValue(nextValue);
+                return onChange?.(e);
+              }
               if (!regex.test(nextValue)) return;
 
               const num = Number(nextValue);
@@ -118,6 +126,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                 return;
               }
 
+              setDraftValue(nextValue);
               onChange?.(e);
             }}
           />
