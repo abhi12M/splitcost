@@ -55,6 +55,11 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           ? value
           : "";
 
+    const maxIntegerDigits =
+      maxValue !== undefined
+        ? Math.max(1, Math.floor(Math.abs(maxValue)).toString().length)
+        : undefined;
+
     const displayValue =
       isFocused && draftValue !== null
         ? draftValue
@@ -119,11 +124,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               const num = Number(nextValue);
               if (Number.isNaN(num)) return;
 
-              if (
-                (minValue !== undefined && num < minValue) ||
-                (maxValue !== undefined && num > maxValue)
-              ) {
-                return;
+              if (maxIntegerDigits !== undefined) {
+                const [integerPart = ""] = nextValue.split(".");
+                if (integerPart.length > maxIntegerDigits) return;
               }
 
               setDraftValue(nextValue);
