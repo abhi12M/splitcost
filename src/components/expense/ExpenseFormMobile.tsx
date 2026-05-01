@@ -469,6 +469,7 @@ export default function ExpenseFormMobile({
                 showHelper={false}
                 aria-invalid={!!errors.amount}
                 currency={currency}
+                formatOnBlur="number"
                 className="rounded-none focus-visible:ring-1"
               />
             </div>

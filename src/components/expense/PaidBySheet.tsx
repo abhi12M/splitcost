@@ -285,6 +285,7 @@ export default function PaidBySheet({
                         )
                       }
                       currency={currency}
+                      formatOnBlur="currency"
                       className="w-28"
                     />
                   </div>

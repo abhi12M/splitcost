@@ -1,7 +1,7 @@
 // components/ui/input.tsx
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { formatAmount } from "./formatters";
+import { formatAmount, formatInputDisplayValue } from "./formatters";
 
 interface NumericProps {
   minValue?: number;
@@ -10,7 +10,8 @@ interface NumericProps {
   showHelper?: boolean;
   currency?: string;
   postfix?: string;
-  unstyled?: boolean; // 👈 NEW
+  unstyled?: boolean;
+  formatOnBlur?: "currency" | "number";
 }
 
 type InputProps = React.ComponentProps<"input"> & NumericProps;
@@ -27,26 +28,42 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       currency = "INR",
       postfix,
       unstyled = false,
+      formatOnBlur,
       onChange,
+      onBlur,
+      onFocus,
       onKeyDown,
       inputMode = "text",
+      value,
       ...props
     },
     ref,
   ) => {
     const isNumeric = inputMode === "decimal" && minValue !== undefined;
+    const [isFocused, setIsFocused] = React.useState(false);
 
     const regex = React.useMemo(
       () => new RegExp(`^\\d*\\.?\\d{0,${precision}}$`),
       [precision],
     );
 
+    const rawValue =
+      typeof value === "number"
+        ? value.toString()
+        : typeof value === "string"
+          ? value
+          : "";
+
+    const displayValue =
+      formatOnBlur && !isFocused
+        ? formatInputDisplayValue(rawValue, formatOnBlur, currency)
+        : rawValue;
+
     const helperText =
       isNumeric && showHelper
-        ? `Enter a value between ${formatAmount(minValue, currency)}${maxValue !== undefined
-          ? ` and ${formatAmount(maxValue, currency)}`
-          : ""
-        }`
+        ? `Enter a value between ${formatAmount(minValue, currency)}${
+            maxValue !== undefined ? ` and ${formatAmount(maxValue, currency)}` : ""
+          }`
         : null;
 
     return (
@@ -57,6 +74,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             type={type}
             {...props}
+            value={displayValue}
             className={cn(
               "w-full h-full text-base bg-background",
               "placeholder:text-muted-foreground",
@@ -75,14 +93,22 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               }
               onKeyDown?.(e);
             }}
+            onFocus={(e) => {
+              setIsFocused(true);
+              onFocus?.(e);
+            }}
+            onBlur={(e) => {
+              setIsFocused(false);
+              onBlur?.(e);
+            }}
             onChange={(e) => {
               if (!isNumeric) return onChange?.(e);
 
-              const value = e.target.value;
-              if (value === "") return onChange?.(e);
-              if (!regex.test(value)) return;
+              const nextValue = e.target.value;
+              if (nextValue === "") return onChange?.(e);
+              if (!regex.test(nextValue)) return;
 
-              const num = Number(value);
+              const num = Number(nextValue);
               if (Number.isNaN(num)) return;
 
               if (

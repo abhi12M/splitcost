@@ -15,6 +15,25 @@ export const formatAmount = (amount: number, currency?: string) => {
   }).format(amount);
 };
 
+export const formatInputDisplayValue = (
+  rawValue: string,
+  formatOnBlur?: "currency" | "number",
+  currency?: string,
+) => {
+  if (!formatOnBlur || rawValue.trim() === "") {
+    return rawValue;
+  }
+
+  const num = Number(rawValue);
+  if (Number.isNaN(num)) {
+    return rawValue;
+  }
+
+  return formatOnBlur === "currency"
+    ? formatAmount(num, currency)
+    : formatAmount(num);
+};
+
 export const toTitleCase = (text) => {
   if (!text) return "";
 

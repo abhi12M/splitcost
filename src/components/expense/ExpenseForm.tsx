@@ -417,6 +417,7 @@ export function ExpenseForm({
                 showHelper={false}
                 aria-invalid={!!errors.amount}
                 currency={currency}
+                formatOnBlur="number"
                 unstyled
               />
             </div>
@@ -624,6 +625,7 @@ export function ExpenseForm({
                             placeholder="1.00"
                             showHelper={false}
                             postfix={splitType === "percentage" ? "%" : undefined}
+                            formatOnBlur={splitType === "custom" ? "currency" : undefined}
                             value={splitType === "percentage" ? participant?.percent ?? "" : participant?.amount ?? ""}
                             onChange={(e) => {
                               updateParticipantValue(member.id, e.target.value ? Number(e.target.value) : null);

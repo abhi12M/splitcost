@@ -693,6 +693,7 @@ export default function SplitScreen(props: SplitScreenProps) {
                                 precision={activeTab.input.precision}
                                 placeholder={activeTab.input.placeholder}
                                 showHelper={activeTab.input.showHelper}
+                                formatOnBlur="currency"
                                 value={m.value ?? ""}
                                 onChange={(e) => {
                                     updateCustomValue(m.id, e.target.value ? +e.target.value : null);
