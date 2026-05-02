@@ -9,7 +9,7 @@ import {
   ExpenseParticipantsRequest,
   ExpenseRequest,
 } from "@/lib/storage"
-import { ExpenseSchema } from "@/lib/validations/expense.schema"
+import { EXPENSE_DESCRIPTION_MAX, ExpenseSchema } from "@/lib/validations/expense.schema"
 import { CategoryKey, EXPENSE_CATEGORIES, SubcategoryId } from "../icons/CategoryIcons"
 import { formatAmount, formatDateForDB } from "../ui/formatters"
 import { SingleSelect } from "../ui/single-select"
@@ -434,6 +434,7 @@ export default function ExpenseFormMobile({
               <Input
                 value={description}
                 placeholder="Description"
+                maxLength={EXPENSE_DESCRIPTION_MAX}
                 onChange={(e) => setDescription(e.target.value)}
                 className="rounded-none focus-visible:ring-1"
                 aria-invalid={!!errors.description}

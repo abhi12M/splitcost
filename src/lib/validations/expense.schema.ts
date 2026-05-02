@@ -5,8 +5,13 @@ import { z, ZodString } from "zod";
 const trimmedNonEmpty = (message: string): ZodString =>
     z.string().trim().nonempty(message);
 
+export const EXPENSE_DESCRIPTION_MAX = 255;
+
 export const ExpenseSchema = z.object({
-    description: trimmedNonEmpty("Enter a description."),
+    description: trimmedNonEmpty("Enter a description.").max(
+        EXPENSE_DESCRIPTION_MAX,
+        `Description can't exceed ${EXPENSE_DESCRIPTION_MAX} characters.`
+    ),
     paidByUserId: z.string().optional(),
     isMultiplePayers: z.boolean().optional(),
     amount: z.string().nonempty("Enter an amount.").transform(Number),

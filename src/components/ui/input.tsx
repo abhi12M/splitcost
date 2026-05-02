@@ -61,7 +61,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         : undefined;
 
     const displayValue =
-      isFocused && draftValue !== null
+      isNumeric && isFocused && draftValue !== null
         ? draftValue
         : formatOnBlur && !isFocused
         ? formatInputDisplayValue(rawValue, formatOnBlur, currency)
@@ -103,7 +103,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             }}
             onFocus={(e) => {
               setIsFocused(true);
-              setDraftValue(rawValue);
+              if (isNumeric) {
+                setDraftValue(rawValue);
+              }
               onFocus?.(e);
             }}
             onBlur={(e) => {
