@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Plus, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -33,23 +33,61 @@ export function GroupForm({ initialData, onSubmit, submitLabel, isSubmitting }: 
   }>({});
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
-  const validate = () => {
+  const validate = useCallback(() => {
     const result = GroupSchema.safeParse({ groupName, members });
     if (!result.success) {
       const e = result.error.format();
-      setErrors({
+      setErrors(prev => ({
+        ...prev,
         groupName: e.groupName?._errors[0],
         members: e.members?._errors[0],
-      });
+      }));
       return false;
     }
-    setErrors({});
+    setErrors(prev => ({
+      ...prev,
+      groupName: undefined,
+      members: undefined,
+    }));
     return true;
-  };
+  }, [groupName, members]);
 
   useEffect(() => {
     if (hasSubmitted) validate();
-  }, [groupName, members]);
+  }, [groupName, members, hasSubmitted, validate]);
+
+  useEffect(() => {
+    const result = GroupSchema.shape.groupName.safeParse(groupName);
+    setErrors(prev => ({
+      ...prev,
+      groupName:
+        !groupName.trim() && !hasSubmitted
+          ? undefined
+          : result.success
+            ? undefined
+            : result.error.issues[0]?.message,
+    }));
+  }, [groupName, hasSubmitted]);
+
+  useEffect(() => {
+    const trimmedMember = newMember.trim();
+
+    if (!trimmedMember) {
+      setErrors(prev => ({
+        ...prev,
+        memberName: undefined,
+        memberExists: undefined,
+      }));
+      return;
+    }
+
+    const memberResult = MemberNameSchema.safeParse(newMember);
+    setErrors(prev => ({
+      ...prev,
+      memberName: memberResult.success ? undefined : memberResult.error.issues[0]?.message,
+      memberExists: members.includes(trimmedMember) ? "Member already added." : undefined,
+    }));
+  }, [newMember, members]);
 
   const handleAddMember = () => {
     const result = MemberNameSchema.safeParse(newMember);

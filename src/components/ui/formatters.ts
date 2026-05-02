@@ -15,6 +15,25 @@ export const formatAmount = (amount: number, currency?: string) => {
   }).format(amount);
 };
 
+export const formatInputDisplayValue = (
+  rawValue: string,
+  formatOnBlur?: "currency" | "number",
+  currency?: string,
+) => {
+  if (!formatOnBlur || rawValue.trim() === "") {
+    return rawValue;
+  }
+
+  const num = Number(rawValue);
+  if (Number.isNaN(num)) {
+    return rawValue;
+  }
+
+  return formatOnBlur === "currency"
+    ? formatAmount(num, currency)
+    : formatAmount(num);
+};
+
 export const toTitleCase = (text) => {
   if (!text) return "";
 
@@ -45,5 +64,25 @@ export const formatDisplayDate = (date: string | Date) => {
     day: "numeric",
     month: "short",
     year: "numeric",
+  }).format(value);
+};
+
+export const formatDisplayDateTime = (date?: string | Date | null) => {
+  if (!date) {
+    return "N/A";
+  }
+
+  const value = typeof date === "string" ? new Date(date) : date;
+
+  if (Number.isNaN(value.getTime())) {
+    return "N/A";
+  }
+
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
   }).format(value);
 };

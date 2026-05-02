@@ -1,6 +1,16 @@
 import CryptoJS from "crypto-js";
 
 const SECRET_KEY = "local-storage-v1"; // static, non-secret
+const isProduction = process.env.NODE_ENV === "production";
+
+console.log(
+  `running in ${isProduction ? "production" : "development"} mode`
+);
+
+const getEncryptedKey = (key: string): string => CryptoJS.SHA256(key).toString();
+
+const getPrimaryStorageKey = (key: string): string =>
+  isProduction ? getEncryptedKey(key) : key;
 
 const encrypt = (value: unknown): string => {
   return CryptoJS.AES.encrypt(
@@ -14,7 +24,7 @@ const decrypt = <T>(cipherText: string): T | null => {
     const bytes = CryptoJS.AES.decrypt(cipherText, SECRET_KEY);
     const decrypted = bytes.toString(CryptoJS.enc.Utf8);
 
-    if (!decrypted) return null; // 👈 IMPORTANT
+    if (!decrypted) return null;
 
     return JSON.parse(decrypted) as T;
   } catch {
@@ -22,11 +32,20 @@ const decrypt = <T>(cipherText: string): T | null => {
   }
 };
 
+const parsePlainValue = <T>(value: string): T | null => {
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return null;
+  }
+};
+
 export const setEncryptedItem = <T>(key: string, value: T): void => {
   try {
-    const encryptedKey = CryptoJS.SHA256(key).toString();
-    const encryptedValue = encrypt(value);
-    localStorage.setItem(encryptedKey, encryptedValue);
+    const primaryKey = getPrimaryStorageKey(key);
+    const storedValue = isProduction ? encrypt(value) : JSON.stringify(value);
+
+    localStorage.setItem(primaryKey, storedValue);
   } catch (error) {
     console.error("Encrypted set error:", error);
   }
@@ -37,28 +56,28 @@ export const getEncryptedItem = <T>(
   defaultValue: T
 ): T => {
   try {
-    const encryptedKey = CryptoJS.SHA256(key).toString();
-    const item = localStorage.getItem(encryptedKey);
+    const primaryKey = getPrimaryStorageKey(key);
+    const storedItem = localStorage.getItem(primaryKey);
 
-    if (!item) return defaultValue;
+    if (!storedItem) return defaultValue;
 
-    const decrypted = decrypt<T>(item);
+    const parsedValue = isProduction
+      ? decrypt<T>(storedItem)
+      : parsePlainValue<T>(storedItem);
 
-    if (decrypted === null) {
-      // 🧹 clean corrupted data
-      localStorage.removeItem(encryptedKey);
+    if (parsedValue === null) {
+      localStorage.removeItem(primaryKey);
       return defaultValue;
     }
 
-    return decrypted;
+    return parsedValue;
   } catch {
     return defaultValue;
   }
 };
 
 export const removeEncryptedItem = (key: string): void => {
-  const encryptedKey = CryptoJS.SHA256(key).toString();
-  localStorage.removeItem(encryptedKey);
+  localStorage.removeItem(getPrimaryStorageKey(key));
 };
 
 export const clearEncryptedStorage = (): void => {

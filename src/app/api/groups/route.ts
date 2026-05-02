@@ -9,11 +9,16 @@ export async function GET() {
       name,
       currency,
       created_at,
+      updated_at,
       group_members (
         is_active,
         users ( name )
       ),
-      expenses ( amount )
+      expenses (
+        amount,
+        created_at,
+        updated_at
+      )
     `)
     .order("created_at", { ascending: false });
 
@@ -33,17 +38,50 @@ export async function GET() {
       (sum: number, expense: { amount: number | null }) => sum + Number(expense.amount ?? 0),
       0
     );
+    const latestExpenseActivityAt = expenses.reduce(
+      (
+        latest: string | null,
+        expense: { created_at?: string | null; updated_at?: string | null }
+      ) => {
+        const candidate = expense.updated_at ?? expense.created_at ?? null;
+        if (!candidate) {
+          return latest;
+        }
+
+        if (!latest) {
+          return candidate;
+        }
+
+        return new Date(candidate).getTime() > new Date(latest).getTime()
+          ? candidate
+          : latest;
+      },
+      null
+    );
 
     return {
       id: group.id,
       name: group.name,
       currency: group.currency,
       createdAt: group.created_at,
+      updatedAt: group.updated_at,
       members,
       memberCount: members.length,
       expenseCount: expenses.length,
       totalExpenses,
+      latestExpenseActivityAt,
     };
+  });
+
+  result.sort((a, b) => {
+    const aTime = new Date(
+      a.latestExpenseActivityAt ?? a.updatedAt ?? a.createdAt
+    ).getTime();
+    const bTime = new Date(
+      b.latestExpenseActivityAt ?? b.updatedAt ?? b.createdAt
+    ).getTime();
+
+    return bTime - aTime;
   });
 
   return NextResponse.json(result);

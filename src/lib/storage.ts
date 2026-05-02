@@ -143,7 +143,11 @@ export interface GroupOverviewItemInterface {//landing page
   name: string;
   currency: string;
   createdAt: string;
-  expenses: { amount: number }[];
+  expenses: {
+    amount: number;
+    createdAt?: string | null;
+    updatedAt?: string | null;
+  }[];
   members: string[];
 }
 export interface UserInterface {

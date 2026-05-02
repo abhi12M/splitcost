@@ -10,6 +10,8 @@ import { createPortal } from "react-dom";
 import { useKeyboardLayout } from "@/hooks/useKeyboardOffset";
 import { toast } from "@/hooks/use-toast";
 import { ToastAction } from "../ui/toast";
+import { InfoSheetButton } from "../ui/InfoSheetButton";
+import { getPaidByInfoContent } from "./expenseInfo";
 
 export interface PayerEntry {
   userId: string;
@@ -90,6 +92,7 @@ export default function PaidBySheet({
     { id: "single", label: "Single" },
     { id: "multiple", label: "Multiple" },
   ];
+  const paidByInfo = getPaidByInfoContent(activeTab);
 
   return createPortal(
     <div className="fixed inset-0 z-[60] bg-background flex flex-col !mt-0 sm:bg-black/30 sm:backdrop-blur-[2px] sm:block">
@@ -107,58 +110,66 @@ export default function PaidBySheet({
           <button type="button" onClick={onClose}>
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <span className="font-medium text-sm">Paid by</span>
-          {activeTab === "multiple" ? (
-            <button
-              type="button"
-              onClick={() => {
-                const validPayers = localPayers.filter((p) => p.amount && p.amount > 0);
-                const total = validPayers.reduce((s, p) => s + Number(p.amount || 0), 0);
-                const diff = expenseAmount - total;
+          <div className="flex items-center gap-1">
+            <span className="font-medium text-sm">Paid by</span>
+            <InfoSheetButton
+              title={paidByInfo.title}
+              description={paidByInfo.description}
+            />
+          </div>
+          <div className="flex min-w-0 items-center justify-end gap-2">
+            {activeTab === "multiple" ? (
+              <button
+                type="button"
+                onClick={() => {
+                  const validPayers = localPayers.filter((p) => p.amount && p.amount > 0);
+                  const total = validPayers.reduce((s, p) => s + Number(p.amount || 0), 0);
+                  const diff = expenseAmount - total;
 
-                if (diff !== 0) {
-                  const totalFormatted = formatAmount(expenseAmount, currency);
-                  const diffFormatted = formatAmount(Math.abs(diff), currency);
-                  let errMsg: string;
+                  if (diff !== 0) {
+                    const totalFormatted = formatAmount(expenseAmount, currency);
+                    const diffFormatted = formatAmount(Math.abs(diff), currency);
+                    let errMsg: string;
 
-                  if (diff > 0) {
-                    errMsg = `The paid amounts don't add up to ${totalFormatted}. You're ${diffFormatted} short.`;
-                  } else {
-                    errMsg = `The paid amounts don't add up to ${totalFormatted}. You're ${diffFormatted} over.`;
+                    if (diff > 0) {
+                      errMsg = `The paid amounts don't add up to ${totalFormatted}. You're ${diffFormatted} short.`;
+                    } else {
+                      errMsg = `The paid amounts don't add up to ${totalFormatted}. You're ${diffFormatted} over.`;
+                    }
+
+                    toast({
+                      title: "Whoops!",
+                      description: errMsg,
+                      position: "center",
+                      hideClose: true,
+                      duration: Infinity,
+                      action: <ToastAction altText="OK">OK</ToastAction>,
+                    });
+                    return;
                   }
 
-                  toast({
-                    title: "Whoops!",
-                    description: errMsg,
-                    position: "center",
-                    hideClose: true,
-                    duration: Infinity,
-                    action: <ToastAction altText="OK">OK</ToastAction>,
-                  });
-                  return;
-                }
+                  if (validPayers.length === 0) {
+                    toast({
+                      title: "Whoops!",
+                      description: "Please enter an amount for at least one person.",
+                      position: "center",
+                      hideClose: true,
+                      duration: Infinity,
+                      action: <ToastAction altText="OK">OK</ToastAction>,
+                    });
+                    return;
+                  }
 
-                if (validPayers.length === 0) {
-                  toast({
-                    title: "Whoops!",
-                    description: "Please enter an amount for at least one person.",
-                    position: "center",
-                    hideClose: true,
-                    duration: Infinity,
-                    action: <ToastAction altText="OK">OK</ToastAction>,
-                  });
-                  return;
-                }
-
-                onConfirmMultiple(validPayers);
-                onClose();
-              }}
-            >
-              <Check className="w-5 h-5 text-primary" />
-            </button>
-          ) : (
-            <div className="w-5" />
-          )}
+                  onConfirmMultiple(validPayers);
+                  onClose();
+                }}
+              >
+                <Check className="w-5 h-5 text-primary" />
+              </button>
+            ) : (
+              <div className="w-5" />
+            )}
+          </div>
         </div>
 
         {/* Segmented toggle */}
@@ -263,7 +274,7 @@ export default function PaidBySheet({
                       inputMode="decimal"
                       placeholder="1.00"
                       minValue={1}
-                      maxValue={Math.max(expenseAmount - 1, 0)}
+                      maxValue={expenseAmount}
                       precision={2}
                       showHelper={false}
                       value={p.amount ?? ""}
@@ -274,6 +285,7 @@ export default function PaidBySheet({
                         )
                       }
                       currency={currency}
+                      formatOnBlur="currency"
                       className="w-28"
                     />
                   </div>

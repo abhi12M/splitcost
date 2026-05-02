@@ -9,7 +9,7 @@ import {
   ExpenseParticipantsRequest,
   ExpenseRequest,
 } from "@/lib/storage"
-import { ExpenseSchema } from "@/lib/validations/expense.schema"
+import { EXPENSE_DESCRIPTION_MAX, ExpenseSchema } from "@/lib/validations/expense.schema"
 import { CategoryKey, EXPENSE_CATEGORIES, SubcategoryId } from "../icons/CategoryIcons"
 import { formatAmount, formatDateForDB } from "../ui/formatters"
 import { SingleSelect } from "../ui/single-select"
@@ -110,7 +110,7 @@ export default function ExpenseFormMobile({
 
   useEffect(() => {
     if (hasSubmitted) validate();
-  }, [description, paidByUserId, amount, isMultiplePayers]);
+  }, [description, paidByUserId, amount, isMultiplePayers, payers]);
 
   useEffect(() => {
     calculateParticipants();
@@ -121,8 +121,9 @@ export default function ExpenseFormMobile({
     setHasSubmitted(true);
     const validation = validate();
     if (!validation.valid) {
-      const errorMessages = Object.values(validation.errors).filter(Boolean);
+      showValidationToast(validation.errors);
 
+      /*
       toast({
         title: "Missing required details",
         description: (
@@ -140,6 +141,7 @@ export default function ExpenseFormMobile({
         duration: Infinity,
         action: <ToastAction altText="OK">OK</ToastAction>,
       });
+      */
       return;
     };
 
@@ -163,8 +165,32 @@ export default function ExpenseFormMobile({
     description?: string;
     amount?: string;
     paidByUserId?: string;
+    payers?: string;
     split?: string;
   }>({});
+
+  const showValidationToast = (validationErrors: typeof errors) => {
+    const errorMessages = Object.values(validationErrors).filter(Boolean);
+    const hasCustomTotalsError = Boolean(validationErrors.split || validationErrors.payers);
+
+    toast({
+      title: hasCustomTotalsError ? "Whoops!" : "Missing required details",
+      description: (
+        <div className="space-y-1">
+          {errorMessages.map((msg, idx) => (
+            <div key={idx}>
+              {errorMessages.length > 1 && "\u2022 "}
+              {msg}
+            </div>
+          ))}
+        </div>
+      ),
+      position: "center",
+      hideClose: true,
+      duration: Infinity,
+      action: <ToastAction altText="OK">OK</ToastAction>,
+    });
+  };
 
   const validate = (from?: string) => {
     const result = ExpenseSchema.safeParse({ description, paidByUserId, amount, isMultiplePayers });
@@ -179,6 +205,7 @@ export default function ExpenseFormMobile({
         description: e.description?._errors?.[0] ?? "",
         amount: e.amount?._errors?.[0] ?? "",
         paidByUserId: e.paidByUserId?._errors?.[0] ?? paidByError,
+        payers: "",
         split: "",
       };
 
@@ -193,6 +220,7 @@ export default function ExpenseFormMobile({
         description: "",
         amount: "",
         paidByUserId: paidByError,
+        payers: "",
         split: "",
       };
 
@@ -206,8 +234,34 @@ export default function ExpenseFormMobile({
       description: "",
       amount: "",
       paidByUserId: "",
+      payers: "",
       split: "",
     };
+
+    if (isMultiplePayers) {
+      const totalPaidBy = payers.reduce(
+        (sum, payer) => sum + Number(payer.amount || 0),
+        0
+      );
+      const expenseTotal = Number(amount || 0);
+
+      if (expenseTotal !== totalPaidBy) {
+        const payersError = `Paid by total is ${formatAmount(
+          totalPaidBy,
+          currency
+        )} but expense is ${formatAmount(expenseTotal, currency)}. Please adjust paid by amounts to continue.`;
+
+        const newErrors = {
+          ...cleared,
+          payers: payersError,
+        };
+
+        setHasSubmitted(true);
+        setErrors(newErrors);
+
+        return { valid: false, errors: newErrors };
+      }
+    }
 
     // ---------- Custom split validation ----------
     const shouldValidateSplit = from !== "split-screen";
@@ -252,8 +306,9 @@ export default function ExpenseFormMobile({
   const handleOpenSlitScreen = () => {
     const validation = validate("split-screen");
     if (!validation.valid) {
-      const errorMessages = Object.values(validation.errors).filter(Boolean);
+      showValidationToast(validation.errors);
 
+      /*
       toast({
         title: "Missing required details",
         description: (
@@ -268,6 +323,7 @@ export default function ExpenseFormMobile({
         duration: Infinity,
         action: <ToastAction altText="OK">OK</ToastAction>,
       });
+      */
       return;
     };
     setShowSplit(true);
@@ -378,6 +434,7 @@ export default function ExpenseFormMobile({
               <Input
                 value={description}
                 placeholder="Description"
+                maxLength={EXPENSE_DESCRIPTION_MAX}
                 onChange={(e) => setDescription(e.target.value)}
                 className="rounded-none focus-visible:ring-1"
                 aria-invalid={!!errors.description}
@@ -413,6 +470,7 @@ export default function ExpenseFormMobile({
                 showHelper={false}
                 aria-invalid={!!errors.amount}
                 currency={currency}
+                formatOnBlur="number"
                 className="rounded-none focus-visible:ring-1"
               />
             </div>
@@ -424,7 +482,7 @@ export default function ExpenseFormMobile({
             <button
               type="button"
               onClick={() => setShowPaidBy(true)}
-              aria-invalid={!!errors.paidByUserId}
+              aria-invalid={!!(errors.paidByUserId || errors.payers)}
               className={cn(
                 "px-3 py-2.5 text-sm border border-border border-b-2 rounded-[5px] font-medium",
                 "aria-[invalid=true]:border-red-500 aria-[invalid=true]:border-b-red-600"
@@ -443,7 +501,16 @@ export default function ExpenseFormMobile({
             className="flex justify-center gap-2 items-center w-full"
           >
             <span className="text-sm text-muted-foreground">and split</span>
-            <span className="px-3 py-2.5 text-sm border border-border border-b-2 rounded-[5px] font-medium" onClick={() => handleOpenSlitScreen()}>{splitType == 'equal' ? "equally" : "unequally"}</span>
+            <span
+              aria-invalid={!!errors.split}
+              className={cn(
+                "px-3 py-2.5 text-sm border border-border border-b-2 rounded-[5px] font-medium",
+                errors.split && "border-red-500 border-b-red-600 text-red-600"
+              )}
+              onClick={() => handleOpenSlitScreen()}
+            >
+              {splitType == 'equal' ? "equally" : "unequally"}
+            </span>
           </button>
         </div>
       </div>

@@ -1,6 +1,30 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
 
+type BatchExpenseRow = {
+  amount: number | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+};
+
+function getLatestExpenseActivityAt(expenses: BatchExpenseRow[]) {
+  return expenses.reduce<string | null>((latest, expense) => {
+    const candidate = expense.updated_at ?? expense.created_at ?? null;
+
+    if (!candidate) {
+      return latest;
+    }
+
+    if (!latest) {
+      return candidate;
+    }
+
+    return new Date(candidate).getTime() > new Date(latest).getTime()
+      ? candidate
+      : latest;
+  }, null);
+}
+
 export async function POST(req: Request) {
   const { groupIds } = await req.json();
 
@@ -24,7 +48,9 @@ export async function POST(req: Request) {
       currency,
       created_at,
       expenses (
-        amount
+        amount,
+        created_at,
+        updated_at
       ),
       group_members!inner (
         user:users (
@@ -42,14 +68,34 @@ export async function POST(req: Request) {
     return NextResponse.json([], { status: 500 });
   }
 
-  const result = (data || []).map((row: any) => ({
-    id: row.id,
-    name: row.name,
-    currency: row.currency,
-    createdAt: row.created_at,
-    expenses: row.expenses,
-    members: row.group_members.map((gm: any) => gm.user.name),
-  }));
+  const result = (data || []).map((row: any) => {
+    const expenses = (row.expenses ?? []).map((expense: BatchExpenseRow) => ({
+      amount: Number(expense.amount ?? 0),
+      createdAt: expense.created_at ?? null,
+      updatedAt: expense.updated_at ?? null,
+    }));
+
+    return {
+      id: row.id,
+      name: row.name,
+      currency: row.currency,
+      createdAt: row.created_at,
+      expenses,
+      members: row.group_members.map((gm: any) => gm.user.name),
+      latestExpenseActivityAt: getLatestExpenseActivityAt(row.expenses ?? []),
+    };
+  });
+
+  result.sort((a, b) => {
+    const aTime = new Date(
+      a.latestExpenseActivityAt ?? a.createdAt
+    ).getTime();
+    const bTime = new Date(
+      b.latestExpenseActivityAt ?? b.createdAt
+    ).getTime();
+
+    return bTime - aTime;
+  });
 
   return NextResponse.json(result);
 }

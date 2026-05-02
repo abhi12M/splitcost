@@ -9,7 +9,7 @@ import { EXPENSE_CATEGORIES, type CategoryKey, type SubcategoryId } from "@/comp
 import { cn } from "@/lib/utils";
 import { detectCategoryFromDescription, ExpenseFormInterface, ExpenseParticipantsRequest, ExpenseRequest, type SplitType, UserInterface } from "@/lib/storage";
 import { Users } from "lucide-react";
-import { ExpenseSchema } from "@/lib/validations/expense.schema";
+import { EXPENSE_DESCRIPTION_MAX, ExpenseSchema } from "@/lib/validations/expense.schema";
 import { formatAmount, formatDateForDB } from "../ui/formatters";
 import { Textarea } from "../ui/textarea";
 import { SingleSelect } from "../ui/single-select";
@@ -332,6 +332,7 @@ export function ExpenseForm({
                 id="description"
                 placeholder="What is this for?"
                 value={description}
+                maxLength={EXPENSE_DESCRIPTION_MAX}
                 onChange={(e) => setDescription(e.target.value)}
                 aria-invalid={!!errors.description}
               />
@@ -417,6 +418,7 @@ export function ExpenseForm({
                 showHelper={false}
                 aria-invalid={!!errors.amount}
                 currency={currency}
+                formatOnBlur="number"
                 unstyled
               />
             </div>
@@ -624,6 +626,7 @@ export function ExpenseForm({
                             placeholder="1.00"
                             showHelper={false}
                             postfix={splitType === "percentage" ? "%" : undefined}
+                            formatOnBlur={splitType === "custom" ? "currency" : undefined}
                             value={splitType === "percentage" ? participant?.percent ?? "" : participant?.amount ?? ""}
                             onChange={(e) => {
                               updateParticipantValue(member.id, e.target.value ? Number(e.target.value) : null);
