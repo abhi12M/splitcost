@@ -16,11 +16,14 @@ import { SingleSelect } from "../ui/single-select";
 import { CURRENCIES } from "@/constants";
 import { InfoLabel } from "../ui/InfoLabel";
 import PaidBySheet from "./PaidBySheet";
+import { ExpenseAttachmentControl } from "./ExpenseAttachmentControl";
+import type { ExpenseAttachment } from "@/lib/expenseAttachments";
 
 interface ExpenseFormProps {
   members: UserInterface[];
   defaultCurrency?: string;
   initialData?: ExpenseFormInterface;
+  initialAttachment?: ExpenseAttachment | null;
   onSubmit: (data: ExpenseRequest) => void;
   submitLabel: string;
 }
@@ -34,6 +37,7 @@ export function ExpenseForm({
   members,
   defaultCurrency = "USD",
   initialData,
+  initialAttachment = null,
   onSubmit,
   submitLabel,
 }: ExpenseFormProps) {
@@ -59,6 +63,7 @@ export function ExpenseForm({
   const [isMultiplePayers, setIsMultiplePayers] = useState(hasInitialMultiplePayers);
   const [payers, setPayers] = useState<EditablePayer[]>(initialPayers);
   const [showPaidBy, setShowPaidBy] = useState(false);
+  const [attachment, setAttachment] = useState<ExpenseAttachment | null>(initialAttachment);
   const totalAmount = parseFloat(amount) || 0;
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const isFirstRender = useRef(true);
@@ -270,6 +275,7 @@ export function ExpenseForm({
       category: category || "uncategorized",
       subcategory: subcategory || "general",
       date: formatDateForDB(date),
+      attachment,
     });
   };
   const [errors, setErrors] = useState<{
@@ -646,6 +652,11 @@ export function ExpenseForm({
           </div>
         </div>
       </div>
+
+      <ExpenseAttachmentControl
+        attachment={attachment}
+        onChange={setAttachment}
+      />
 
       {/* Submit */}
       <div className="pt-3 border-t border-border">

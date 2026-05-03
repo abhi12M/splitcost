@@ -119,6 +119,7 @@ export type Database = {
       expenses: {
         Row: {
           amount: number
+          attachment_data_url: string | null
           category: string
           created_at: string
           created_by: string | null
@@ -134,6 +135,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          attachment_data_url?: string | null
           category: string
           created_at?: string
           created_by?: string | null
@@ -149,6 +151,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          attachment_data_url?: string | null
           category?: string
           created_at?: string
           created_by?: string | null
