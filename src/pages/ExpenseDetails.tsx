@@ -635,7 +635,7 @@ export default function ExpenseDetailsPage({
                 </div>
                 <div className="mt-2 space-y-1 text-xs text-muted-foreground">
                   {createdAtLabel ? <p>Added on {createdAtLabel}</p> : null}
-                  {updatedAtLabel ? <p>Updated on{updatedAtLabel}</p> : null}
+                  {updatedAtLabel ? <p>Updated on {updatedAtLabel}</p> : null}
                 </div>
               </div>
             </div>
