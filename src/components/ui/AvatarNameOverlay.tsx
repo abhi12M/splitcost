@@ -12,14 +12,18 @@ const overlayClass =
 export function AvatarNameOverlay({
   name,
   children,
+  disableMobileOverlay = false,
 }: {
   name: string;
   children: React.ReactNode;
+  disableMobileOverlay?: boolean;
 }) {
   const device = useDeviceType();
   const isMobile = device !== "desktop";
 
   if (isMobile) {
+    if (disableMobileOverlay) return <>{children}</>;
+
     return (
       <Popover>
         <PopoverTrigger asChild>{children}</PopoverTrigger>

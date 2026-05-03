@@ -61,7 +61,7 @@ export function ExpenseAttachmentControl({
     try {
       const nextAttachment = await readExpenseAttachmentFile(file);
       onChange(nextAttachment);
-      setIsViewerOpen(true);
+      setIsViewerOpen(false);
     } finally {
       setIsReadingFile(false);
     }

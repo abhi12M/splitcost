@@ -999,12 +999,18 @@ export default function GroupResponsesPage({
                                     <div className="min-w-0 flex-1">
                                       {/* DESCRIPTION + MOBILE EDIT */}
                                       <div className="flex items-center gap-2">
-                                        <SmartTooltip text={expense.description} />
+                                        <SmartTooltip
+                                          text={expense.description}
+                                          disableMobileTooltip
+                                        />
                                       </div>
 
                                       {/* PAID BY */}
                                       <div className="text-xs md:text-base text-muted-foreground mt-0.5 flex items-center gap-1">
-                                        <SmartTooltip text={getExpensePaidByLabel(expense)} />
+                                        <SmartTooltip
+                                          text={getExpensePaidByLabel(expense)}
+                                          disableMobileTooltip
+                                        />
                                         <span className="shrink-0">paid</span>
                                       </div>
 
@@ -1018,6 +1024,7 @@ export default function GroupResponsesPage({
                                         }
                                         className="mt-2"
                                         label=""
+                                        disableMobileTooltip
                                       />
 
                                     </div>

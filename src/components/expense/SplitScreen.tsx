@@ -305,6 +305,11 @@ export default function SplitScreen(props: SplitScreenProps) {
                 selectedTab: getNextTab(prev.selectedTab, "right"),
             }));
         },
+        onSwipedDown: ({ initial, deltaY }) => {
+            if (initial[1] <= 140 && deltaY > 70) {
+                onClose();
+            }
+        },
         preventScrollOnSwipe: true,
         trackTouch: true,
         delta: 40,
@@ -580,7 +585,7 @@ export default function SplitScreen(props: SplitScreenProps) {
     }
 
     return (
-        <div className="fixed inset-0 bg-background z-[60] flex flex-col">
+        <div {...swipeHandlers} className="fixed inset-0 bg-background z-[60] flex flex-col">
 
             {/* Header */}
             <div className={"fixed top-0 left-0 right-0 bg-background z-[70] touch-none overscroll-none"}>
@@ -628,7 +633,6 @@ export default function SplitScreen(props: SplitScreenProps) {
             {/* Scrollable area content participants */}
             <div
                 id="split-scroll-container"
-                {...swipeHandlers}
                 className="fixed left-0 right-0 overflow-y-auto overscroll-contain p-1 space-y-2"
                 style={{
                     top: 112,                 // header + tabs height

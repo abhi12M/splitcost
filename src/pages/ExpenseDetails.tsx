@@ -88,6 +88,34 @@ function formatSummaryName(name: string) {
   return `${trimmedFirstName} ${secondName.charAt(0).toUpperCase()}.`;
 }
 
+function getDateTimeMs(date?: string | Date | null) {
+  if (!date) return null;
+
+  const value = typeof date === "string" ? new Date(date) : date;
+  const time = value.getTime();
+
+  return Number.isNaN(time) ? null : time;
+}
+
+function shouldShowUpdatedAt(
+  createdAt?: string | Date | null,
+  updatedAt?: string | Date | null
+) {
+  const updatedAtMs = getDateTimeMs(updatedAt);
+
+  if (updatedAtMs === null) {
+    return false;
+  }
+
+  const createdAtMs = getDateTimeMs(createdAt);
+
+  if (createdAtMs === null) {
+    return true;
+  }
+
+  return Math.abs(updatedAtMs - createdAtMs) > 1000;
+}
+
 function calculateExpenseSettlements(
   members: EditExpenseInterface["group"]["members"],
   payers: { userId: string | null; amount: number }[],
@@ -157,8 +185,8 @@ function ExpenseDetailsSkeleton() {
           <Skeleton className="absolute bottom-[-24px] left-[5rem] h-16 w-16 rounded-md" />
         </header>
 
-        <main className="grid min-h-0 flex-1 grid-rows-[auto_1fr] gap-3 p-4 pt-10">
-          <section>
+        <main className="grid min-h-0 flex-1 grid-rows-[auto_1fr] gap-3 p-4 pt-6">
+          <section className="shrink-0">
             <div className="space-y-2">
               <Skeleton className="h-7 w-24" />
               <Skeleton className="h-9 w-36" />
@@ -171,8 +199,8 @@ function ExpenseDetailsSkeleton() {
             </div>
           </section>
 
-          <section className="grid min-h-0 gap-3 md:grid-cols-[1fr_0.85fr]">
-            <div className="min-h-0 rounded-lg border bg-card p-4">
+          <section className="grid shrink-0 gap-3 md:grid-cols-[1fr_0.85fr]">
+            <div className="rounded-lg border bg-card p-4">
               <div className="space-y-4">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-3">
@@ -304,7 +332,7 @@ export default function ExpenseDetailsPage({
         nextAttachment
       );
       setAttachment(savedAttachment);
-      setIsViewerOpen(Boolean(savedAttachment));
+      setIsViewerOpen(false);
     } catch (error) {
       console.error("save attachment failed:", error);
     } finally {
@@ -417,8 +445,15 @@ export default function ExpenseDetailsPage({
     amount: Number(participant.amount) || 0,
   }));
   const isImageAttachment = attachment?.type.startsWith("image/");
-  const createdAtLabel = formatDisplayDateTime(expense.createdAt);
-  const updatedAtLabel = formatDisplayDateTime(expense.updatedAt);
+  const createdAtLabel = getDateTimeMs(expense.createdAt) !== null
+    ? formatDisplayDateTime(expense.createdAt)
+    : "";
+  const updatedAtLabel = shouldShowUpdatedAt(
+    expense.createdAt,
+    expense.updatedAt
+  )
+    ? formatDisplayDateTime(expense.updatedAt)
+    : "";
   const attachmentActionButtonClass =
     "inline-flex h-10 w-10 items-center justify-center rounded-full bg-transparent text-foreground/70 transition-colors [-webkit-tap-highlight-color:transparent] hover:bg-transparent hover:text-foreground active:bg-transparent focus:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60 sm:hover:bg-muted";
   const attachmentActions = (
@@ -557,8 +592,8 @@ export default function ExpenseDetailsPage({
           </div>
         </header>
 
-        <main className="grid min-h-0 flex-1 grid-rows-[auto_1fr_auto] gap-3 p-4 pt-10">
-          <section>
+        <main className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4 pt-10">
+          <section className="shrink-0">
             <div className="flex items-start gap-3">
               {attachment && (
                 <button
@@ -581,8 +616,8 @@ export default function ExpenseDetailsPage({
                 </button>
               )}
 
-              <div className="min-w-0 flex-1 overflow-hidden">
-                <p className="break-words text-2xl font-semibold leading-tight">
+              <div className="min-w-0 flex-1">
+                <p className="whitespace-pre-wrap break-words text-2xl font-semibold leading-tight [overflow-wrap:anywhere]">
                   {expense.description}
                 </p>
                 <p className="mt-1 text-3xl font-semibold tracking-normal">
@@ -591,7 +626,7 @@ export default function ExpenseDetailsPage({
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <span className="inline-flex items-center gap-1">
                     <CalendarDays className="h-3.5 w-3.5" />
-                    {formatDisplayDate(expense.date)}
+                    Expense date {formatDisplayDate(expense.date)}
                   </span>
                   <span className="inline-flex items-center gap-1">
                     <Users className="h-3.5 w-3.5" />
@@ -600,14 +635,14 @@ export default function ExpenseDetailsPage({
                 </div>
                 <div className="mt-2 space-y-1 text-xs text-muted-foreground">
                   {createdAtLabel ? <p>Added on {createdAtLabel}</p> : null}
-                  {updatedAtLabel ? <p>Updated on {updatedAtLabel}</p> : null}
+                  {updatedAtLabel ? <p>Updated on{updatedAtLabel}</p> : null}
                 </div>
               </div>
             </div>
           </section>
 
-          <section className="grid min-h-0 gap-3 md:grid-cols-[1fr_0.85fr]">
-            <div className="min-h-0 rounded-lg border bg-card p-4">
+          <section className="grid shrink-0 gap-3 overflow-visible md:grid-cols-[1fr_0.85fr]">
+            <div className="h-auto overflow-visible rounded-lg border bg-card p-4">
               <div className="space-y-4">
                 <div className="space-y-3">
                   {payers.map((payer) => (
