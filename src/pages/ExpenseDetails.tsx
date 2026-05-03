@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -9,9 +9,8 @@ import {
   Check,
   ChevronDown,
   FileText,
-  ImageIcon,
+  ImagePlus,
   Loader2,
-  Paperclip,
   Pencil,
   Trash2,
   Users,
@@ -29,6 +28,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ExpenseAttachmentViewer } from "@/components/expense/ExpenseAttachmentViewer";
+import { Spinner } from "@/components/ui/Spinner";
 import {
   getCategoryIcon,
   EXPENSE_CATEGORIES,
@@ -49,13 +49,13 @@ import {
 import {
   deleteExpenseAttachment,
   ExpenseAttachment,
-  formatAttachmentSize,
   loadExpenseAttachment,
+  readExpenseAttachmentFile,
+  saveExpenseAttachment,
+  validateAttachmentFile,
 } from "@/lib/expenseAttachments";
-import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SingleSelect } from "@/components/ui/single-select";
-import { useDeviceType } from "@/hooks/useDeviceType";
 
 function memberName(
   members: EditExpenseInterface["group"]["members"],
@@ -238,7 +238,7 @@ export default function ExpenseDetailsPage({
   expenseId: string;
 }) {
   const router = useRouter();
-  const device = useDeviceType();
+  const attachmentInputRef = useRef<HTMLInputElement>(null);
   const [details, setDetails] = useState<EditExpenseInterface | null>(null);
   const [attachment, setAttachment] = useState<ExpenseAttachment | null>(null);
   const [loading, setLoading] = useState(true);
@@ -246,6 +246,8 @@ export default function ExpenseDetailsPage({
   const [isUpdatingCategory, setIsUpdatingCategory] = useState(false);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [isExpenseDeleteConfirmOpen, setIsExpenseDeleteConfirmOpen] = useState(false);
+  const [isAttachmentDeleteConfirmOpen, setIsAttachmentDeleteConfirmOpen] = useState(false);
+  const [attachmentSpinnerMessage, setAttachmentSpinnerMessage] = useState("");
   const headerIconButtonClass =
     "inline-flex h-10 w-10 items-center justify-center rounded-full bg-transparent text-foreground/70 transition-colors [-webkit-tap-highlight-color:transparent] hover:bg-transparent hover:text-foreground active:bg-transparent focus:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60 sm:hover:bg-background/40";
 
@@ -276,6 +278,52 @@ export default function ExpenseDetailsPage({
     } finally {
       setIsDeletingExpense(false);
       setIsExpenseDeleteConfirmOpen(false);
+    }
+  };
+
+  const handleAttachmentFileChange = async (
+    event: ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    const validationError = validateAttachmentFile(file);
+    if (validationError) {
+      return;
+    }
+
+    setAttachmentSpinnerMessage(
+      attachment ? "Updating attachment..." : "Uploading attachment..."
+    );
+
+    try {
+      const nextAttachment = await readExpenseAttachmentFile(file);
+      const savedAttachment = await saveExpenseAttachment(
+        expenseId,
+        nextAttachment
+      );
+      setAttachment(savedAttachment);
+      setIsViewerOpen(Boolean(savedAttachment));
+    } catch (error) {
+      console.error("save attachment failed:", error);
+    } finally {
+      setAttachmentSpinnerMessage("");
+    }
+  };
+
+  const handleDeleteAttachment = async () => {
+    setIsAttachmentDeleteConfirmOpen(false);
+    setAttachmentSpinnerMessage("Deleting attachment...");
+
+    try {
+      await deleteExpenseAttachment(expenseId);
+      setAttachment(null);
+      setIsViewerOpen(false);
+    } catch (error) {
+      console.error("delete attachment failed:", error);
+    } finally {
+      setAttachmentSpinnerMessage("");
     }
   };
 
@@ -344,7 +392,6 @@ export default function ExpenseDetailsPage({
   );
   const showCategoryPatch =
     expense.category === "uncategorized" && expense.subcategory === "general";
-  const isMobile = device === "mobile";
   const isSettlementExpense = expense.category === "settlement";
   const payers = expense.payers?.length
     ? expense.payers.map((payer) => ({
@@ -372,9 +419,46 @@ export default function ExpenseDetailsPage({
   const isImageAttachment = attachment?.type.startsWith("image/");
   const createdAtLabel = formatDisplayDateTime(expense.createdAt);
   const updatedAtLabel = formatDisplayDateTime(expense.updatedAt);
+  const attachmentActionButtonClass =
+    "inline-flex h-10 w-10 items-center justify-center rounded-full bg-transparent text-foreground/70 transition-colors [-webkit-tap-highlight-color:transparent] hover:bg-transparent hover:text-foreground active:bg-transparent focus:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60 sm:hover:bg-muted";
+  const attachmentActions = (
+    <>
+      <button
+        type="button"
+        onClick={() => attachmentInputRef.current?.click()}
+        aria-label={attachment ? "Replace attachment" : "Upload attachment"}
+        className={attachmentActionButtonClass}
+        disabled={Boolean(attachmentSpinnerMessage)}
+      >
+        {attachment ? (
+          <Pencil className="h-5 w-5" />
+        ) : (
+          <ImagePlus className="h-5 w-5" />
+        )}
+      </button>
+      {attachment && (
+        <button
+          type="button"
+          onClick={() => setIsAttachmentDeleteConfirmOpen(true)}
+          aria-label="Delete attachment"
+          className={attachmentActionButtonClass}
+          disabled={Boolean(attachmentSpinnerMessage)}
+        >
+          <Trash2 className="h-5 w-5" />
+        </button>
+      )}
+    </>
+  );
 
   return (
     <div className="h-dvh overflow-hidden bg-background text-foreground">
+      <input
+        ref={attachmentInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleAttachmentFileChange}
+      />
       <div className="mx-auto flex h-full max-w-3xl flex-col">
         <header
           className="relative shrink-0 border-b px-3 sm:px-4"
@@ -389,6 +473,17 @@ export default function ExpenseDetailsPage({
               <ArrowLeft className="h-5 w-5" />
             </Link>
             <div className="flex items-center gap-1 text-foreground/70">
+              {!attachment && (
+                <button
+                  type="button"
+                  onClick={() => attachmentInputRef.current?.click()}
+                  aria-label="Upload attachment"
+                  className={headerIconButtonClass}
+                  disabled={Boolean(attachmentSpinnerMessage)}
+                >
+                  <ImagePlus className="h-5 w-5" />
+                </button>
+              )}
               <Link
                 href={`/group/${groupId}/edit-expense/${expenseId}`}
                 aria-label="Edit expense"
@@ -473,11 +568,15 @@ export default function ExpenseDetailsPage({
                   onClick={() => setIsViewerOpen(true)}
                 >
                   <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-sm border bg-black/5">
-                    <img
-                      src={attachment.url}
-                      alt={attachment.name}
-                      className="h-full w-full object-cover"
-                    />
+                    {isImageAttachment ? (
+                      <img
+                        src={attachment.url}
+                        alt={attachment.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <FileText className="h-6 w-6 text-muted-foreground" />
+                    )}
                   </div>
                 </button>
               )}
@@ -584,49 +683,6 @@ export default function ExpenseDetailsPage({
               </div>
             </div>
 
-            <div className={cn("min-h-0 rounded-lg border bg-card p-3", isMobile && "hidden md:block")}>
-              <div className="mb-3 flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 text-sm font-semibold">
-                  <Paperclip className="h-4 w-4 text-primary" />
-                  Attachment
-                </div>
-              </div>
-
-              {attachment ? (
-                <button
-                  type="button"
-                  className="block h-full min-h-[9rem] w-full text-left"
-                  onClick={() => setIsViewerOpen(true)}
-                >
-                  <div className="flex h-full min-h-[9rem] flex-col items-center justify-center overflow-hidden rounded-md border bg-black/5">
-                    <img
-                      src={attachment.url}
-                      alt={attachment.name}
-                      className="h-full max-h-[32dvh] w-full object-contain"
-                    />
-                  </div>
-                  <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
-                    {isImageAttachment ? (
-                      <ImageIcon className="h-3.5 w-3.5" />
-                    ) : (
-                      <FileText className="h-3.5 w-3.5" />
-                    )}
-                    <span className="min-w-0 flex-1 truncate">{attachment.name}</span>
-                    <span>{formatAttachmentSize(attachment.size) || "Tap to open"}</span>
-                  </div>
-                </button>
-              ) : (
-                <div className="flex h-full min-h-[9rem] flex-col items-center justify-center rounded-md border border-dashed text-center text-sm text-muted-foreground">
-                  <ImageIcon className="mb-2 h-7 w-7" />
-                  <p>No image attached</p>
-                  <Button asChild variant="link" size="sm" className="mt-1">
-                    <Link href={`/group/${groupId}/edit-expense/${expenseId}`}>
-                      Add one
-                    </Link>
-                  </Button>
-                </div>
-              )}
-            </div>
           </section>
 
         </main>
@@ -635,7 +691,33 @@ export default function ExpenseDetailsPage({
           attachment={attachment}
           open={isViewerOpen && Boolean(attachment)}
           onOpenChange={setIsViewerOpen}
+          actions={attachmentActions}
         />
+        <AlertDialog
+          open={isAttachmentDeleteConfirmOpen}
+          onOpenChange={setIsAttachmentDeleteConfirmOpen}
+        >
+          <AlertDialogContent className="max-w-[290px] rounded-2xl">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-lg">Delete image?</AlertDialogTitle>
+              <AlertDialogDescription className="text-xs">
+                This will permanently remove the attached image from this expense.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="mt-4 flex-row gap-2">
+              <AlertDialogCancel className="mt-0 flex-1 rounded-xl border-none bg-muted hover:bg-muted/80">
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteAttachment}
+                disabled={Boolean(attachmentSpinnerMessage)}
+                className="flex-1 rounded-xl bg-destructive text-white hover:bg-destructive/90"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
         <AlertDialog
           open={isExpenseDeleteConfirmOpen}
           onOpenChange={setIsExpenseDeleteConfirmOpen}
@@ -662,6 +744,11 @@ export default function ExpenseDetailsPage({
           </AlertDialogContent>
         </AlertDialog>
       </div>
+      <Spinner
+        show={Boolean(attachmentSpinnerMessage)}
+        className="z-[100]"
+        message={attachmentSpinnerMessage}
+      />
     </div>
   );
 }

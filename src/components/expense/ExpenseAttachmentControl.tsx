@@ -105,7 +105,7 @@ export function ExpenseAttachmentControl({
       <input
         ref={inputRef}
         type="file"
-        accept="image/*,application/pdf"
+        accept="image/*"
         className="hidden"
         onChange={handleFileChange}
       />
