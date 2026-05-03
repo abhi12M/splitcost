@@ -1,3 +1,4 @@
+import * as React from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useBackButtonClose } from "@/hooks/useBackButtonClose";
 import { Toast, ToastClose, ToastDescription, ToastProvider, ToastTitle, ToastViewport } from "@/components/ui/toast";
@@ -17,6 +18,26 @@ export function Toaster() {
     if (openToast) dismiss(openToast.id);
   });
 
+  React.useEffect(() => {
+    if (!openToast) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target;
+
+      if (target instanceof Element && target.closest("[data-app-toast]")) {
+        return;
+      }
+
+      dismiss(openToast.id);
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown, true);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown, true);
+    };
+  }, [dismiss, openToast]);
+
   const grouped = toasts.reduce((acc, t) => {
     const pos = t.position ?? "top-right"
     acc[pos] ??= []
@@ -29,7 +50,7 @@ export function Toaster() {
       {Object.entries(grouped).map(([pos, items]) => (
         <ToastViewport key={pos} className={`${positionClasses[pos]} z-[100]`}>
           {items.map(({ id, title, description, action, hideClose, ...props }) => (
-            <Toast key={id} {...props}>
+            <Toast key={id} data-app-toast="" {...props}>
               <div className="grid min-w-0 gap-1">
                 {title && <ToastTitle>{title}</ToastTitle>}
                 {description && <ToastDescription>{description}</ToastDescription>}

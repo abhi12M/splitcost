@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { detectCategoryFromDescription, ExpenseFormInterface, ExpenseParticipantsRequest, ExpenseRequest, type SplitType, UserInterface } from "@/lib/storage";
 import { Users } from "lucide-react";
 import { EXPENSE_DESCRIPTION_MAX, ExpenseSchema } from "@/lib/validations/expense.schema";
-import { formatAmount, formatDateForDB } from "../ui/formatters";
+import { formatAmount, formatDateForDB, getCurrencyDifference, getRoundedDifference } from "../ui/formatters";
 import { Textarea } from "../ui/textarea";
 import { SingleSelect } from "../ui/single-select";
 import { CURRENCIES } from "@/constants";
@@ -80,7 +80,10 @@ export function ExpenseForm({
 
 
     const target = splitType === "percentage" ? 100 : totalAmount;
-    const diff = target - currentTotal;
+    const diff =
+      splitType === "percentage"
+        ? getRoundedDifference(target, currentTotal)
+        : getCurrencyDifference(target, currentTotal);
 
     return {
       isValid: Math.abs(diff) < 0.01,
@@ -259,7 +262,7 @@ export function ExpenseForm({
     setHasSubmitted(true);
     const isValid = validate();
     if (!isValid) return; // STOP submit
-    if ((splitType == 'custom' || splitType == 'percentage') && validationState.diff !== 0) return;
+    if ((splitType == 'custom' || splitType == 'percentage') && !validationState.isValid) return;
     onSubmit({
       description,
       amount: parseFloat(amount),

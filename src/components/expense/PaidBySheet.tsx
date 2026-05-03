@@ -5,7 +5,7 @@ import { ArrowLeft, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "../ui/UserAvatar";
 import { Input } from "../ui/input";
-import { formatAmount } from "../ui/formatters";
+import { formatAmount, getCurrencyDifference } from "../ui/formatters";
 import { createPortal } from "react-dom";
 import { useKeyboardLayout } from "@/hooks/useKeyboardOffset";
 import { toast } from "@/hooks/use-toast";
@@ -88,9 +88,9 @@ export default function PaidBySheet({
     (s, p) => s + Number(p.amount || 0),
     0
   );
-  const difference = expenseAmount - payersTotal;
-  const isOver = payersTotal > expenseAmount;
-  const isExact = payersTotal === expenseAmount && expenseAmount > 0;
+  const difference = getCurrencyDifference(expenseAmount, payersTotal);
+  const isOver = difference < 0;
+  const isExact = difference === 0 && expenseAmount > 0;
 
   const updatePayerAmount = (userId: string, value: number | null) => {
     setLocalPayers((prev) =>
@@ -139,7 +139,7 @@ export default function PaidBySheet({
                 onClick={() => {
                   const validPayers = localPayers.filter((p) => p.amount && p.amount > 0);
                   const total = validPayers.reduce((s, p) => s + Number(p.amount || 0), 0);
-                  const diff = expenseAmount - total;
+                  const diff = getCurrencyDifference(expenseAmount, total);
 
                   if (diff !== 0) {
                     const totalFormatted = formatAmount(expenseAmount, currency);

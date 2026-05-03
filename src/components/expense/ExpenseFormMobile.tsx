@@ -11,7 +11,7 @@ import {
 } from "@/lib/storage"
 import { EXPENSE_DESCRIPTION_MAX, ExpenseSchema } from "@/lib/validations/expense.schema"
 import { CategoryKey, EXPENSE_CATEGORIES, SubcategoryId } from "../icons/CategoryIcons"
-import { formatAmount, formatDateForDB } from "../ui/formatters"
+import { formatAmount, formatDateForDB, getCurrencyDifference } from "../ui/formatters"
 import { SingleSelect } from "../ui/single-select"
 import { CURRENCIES } from "@/constants"
 import Link from "next/link"
@@ -251,7 +251,7 @@ export default function ExpenseFormMobile({
       );
       const expenseTotal = Number(amount || 0);
 
-      if (expenseTotal !== totalPaidBy) {
+      if (getCurrencyDifference(expenseTotal, totalPaidBy) !== 0) {
         const payersError = `Paid by total is ${formatAmount(
           totalPaidBy,
           currency
@@ -280,7 +280,7 @@ export default function ExpenseFormMobile({
 
       const expenseTotal = Number(amount || 0);
 
-      if (expenseTotal !== totalCustomValue) {
+      if (getCurrencyDifference(expenseTotal, totalCustomValue) !== 0) {
         const splitError = `Split total is ${formatAmount(
           totalCustomValue,
           currency
