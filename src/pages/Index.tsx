@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import { ArrowRight, Plus, Users } from "lucide-react";
 
 import { Layout } from "@/components/layout/Layout";
@@ -30,19 +29,6 @@ type HomeGroup = GroupOverviewItemInterface & {
   expenseCount?: number;
   updatedAt?: string | null;
   latestExpenseActivityAt?: string | null;
-};
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 },
 };
 
 const features = [
@@ -192,20 +178,10 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
       {!adminMode && (
         <section className="gradient-hero py-16 md:py-[3rem]">
           <div className="container">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="max-w-3xl mx-auto text-center"
-            >
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", delay: 0.2 }}
-                className="flex justify-center mb-6"
-              >
+            <div className="max-w-3xl mx-auto text-center">
+              <div className="flex justify-center mb-6">
                 <BrandIcon className="w-20 h-20" />
-              </motion.div>
+              </div>
 
               <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4 text-balance">
                 Split expenses with friends,
@@ -234,12 +210,12 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
                 </Button>
                 <Button asChild variant="outline" size="lg" className="text-base">
                   <Link href="/faq">
-                    Learn More
+                    Learn How Splitcost Works
                     <ArrowRight className="w-5 h-5" />
                   </Link>
                 </Button>
               </div>
-            </motion.div>
+            </div>
           </div>
         </section>
       )}
@@ -291,12 +267,7 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
               )}
             </div>
 
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
-            >
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {groups.map((group) => {
                 const IconComponent = getGroupIcon(group.name);
                 const totalExpenses =
@@ -304,9 +275,8 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
                   group?.expenses?.reduce((sum, expense) => sum + (expense?.amount || 0), 0);
 
                 return (
-                  <motion.div
+                  <div
                     key={group.id}
-                    variants={itemVariants}
                     onClick={() =>
                       router.push(
                         adminMode
@@ -364,12 +334,12 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
                         </div>
                       </CardContent>
                     </Card>
-                  </motion.div>
+                  </div>
                 );
               })}
 
               {!adminMode && (
-                <motion.div variants={itemVariants}>
+                <div>
                   <Link href="/create-group">
                     <Card
                       hover
@@ -388,9 +358,9 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
                       </CardContent>
                     </Card>
                   </Link>
-                </motion.div>
+                </div>
               )}
-            </motion.div>
+            </div>
           </div>
         </section>
       )}
@@ -410,15 +380,9 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
               </p>
             </div>
 
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              className="grid grid-cols-1 md:grid-cols-3 gap-6"
-            >
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {features.map((feature, index) => (
-                <motion.div key={index} variants={itemVariants}>
+                <div key={index}>
                   <Card className="text-center h-full">
                     <CardContent className="pt-8">
                       <div className="w-14 h-14 rounded-2xl gradient-primary flex items-center justify-center mx-auto mb-5">
@@ -432,9 +396,9 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
                       </p>
                     </CardContent>
                   </Card>
-                </motion.div>
+                </div>
               ))}
-            </motion.div>
+            </div>
           </div>
         </section>
       )}
@@ -493,10 +457,10 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
               ].map((step, index) => (
                 <Card key={step} className="h-full">
                   <CardContent className="pt-6 text-center">
-                    <p className="text-sm font-semibold text-primary mb-2">
+                    <p className="text-sm font-semibold text-foreground mb-2">
                       Step {index + 1}
                     </p>
-                    <p className="text-sm text-muted-foreground">{step}</p>
+                    <p className="text-sm text-foreground">{step}</p>
                   </CardContent>
                 </Card>
               ))}

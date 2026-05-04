@@ -25,8 +25,8 @@ export function Footer() {
             </p>
           </div>
 
-          <div>
-            <h4 className="font-semibold text-foreground mb-4">Product</h4>
+          <nav aria-label="Product links">
+            <p className="font-semibold text-foreground mb-4">Product</p>
             <ul className="space-y-2.5">
               <li>
                 <Link
@@ -45,10 +45,10 @@ export function Footer() {
                 </Link>
               </li>
             </ul>
-          </div>
+          </nav>
 
-          <div>
-            <h4 className="font-semibold text-foreground mb-4">Legal</h4>
+          <nav aria-label="Legal links">
+            <p className="font-semibold text-foreground mb-4">Legal</p>
             <ul className="space-y-2.5">
               <li>
                 <Link
@@ -67,7 +67,7 @@ export function Footer() {
                 </Link>
               </li>
             </ul>
-          </div>
+          </nav>
         </div>
 
         <div className="mt-8 pt-8 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4">
