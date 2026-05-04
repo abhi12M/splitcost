@@ -53,6 +53,7 @@ type BuildMetadataArgs = {
   description: string;
   path: string;
   noIndex?: boolean;
+  keywords?: string[];
 };
 
 export function buildMetadata({
@@ -60,6 +61,7 @@ export function buildMetadata({
   description,
   path,
   noIndex = false,
+  keywords,
 }: BuildMetadataArgs): Metadata {
   const canonicalPath = normalizePath(path);
   const canonicalUrl = getCanonicalUrl(canonicalPath);
@@ -67,9 +69,9 @@ export function buildMetadata({
   return {
     title,
     description,
-    keywords: SITE_KEYWORDS,
+    keywords: keywords ?? SITE_KEYWORDS,
     alternates: {
-      canonical: canonicalPath,
+      canonical: canonicalUrl,
     },
     robots: noIndex
       ? {

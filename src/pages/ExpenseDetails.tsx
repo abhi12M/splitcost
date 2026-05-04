@@ -1,6 +1,7 @@
 "use client";
 
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -604,10 +605,13 @@ export default function ExpenseDetailsPage({
                 >
                   <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-sm border bg-black/5">
                     {isImageAttachment ? (
-                      <img
+                      <Image
                         src={attachment.url}
                         alt={attachment.name}
+                        width={56}
+                        height={56}
                         className="h-full w-full object-cover"
+                        unoptimized
                       />
                     ) : (
                       <FileText className="h-6 w-6 text-muted-foreground" />

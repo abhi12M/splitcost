@@ -8,8 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { GroupForm } from "@/components/group/GroupForm";
 import { createGroup } from "@/lib/storage";
-import { getEncryptedItem, setEncryptedItem } from "@/lib/localStorage";
+import { getEncryptedItem, migrateLocalStorageKey, setEncryptedItem } from "@/lib/localStorage";
 import { LOCAL_CURRENCY_KEY, LOCAL_GROUPS_KEY } from "@/lib/constants";
+
+if (typeof window !== "undefined") {
+  migrateLocalStorageKey("my_currecny", LOCAL_CURRENCY_KEY);
+}
 
 export default function CreateGroupPage() {
   const router = useRouter();

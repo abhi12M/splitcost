@@ -12,6 +12,21 @@ const getEncryptedKey = (key: string): string => CryptoJS.SHA256(key).toString()
 const getPrimaryStorageKey = (key: string): string =>
   isProduction ? getEncryptedKey(key) : key;
 
+
+export const migrateLocalStorageKey = (oldKey: string, newKey: string): void => {
+  try {
+    const oldStorageKey = getPrimaryStorageKey(oldKey);
+    const newStorageKey = getPrimaryStorageKey(newKey);
+    const oldValue = localStorage.getItem(oldStorageKey);
+    const newValue = localStorage.getItem(newStorageKey);
+    if (oldValue !== null && newValue === null) {
+      localStorage.setItem(newStorageKey, oldValue);
+      localStorage.removeItem(oldStorageKey);
+    }
+  } catch {
+  }
+};
+
 const encrypt = (value: unknown): string => {
   return CryptoJS.AES.encrypt(
     JSON.stringify(value),
