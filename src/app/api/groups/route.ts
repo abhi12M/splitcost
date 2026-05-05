@@ -2,89 +2,16 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
 
 export async function GET() {
-  const { data, error } = await supabaseAdmin
-    .from("groups")
-    .select(`
-      id,
-      name,
-      currency,
-      created_at,
-      updated_at,
-      group_members (
-        is_active,
-        users ( name )
-      ),
-      expenses (
-        amount,
-        created_at,
-        updated_at
-      )
-    `)
-    .order("created_at", { ascending: false });
+  const { data, error } = await (supabaseAdmin as any).rpc("load_group_summaries", {
+    p_group_ids: null,
+  });
 
   if (error) {
     console.error("loadGroups error:", error);
     return NextResponse.json({ error: "Failed to load groups" }, { status: 400 });
   }
 
-  const result = (data ?? []).map((group: any) => {
-    const activeMembers = (group.group_members ?? []).filter((m: any) => m.is_active);
-    const members = activeMembers
-      .map((m: any) => m.users?.name)
-      .filter((name: string | undefined): name is string => Boolean(name));
-
-    const expenses = group.expenses ?? [];
-    const totalExpenses = expenses.reduce(
-      (sum: number, expense: { amount: number | null }) => sum + Number(expense.amount ?? 0),
-      0
-    );
-    const latestExpenseActivityAt = expenses.reduce(
-      (
-        latest: string | null,
-        expense: { created_at?: string | null; updated_at?: string | null }
-      ) => {
-        const candidate = expense.updated_at ?? expense.created_at ?? null;
-        if (!candidate) {
-          return latest;
-        }
-
-        if (!latest) {
-          return candidate;
-        }
-
-        return new Date(candidate).getTime() > new Date(latest).getTime()
-          ? candidate
-          : latest;
-      },
-      null
-    );
-
-    return {
-      id: group.id,
-      name: group.name,
-      currency: group.currency,
-      createdAt: group.created_at,
-      updatedAt: group.updated_at,
-      members,
-      memberCount: members.length,
-      expenseCount: expenses.length,
-      totalExpenses,
-      latestExpenseActivityAt,
-    };
-  });
-
-  result.sort((a, b) => {
-    const aTime = new Date(
-      a.latestExpenseActivityAt ?? a.updatedAt ?? a.createdAt
-    ).getTime();
-    const bTime = new Date(
-      b.latestExpenseActivityAt ?? b.updatedAt ?? b.createdAt
-    ).getTime();
-
-    return bTime - aTime;
-  });
-
-  return NextResponse.json(result);
+  return NextResponse.json(data ?? []);
 }
 
 export async function POST(req: Request) {

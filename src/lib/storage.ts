@@ -154,12 +154,17 @@ export interface GroupOverviewItemInterface {//landing page
   name: string;
   currency: string;
   createdAt: string;
-  expenses: {
+  updatedAt?: string | null;
+  expenses?: {
     amount: number;
     createdAt?: string | null;
     updatedAt?: string | null;
   }[];
   members: string[];
+  memberCount?: number;
+  expenseCount?: number;
+  totalExpenses?: number;
+  latestExpenseActivityAt?: string | null;
 }
 export interface UserInterface {
   id: string;

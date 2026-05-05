@@ -272,7 +272,8 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
                 const IconComponent = getGroupIcon(group.name);
                 const totalExpenses =
                   group.totalExpenses ??
-                  group?.expenses?.reduce((sum, expense) => sum + (expense?.amount || 0), 0);
+                  group?.expenses?.reduce((sum, expense) => sum + (expense?.amount || 0), 0) ??
+                  0;
 
                 return (
                   <div
