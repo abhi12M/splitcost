@@ -4,36 +4,44 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Trash2, Loader2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ExpenseForm } from "@/components/expense/ExpenseForm";
-import { updateExpense, deleteExpense, GroupResponse, editExpense, ExpenseFormInterface } from "@/lib/storage";
-import { useToast } from "@/hooks/use-toast";
+import { updateExpense, GroupResponse, editExpense, ExpenseFormInterface } from "@/lib/storage";
 import ExpenseFormMobile from "@/components/expense/ExpenseFormMobile";
 import { ExpenseFormSkeleton } from "@/components/expense/ExpenseFormSkeleton";
 import { Spinner } from "@/components/ui/Spinner";
+import {
+  ExpenseAttachment,
+  loadExpenseAttachment,
+  saveExpenseAttachment,
+} from "@/lib/expenseAttachments";
 
 export default function EditExpensePage({ groupId, expenseId }: { groupId: string; expenseId: string }) {
   const router = useRouter();
-  const { toast } = useToast();
   const [group, setGroup] = useState<GroupResponse | undefined>();
   const [expense, setExpense] = useState<ExpenseFormInterface | undefined>();
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [attachment, setAttachment] = useState<ExpenseAttachment | null>(null);
 
   useEffect(() => {
     if (!groupId || !expenseId) return;
     setLoading(true);
 
     editExpense(expenseId)
-      .then((details) => {
+      .then(async (details) => {
         if (!details) return;
 
         setGroup(details.group);
         setExpense(details.expense);
+        const storedAttachment = await loadExpenseAttachment(
+          expenseId,
+          details.expense.attachmentDataUrl
+        );
+        setAttachment(storedAttachment);
       })
       .finally(() => setLoading(false));
   }, [groupId, expenseId]);
@@ -61,6 +69,10 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
     setIsSubmitting(true);
     try {
       await updateExpense(groupId!, expenseId!, data);
+      if (data.attachment || attachment) {
+        const nextAttachment = await saveExpenseAttachment(expenseId!, data.attachment);
+        setAttachment(nextAttachment);
+      }
       // toast({
       //   title: "Expense updated",
       //   description: "Your changes have been saved",
@@ -73,25 +85,6 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
       //   variant: "destructive",
       // });
       setIsSubmitting(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    setIsDeleting(true);
-    try {
-      await deleteExpense(expenseId!);
-      toast({
-        title: "Expense deleted",
-        description: "The expense has been removed",
-      });
-      router.push(`/group/${groupId}`);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete expense",
-        variant: "destructive",
-      });
-      setIsDeleting(false);
     }
   };
 
@@ -115,19 +108,6 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
                       <CardTitle className="text-xl">Edit Expense</CardTitle>
                       <CardDescription>Modify the expense details</CardDescription>
                     </div>
-                    {/* <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                      onClick={handleDelete}
-                      disabled={isDeleting}
-                    >
-                      {isDeleting ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                      ) : (
-                        <Trash2 className="w-5 h-5" />
-                      )}
-                    </Button> */}
                   </div>
                 </CardHeader>
 
@@ -138,6 +118,7 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
                     initialData={{
                       ...expense
                     }}
+                    initialAttachment={attachment}
                     onSubmit={handleSubmit}
                     submitLabel={isSubmitting ? "Saving..." : "Save Changes"}
                   />
@@ -155,6 +136,7 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
           initialData={{
             ...expense
           }}
+          initialAttachment={attachment}
           onSubmit={handleSubmit}
         />
       </div>

@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { UserAvatar } from "../ui/UserAvatar";
 import { Input } from "../ui/input";
 import { ExpenseParticipantsRequest, SplitType, UserInterface } from "@/lib/storage";
-import { formatAmount } from "../ui/formatters";
+import { formatAmount, getCurrencyDifference, getRoundedDifference } from "../ui/formatters";
 import { useKeyboardLayout } from "@/hooks/useKeyboardOffset";
 import { useSwipeable } from "react-swipeable";
 import { toast } from "@/hooks/use-toast";
@@ -232,7 +232,7 @@ export function buildSplitScreenVM(params: {
         footer: {
             selected: {
                 totalValue: customTotal,
-                difference: (totalAmount - customTotal)
+                difference: getCurrencyDifference(totalAmount, customTotal)
             },
         },
     };
@@ -275,7 +275,7 @@ export function buildSplitScreenVM(params: {
         footer: {
             selected: {
                 totalValue: percentTotal,
-                difference: 100 - percentTotal
+                difference: getRoundedDifference(100, percentTotal)
             },
         },
     };
@@ -304,6 +304,11 @@ export default function SplitScreen(props: SplitScreenProps) {
                 ...prev,
                 selectedTab: getNextTab(prev.selectedTab, "right"),
             }));
+        },
+        onSwipedDown: ({ initial, deltaY }) => {
+            if (initial[1] <= 140 && deltaY > 70) {
+                onClose();
+            }
         },
         preventScrollOnSwipe: true,
         trackTouch: true,
@@ -447,7 +452,7 @@ export default function SplitScreen(props: SplitScreenProps) {
                             ...tab.footer,
                             selected: {
                                 totalValue: total,
-                                difference: ((amount || 0) - total)
+                                difference: getCurrencyDifference(amount || 0, total)
                             }
                         }
                     }
@@ -480,7 +485,7 @@ export default function SplitScreen(props: SplitScreenProps) {
                         ...tab, members, footer: {
                             selected: {
                                 totalValue: total,
-                                difference: 100 - total
+                                difference: getRoundedDifference(100, total)
                             }
                         }
                     }
@@ -580,7 +585,7 @@ export default function SplitScreen(props: SplitScreenProps) {
     }
 
     return (
-        <div className="fixed inset-0 bg-background z-[60] flex flex-col">
+        <div {...swipeHandlers} className="fixed inset-0 bg-background z-[60] flex flex-col">
 
             {/* Header */}
             <div className={"fixed top-0 left-0 right-0 bg-background z-[70] touch-none overscroll-none"}>
@@ -628,7 +633,6 @@ export default function SplitScreen(props: SplitScreenProps) {
             {/* Scrollable area content participants */}
             <div
                 id="split-scroll-container"
-                {...swipeHandlers}
                 className="fixed left-0 right-0 overflow-y-auto overscroll-contain p-1 space-y-2"
                 style={{
                     top: 112,                 // header + tabs height
@@ -787,7 +791,7 @@ export default function SplitScreen(props: SplitScreenProps) {
                 {activeTab.id === "custom" && (() => {
                     const { totalValue, difference } = activeTab.footer.selected
                     const limit = amount || 0
-                    const isOver = totalValue > limit
+                    const isOver = difference < 0
 
                     return (
                         <div className="text-sm text-center">
@@ -797,7 +801,7 @@ export default function SplitScreen(props: SplitScreenProps) {
                             <div
                                 className={cn(
                                     "font-medium",
-                                    totalValue === limit && "text-primary",
+                                    difference === 0 && "text-primary",
                                     isOver && "text-red-500"
                                 )}
                             >
@@ -810,7 +814,7 @@ export default function SplitScreen(props: SplitScreenProps) {
                 {activeTab.id === "percentage" && (() => {
                     const { totalValue, difference } = activeTab.footer.selected
                     const limit = 100
-                    const isOver = totalValue > limit
+                    const isOver = difference < 0
 
                     return (
                         <div className="text-sm text-center">
@@ -820,7 +824,7 @@ export default function SplitScreen(props: SplitScreenProps) {
                             <div
                                 className={cn(
                                     "font-medium",
-                                    totalValue === limit && "text-primary",
+                                    difference === 0 && "text-primary",
                                     isOver && "text-red-500"
                                 )}
                             >

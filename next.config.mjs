@@ -3,6 +3,9 @@ const nextConfig = {
   reactStrictMode: true,
   compress: true,
   poweredByHeader: false,
+  experimental: {
+    optimizeCss: true,
+  },
   async headers() {
     return [
       {
@@ -47,6 +50,24 @@ const nextConfig = {
           {
             key: "Cache-Control",
             value: "public, max-age=86400, must-revalidate",
+          },
+        ],
+      },
+      {
+        source: "/icon-192.png",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=604800, stale-while-revalidate=86400",
+          },
+        ],
+      },
+      {
+        source: "/icon-512.png",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=604800, stale-while-revalidate=86400",
           },
         ],
       },

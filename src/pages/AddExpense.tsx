@@ -11,13 +11,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ExpenseForm } from "@/components/expense/ExpenseForm";
 import { getGroup, addExpense, GroupResponse } from "@/lib/storage";
-import { useToast } from "@/hooks/use-toast";
 import ExpenseFormMobile from "@/components/expense/ExpenseFormMobile";
 import { ExpenseFormSkeleton } from "@/components/expense/ExpenseFormSkeleton";
+import { saveExpenseAttachment } from "@/lib/expenseAttachments";
 
 export default function AddExpensePage({ groupId }: { groupId: string }) {
   const router = useRouter();
-  const { toast } = useToast();
   const [group, setGroup] = useState<GroupResponse | undefined>();
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -60,7 +59,10 @@ export default function AddExpensePage({ groupId }: { groupId: string }) {
   const handleSubmit = async (data: Parameters<typeof addExpense>[1]) => {
     setIsSubmitting(true);
     try {
-      await addExpense(groupId!, data);
+      const expense = await addExpense(groupId!, data);
+      if (expense?.id && data.attachment) {
+        await saveExpenseAttachment(expense.id, data.attachment);
+      }
       // toast({
       //   title: "Expense added",
       //   description: "Your expense has been saved",

@@ -2,8 +2,10 @@ import type { MetadataRoute } from "next";
 
 import { getCanonicalUrl } from "@/lib/seo";
 
+const BUILD_DATE = new Date();
+
 export default function sitemap(): MetadataRoute.Sitemap {
-  const now = new Date();
+  const now = BUILD_DATE;
 
   return [
     {

@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import {
   ArrowLeft,
   Plus,
@@ -40,7 +40,6 @@ import {
 } from "@/components/icons/CategoryIcons";
 import {
   addExpense,
-  deleteExpense,
   ExpenseRequest,
   GroupDashboardInterface,
   loadGroupDetails,
@@ -53,7 +52,6 @@ import { getEncryptedItem, setEncryptedItem } from "@/lib/localStorage";
 import { ADMIN_BASE_PATH, LOCAL_GROUPS_KEY } from "@/lib/constants";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { ActionMenu } from "@/components/ui/action-menu";
 import { SmartTooltip } from "@/components/ui/smartTooltip";
 import {
   AlertDialog,
@@ -128,6 +126,13 @@ function calculateBalances(
   members: UserInterface[]
 ) {
   const balances: Record<string, number> = {};
+  const EPS = 1e-9;
+  const normalize = (value: number) => {
+    if (!Number.isFinite(value)) return 0;
+    if (Math.abs(value) < EPS) return 0;
+    const rounded = Math.round(value * 100) / 100;
+    return Object.is(rounded, -0) ? 0 : rounded;
+  };
 
   members.forEach((m) => {
     balances[m.id] = 0;
@@ -167,7 +172,7 @@ function calculateBalances(
   });
 
   Object.keys(balances).forEach((key) => {
-    balances[key] = Math.round(balances[key] * 100) / 100;
+    balances[key] = normalize(balances[key]);
   });
 
   return balances;
@@ -434,7 +439,6 @@ export default function GroupResponsesPage({
     {}
   );
   const shouldTitleCase = groupBy === "category" || groupBy === "splitType";
-  const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [openRow, setOpenRow] = useState<number | null>(null);
   const [settlingIndex, setSettlingIndex] = useState<number | null>(null);
   const [settleConfirmation, setSettleConfirmation] = useState<{
@@ -442,18 +446,6 @@ export default function GroupResponsesPage({
     index: number;
   } | null>(null);
 
-  const handleDelete = async (expenseId: string) => {
-    try {
-      setIsDeleting(expenseId);
-      await deleteExpense(expenseId);
-      const details = await loadGroupDetails(groupId!);
-      setExpenses(details?.expenses || []);
-    } catch (error) {
-      // toast.error("Failed to delete expense");
-    } finally {
-      setIsDeleting(null);
-    }
-  };
   useEffect(() => {
     if (!groupId) return;
     setLoading(true);
@@ -991,21 +983,12 @@ export default function GroupResponsesPage({
                                   initial={{ opacity: 0, y: 6 }}
                                   animate={{ opacity: 1, y: 0 }}
                                   transition={{ delay: index * 0.03 }}
-                                  className="group relative p-4 border-b last:border-b-0 hover:bg-muted/50 transition-colors"
+                                  className="group relative border-b last:border-b-0 hover:bg-muted/50 transition-colors"
                                 >
-
-                                  <div className="absolute right-4 top-4">
-                                    <ActionMenu
-                                      editHref={`/group/${groupId}/edit-expense/${expense.id}`}
-                                      onDelete={() => handleDelete(expense.id)}
-                                      isDeleting={isDeleting === expense.id}
-                                      deleteTitle="Delete expense?"
-                                      deleteDescription="Are you sure you want to delete this expense?"
-                                      stopPropagation
-                                    />
-                                  </div>
-
-                                  <div className="flex gap-3">
+                                  <Link
+                                    href={`/group/${groupId}/expense/${expense.id}`}
+                                    className="flex gap-3 p-4"
+                                  >
                                     {/* CATEGORY ICON */}
                                     <div
                                       className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
@@ -1023,12 +1006,18 @@ export default function GroupResponsesPage({
                                     <div className="min-w-0 flex-1">
                                       {/* DESCRIPTION + MOBILE EDIT */}
                                       <div className="flex items-center gap-2">
-                                        <SmartTooltip text={expense.description} />
+                                        <SmartTooltip
+                                          text={expense.description}
+                                          disableMobileTooltip
+                                        />
                                       </div>
 
                                       {/* PAID BY */}
                                       <div className="text-xs md:text-base text-muted-foreground mt-0.5 flex items-center gap-1">
-                                        <SmartTooltip text={getExpensePaidByLabel(expense)} />
+                                        <SmartTooltip
+                                          text={getExpensePaidByLabel(expense)}
+                                          disableMobileTooltip
+                                        />
                                         <span className="shrink-0">paid</span>
                                       </div>
 
@@ -1042,6 +1031,7 @@ export default function GroupResponsesPage({
                                         }
                                         className="mt-2"
                                         label=""
+                                        disableMobileTooltip
                                       />
 
                                     </div>
@@ -1055,7 +1045,7 @@ export default function GroupResponsesPage({
                                         )}
                                       </p>
                                     </div>
-                                  </div>
+                                  </Link>
                                 </motion.div>
 
                               );

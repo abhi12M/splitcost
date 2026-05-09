@@ -34,12 +34,14 @@ interface UserAvatarProps {
   name: string;
   size?: AvatarSize;
   className?: string;
+  disableMobileTooltip?: boolean;
 }
 
 export function UserAvatar({
   name,
   size ,
   className,
+  disableMobileTooltip = false,
 }: UserAvatarProps) {
   const device = useDeviceType();
   const effectiveSize = size || getResponsiveAvatarSize(device);
@@ -65,7 +67,14 @@ export function UserAvatar({
     </div>
   );
 
-  return <AvatarNameOverlay name={name}>{avatar}</AvatarNameOverlay>;
+  return (
+    <AvatarNameOverlay
+      name={name}
+      disableMobileOverlay={disableMobileTooltip}
+    >
+      {avatar}
+    </AvatarNameOverlay>
+  );
 }
 
 /* -----------------------------------------
@@ -79,6 +88,7 @@ interface AvatarGroupProps {
   showBelow?: boolean;
   label?: string;
   isShowTotalMemberText?:boolean;
+  disableMobileTooltip?: boolean;
 }
 
 export function AvatarGroup({
@@ -88,7 +98,8 @@ export function AvatarGroup({
   className,
   showBelow,
   label = "members",
-  isShowTotalMemberText = true
+  isShowTotalMemberText = true,
+  disableMobileTooltip = false
 }: AvatarGroupProps) {
   const device = useDeviceType();
 
@@ -118,6 +129,7 @@ export function AvatarGroup({
             name={name}
             size={effectiveSize}
             className="border-[1.5px] border-white"
+            disableMobileTooltip={disableMobileTooltip}
           />
         ))}
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react"
-import { ArrowLeft, CalendarIcon, Check, Settings, Users } from "lucide-react"
+import { ArrowLeft, CalendarIcon, Check, Settings } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
@@ -11,7 +11,7 @@ import {
 } from "@/lib/storage"
 import { EXPENSE_DESCRIPTION_MAX, ExpenseSchema } from "@/lib/validations/expense.schema"
 import { CategoryKey, EXPENSE_CATEGORIES, SubcategoryId } from "../icons/CategoryIcons"
-import { formatAmount, formatDateForDB } from "../ui/formatters"
+import { formatAmount, formatDateForDB, getCurrencyDifference } from "../ui/formatters"
 import { SingleSelect } from "../ui/single-select"
 import { CURRENCIES } from "@/constants"
 import Link from "next/link"
@@ -22,14 +22,17 @@ import { useKeyboardLayout } from "@/hooks/useKeyboardOffset"
 import { useBackButtonClose } from "@/hooks/useBackButtonClose"
 import { toast } from "@/hooks/use-toast"
 import { ToastAction } from "../ui/toast"
-import { AvatarGroup, UserAvatar } from "../ui/UserAvatar"
+import { AvatarGroup } from "../ui/UserAvatar"
 import { cn } from "@/lib/utils"
+import { ExpenseAttachmentControl } from "./ExpenseAttachmentControl"
+import type { ExpenseAttachment } from "@/lib/expenseAttachments"
 
 interface Props {
   members: any[]
   defaultCurrency?: string
   initialData?: ExpenseFormInterface,
   groupId?: string,
+  initialAttachment?: ExpenseAttachment | null,
   onSubmit: (data: ExpenseRequest) => void
 }
 
@@ -38,6 +41,7 @@ export default function ExpenseFormMobile({
   defaultCurrency = "USD",
   initialData,
   groupId,
+  initialAttachment = null,
   onSubmit
 }: Props) {
   const initialPayers = initialData?.payers || [];
@@ -55,6 +59,7 @@ export default function ExpenseFormMobile({
   const [splitType, setSplitType] = useState<any>(initialData?.splitType || "equal");
   const [showSplit, setShowSplit] = useState(false)
   const [showCalendar, setShowCalendar] = useState(false)
+  const [attachment, setAttachment] = useState<ExpenseAttachment | null>(initialAttachment);
   const [date, setDate] = useState<Date>(
     initialData?.date ? new Date(initialData.date) : new Date()
   );
@@ -158,6 +163,7 @@ export default function ExpenseFormMobile({
       category,
       subcategory,
       date: formatDateForDB(date),
+      attachment,
     });
   };
 
@@ -245,7 +251,7 @@ export default function ExpenseFormMobile({
       );
       const expenseTotal = Number(amount || 0);
 
-      if (expenseTotal !== totalPaidBy) {
+      if (getCurrencyDifference(expenseTotal, totalPaidBy) !== 0) {
         const payersError = `Paid by total is ${formatAmount(
           totalPaidBy,
           currency
@@ -274,7 +280,7 @@ export default function ExpenseFormMobile({
 
       const expenseTotal = Number(amount || 0);
 
-      if (expenseTotal !== totalCustomValue) {
+      if (getCurrencyDifference(expenseTotal, totalCustomValue) !== 0) {
         const splitError = `Split total is ${formatAmount(
           totalCustomValue,
           currency
@@ -516,7 +522,7 @@ export default function ExpenseFormMobile({
       </div>
 
       {/* Footer */}
-      <div className="fixed left-0 right-0 bg-background border-t h-[3rem] px-4 flex items-center justify-between z-50 touch-none overscroll-none"
+      <div className="fixed left-0 right-0 bg-background border-t min-h-[3.75rem] px-4 py-2 flex items-center justify-between gap-3 z-50 touch-none overscroll-none"
         style={{ bottom: keyboardOffset }}
       >
 
@@ -554,6 +560,12 @@ export default function ExpenseFormMobile({
             />
           </PopoverContent>
         </Popover>
+
+        <ExpenseAttachmentControl
+          attachment={attachment}
+          onChange={setAttachment}
+          compact
+        />
       </div>
 
       {showSplit &&

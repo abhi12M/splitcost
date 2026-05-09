@@ -1,4 +1,28 @@
 // utils/formatters.ts
+export const toCurrencyMinorUnits = (amount: number) => {
+  return Math.round(Number(amount || 0) * 100);
+};
+
+export const fromCurrencyMinorUnits = (amount: number) => {
+  return amount / 100;
+};
+
+export const getRoundedDifference = (
+  target: number,
+  current: number,
+  precision = 2
+) => {
+  const scale = 10 ** precision;
+  return (Math.round(Number(target || 0) * scale) -
+    Math.round(Number(current || 0) * scale)) / scale;
+};
+
+export const getCurrencyDifference = (target: number, current: number) => {
+  return fromCurrencyMinorUnits(
+    toCurrencyMinorUnits(target) - toCurrencyMinorUnits(current)
+  );
+};
+
 export const formatAmount = (amount: number, currency?: string) => {
   if (currency) {
     return new Intl.NumberFormat("en-IN", {

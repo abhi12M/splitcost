@@ -17,11 +17,13 @@ interface SmartTooltipProps {
     text: string;
     maxWidth?: string;
     className?: string;
+    disableMobileTooltip?: boolean;
 }
 
 export function SmartTooltip({
     text,
     className = "",
+    disableMobileTooltip = false,
 }: SmartTooltipProps) {
 
     const device = useDeviceType();
@@ -29,6 +31,14 @@ export function SmartTooltip({
 
     // 📱 MOBILE → Popover (tap)
     if (device != 'desktop') {
+        if (disableMobileTooltip) {
+            return (
+                <span className={`truncate block max-w-full ${className}`}>
+                    {text}
+                </span>
+            );
+        }
+
         return (
             <Popover>
                 <PopoverTrigger asChild>

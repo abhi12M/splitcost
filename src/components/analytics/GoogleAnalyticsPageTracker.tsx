@@ -8,6 +8,7 @@ import { ADMIN_PARENT_PATH } from "@/lib/constants";
 
 declare global {
   interface Window {
+    dataLayer?: unknown[];
     gtag?: (...args: unknown[]) => void;
   }
 }
@@ -32,11 +33,17 @@ export function GoogleAnalyticsPageTracker() {
     if (
       !isEnabled ||
       !pathname ||
-      shouldSkipAnalytics(pathname) ||
-      typeof window.gtag !== "function"
+      shouldSkipAnalytics(pathname)
     ) {
       return;
     }
+
+    window.dataLayer = window.dataLayer || [];
+    window.gtag =
+      window.gtag ||
+      function gtag(...args: unknown[]) {
+        window.dataLayer?.push(args);
+      };
 
     const query = searchParams?.toString() ?? "";
     const pagePath = query ? `${pathname}?${query}` : pathname;

@@ -1,5 +1,7 @@
-import * as Dialog from "@radix-ui/react-dialog";
+import { Drawer } from "vaul";
 import { Info, X } from "lucide-react";
+import { useState } from "react";
+import { useBackButtonClose } from "@/hooks/useBackButtonClose";
 import { cn } from "@/lib/utils";
 
 interface InfoSheetButtonProps {
@@ -15,9 +17,13 @@ export function InfoSheetButton({
   className,
   iconClassName,
 }: InfoSheetButtonProps) {
+  const [open, setOpen] = useState(false);
+
+  useBackButtonClose(open, () => setOpen(false));
+
   return (
-    <Dialog.Root>
-      <Dialog.Trigger asChild>
+    <Drawer.Root open={open} onOpenChange={setOpen}>
+      <Drawer.Trigger asChild>
         <button
           type="button"
           aria-label={`More info about ${title}`}
@@ -28,20 +34,20 @@ export function InfoSheetButton({
         >
           <Info className={cn("h-4 w-4", iconClassName)} />
         </button>
-      </Dialog.Trigger>
+      </Drawer.Trigger>
 
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-[80] bg-black/40 animate-in fade-in" />
-        <Dialog.Content
+      <Drawer.Portal>
+        <Drawer.Overlay className="fixed inset-0 z-[80] bg-black/40" />
+        <Drawer.Content
           className={cn(
-            "fixed bottom-0 left-0 right-0 z-[81] rounded-t-2xl bg-background p-4",
-            "animate-in slide-in-from-bottom duration-200"
+            "fixed bottom-0 left-0 right-0 z-[81] rounded-t-2xl bg-background p-4 outline-none"
           )}
         >
+          <div className="absolute -top-3 left-1/2 h-1 w-10 -translate-x-1/2 rounded-full bg-muted-foreground/50" />
           <div className="mb-3 flex items-center justify-between gap-3">
-            <Dialog.Title className="text-sm font-semibold">{title}</Dialog.Title>
+            <Drawer.Title className="text-sm font-semibold">{title}</Drawer.Title>
 
-            <Dialog.Close asChild>
+            <Drawer.Close asChild>
               <button
                 type="button"
                 aria-label="Close info sheet"
@@ -49,14 +55,14 @@ export function InfoSheetButton({
               >
                 <X className="h-4 w-4" />
               </button>
-            </Dialog.Close>
+            </Drawer.Close>
           </div>
 
-          <Dialog.Description className="whitespace-pre-line text-xs leading-relaxed text-muted-foreground">
+          <Drawer.Description className="whitespace-pre-line text-xs leading-relaxed text-muted-foreground">
             {description}
-          </Dialog.Description>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+          </Drawer.Description>
+        </Drawer.Content>
+      </Drawer.Portal>
+    </Drawer.Root>
   );
 }

@@ -1,5 +1,5 @@
 import { EXPENSE_CATEGORIES, type CategoryKey, type SubcategoryId } from "@/components/icons/CategoryIcons";
-import { supabase } from "@/integrations/supabase/client";
+import type { ExpenseAttachment } from "@/lib/expenseAttachments";
 
 export type SplitType = "equal" | "percentage" | "custom";
 
@@ -108,6 +108,7 @@ export interface ExpenseResponse {
   subcategory: SubcategoryId;
   date: string;
   participants: ExpenseParticipantsResponse[];
+  attachmentDataUrl?: string | null;
   createdAt: string;
   updatedAt?: string;
 }
@@ -122,6 +123,7 @@ export interface ExpenseRequest {
   subcategory: SubcategoryId;
   date: string;
   participants: ExpenseParticipantsRequest[];
+  attachment?: ExpenseAttachment | null;
 }
 export interface ExpenseFormInterface {
   id: string;
@@ -135,7 +137,16 @@ export interface ExpenseFormInterface {
   subcategory: SubcategoryId;
   date: string;
   participants: ExpenseParticipantsRequest[];
+  attachmentDataUrl?: string | null;
+  attachment?: ExpenseAttachment | null;
   createdAt?: string;
+  updatedAt?: string;
+}
+export interface ExpenseCategoryPatchResponse {
+  id: string;
+  groupId?: string;
+  category: CategoryKey;
+  subcategory: SubcategoryId;
   updatedAt?: string;
 }
 export interface GroupOverviewItemInterface {//landing page
@@ -143,12 +154,17 @@ export interface GroupOverviewItemInterface {//landing page
   name: string;
   currency: string;
   createdAt: string;
-  expenses: {
+  updatedAt?: string | null;
+  expenses?: {
     amount: number;
     createdAt?: string | null;
     updatedAt?: string | null;
   }[];
   members: string[];
+  memberCount?: number;
+  expenseCount?: number;
+  totalExpenses?: number;
+  latestExpenseActivityAt?: string | null;
 }
 export interface UserInterface {
   id: string;
@@ -295,6 +311,8 @@ export async function addExpense(
   groupId: string,
   expenseData: ExpenseRequest
 ): Promise<ExpenseResponse | undefined> {
+  const { attachment: _attachment, ...expensePayload } = expenseData;
+
   const res = await fetch("/api/expenses", {
     method: "POST",
     headers: {
@@ -302,7 +320,7 @@ export async function addExpense(
     },
     body: JSON.stringify({
       groupId,
-      ...expenseData,
+      ...expensePayload,
     }),
   });
 
@@ -335,6 +353,8 @@ export async function updateExpense(
   expenseId: string,
   data: ExpenseRequest
 ): Promise<ExpenseResponse | undefined> {
+  const { attachment: _attachment, ...expensePayload } = data;
+
   const res = await fetch(`/api/expenses/${expenseId}`, {
     method: "PUT",
     headers: {
@@ -342,12 +362,36 @@ export async function updateExpense(
     },
     body: JSON.stringify({
       groupId,
-      ...data,
+      ...expensePayload,
     }),
   });
 
   if (!res.ok) {
     console.error("Failed to update expense");
+    return undefined;
+  }
+
+  return res.json();
+}
+
+export async function patchExpenseCategory(
+  expenseId: string,
+  category: CategoryKey,
+  subcategory: SubcategoryId
+): Promise<ExpenseCategoryPatchResponse | undefined> {
+  const res = await fetch(`/api/expenses/${expenseId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      category,
+      subcategory,
+    }),
+  });
+
+  if (!res.ok) {
+    console.error("Failed to patch expense category");
     return undefined;
   }
 

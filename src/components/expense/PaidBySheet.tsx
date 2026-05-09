@@ -5,13 +5,14 @@ import { ArrowLeft, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "../ui/UserAvatar";
 import { Input } from "../ui/input";
-import { formatAmount } from "../ui/formatters";
+import { formatAmount, getCurrencyDifference } from "../ui/formatters";
 import { createPortal } from "react-dom";
 import { useKeyboardLayout } from "@/hooks/useKeyboardOffset";
 import { toast } from "@/hooks/use-toast";
 import { ToastAction } from "../ui/toast";
 import { InfoSheetButton } from "../ui/InfoSheetButton";
 import { getPaidByInfoContent } from "./expenseInfo";
+import { useSwipeable } from "react-swipeable";
 
 export interface PayerEntry {
   userId: string;
@@ -71,14 +72,25 @@ export default function PaidBySheet({
   }, [open]);
 
   const { keyboardOffset } = useKeyboardLayout();
+  const swipeHandlers = useSwipeable({
+    onSwipedDown: ({ initial, deltaY }) => {
+      if (initial[1] <= 140 && deltaY > 70) {
+        onClose();
+      }
+    },
+    preventScrollOnSwipe: false,
+    trackMouse: false,
+    trackTouch: true,
+    delta: 40,
+  });
 
   const payersTotal = localPayers.reduce(
     (s, p) => s + Number(p.amount || 0),
     0
   );
-  const difference = expenseAmount - payersTotal;
-  const isOver = payersTotal > expenseAmount;
-  const isExact = payersTotal === expenseAmount && expenseAmount > 0;
+  const difference = getCurrencyDifference(expenseAmount, payersTotal);
+  const isOver = difference < 0;
+  const isExact = difference === 0 && expenseAmount > 0;
 
   const updatePayerAmount = (userId: string, value: number | null) => {
     setLocalPayers((prev) =>
@@ -102,7 +114,10 @@ export default function PaidBySheet({
         onClick={onClose}
         className="hidden sm:block absolute inset-0"
       />
-      <div className="flex h-full flex-col bg-background sm:relative sm:z-10 sm:mx-auto sm:my-10 sm:h-auto sm:max-h-[calc(100vh-5rem)] sm:w-full sm:max-w-xl sm:overflow-hidden sm:rounded-2xl sm:border sm:border-border sm:shadow-2xl">
+      <div
+        {...swipeHandlers}
+        className="flex h-full flex-col bg-background sm:relative sm:z-10 sm:mx-auto sm:my-10 sm:h-auto sm:max-h-[calc(100vh-5rem)] sm:w-full sm:max-w-xl sm:overflow-hidden sm:rounded-2xl sm:border sm:border-border sm:shadow-2xl"
+      >
       {/* -------- Header -------- */}
       <div className="shrink-0 border-b bg-background">
         {/* Top bar */}
@@ -124,7 +139,7 @@ export default function PaidBySheet({
                 onClick={() => {
                   const validPayers = localPayers.filter((p) => p.amount && p.amount > 0);
                   const total = validPayers.reduce((s, p) => s + Number(p.amount || 0), 0);
-                  const diff = expenseAmount - total;
+                  const diff = getCurrencyDifference(expenseAmount, total);
 
                   if (diff !== 0) {
                     const totalFormatted = formatAmount(expenseAmount, currency);

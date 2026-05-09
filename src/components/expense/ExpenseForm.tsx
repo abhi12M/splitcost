@@ -10,17 +10,20 @@ import { cn } from "@/lib/utils";
 import { detectCategoryFromDescription, ExpenseFormInterface, ExpenseParticipantsRequest, ExpenseRequest, type SplitType, UserInterface } from "@/lib/storage";
 import { Users } from "lucide-react";
 import { EXPENSE_DESCRIPTION_MAX, ExpenseSchema } from "@/lib/validations/expense.schema";
-import { formatAmount, formatDateForDB } from "../ui/formatters";
+import { formatAmount, formatDateForDB, getCurrencyDifference, getRoundedDifference } from "../ui/formatters";
 import { Textarea } from "../ui/textarea";
 import { SingleSelect } from "../ui/single-select";
 import { CURRENCIES } from "@/constants";
 import { InfoLabel } from "../ui/InfoLabel";
 import PaidBySheet from "./PaidBySheet";
+import { ExpenseAttachmentControl } from "./ExpenseAttachmentControl";
+import type { ExpenseAttachment } from "@/lib/expenseAttachments";
 
 interface ExpenseFormProps {
   members: UserInterface[];
   defaultCurrency?: string;
   initialData?: ExpenseFormInterface;
+  initialAttachment?: ExpenseAttachment | null;
   onSubmit: (data: ExpenseRequest) => void;
   submitLabel: string;
 }
@@ -34,6 +37,7 @@ export function ExpenseForm({
   members,
   defaultCurrency = "USD",
   initialData,
+  initialAttachment = null,
   onSubmit,
   submitLabel,
 }: ExpenseFormProps) {
@@ -59,6 +63,7 @@ export function ExpenseForm({
   const [isMultiplePayers, setIsMultiplePayers] = useState(hasInitialMultiplePayers);
   const [payers, setPayers] = useState<EditablePayer[]>(initialPayers);
   const [showPaidBy, setShowPaidBy] = useState(false);
+  const [attachment, setAttachment] = useState<ExpenseAttachment | null>(initialAttachment);
   const totalAmount = parseFloat(amount) || 0;
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const isFirstRender = useRef(true);
@@ -75,7 +80,10 @@ export function ExpenseForm({
 
 
     const target = splitType === "percentage" ? 100 : totalAmount;
-    const diff = target - currentTotal;
+    const diff =
+      splitType === "percentage"
+        ? getRoundedDifference(target, currentTotal)
+        : getCurrencyDifference(target, currentTotal);
 
     return {
       isValid: Math.abs(diff) < 0.01,
@@ -254,7 +262,7 @@ export function ExpenseForm({
     setHasSubmitted(true);
     const isValid = validate();
     if (!isValid) return; // STOP submit
-    if ((splitType == 'custom' || splitType == 'percentage') && validationState.diff !== 0) return;
+    if ((splitType == 'custom' || splitType == 'percentage') && !validationState.isValid) return;
     onSubmit({
       description,
       amount: parseFloat(amount),
@@ -270,6 +278,7 @@ export function ExpenseForm({
       category: category || "uncategorized",
       subcategory: subcategory || "general",
       date: formatDateForDB(date),
+      attachment,
     });
   };
   const [errors, setErrors] = useState<{
@@ -646,6 +655,11 @@ export function ExpenseForm({
           </div>
         </div>
       </div>
+
+      <ExpenseAttachmentControl
+        attachment={attachment}
+        onChange={setAttachment}
+      />
 
       {/* Submit */}
       <div className="pt-3 border-t border-border">
