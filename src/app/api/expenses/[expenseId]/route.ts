@@ -5,6 +5,10 @@ import {
   type SubcategoryId,
 } from "@/components/icons/CategoryIcons";
 import { NextResponse } from "next/server";
+import {
+  getStoragePathFromValue,
+  tryBuildAttachmentPayload,
+} from "@/lib/supabase/attachments";
 
 type ParticipantPayload = {
   userId: string;
@@ -270,19 +274,30 @@ export async function GET(
   }
 
   const expenseRow = data as any;
+  const attachmentPath = getStoragePathFromValue(
+    expenseRow.attachment_data_url as string | null
+  );
 
-  // Fetch payers from expense_payers table
-  const { data: payersData } = await supabaseAdmin
-    .from("expense_payers")
-    .select(`
-      amount,
-      user_id,
-      users (
-        id,
-        name
-      )
-    `)
-    .eq("expense_id", expenseId);
+  // Fan out the payers query and the (optional) attachment payload in parallel
+  // so the GET responds in a single round-trip with everything the view / edit
+  // pages need. Previously the client had to make a separate request to
+  // /api/expenses/:id/attachment after this one returned.
+  const [payersResult, attachment] = await Promise.all([
+    supabaseAdmin
+      .from("expense_payers")
+      .select(`
+        amount,
+        user_id,
+        users (
+          id,
+          name
+        )
+      `)
+      .eq("expense_id", expenseId),
+    tryBuildAttachmentPayload(attachmentPath),
+  ]);
+
+  const payersData = payersResult.data;
 
   return NextResponse.json({
     group: {
@@ -311,6 +326,7 @@ export async function GET(
       createdAt: expenseRow.created_at,
       updatedAt: expenseRow.updated_at,
       attachmentDataUrl: expenseRow.attachment_data_url,
+      attachment,
       participants: expenseRow.expense_participants.map((p: ExpenseParticipantRow) => ({
         userId: p.user_id,
         amount: p.share_amount,

@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Plus,
@@ -42,9 +42,13 @@ import {
   addExpense,
   ExpenseRequest,
   GroupDashboardInterface,
-  loadGroupDetails,
   UserInterface,
 } from "@/lib/storage";
+import {
+  fetchGroupDashboard,
+  invalidateGroupDashboard,
+  queryKeys,
+} from "@/lib/queries";
 import { SingleSelect } from "@/components/ui/single-select";
 import { toTitleCase } from "@/components/ui/formatters";
 import { toast } from "@/hooks/use-toast";
@@ -63,6 +67,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
+// Recharts is ~100KB. Only load it when the user opens the chart view.
+const ExpenseChart = dynamic(() => import("@/components/group/ExpenseChart"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[200px] w-full flex items-center justify-center text-sm text-muted-foreground">
+      Loading chart…
+    </div>
+  ),
+});
 
 /* ======================================================
    CONSTANTS – MOVE TO CONSTANTS FILE LATER
@@ -425,12 +439,27 @@ export default function GroupResponsesPage({
   groupId: string;
   isAdminView?: boolean;
 }) {
-  const [group, setGroup] = useState<GroupDashboardInterface["group"] | null>(null);
-  const [expenses, setExpenses] = useState<GroupDashboardInterface["expenses"]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const dashboardQuery = useQuery<GroupDashboardInterface | null>({
+    queryKey: queryKeys.groupDashboard(groupId),
+    queryFn: () => fetchGroupDashboard(groupId),
+    enabled: Boolean(groupId),
+  });
+
+  const group = dashboardQuery.data?.group ?? null;
+  const expenses = dashboardQuery.data?.expenses ?? [];
+  const loading = dashboardQuery.isPending;
+
   const [viewMode, setViewMode] = useState<"list" | "chart">("list");
   // UI state
   const [search, setSearch] = useState("");
+  // Debounced search avoids re-running the entire filter / group / sort
+  // pipeline on every keystroke, which can be slow on long expense lists.
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => {
+    const handle = window.setTimeout(() => setDebouncedSearch(search), 150);
+    return () => window.clearTimeout(handle);
+  }, [search]);
   const [groupBy, setGroupBy] =
     useState<GroupByValue>("date");
   const [sortBy, setSortBy] =
@@ -446,26 +475,15 @@ export default function GroupResponsesPage({
     index: number;
   } | null>(null);
 
+  // Track this group in the user's local "recent groups" list whenever the
+  // dashboard loads it. Independent from data fetching now that React Query
+  // owns the request lifecycle.
   useEffect(() => {
-    if (!groupId) return;
-    setLoading(true);
-
-    loadGroupDetails(groupId)
-      .then((details) => {
-        if (!details) return;
-
-        setGroup(details.group);
-        setExpenses(details.expenses || []);
-        if (!isAdminView) {
-          const existingGroups = getEncryptedItem<string[]>(LOCAL_GROUPS_KEY, []);
-          const updatedGroups = Array.from(
-            new Set([groupId, ...existingGroups])
-          );
-          setEncryptedItem(LOCAL_GROUPS_KEY, updatedGroups);
-        }
-      })
-      .finally(() => setLoading(false));
-  }, [groupId, isAdminView]);
+    if (!groupId || isAdminView || !dashboardQuery.data) return;
+    const existingGroups = getEncryptedItem<string[]>(LOCAL_GROUPS_KEY, []);
+    const updatedGroups = Array.from(new Set([groupId, ...existingGroups]));
+    setEncryptedItem(LOCAL_GROUPS_KEY, updatedGroups);
+  }, [groupId, isAdminView, dashboardQuery.data]);
 
   /* ======================================================
      FILTER / SORT / GROUP
@@ -473,8 +491,8 @@ export default function GroupResponsesPage({
   const groupedExpenses = useMemo(() => {
     let list = [...expenses];
 
-    if (search.trim()) {
-      const q = search.toLowerCase();
+    if (debouncedSearch.trim()) {
+      const q = debouncedSearch.toLowerCase();
       const memberMap = group ? new Map(group.members.map(m => [m.id, m.name])) : new Map();
       list = list.filter(
         (e) =>
@@ -525,7 +543,7 @@ export default function GroupResponsesPage({
     });
 
     return grouped;
-  }, [expenses, search, sortBy, groupBy, group]);
+  }, [expenses, debouncedSearch, sortBy, groupBy, group]);
 
   const chartData = useMemo(() => {
     return Object.entries(groupedExpenses).map(([key, list]) => {
@@ -538,7 +556,33 @@ export default function GroupResponsesPage({
       return { name, value };
     });
   }, [groupedExpenses, shouldTitleCase]);
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+
+  const members = group?.members;
+
+  const balances = useMemo(
+    () => (members ? calculateBalances(expenses, members) : {}),
+    [expenses, members]
+  );
+
+  const settlements = useMemo(
+    () => (members ? calculateSettlements(balances, members) : []),
+    [balances, members]
+  );
+
+  const totalExpenses = useMemo(
+    () => expenses.reduce((s, e) => s + e.amount, 0),
+    [expenses]
+  );
+
+  const visibleCount = useMemo(
+    () =>
+      Object.values(groupedExpenses).reduce(
+        (sum, list) => sum + list.length,
+        0
+      ),
+    [groupedExpenses]
+  );
+
   if (loading) {
     return <GroupResponsesSkeleton />;
   }
@@ -555,14 +599,6 @@ export default function GroupResponsesPage({
       </Layout>
     );
   }
-
-  const balances = calculateBalances(expenses, group.members);
-  const settlements = calculateSettlements(balances, group.members);
-  const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
-  const visibleCount = Object.values(groupedExpenses).reduce(
-    (sum, list) => sum + list.length,
-    0
-  );
 
   const shareLink = `${typeof window !== "undefined" ? window.location.origin : ""}/group/${groupId}`;
 
@@ -675,8 +711,12 @@ export default function GroupResponsesPage({
         ]
       }
       await addExpense(groupId!, data);
-      const details = await loadGroupDetails(groupId!);
-      setExpenses(details?.expenses || []);
+      // Invalidate so the dashboard query refetches once. Avoids the previous
+      // pattern of an extra manual loadGroupDetails call alongside React state
+      // mutation.
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.groupDashboard(groupId!),
+      });
     } catch (error) {
       // toast.error("Failed to delete expense");
     } finally {
@@ -966,7 +1006,7 @@ export default function GroupResponsesPage({
 
                           {/* ✅ EXPENSE ITEMS */}
                           {isOpen &&
-                            list.map((expense, index) => {
+                            list.map((expense) => {
                               const IconComponent = getCategoryIcon(
                                 expense.category as CategoryKey,
                                 expense.subcategory
@@ -978,12 +1018,9 @@ export default function GroupResponsesPage({
                                 ]?.color || "category-uncategorized";
 
                               return (
-                                <motion.div
+                                <div
                                   key={expense.id}
-                                  initial={{ opacity: 0, y: 6 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  transition={{ delay: index * 0.03 }}
-                                  className="group relative border-b last:border-b-0 hover:bg-muted/50 transition-colors"
+                                  className="group relative border-b last:border-b-0 hover:bg-muted/50 transition-colors animate-in fade-in slide-in-from-top-1 duration-200"
                                 >
                                   <Link
                                     href={`/group/${groupId}/expense/${expense.id}`}
@@ -1046,7 +1083,7 @@ export default function GroupResponsesPage({
                                       </p>
                                     </div>
                                   </Link>
-                                </motion.div>
+                                </div>
 
                               );
                             })}
@@ -1055,69 +1092,11 @@ export default function GroupResponsesPage({
                     })}
                   </>
                 ) : (
-                  <div className="flex flex-col lg:flex-row lg:items-center gap-2">
-
-                    {/* THE CHART CONTAINER */}
-                    <div className="h-[200px] w-full lg:w-1/2">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={chartData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={60}
-                            outerRadius={80}
-                            paddingAngle={5}
-                            dataKey="value"
-                            animationDuration={750}
-                          >
-                            {chartData.map((_, index) => (
-                              <Cell
-                                key={`cell-${index}`}
-                                fill={COLORS[index % COLORS.length]}
-                                stroke="transparent"
-                              />
-                            ))}
-                          </Pie>
-                          <Tooltip
-                            formatter={(value: number) => formatCurrency(value, group.currency)}
-                            contentStyle={{
-                              borderRadius: '8px',
-                              border: 'none',
-                              boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'
-                            }}
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-
-                    {/* DYNAMIC LEGEND TABLE */}
-                    <div className="grid grid-cols-1 gap-2 w-full lg:w-1/2 px-[10px] sm:px-0">
-                      {chartData.map((item, i) => (
-                        <div
-                          key={item.name}
-                          className="flex justify-between items-center p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors my-2"
-                        >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div
-                              className="w-3 h-3 rounded-full shrink-0"
-                              style={{ backgroundColor: COLORS[i % COLORS.length] }}
-                            />
-                            {/* <span className="text-sm font-medium truncate">{item.name}</span> */}
-                            <SmartTooltip text={item.name} />
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm font-medium">
-                              {formatCurrency(item.value, group.currency)}
-                            </p>
-                            <p className="text-[10px] text-muted-foreground">
-                              {((item.value / totalExpenses) * 100).toFixed(1)}%
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  <ExpenseChart
+                    data={chartData}
+                    currency={group.currency}
+                    totalExpenses={totalExpenses}
+                  />
                 )}
               </CardContent>
             </Card>

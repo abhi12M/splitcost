@@ -1,12 +1,7 @@
 import { NextResponse } from "next/server"
 import { supabaseAdmin } from "@/lib/supabase/server"
 
-export async function POST(
-  _req: Request,
-  { params }: { params: { groupId: string } }
-) {
-  const groupId = params.groupId
-
+async function loadDashboard(groupId: string) {
   if (!groupId) {
     return NextResponse.json(null, { status: 400 })
   }
@@ -20,4 +15,19 @@ export async function POST(
   }
 
   return NextResponse.json(data)
+}
+
+export async function GET(
+  _req: Request,
+  { params }: { params: { groupId: string } }
+) {
+  return loadDashboard(params.groupId)
+}
+
+// Kept for backward compatibility with any clients still issuing POST.
+export async function POST(
+  _req: Request,
+  { params }: { params: { groupId: string } }
+) {
+  return loadDashboard(params.groupId)
 }

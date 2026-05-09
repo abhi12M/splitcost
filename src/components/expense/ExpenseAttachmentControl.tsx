@@ -1,4 +1,4 @@
-import { ChangeEvent, useRef, useState } from "react";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { ImagePlus, Loader2, Pencil, Trash2, X } from "lucide-react";
 
 import {
@@ -37,11 +37,40 @@ export function ExpenseAttachmentControl({
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [isReadingFile, setIsReadingFile] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  // Track the blob URL we created locally so we can revoke it when the user
+  // replaces it, removes it, or unmounts the form. Without this the File
+  // reference behind the blob URL stays alive for the page's lifetime.
+  const ownedBlobUrlRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (ownedBlobUrlRef.current) {
+        try {
+          URL.revokeObjectURL(ownedBlobUrlRef.current);
+        } catch {
+          // Best-effort cleanup.
+        }
+        ownedBlobUrlRef.current = null;
+      }
+    };
+  }, []);
+
+  const releaseOwnedBlobUrl = () => {
+    if (ownedBlobUrlRef.current) {
+      try {
+        URL.revokeObjectURL(ownedBlobUrlRef.current);
+      } catch {
+        // Best-effort cleanup.
+      }
+      ownedBlobUrlRef.current = null;
+    }
+  };
 
   const clearAttachment = () => {
     setError("");
     setIsViewerOpen(false);
     setIsDeleteConfirmOpen(false);
+    releaseOwnedBlobUrl();
     onChange(null);
   };
 
@@ -60,6 +89,11 @@ export function ExpenseAttachmentControl({
     setIsReadingFile(true);
     try {
       const nextAttachment = await readExpenseAttachmentFile(file);
+      // Replacing an existing local file? Revoke the previous blob URL first.
+      releaseOwnedBlobUrl();
+      ownedBlobUrlRef.current = nextAttachment.url.startsWith("blob:")
+        ? nextAttachment.url
+        : null;
       onChange(nextAttachment);
       setIsViewerOpen(false);
     } finally {

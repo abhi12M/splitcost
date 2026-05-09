@@ -1,5 +1,6 @@
 import { EXPENSE_CATEGORIES, type CategoryKey, type SubcategoryId } from "@/components/icons/CategoryIcons";
 import type { ExpenseAttachment } from "@/lib/expenseAttachments";
+import { clearCachedExpense, saveCachedExpense } from "@/lib/expenseCache";
 
 export type SplitType = "equal" | "percentage" | "custom";
 
@@ -138,6 +139,8 @@ export interface ExpenseFormInterface {
   date: string;
   participants: ExpenseParticipantsRequest[];
   attachmentDataUrl?: string | null;
+  // Inline attachment payload returned by GET /api/expenses/:id so callers
+  // don't need a second round-trip to /api/expenses/:id/attachment.
   attachment?: ExpenseAttachment | null;
   createdAt?: string;
   updatedAt?: string;
@@ -262,7 +265,8 @@ export async function checkGroupMemberRemoval(
 
 export async function loadGroupDetails(groupId: string) {
   const res = await fetch(`/api/groups/${groupId}/dashboard`, {
-    method: "POST",
+    method: "GET",
+    cache: "no-store",
   })
 
   if (!res.ok) {
@@ -345,7 +349,11 @@ export async function editExpense(
     return null;
   }
 
-  return res.json();
+  const payload = (await res.json()) as EditExpenseInterface;
+  // Cache so a subsequent navigation (view -> edit, or vice versa) can render
+  // instantly while a fresh fetch revalidates in the background.
+  saveCachedExpense(expenseId, payload);
+  return payload;
 }
 
 export async function updateExpense(
@@ -371,6 +379,8 @@ export async function updateExpense(
     return undefined;
   }
 
+  // Cached read may now be stale (description / amount / split changed).
+  clearCachedExpense(expenseId);
   return res.json();
 }
 
@@ -410,6 +420,7 @@ export async function deleteExpense(
     return false;
   }
 
+  clearCachedExpense(expenseId);
   return true;
 }
 

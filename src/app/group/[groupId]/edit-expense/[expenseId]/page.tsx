@@ -3,7 +3,7 @@ import dynamic from "next/dynamic";
 
 import { buildMetadata } from "@/lib/seo";
 
-const EditExpensePage = dynamic(() => import("@/pages/EditExpense"));
+const EditExpensePage = dynamic(() => import("@/views/EditExpense"));
 
 export async function generateMetadata({
   params,

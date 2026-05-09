@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { buildMetadata } from "@/lib/seo";
-import FAQPage from "@/pages/FAQ";
+import FAQPage from "@/views/FAQ";
 
 export const metadata: Metadata = buildMetadata({
   title: "Expense Splitting FAQ",
