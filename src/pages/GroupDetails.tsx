@@ -126,6 +126,13 @@ function calculateBalances(
   members: UserInterface[]
 ) {
   const balances: Record<string, number> = {};
+  const EPS = 1e-9;
+  const normalize = (value: number) => {
+    if (!Number.isFinite(value)) return 0;
+    if (Math.abs(value) < EPS) return 0;
+    const rounded = Math.round(value * 100) / 100;
+    return Object.is(rounded, -0) ? 0 : rounded;
+  };
 
   members.forEach((m) => {
     balances[m.id] = 0;
@@ -165,7 +172,7 @@ function calculateBalances(
   });
 
   Object.keys(balances).forEach((key) => {
-    balances[key] = Math.round(balances[key] * 100) / 100;
+    balances[key] = normalize(balances[key]);
   });
 
   return balances;
