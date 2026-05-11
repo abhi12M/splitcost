@@ -58,6 +58,27 @@ export async function readExpenseAttachmentFile(
   };
 }
 
+// Revoke the in-memory blob URL backing a locally-read attachment so the
+// browser can release the underlying file. Safe to call with any attachment;
+// only blob: URLs are touched.
+export function revokeAttachmentObjectUrl(
+  attachment: ExpenseAttachment | null | undefined
+) {
+  if (
+    typeof URL === "undefined" ||
+    !attachment ||
+    !attachment.url?.startsWith("blob:")
+  ) {
+    return;
+  }
+
+  try {
+    URL.revokeObjectURL(attachment.url);
+  } catch {
+    // Best-effort cleanup — ignore browser quirks.
+  }
+}
+
 export async function saveExpenseAttachment(
   expenseId: string,
   attachment: ExpenseAttachment | null | undefined

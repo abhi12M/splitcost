@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { buildMetadata } from "@/lib/seo";
-import PrivacyPage from "@/pages/Privacy";
+import PrivacyPage from "@/views/Privacy";
 
 export const metadata: Metadata = buildMetadata({
   title: "Privacy Policy",

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { buildMetadata } from "@/lib/seo";
-import ContactPage from "@/pages/Contact";
+import ContactPage from "@/views/Contact";
 
 export const metadata: Metadata = buildMetadata({
   title: "Contact Splitcost Support",

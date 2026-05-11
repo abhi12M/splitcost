@@ -8,7 +8,24 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 
 export default function AppProviders({ children }: { children: ReactNode }) {
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            // Cache aggressively across navigations so view -> edit -> save
+            // -> back-to-dashboard reuses what we already fetched. We still
+            // refetch in the background after mutations invalidate the key.
+            staleTime: 30_000,
+            gcTime: 5 * 60_000,
+            // Avoid the "fetch every time the tab regains focus" double-fetch
+            // pattern that React Query enables by default.
+            refetchOnWindowFocus: false,
+            retry: 1,
+          },
+        },
+      })
+  );
 
   return (
     <QueryClientProvider client={queryClient}>

@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { buildMetadata } from "@/lib/seo";
 import { supabaseAdmin } from "@/lib/supabase/server";
 
-const GroupResponsesPage = dynamic(() => import("@/pages/GroupDetails"));
+const GroupResponsesPage = dynamic(() => import("@/views/GroupDetails"));
 
 export async function generateMetadata({
   params,

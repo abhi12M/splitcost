@@ -4,7 +4,9 @@ import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import {
+  AlertCircle,
   ArrowLeft,
   CalendarDays,
   Check,
@@ -37,7 +39,6 @@ import {
 } from "@/components/icons/CategoryIcons";
 import {
   deleteExpense,
-  editExpense,
   EditExpenseInterface,
   patchExpenseCategory,
   ExpenseParticipantsRequest,
@@ -50,11 +51,20 @@ import {
 import {
   deleteExpenseAttachment,
   ExpenseAttachment,
-  loadExpenseAttachment,
   readExpenseAttachmentFile,
+  revokeAttachmentObjectUrl,
   saveExpenseAttachment,
   validateAttachmentFile,
 } from "@/lib/expenseAttachments";
+import {
+  evictExpense,
+  invalidateGroupDashboard,
+  useExpenseQuery,
+} from "@/lib/queries";
+import {
+  dismissAttachmentUpload,
+  useAttachmentUpload,
+} from "@/lib/attachmentUploads";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SingleSelect } from "@/components/ui/single-select";
 
@@ -250,10 +260,74 @@ export default function ExpenseDetailsPage({
   expenseId: string;
 }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const attachmentInputRef = useRef<HTMLInputElement>(null);
-  const [details, setDetails] = useState<EditExpenseInterface | null>(null);
-  const [attachment, setAttachment] = useState<ExpenseAttachment | null>(null);
-  const [loading, setLoading] = useState(true);
+
+  // React Query owns expense fetching. With initialData hydrated from the
+  // session cache and a 30s staleTime, navigating view -> edit (or vice
+  // versa) inside that window reuses the cached data and fires zero new
+  // requests. After a save we invalidate the key so the next mount refetches.
+  const expenseQuery = useExpenseQuery(expenseId);
+  const details = expenseQuery.data ?? null;
+  const loading = expenseQuery.isPending;
+
+  // `removeQueries` while `useExpenseQuery` is still subscribed triggers an
+  // automatic refetch → GET /api/expenses/:id → 404 after delete. Defer
+  // eviction until this component unmounts so no observer asks for data.
+  const evictExpenseAfterUnmountRef = useRef<string | null>(null);
+  useEffect(() => {
+    return () => {
+      const id = evictExpenseAfterUnmountRef.current;
+      if (id && id === expenseId) {
+        evictExpense(queryClient, id);
+        evictExpenseAfterUnmountRef.current = null;
+      }
+    };
+  }, [expenseId, queryClient]);
+  const [attachmentOverride, setAttachmentOverride] =
+    useState<ExpenseAttachment | null | undefined>(undefined);
+  // Tracks any attachment save kicked off in the background by the Add /
+  // Edit form (or by this page itself). When something is in flight we
+  // render the local blob preview behind a spinner so the user sees the
+  // intended next state instead of stale server data.
+  const pendingUpload = useAttachmentUpload(expenseId);
+  const isAttachmentUploading = pendingUpload?.status === "uploading";
+  // The attachment is part of the expense payload but the user can replace /
+  // delete it from this page without invalidating the query. The override lets
+  // those local mutations win until the next refetch.
+  const cachedAttachment =
+    attachmentOverride !== undefined
+      ? attachmentOverride
+      : details?.expense.attachment ?? null;
+  // While an upload is in flight the pending state's intent wins over what
+  // the cache says (which may still be the pre-save server value). For new
+  // uploads `intent` is the attachment we're trying to save (with a blob
+  // preview URL); for deletes it's `null`.
+  const attachment = pendingUpload
+    ? pendingUpload.intent
+    : cachedAttachment;
+
+  // Mutating the attachment also has to update the React Query cache,
+  // otherwise the next page that reads the same query (e.g. the edit page)
+  // would render with the stale attachment value.
+  const setAttachment = (next: ExpenseAttachment | null) => {
+    setAttachmentOverride(next);
+    queryClient.setQueryData<EditExpenseInterface | null>(
+      ["expense", expenseId],
+      (current) =>
+        current
+          ? {
+              ...current,
+              expense: {
+                ...current.expense,
+                attachment: next,
+                attachmentDataUrl: next ? current.expense.attachmentDataUrl : null,
+              },
+            }
+          : current
+    );
+  };
+
   const [isDeletingExpense, setIsDeletingExpense] = useState(false);
   const [isUpdatingCategory, setIsUpdatingCategory] = useState(false);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
@@ -263,29 +337,30 @@ export default function ExpenseDetailsPage({
   const headerIconButtonClass =
     "inline-flex h-10 w-10 items-center justify-center rounded-full bg-transparent text-foreground/70 transition-colors [-webkit-tap-highlight-color:transparent] hover:bg-transparent hover:text-foreground active:bg-transparent focus:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60 sm:hover:bg-background/40";
 
-  useEffect(() => {
-    editExpense(expenseId)
-      .then(async (expenseDetails) => {
-        setDetails(expenseDetails);
-
-        if (!expenseDetails) return;
-
-        const storedAttachment = await loadExpenseAttachment(
-          expenseId,
-          expenseDetails.expense.attachmentDataUrl
-        );
-        setAttachment(storedAttachment);
-      })
-      .finally(() => setLoading(false));
-  }, [expenseId]);
-
   const handleDeleteExpense = async () => {
     setIsDeletingExpense(true);
     try {
-      if (attachment) {
-        await deleteExpenseAttachment(expenseId);
+      // If a background upload is still in flight there's no point letting
+      // it finish (we're about to delete the expense). Drop the local
+      // pending state and let any in-flight network request complete on
+      // its own; the server-side cascade on expense delete handles cleanup.
+      dismissAttachmentUpload(expenseId);
+
+      // Only call delete-attachment if the SERVER actually has one.
+      // `cachedAttachment` reflects the React Query cache (i.e. server
+      // state), whereas `attachment` may be a local pending preview.
+      if (cachedAttachment) {
+        try {
+          await deleteExpenseAttachment(expenseId);
+        } catch (error) {
+          // The attachment may already be gone (e.g. background delete
+          // raced ahead). Swallow so we still get to delete the expense.
+          console.error("delete attachment failed during expense delete:", error);
+        }
       }
       await deleteExpense(expenseId);
+      evictExpenseAfterUnmountRef.current = expenseId;
+      invalidateGroupDashboard(queryClient, groupId);
       router.push(`/group/${groupId}`);
     } finally {
       setIsDeletingExpense(false);
@@ -309,17 +384,22 @@ export default function ExpenseDetailsPage({
       attachment ? "Updating attachment..." : "Uploading attachment..."
     );
 
+    let localAttachment: ExpenseAttachment | null = null;
     try {
-      const nextAttachment = await readExpenseAttachmentFile(file);
+      localAttachment = await readExpenseAttachmentFile(file);
       const savedAttachment = await saveExpenseAttachment(
         expenseId,
-        nextAttachment
+        localAttachment
       );
       setAttachment(savedAttachment);
       setIsViewerOpen(false);
     } catch (error) {
       console.error("save attachment failed:", error);
     } finally {
+      // The server returns its own signed URL, so the local blob URL is no
+      // longer needed and must be released to avoid leaking the underlying
+      // File reference for the lifetime of the page.
+      revokeAttachmentObjectUrl(localAttachment);
       setAttachmentSpinnerMessage("");
     }
   };
@@ -356,15 +436,25 @@ export default function ExpenseDetailsPage({
     );
 
     if (updatedExpense) {
-      setDetails({
-        ...details,
-        expense: {
-          ...details.expense,
-          category: updatedExpense.category,
-          subcategory: updatedExpense.subcategory,
-          updatedAt: updatedExpense.updatedAt,
-        },
-      });
+      // Update the React Query cache in place so the page reflects the new
+      // category/subcategory immediately and the dashboard refetch (kicked
+      // off below) is the only network call this action makes.
+      queryClient.setQueryData<EditExpenseInterface | null>(
+        ["expense", expenseId],
+        (current) =>
+          current
+            ? {
+                ...current,
+                expense: {
+                  ...current.expense,
+                  category: updatedExpense.category,
+                  subcategory: updatedExpense.subcategory,
+                  updatedAt: updatedExpense.updatedAt,
+                },
+              }
+            : current
+      );
+      invalidateGroupDashboard(queryClient, groupId);
     }
 
     setIsUpdatingCategory(false);
@@ -440,6 +530,8 @@ export default function ExpenseDetailsPage({
     : "";
   const attachmentActionButtonClass =
     "inline-flex h-10 w-10 items-center justify-center rounded-full bg-transparent text-foreground/70 transition-colors [-webkit-tap-highlight-color:transparent] hover:bg-transparent hover:text-foreground active:bg-transparent focus:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60 sm:hover:bg-muted";
+  const attachmentActionsDisabled =
+    Boolean(attachmentSpinnerMessage) || isAttachmentUploading;
   const attachmentActions = (
     <>
       <button
@@ -447,7 +539,7 @@ export default function ExpenseDetailsPage({
         onClick={() => attachmentInputRef.current?.click()}
         aria-label={attachment ? "Replace attachment" : "Upload attachment"}
         className={attachmentActionButtonClass}
-        disabled={Boolean(attachmentSpinnerMessage)}
+        disabled={attachmentActionsDisabled}
       >
         {attachment ? (
           <Pencil className="h-5 w-5" />
@@ -461,7 +553,7 @@ export default function ExpenseDetailsPage({
           onClick={() => setIsAttachmentDeleteConfirmOpen(true)}
           aria-label="Delete attachment"
           className={attachmentActionButtonClass}
-          disabled={Boolean(attachmentSpinnerMessage)}
+          disabled={attachmentActionsDisabled}
         >
           <Trash2 className="h-5 w-5" />
         </button>
@@ -498,7 +590,7 @@ export default function ExpenseDetailsPage({
                   onClick={() => attachmentInputRef.current?.click()}
                   aria-label="Upload attachment"
                   className={headerIconButtonClass}
-                  disabled={Boolean(attachmentSpinnerMessage)}
+                  disabled={attachmentActionsDisabled}
                 >
                   <ImagePlus className="h-5 w-5" />
                 </button>
@@ -583,10 +675,15 @@ export default function ExpenseDetailsPage({
                 <button
                   type="button"
                   className="mt-1 block shrink-0"
-                  aria-label="Open attachment"
-                  onClick={() => setIsViewerOpen(true)}
+                  aria-label={
+                    isAttachmentUploading ? "Uploading attachment" : "Open attachment"
+                  }
+                  onClick={() => {
+                    if (!isAttachmentUploading) setIsViewerOpen(true);
+                  }}
+                  disabled={isAttachmentUploading}
                 >
-                  <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-sm border bg-black/5">
+                  <div className="relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-sm border bg-black/5">
                     {isImageAttachment ? (
                       <Image
                         src={attachment.url}
@@ -598,6 +695,19 @@ export default function ExpenseDetailsPage({
                       />
                     ) : (
                       <FileText className="h-6 w-6 text-muted-foreground" />
+                    )}
+                    {isAttachmentUploading && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                        <Loader2 className="h-5 w-5 animate-spin text-white" />
+                      </div>
+                    )}
+                    {pendingUpload?.status === "error" && (
+                      <div
+                        className="absolute inset-0 flex items-center justify-center bg-destructive/40"
+                        title={pendingUpload.error ?? "Failed to save attachment"}
+                      >
+                        <AlertCircle className="h-5 w-5 text-white" />
+                      </div>
                     )}
                   </div>
                 </button>

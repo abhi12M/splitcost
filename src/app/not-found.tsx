@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { buildMetadata } from "@/lib/seo";
-import NotFound from "@/pages/NotFound";
+import NotFound from "@/views/NotFound";
 
 export const metadata: Metadata = buildMetadata({
   title: "Page not found",

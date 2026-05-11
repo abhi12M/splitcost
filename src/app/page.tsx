@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { buildMetadata } from "@/lib/seo";
-import HomePage from "@/pages/Index";
+import HomePage from "@/views/Index";
 
 export const metadata: Metadata = buildMetadata({
   title: "Split Expenses With Friends, Roommates, and Travel Groups",

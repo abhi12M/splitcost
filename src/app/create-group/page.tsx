@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { buildMetadata } from "@/lib/seo";
-import CreateGroupPage from "@/pages/AddGroup";
+import CreateGroupPage from "@/views/AddGroup";
 
 export const metadata: Metadata = buildMetadata({
   title: "Create group",
