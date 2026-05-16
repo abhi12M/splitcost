@@ -61,6 +61,8 @@ import {
   invalidateGroupDashboard,
   useExpenseQuery,
 } from "@/lib/queries";
+import { getGroupViewerMemberId } from "@/lib/groupViewer";
+import { memberNameForViewer } from "@/lib/groupExpenseLabels";
 import {
   dismissAttachmentUpload,
   useAttachmentUpload,
@@ -70,13 +72,18 @@ import { SingleSelect } from "@/components/ui/single-select";
 
 function memberName(
   members: EditExpenseInterface["group"]["members"],
-  userId: string | null
+  userId: string | null,
+  viewerMemberId: string | null
 ) {
   if (!userId) return "Unknown";
-  return members.find((member) => member.id === userId)?.name || "Unknown";
+  const m = members.find((member) => member.id === userId);
+  if (!m) return "Unknown";
+  return memberNameForViewer(m.id, m.name, viewerMemberId);
 }
 
-function formatSummaryName(name: string) {
+const YOU_DISPLAY_SUFFIX = " (You)";
+
+function formatSummaryNameCore(name: string) {
   const normalized = name.trim().replace(/\s+/g, " ");
 
   if (!normalized) {
@@ -97,6 +104,14 @@ function formatSummaryName(name: string) {
   }
 
   return `${trimmedFirstName} ${secondName.charAt(0).toUpperCase()}.`;
+}
+
+function formatSummaryName(name: string) {
+  if (name.endsWith(YOU_DISPLAY_SUFFIX)) {
+    const core = name.slice(0, -YOU_DISPLAY_SUFFIX.length);
+    return `${formatSummaryNameCore(core)}${YOU_DISPLAY_SUFFIX}`;
+  }
+  return formatSummaryNameCore(name);
 }
 
 function getDateTimeMs(date?: string | Date | null) {
@@ -164,9 +179,9 @@ function calculateExpenseSettlements(
 
     settlements.push({
       fromId: debtors[debtorIndex].userId,
-      fromName: memberName(members, debtors[debtorIndex].userId),
+      fromName: memberName(members, debtors[debtorIndex].userId, null),
       toId: creditors[creditorIndex].userId,
-      toName: memberName(members, creditors[creditorIndex].userId),
+      toName: memberName(members, creditors[creditorIndex].userId, null),
       amount: Math.round(amount * 100) / 100,
     });
 
@@ -270,6 +285,11 @@ export default function ExpenseDetailsPage({
   const expenseQuery = useExpenseQuery(expenseId);
   const details = expenseQuery.data ?? null;
   const loading = expenseQuery.isPending;
+
+  const [viewerMemberId, setViewerMemberId] = useState<string | null>(null);
+  useEffect(() => {
+    setViewerMemberId(getGroupViewerMemberId(groupId));
+  }, [groupId]);
 
   // `removeQueries` while `useExpenseQuery` is still subscribed triggers an
   // automatic refetch → GET /api/expenses/:id → 404 after delete. Defer
@@ -465,9 +485,9 @@ export default function ExpenseDetailsPage({
 
     return details.expense.participants.map((participant: ExpenseParticipantsRequest) => ({
       ...participant,
-      name: memberName(details.group.members, participant.userId),
+      name: memberName(details.group.members, participant.userId, viewerMemberId),
     }));
-  }, [details]);
+  }, [details, viewerMemberId]);
 
   if (loading) {
     return <ExpenseDetailsSkeleton />;
@@ -497,17 +517,17 @@ export default function ExpenseDetailsPage({
   const isSettlementExpense = expense.category === "settlement";
   const payers = expense.payers?.length
     ? expense.payers.map((payer) => ({
-      userId: payer.userId,
-      name: memberName(group.members, payer.userId),
-      amount: payer.amount,
-    }))
+        userId: payer.userId,
+        name: memberName(group.members, payer.userId, viewerMemberId),
+        amount: payer.amount,
+      }))
     : [
-      {
-        userId: expense.paidByUserId,
-        name: memberName(group.members, expense.paidByUserId),
-        amount: expense.amount,
-      },
-    ];
+        {
+          userId: expense.paidByUserId,
+          name: memberName(group.members, expense.paidByUserId, viewerMemberId),
+          amount: expense.amount,
+        },
+      ];
   const netSettlements = calculateExpenseSettlements(
     group.members,
     payers.map(({ userId, amount }) => ({ userId, amount })),

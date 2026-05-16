@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 
-export const SITE_NAME = "Splitcost";
+export const SITE_NAME = "SplitCost";
 export const SITE_TITLE =
-  "Splitcost | Split expenses with friends, roommates, and travel groups";
+  "SplitCost | Split expenses with friends, roommates, and travel groups";
 export const SITE_DESCRIPTION =
-  "Splitcost is a free group expense tracker that helps friends, roommates, and travel groups split bills, support multiple payers per expense, edit group details, track balances, and settle up faster.";
+  "SplitCost is a free group expense tracker that helps friends, roommates, and travel groups split bills, support multiple payers per expense, edit group details, track balances, and settle up faster.";
 export const SITE_KEYWORDS = [
   "split expenses",
   "expense splitter",

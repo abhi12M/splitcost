@@ -3,7 +3,17 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { ArrowRight, Plus, Users } from "lucide-react";
+import {
+  ArrowRight,
+  CheckCircle2,
+  CreditCard,
+  LayoutDashboard,
+  Plus,
+  Smartphone,
+  Sparkles,
+  Users,
+  Wallet,
+} from "lucide-react";
 
 import { Layout } from "@/components/layout/Layout";
 import {
@@ -75,6 +85,83 @@ const useCases = [
       "Keep wedding parties, weekend outings, office lunches, and friend groups aligned on who owes what.",
   },
 ];
+
+/** Decorative desktop preview — not live data. */
+function LandingDashboardPreview() {
+  return (
+    <div className="relative mx-auto w-full max-w-lg lg:max-w-none">
+      <div
+        className="pointer-events-none absolute -inset-4 rounded-[2rem] bg-primary/[0.07] blur-2xl"
+        aria-hidden
+      />
+      <Card className="relative overflow-hidden border-primary/15 shadow-lg shadow-primary/5">
+        <div className="flex gap-0 border-b border-border/80 bg-muted/40">
+          <div className="hidden w-[28%] shrink-0 border-r border-border/80 bg-muted/30 p-3 xl:block">
+            <div className="mb-3 h-2 w-16 rounded-full bg-foreground/15" />
+            {["Dashboard", "Groups", "Expenses"].map((label) => (
+              <div
+                key={label}
+                className="mb-2 flex items-center gap-2 rounded-lg px-2 py-1.5 text-[11px] font-medium text-muted-foreground"
+              >
+                <span className="h-1.5 w-1.5 rounded-full bg-foreground/20" />
+                {label}
+              </div>
+            ))}
+          </div>
+          <div className="min-w-0 flex-1 p-4 sm:p-5">
+            <div className="mb-4 flex items-center justify-between gap-2">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Overview
+                </p>
+                <p className="text-sm font-semibold text-foreground">Group dashboard</p>
+              </div>
+              <LayoutDashboard className="h-5 w-5 shrink-0 text-primary" aria-hidden />
+            </div>
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+              {[
+                { label: "Total expenses", hint: "This month", tone: "default" as const },
+                { label: "You paid", hint: "Your share", tone: "muted" as const },
+                { label: "You owe", hint: "Across groups", tone: "owe" as const },
+                { label: "You are owed", hint: "From friends", tone: "owed" as const },
+              ].map((cell) => (
+                <div
+                  key={cell.label}
+                  className="rounded-xl border border-border/80 bg-card p-3 shadow-sm"
+                >
+                  <p className="text-[10px] font-medium text-muted-foreground">{cell.label}</p>
+                  <p
+                    className={`mt-1 font-semibold tabular-nums ${
+                      cell.tone === "owe"
+                        ? "text-destructive"
+                        : cell.tone === "owed"
+                          ? "text-success"
+                          : "text-foreground"
+                    }`}
+                  >
+                    ——
+                  </p>
+                  <p className="mt-0.5 text-[10px] text-muted-foreground">{cell.hint}</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 space-y-2 rounded-xl border border-dashed border-primary/20 bg-primary/[0.04] p-3">
+              <div className="flex items-center gap-2 text-[11px] font-medium text-foreground">
+                <Wallet className="h-3.5 w-3.5 text-primary" aria-hidden />
+                Recent activity
+              </div>
+              <div className="space-y-2">
+                <div className="h-2 w-full rounded-full bg-foreground/10" />
+                <div className="h-2 w-[85%] rounded-full bg-foreground/10" />
+                <div className="h-2 w-[60%] rounded-full bg-foreground/10" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+}
 
 function getGroupIcon(name: string) {
   const lower = name.toLowerCase();
@@ -176,44 +263,86 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
   return (
     <Layout>
       {!adminMode && (
-        <section className="gradient-hero py-16 md:py-[3rem]">
-          <div className="container">
-            <div className="max-w-3xl mx-auto text-center">
-              <div className="flex justify-center mb-6">
-                <BrandIcon className="w-20 h-20" />
+        <section className="gradient-hero relative overflow-hidden py-12 sm:py-16 md:py-20 lg:py-24">
+          <div
+            className="pointer-events-none absolute -right-24 top-1/2 h-[min(520px,80vw)] w-[min(520px,80vw)] -translate-y-1/2 rounded-full bg-primary/[0.12] blur-3xl"
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none absolute -left-32 bottom-0 h-64 w-64 rounded-full bg-primary/[0.08] blur-3xl sm:h-80 sm:w-80"
+            aria-hidden
+          />
+          <div className="container relative">
+            <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-12 xl:gap-16">
+              <div className="text-center lg:col-span-6 lg:text-left xl:col-span-5">
+                <div className="mb-6 flex flex-col items-center gap-4 sm:mb-8 lg:items-start">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-primary sm:text-xs">
+                    <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                    Smart expense sharing
+                  </span>
+                  <BrandIcon
+                    className="h-[4.25rem] w-[4.25rem] sm:h-24 sm:w-24 lg:h-20 lg:w-20"
+                    size={96}
+                  />
+                </div>
+
+                <h1 className="mb-4 text-balance text-3xl font-bold leading-[1.15] text-foreground sm:text-4xl md:text-5xl lg:mb-5 lg:text-[2.75rem] lg:leading-tight xl:text-[3.1rem]">
+                  Split, track, and settle{" "}
+                  <span className="text-primary">shared bills and group payments</span> without the
+                  spreadsheet chaos.
+                </h1>
+
+                <p className="mx-auto mb-3 max-w-xl text-balance text-base text-muted-foreground sm:text-lg lg:mx-0">
+                  Track shared expenses, split bills instantly, manage balances, and simplify group
+                  payments in one dashboard built for trips, roommates, and events.
+                </p>
+                <p className="mx-auto mb-8 max-w-xl text-balance text-sm text-muted-foreground sm:text-base lg:mx-0">
+                  Create a group, add expenses with one or multiple payers, and see who owes whom in
+                  real time. No sign-up required.
+                </p>
+
+                <div className="mx-auto mb-8 flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center lg:mx-0 lg:justify-start">
+                  <Button
+                    asChild
+                    size="lg"
+                    className="h-12 w-full text-base font-semibold sm:h-12 sm:w-auto sm:min-w-[11rem]"
+                  >
+                    <Link href="/create-group">
+                      Start free
+                      <ArrowRight className="h-5 w-5" />
+                    </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="lg"
+                    className="h-12 w-full border-primary/25 bg-card/80 text-base font-semibold hover:bg-primary/5 sm:h-12 sm:w-auto sm:min-w-[11rem]"
+                  >
+                    <Link href="/faq">
+                      <Users className="h-5 w-5" />
+                      How splits work
+                    </Link>
+                  </Button>
+                </div>
+
+                <ul className="mx-auto flex max-w-lg flex-col gap-3 text-left text-sm text-muted-foreground sm:mx-auto sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center sm:justify-center sm:gap-x-8 sm:gap-y-3 sm:text-center lg:mx-0 lg:justify-start lg:text-left">
+                  <li className="inline-flex items-center justify-center gap-2 sm:justify-center lg:justify-start">
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                    <span>100% free to start</span>
+                  </li>
+                  <li className="inline-flex items-center justify-center gap-2 sm:justify-center lg:justify-start">
+                    <CreditCard className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                    <span>No credit card required</span>
+                  </li>
+                  <li className="inline-flex items-center justify-center gap-2 sm:justify-center lg:justify-start">
+                    <Smartphone className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                    <span>Works on web and mobile</span>
+                  </li>
+                </ul>
               </div>
 
-              <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4 text-balance">
-                Split expenses with friends,
-                <span className="block text-primary">
-                  roommates, travel groups, and shared plans
-                </span>
-              </h1>
-
-              <p className="text-lg text-muted-foreground mb-4 text-balance">
-                {APP_NAME} is a free expense splitter that helps groups track
-                shared bills, balances, and settlements in one place.
-              </p>
-              <p className="text-base text-muted-foreground mb-8 text-balance max-w-2xl mx-auto">
-                Create a group, add expenses, choose one payer or split the payment
-                across multiple people, and instantly see who owes whom. No sign-up
-                required, no spreadsheet cleanup, and no confusion when it is time
-                to settle up.
-              </p>
-
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button asChild size="lg" className="text-base">
-                  <Link href="/create-group">
-                    <Plus className="w-5 h-5" />
-                    Create New Group
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" size="lg" className="text-base">
-                  <Link href="/faq">
-                    Learn How Splitcost Works
-                    <ArrowRight className="w-5 h-5" />
-                  </Link>
-                </Button>
+              <div className="hidden lg:col-span-6 lg:block xl:col-span-7" aria-hidden>
+                <LandingDashboardPreview />
               </div>
             </div>
           </div>
@@ -221,16 +350,16 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
       )}
 
       {loading ? (
-        <section className="py-12 md:py-16">
+        <section className="py-10 sm:py-12 md:py-16">
           <div className="container">
-            <div className="flex items-center justify-between mb-8">
-              <div className="space-y-2">
-                <Skeleton className="h-6 w-40" />
-                <Skeleton className="h-4 w-56" />
+            <div className="mb-8 flex flex-col gap-4 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
+              <div className="min-w-0 space-y-2">
+                <Skeleton className="h-7 w-48 sm:h-8" />
+                <Skeleton className="h-4 w-full max-w-xs sm:max-w-md" />
               </div>
-              <Skeleton className="h-8 w-28 rounded-md" />
+              <Skeleton className="h-10 w-full shrink-0 rounded-md sm:h-9 sm:w-32" />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
                 <GroupCardSkeleton key={i} />
               ))}
@@ -238,36 +367,36 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
           </div>
         </section>
       ) : (
-        <section className="py-12 md:py-16">
+        <section className="py-10 sm:py-12 md:py-16">
           <div className="container">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h2 className="text-2xl font-bold text-foreground mb-1">
+            <div className="mb-8 flex flex-col gap-4 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
+              <div className="min-w-0">
+                <h2 className="mb-1 text-xl font-bold text-foreground sm:text-2xl">
                   {adminMode ? "All Groups" : "Your Groups"}
                 </h2>
-                <p className="text-muted-foreground">
+                <p className="text-pretty text-sm text-muted-foreground sm:text-base">
                   {adminMode
                     ? "Admin view of all expense groups"
                     : "Open a recent expense group and keep tracking shared bills"}
                 </p>
                 {adminMode ? (
-                  <p className="text-sm text-muted-foreground mt-2">
+                  <p className="mt-2 text-sm text-muted-foreground">
                     Total groups:{" "}
                     <span className="font-semibold text-foreground">{groups.length}</span>
                   </p>
                 ) : null}
               </div>
               {!adminMode && (
-                <Button asChild variant="ghost" size="sm">
+                <Button asChild variant="default" size="sm" className="h-10 w-full shrink-0 sm:h-9 sm:w-auto">
                   <Link href="/create-group">
-                    <Plus className="w-4 h-4" />
-                    New Group
+                    <Plus className="h-4 w-4" />
+                    New group
                   </Link>
                 </Button>
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
               {groups.map((group) => {
                 const IconComponent = getGroupIcon(group.name);
                 const totalExpenses =
@@ -367,13 +496,13 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
       )}
 
       {!adminMode && (
-        <section className="py-12 md:py-16 bg-muted/30">
+        <section className="py-10 sm:py-12 md:py-16 bg-muted/30">
           <div className="container">
-            <div className="text-center mb-12 max-w-2xl mx-auto">
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
+            <div className="mx-auto mb-10 max-w-2xl text-center sm:mb-12">
+              <h2 className="mb-3 text-xl font-bold text-foreground sm:text-2xl md:text-3xl">
                 Why use {APP_NAME} as your expense splitter?
               </h2>
-              <p className="text-muted-foreground">
+              <p className="text-pretty text-sm text-muted-foreground sm:text-base">
                 Built for the everyday situations where a group expense tracker
                 saves time: travel, rent, groceries, nights out, shared
                 events, and plans where group members need to update people or
@@ -381,13 +510,13 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 md:grid-cols-3 md:gap-6">
               {features.map((feature, index) => (
                 <div key={index}>
                   <Card className="text-center h-full">
                     <CardContent className="pt-8">
-                      <div className="w-14 h-14 rounded-2xl gradient-primary flex items-center justify-center mx-auto mb-5">
-                        <feature.icon className="w-7 h-7 text-secondary-foreground" />
+                      <div className="w-14 h-14 rounded-2xl bg-primary/12 flex items-center justify-center mx-auto mb-5 ring-1 ring-primary/15">
+                        <feature.icon className="w-7 h-7 text-primary" />
                       </div>
                       <h3 className="text-lg font-semibold text-foreground mb-2">
                         {feature.title}
@@ -405,13 +534,13 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
       )}
 
       {!adminMode && (
-        <section className="py-12 md:py-16">
+        <section className="py-10 sm:py-12 md:py-16">
           <div className="container">
-            <div className="max-w-3xl mb-10">
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
+            <div className="mb-8 max-w-3xl sm:mb-10">
+              <h2 className="mb-3 text-xl font-bold text-foreground sm:text-2xl md:text-3xl">
                 One shared bill tracker for every group plan
               </h2>
-              <p className="text-muted-foreground">
+              <p className="text-pretty text-sm text-muted-foreground sm:text-base">
                 Whether you need a roommate expense tracker, a trip expense
                 tracker, or a simple way to divide everyday bills with friends,
                 {` ${APP_NAME} `} keeps balances clear with flexible splits,
@@ -419,7 +548,7 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 md:grid-cols-3 md:gap-6">
               {useCases.map((useCase) => (
                 <Card key={useCase.title} className="h-full">
                   <CardContent className="pt-6">
@@ -438,19 +567,19 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
       )}
 
       {!adminMode && (
-        <section className="py-12 md:py-16 bg-muted/30">
+        <section className="py-10 sm:py-12 md:py-16 bg-muted/30">
           <div className="container max-w-4xl">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
+            <div className="mb-8 text-center sm:mb-10">
+              <h2 className="mb-3 text-xl font-bold text-foreground sm:text-2xl md:text-3xl">
                 How to split expenses in minutes
               </h2>
-              <p className="text-muted-foreground">
+              <p className="mx-auto max-w-2xl text-pretty text-sm text-muted-foreground sm:text-base">
                 The workflow is intentionally simple so your group spends less
                 time managing bills and more time moving on.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 md:grid-cols-3 md:gap-6">
               {[
                 "Create a group and add the people involved.",
                 "Log each expense with one payer or multiple payers plus the right participants.",

@@ -23,6 +23,7 @@ import {
   useGroupQuery,
 } from "@/lib/queries";
 import { saveCachedExpense } from "@/lib/expenseCache";
+import { getGroupViewerMemberId } from "@/lib/groupViewer";
 
 export default function AddExpensePage({ groupId }: { groupId: string }) {
   const router = useRouter();
@@ -44,7 +45,7 @@ export default function AddExpensePage({ groupId }: { groupId: string }) {
 
   if (!group) {
     return (
-      <Layout>
+      <Layout variant="minimal">
         <div className="container py-12 text-center">
           <p className="text-muted-foreground">Group not found</p>
           <Button asChild className="mt-4">
@@ -54,6 +55,10 @@ export default function AddExpensePage({ groupId }: { groupId: string }) {
       </Layout>
     );
   }
+
+  const viewerId = getGroupViewerMemberId(groupId);
+  const defaultPaidByUserId =
+    viewerId && group.members.some((m) => m.id === viewerId) ? viewerId : undefined;
 
   const handleSubmit = async (data: Parameters<typeof addExpense>[1]) => {
     setIsSubmitting(true);
@@ -118,7 +123,7 @@ export default function AddExpensePage({ groupId }: { groupId: string }) {
     <>
       {/* ================= DESKTOP / TABLET ================= */}
       <div className="hidden md:block">
-        <Layout>
+        <Layout variant="minimal">
           <div className="container py-6 md:py-8 max-w-2xl">
             <Button variant="ghost" size="sm" asChild className="mb-4">
               <Link href={`/group/${groupId}`}>
@@ -140,6 +145,8 @@ export default function AddExpensePage({ groupId }: { groupId: string }) {
                   <ExpenseForm
                     members={group.members}
                     defaultCurrency={group.currency}
+                    defaultPaidByUserId={defaultPaidByUserId}
+                    viewerMemberId={defaultPaidByUserId ?? null}
                     onSubmit={handleSubmit}
                     submitLabel={isSubmitting ? "Adding..." : "Add Expense"}
                   />
@@ -155,6 +162,8 @@ export default function AddExpensePage({ groupId }: { groupId: string }) {
         <ExpenseFormMobile
           members={group.members}
           defaultCurrency={group.currency}
+          defaultPaidByUserId={defaultPaidByUserId}
+          viewerMemberId={defaultPaidByUserId ?? null}
           groupId={groupId}
           onSubmit={handleSubmit}
         />

@@ -32,6 +32,8 @@ function getResponsiveAvatarSize(
 ------------------------------------------ */
 interface UserAvatarProps {
   name: string;
+  /** Shown in hover tooltip / mobile popover; initials and colors still use `name`. */
+  overlayName?: string;
   size?: AvatarSize;
   className?: string;
   disableMobileTooltip?: boolean;
@@ -39,6 +41,7 @@ interface UserAvatarProps {
 
 export function UserAvatar({
   name,
+  overlayName,
   size ,
   className,
   disableMobileTooltip = false,
@@ -61,7 +64,7 @@ export function UserAvatar({
         backgroundColor: `hsl(${colors.bg})`,
         color: `hsl(${colors.fg})`,
       }}
-      aria-label={name}
+      aria-label={overlayName ?? name}
     >
       {initials}
     </div>
@@ -69,7 +72,7 @@ export function UserAvatar({
 
   return (
     <AvatarNameOverlay
-      name={name}
+      name={overlayName ?? name}
       disableMobileOverlay={disableMobileTooltip}
     >
       {avatar}
@@ -82,6 +85,8 @@ export function UserAvatar({
 ------------------------------------------ */
 interface AvatarGroupProps {
   names: string[];
+  /** Optional per-avatar tooltip labels (e.g. `Name (You)`); defaults to `names`. */
+  overlayNames?: string[];
   max?: number;
   size?: AvatarSize;
   className?: string;
@@ -93,6 +98,7 @@ interface AvatarGroupProps {
 
 export function AvatarGroup({
   names,
+  overlayNames,
   max = 4,
   size = defaultAvatarSize,
   className,
@@ -112,6 +118,7 @@ export function AvatarGroup({
   const visibleNames = names.slice(0, effectiveMax);
   const overflow = names.length - effectiveMax;
   const overflowNames = names.slice(effectiveMax);
+  const overflowOverlays = overlayNames?.slice(effectiveMax);
 
   return (
     <div
@@ -127,6 +134,7 @@ export function AvatarGroup({
           <UserAvatar
             key={`${name}-${index}`}
             name={name}
+            overlayName={overlayNames?.[index]}
             size={effectiveSize}
             className="border-[1.5px] border-white"
             disableMobileTooltip={disableMobileTooltip}
@@ -135,9 +143,9 @@ export function AvatarGroup({
 
         {overflow > 0 && (
           <SingleSelect
-            items={overflowNames.map((m) => ({
+            items={overflowNames.map((m, i) => ({
               id: m,
-              label: m,
+              label: overflowOverlays?.[i] ?? m,
               showAvatar: true,
             }))}
             isMinWidth

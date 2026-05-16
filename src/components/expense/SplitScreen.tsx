@@ -13,6 +13,7 @@ import { toast } from "@/hooks/use-toast";
 import { ToastAction } from "@radix-ui/react-toast";
 import { InfoSheetButton } from "../ui/InfoSheetButton";
 import { getSplitInfoText } from "./expenseInfo";
+import { memberNameForViewer } from "@/lib/groupExpenseLabels";
 
 export interface SplitResult {
     splitType: SplitType;
@@ -34,6 +35,7 @@ interface SplitScreenProps {
     amount: number;
     currency: string;
     members: UserInterface[];
+    viewerMemberId?: string | null;
     initialParticipants?: ExpenseParticipantsRequest[] | null;
     splitType: SplitType;
     onConfirm: (data: SplitResult) => void;
@@ -290,7 +292,7 @@ export function buildSplitScreenVM(params: {
 }
 
 export default function SplitScreen(props: SplitScreenProps) {
-    const { onClose, amount, currency, members, initialParticipants, splitType, onConfirm } = props;
+    const { onClose, amount, currency, members, viewerMemberId, initialParticipants, splitType, onConfirm } = props;
     const { keyboardOffset } = useKeyboardLayout();
     const swipeHandlers = useSwipeable({
         onSwipedLeft: () => {
@@ -640,10 +642,12 @@ export default function SplitScreen(props: SplitScreenProps) {
                     WebkitOverflowScrolling: "touch",
                 }}
             >
-                {activeTab.id === "equal" && activeTab.members.map((m) => (
+                {activeTab.id === "equal" && activeTab.members.map((m) => {
+                    const rowLabel = memberNameForViewer(m.id, m.name, viewerMemberId);
+                    return (
                     <div key={m.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
                         <div className="flex items-center gap-2 min-w-0 flex-1">
-                            <UserAvatar name={m.name} size="md" />
+                            <UserAvatar name={m.name} overlayName={rowLabel} size="md" />
 
                             <div className="flex flex-col min-w-0">
                                 <span
@@ -651,9 +655,9 @@ export default function SplitScreen(props: SplitScreenProps) {
                                         "text-sm font-medium truncate block",
                                         m.isSelected ? "text-foreground" : "text-muted-foreground"
                                     )}
-                                    title={m.name}
+                                    title={rowLabel}
                                 >
-                                    {m.name}
+                                    {rowLabel}
                                 </span>
                             </div>
                         </div>
@@ -667,12 +671,15 @@ export default function SplitScreen(props: SplitScreenProps) {
                             />
                         </div>
                     </div>
-                ))}
+                );
+                })}
 
-                {activeTab.id === "custom" && activeTab.members.map((m) => (
+                {activeTab.id === "custom" && activeTab.members.map((m) => {
+                    const rowLabel = memberNameForViewer(m.id, m.name, viewerMemberId);
+                    return (
                     <div key={m.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
                         <div className="flex items-center gap-2 min-w-0 flex-1">
-                            <UserAvatar name={m.name} size="md" />
+                            <UserAvatar name={m.name} overlayName={rowLabel} size="md" />
 
                             <div className="flex flex-col min-w-0">
                                 <span
@@ -680,9 +687,9 @@ export default function SplitScreen(props: SplitScreenProps) {
                                         "text-sm font-medium truncate block",
                                         m.value ? "text-foreground" : "text-muted-foreground"
                                     )}
-                                    title={m.name}
+                                    title={rowLabel}
                                 >
-                                    {m.name}
+                                    {rowLabel}
                                 </span>
                             </div>
                         </div>
@@ -706,12 +713,15 @@ export default function SplitScreen(props: SplitScreenProps) {
                             />
                         </div>
                     </div>
-                ))}
+                );
+                })}
 
-                {activeTab.id === "percentage" && activeTab.members.map((m) => (
+                {activeTab.id === "percentage" && activeTab.members.map((m) => {
+                    const rowLabel = memberNameForViewer(m.id, m.name, viewerMemberId);
+                    return (
                     <div key={m.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
                         <div className="flex items-center gap-2 min-w-0 flex-1">
-                            <UserAvatar name={m.name} size="md" />
+                            <UserAvatar name={m.name} overlayName={rowLabel} size="md" />
 
                             <div className="flex flex-col min-w-0">
                                 <span
@@ -719,9 +729,9 @@ export default function SplitScreen(props: SplitScreenProps) {
                                         "text-sm font-medium truncate block",
                                         m.value ? "text-foreground" : "text-muted-foreground"
                                     )}
-                                    title={m.name}
+                                    title={rowLabel}
                                 >
-                                    {m.name}
+                                    {rowLabel}
                                 </span>
 
                                 <span className="text-xs text-muted-foreground">
@@ -749,7 +759,8 @@ export default function SplitScreen(props: SplitScreenProps) {
                             />
                         </div>
                     </div>
-                ))}
+                );
+                })}
             </div>
 
             {/* Footer */}

@@ -13,6 +13,7 @@ import { ToastAction } from "../ui/toast";
 import { InfoSheetButton } from "../ui/InfoSheetButton";
 import { getPaidByInfoContent } from "./expenseInfo";
 import { useSwipeable } from "react-swipeable";
+import { memberLabelWithYouSuffix } from "@/lib/groupExpenseLabels";
 
 export interface PayerEntry {
   userId: string;
@@ -23,6 +24,7 @@ interface PaidBySheetProps {
   open: boolean;
   onClose: () => void;
   members: { id: string; name: string }[];
+  viewerMemberId?: string | null;
   currency: string;
   expenseAmount: number;
   paidByUserId: string;
@@ -38,6 +40,7 @@ export default function PaidBySheet({
   open,
   onClose,
   members,
+  viewerMemberId,
   currency,
   expenseAmount,
   paidByUserId,
@@ -221,6 +224,7 @@ export default function PaidBySheet({
         <div className="flex-1 overflow-y-auto sm:max-h-[24rem]">
           {members.map((m) => {
             const isSelected = !isMultiplePayers && paidByUserId === m.id;
+            const label = memberLabelWithYouSuffix(m.id, m.name, viewerMemberId);
             return (
               <button
                 key={m.id}
@@ -235,9 +239,9 @@ export default function PaidBySheet({
                     : "hover:bg-muted active:bg-muted"
                 )}
               >
-                <UserAvatar name={m.name} size="md" />
+                <UserAvatar name={m.name} overlayName={label} size="md" />
                 <span className="text-sm font-medium flex-1 text-left truncate">
-                  {m.name}
+                  {label}
                 </span>
                 {isSelected && (
                   <Check className="w-4 h-4 text-primary shrink-0" />
@@ -261,6 +265,7 @@ export default function PaidBySheet({
             {localPayers.map((p, idx) => {
               const member = members.find((m) => m.id === p.userId);
               if (!member) return null;
+              const label = memberLabelWithYouSuffix(member.id, member.name, viewerMemberId);
               return (
                 <div
                   key={p.userId}
@@ -271,7 +276,7 @@ export default function PaidBySheet({
                   )}
                 >
                   <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                    <UserAvatar name={member.name} size="md" />
+                    <UserAvatar name={member.name} overlayName={label} size="md" />
                     <span
                       className={cn(
                         "text-sm font-medium truncate",
@@ -280,7 +285,7 @@ export default function PaidBySheet({
                           : "text-muted-foreground"
                       )}
                     >
-                      {member.name}
+                      {label}
                     </span>
                   </div>
                   <div className="shrink-0">

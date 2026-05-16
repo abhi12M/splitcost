@@ -9,11 +9,11 @@ import { APP_NAME } from "@/lib/constants";
 
 const faqs = [
   {
-    question: "What is Splitcost and how does it help split expenses?",
+    question: "What is SplitCost and how does it help split expenses?",
     answer: `${APP_NAME} is a free expense splitting app for friends, roommates, couples, and travel groups. Create a shared group, add bills, choose who paid, including multiple payers for the same expense, and ${APP_NAME} automatically calculates balances and the simplest way to settle up.`,
   },
   {
-    question: "Do I need to create an account to use Splitcost?",
+    question: "Do I need to create an account to use SplitCost?",
     answer: `No. ${APP_NAME} works without sign-up. You can create a group, share the link, and start tracking shared expenses right away.`,
   },
   {
@@ -25,7 +25,7 @@ const faqs = [
     answer: `Yes. ${APP_NAME} supports multiple payers on one expense, so you can record shared upfront payments accurately and keep balances correct without creating duplicate entries.`,
   },
   {
-    question: "Can I use Splitcost for trips, vacations, or roommate bills?",
+    question: "Can I use SplitCost for trips, vacations, or roommate bills?",
     answer: `Yes. ${APP_NAME} works well for travel expenses, apartment costs, household bills, event planning, and any other shared spending where a group needs a simple expense tracker.`,
   },
   {
@@ -41,12 +41,12 @@ const faqs = [
     answer: `Yes. You can edit a group's name, currency, and members after creation, which is useful when plans change or new people join the expense tracker.`,
   },
   {
-    question: "How does Splitcost calculate settlements?",
+    question: "How does SplitCost calculate settlements?",
     answer: `${APP_NAME} reduces the number of payments needed to settle a group. Instead of everyone paying everyone else, the app simplifies balances into the fewest practical transactions.`,
   },
   {
     question: "Is my expense data secure?",
-    answer: "Splitcost uses a mix of local storage and secure third-party infrastructure so shared groups can work across devices and sessions. We aim to collect only the information needed to run the product. See the Privacy Policy for full details.",
+    answer: "SplitCost uses a mix of local storage and secure third-party infrastructure so shared groups can work across devices and sessions. We aim to collect only the information needed to run the product. See the Privacy Policy for full details.",
   },
   {
     question: "Is there a mobile app?",

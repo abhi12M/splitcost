@@ -8,7 +8,9 @@ import {
   ExpenseFormInterface,
   ExpenseParticipantsRequest,
   ExpenseRequest,
+  UserInterface,
 } from "@/lib/storage"
+import { memberNameForViewer } from "@/lib/groupExpenseLabels"
 import { EXPENSE_DESCRIPTION_MAX, ExpenseSchema } from "@/lib/validations/expense.schema"
 import { CategoryKey, EXPENSE_CATEGORIES, SubcategoryId } from "../icons/CategoryIcons"
 import { formatAmount, formatDateForDB, getCurrencyDifference } from "../ui/formatters"
@@ -30,6 +32,9 @@ import type { ExpenseAttachment } from "@/lib/expenseAttachments"
 interface Props {
   members: any[]
   defaultCurrency?: string
+  /** When adding (no initialData), pre-select paid-by if it matches a member id. */
+  defaultPaidByUserId?: string
+  viewerMemberId?: string | null
   initialData?: ExpenseFormInterface,
   groupId?: string,
   initialAttachment?: ExpenseAttachment | null,
@@ -39,6 +44,8 @@ interface Props {
 export default function ExpenseFormMobile({
   members,
   defaultCurrency = "USD",
+  defaultPaidByUserId,
+  viewerMemberId,
   initialData,
   groupId,
   initialAttachment = null,
@@ -46,14 +53,20 @@ export default function ExpenseFormMobile({
 }: Props) {
   const initialPayers = initialData?.payers || [];
   const hasInitialMultiplePayers = initialPayers.length > 0;
+  const initialSinglePaidBy =
+    hasInitialMultiplePayers
+      ? ""
+      : initialData?.paidByUserId ||
+        (defaultPaidByUserId &&
+        members.some((m: { id: string }) => m.id === defaultPaidByUserId)
+          ? defaultPaidByUserId
+          : "");
 
   /* ---------------- state ---------------- */
   const [description, setDescription] = useState(initialData?.description || "");
   const [amount, setAmount] = useState(initialData?.amount?.toString() || "");
   const [currency, setCurrency] = useState(initialData?.currency || defaultCurrency);
-  const [paidByUserId, setPaidBy] = useState(
-    hasInitialMultiplePayers ? "" : (initialData?.paidByUserId || "")
-  );
+  const [paidByUserId, setPaidBy] = useState(initialSinglePaidBy);
   const [category, setCategory] = useState<CategoryKey>(initialData?.category || "uncategorized");
   const [subcategory, setSubcategory] = useState<SubcategoryId>(initialData?.subcategory || "general");
   const [splitType, setSplitType] = useState<any>(initialData?.splitType || "equal");
@@ -367,9 +380,13 @@ export default function ExpenseFormMobile({
 
   };
 
-  const userNamesFromParticipants = participants
-    .map(p => members.find(m => m.id === p.userId)?.name)
-    .filter((name): name is string => Boolean(name));
+  const participantMembers = participants
+    .map((p) => members.find((m: UserInterface) => m.id === p.userId))
+    .filter((m): m is UserInterface => Boolean(m));
+  const participantNames = participantMembers.map((m) => m.name);
+  const participantOverlayNames = participantMembers.map((m) =>
+    memberNameForViewer(m.id, m.name, viewerMemberId)
+  );
 
   return (
     <>
@@ -392,7 +409,11 @@ export default function ExpenseFormMobile({
         {/* Avatar row */}
         <div className="flex items-center gap-2 px-4 py-1 border-b">
           <span className="text-sm text-muted-foreground">With:</span>
-          <AvatarGroup names={userNamesFromParticipants} isShowTotalMemberText={false} />
+          <AvatarGroup
+            names={participantNames}
+            overlayNames={participantOverlayNames}
+            isShowTotalMemberText={false}
+          />
           <Settings
             className={cn(
               "w-4 h-4 cursor-pointer transition-colors",
@@ -497,7 +518,12 @@ export default function ExpenseFormMobile({
               {isMultiplePayers
                 ? `${payers.filter(p => p.amount && p.amount > 0).length} people`
                 : paidByUserId
-                  ? members.find((m) => m.id === paidByUserId)?.name || "select member"
+                  ? (() => {
+                      const m = members.find((mem: UserInterface) => mem.id === paidByUserId);
+                      if (!m) return "select member";
+                      if (viewerMemberId && m.id === viewerMemberId) return "You";
+                      return m.name;
+                    })()
                   : "select member"}
             </button>
           </div>
@@ -574,6 +600,7 @@ export default function ExpenseFormMobile({
           amount={Number(amount)}
           currency={currency}
           members={members}
+          viewerMemberId={viewerMemberId}
           initialParticipants={participants}
           splitType={splitType}
           onConfirm={(data) => {
@@ -586,6 +613,7 @@ export default function ExpenseFormMobile({
         open={showPaidBy}
         onClose={() => setShowPaidBy(false)}
         members={members}
+        viewerMemberId={viewerMemberId}
         currency={currency}
         expenseAmount={Number(amount || 0)}
         paidByUserId={paidByUserId}

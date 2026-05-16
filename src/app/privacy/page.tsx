@@ -6,7 +6,7 @@ import PrivacyPage from "@/views/Privacy";
 export const metadata: Metadata = buildMetadata({
   title: "Privacy Policy",
   description:
-    "Learn how Splitcost handles expense data, analytics, storage, and privacy choices.",
+    "Learn how SplitCost handles expense data, analytics, storage, and privacy choices.",
   path: "/privacy",
 });
 

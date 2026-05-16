@@ -28,6 +28,8 @@ import {
   Download,
 } from "lucide-react";
 
+import { MobileGroupDashboard } from "@/components/group/MobileGroupDashboard";
+import { MobileGroupDashboardSkeleton } from "@/components/group/MobileGroupDashboardSkeleton";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,6 +40,17 @@ import {
   EXPENSE_CATEGORIES,
   type CategoryKey,
 } from "@/components/icons/CategoryIcons";
+import {
+  getExpensePaidByLabel,
+  getExpensePayers,
+  memberLabelWithYouSuffix,
+  memberNameForViewer,
+} from "@/lib/groupExpenseLabels";
+import {
+  clearGroupViewerMemberId,
+  getGroupViewerMemberId,
+  setGroupViewerMemberId,
+} from "@/lib/groupViewer";
 import {
   addExpense,
   ExpenseRequest,
@@ -50,7 +63,9 @@ import {
   queryKeys,
 } from "@/lib/queries";
 import { SingleSelect } from "@/components/ui/single-select";
-import { toTitleCase } from "@/components/ui/formatters";
+import { formatExpenseGroupHeaderTitle, toTitleCase } from "@/components/ui/formatters";
+import { shareOrCopy } from "@/lib/shareContent";
+import { isMobileViewportWidth, useDeviceType } from "@/hooks/useDeviceType";
 import { toast } from "@/hooks/use-toast";
 import { getEncryptedItem, setEncryptedItem } from "@/lib/localStorage";
 import { ADMIN_BASE_PATH, LOCAL_GROUPS_KEY } from "@/lib/constants";
@@ -111,28 +126,6 @@ function calculateShare(
 
   const amount = Number(participant.amount);
   return Number.isNaN(amount) ? 0 : amount;
-}
-
-function getExpensePayers(
-  expense: GroupDashboardInterface["expenses"][number]
-): UserInterface[] {
-  if (expense.payers?.length) {
-    return expense.payers
-      .map((payer) => payer.user)
-      .filter((payer): payer is UserInterface => !!payer);
-  }
-
-  return expense.paidBy ? [expense.paidBy] : [];
-}
-
-function getExpensePaidByLabel(
-  expense: GroupDashboardInterface["expenses"][number]
-) {
-  const payerNames = getExpensePayers(expense).map((payer) => payer.name);
-
-  if (payerNames.length === 0) return "Unknown payer";
-  if (payerNames.length === 1) return payerNames[0];
-  return `${payerNames.length} people`;
 }
 
 function calculateBalances(
@@ -348,20 +341,29 @@ function buildExpensesCsv(
 function GroupResponsesSkeleton() {
   return (
     <Layout>
-      <div className="container py-6 space-y-6">
-        {/* HEADER */}
-        <div className="flex items-center gap-3">
-          <Skeleton className="w-9 h-9 rounded-md" />
-
-          <div className="flex-1 space-y-2">
-            <Skeleton className="h-6 w-48" />
-            <Skeleton className="h-4 w-32" />
+      <div className="container space-y-5 py-5 sm:space-y-6 sm:py-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="flex flex-1 items-center gap-3">
+            <Skeleton className="h-9 w-9 shrink-0 rounded-md" />
+            <div className="min-w-0 flex-1 space-y-2">
+              <Skeleton className="h-7 w-48 max-w-full sm:h-8" />
+              <Skeleton className="h-4 w-36" />
+            </div>
           </div>
-
-          <Skeleton className="w-9 h-9 rounded-md" />
+          <div className="flex justify-end gap-2">
+            <Skeleton className="h-9 w-20 rounded-md" />
+            <Skeleton className="h-9 w-20 rounded-md" />
+            <Skeleton className="hidden h-9 w-28 rounded-md sm:block" />
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-[4.5rem] rounded-xl sm:h-[4.75rem]" />
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* LEFT COLUMN */}
           <div className="lg:col-span-2 space-y-4">
             {/* Filters */}
@@ -450,6 +452,25 @@ export default function GroupResponsesPage({
   const expenses = dashboardQuery.data?.expenses ?? [];
   const loading = dashboardQuery.isPending;
 
+  const [viewerMemberId, setViewerMemberId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!groupId) return;
+    let id = getGroupViewerMemberId(groupId);
+    if (group && !id && group.members.length === 1) {
+      id = group.members[0].id;
+      setGroupViewerMemberId(groupId, id);
+    }
+    setViewerMemberId(id ?? null);
+  }, [groupId, group]);
+
+  const onViewerMemberIdChange = (memberId: string | null) => {
+    if (!groupId) return;
+    if (memberId === null) clearGroupViewerMemberId(groupId);
+    else setGroupViewerMemberId(groupId, memberId);
+    setViewerMemberId(memberId);
+  };
+
   const [viewMode, setViewMode] = useState<"list" | "chart">("list");
   // UI state
   const [search, setSearch] = useState("");
@@ -475,6 +496,8 @@ export default function GroupResponsesPage({
     index: number;
   } | null>(null);
 
+  const device = useDeviceType();
+
   // Track this group in the user's local "recent groups" list whenever the
   // dashboard loads it. Independent from data fetching now that React Query
   // owns the request lifecycle.
@@ -497,7 +520,8 @@ export default function GroupResponsesPage({
       list = list.filter(
         (e) =>
           e.description.toLowerCase().includes(q) ||
-          getExpensePaidByLabel(e).toLowerCase().includes(q) ||
+          getExpensePaidByLabel(e, viewerMemberId).toLowerCase().includes(q) ||
+          getExpensePayers(e).some((p) => p.name.toLowerCase().includes(q)) ||
           e.category.toLowerCase().includes(q) ||
           e.subcategory.toLowerCase().includes(q) ||
           e.amount.toString().includes(q) ||
@@ -530,11 +554,8 @@ export default function GroupResponsesPage({
     const grouped: Record<string, GroupDashboardInterface["expenses"]> = {};
     list.forEach((e) => {
       let key = "";
-      if (groupBy === "date")
-        key = e.date
-          ? e.date
-          : String(e.date);
-      if (groupBy === "paidBy") key = getExpensePaidByLabel(e);
+      if (groupBy === "date") key = e.date ? e.date : String(e.date);
+      if (groupBy === "paidBy") key = getExpensePaidByLabel(e, viewerMemberId);
       if (groupBy === "category") key = e.category;
       if (groupBy === "splitType") key = e.splitType || "equal";
 
@@ -543,19 +564,17 @@ export default function GroupResponsesPage({
     });
 
     return grouped;
-  }, [expenses, debouncedSearch, sortBy, groupBy, group]);
+  }, [expenses, debouncedSearch, sortBy, groupBy, group, viewerMemberId]);
 
   const chartData = useMemo(() => {
     return Object.entries(groupedExpenses).map(([key, list]) => {
-      // Format the label based on the grouping type
-      let name = key;
-      name = shouldTitleCase ? toTitleCase(key) : key;
+      const name = formatExpenseGroupHeaderTitle(key, groupBy, shouldTitleCase);
 
       const value = list.reduce((sum, e) => sum + e.amount, 0);
 
       return { name, value };
     });
-  }, [groupedExpenses, shouldTitleCase]);
+  }, [groupedExpenses, shouldTitleCase, groupBy]);
 
   const members = group?.members;
 
@@ -583,7 +602,18 @@ export default function GroupResponsesPage({
     [groupedExpenses]
   );
 
+  const isMobileGroupLoading = device === "mobile" || isMobileViewportWidth();
+
   if (loading) {
+    // SSR defaults to desktop in useDeviceType — use minimal skeleton so phones
+    // never flash the full-site GroupResponsesSkeleton (header + footer).
+    if (typeof window === "undefined" || isMobileGroupLoading) {
+      return (
+        <Layout variant="minimal">
+          <MobileGroupDashboardSkeleton />
+        </Layout>
+      );
+    }
     return <GroupResponsesSkeleton />;
   }
 
@@ -604,30 +634,48 @@ export default function GroupResponsesPage({
 
   type CopyType = "settlement" | "link";
 
-  const copyLink = async (type: CopyType) => {
-    let textToCopy = "";
-    let description = "";
+  const shareGroupContent = async (type: CopyType) => {
+    const settlementText = type === "settlement" ? getSettlementText() : "";
 
-    switch (type) {
-      case "settlement":
-        textToCopy = getSettlementText();
-        description = "Settlement summary copied";
-        break;
-      case "link":
-        textToCopy = shareLink;
-        description = "Share this link with your group members";
-        break;
-      default:
-        textToCopy = shareLink;
-        description = "Share this link with your group members";
+    if (type === "settlement" && !settlementText.trim()) {
+      toast({
+        title: "Nothing to share yet",
+        description: "Add expenses so we can suggest who should pay whom.",
+      });
+      return;
     }
 
-    await navigator.clipboard.writeText(textToCopy);
-    toast({
-      title: "Copied!",
-      description,
-    });
+    const clipboardText = type === "link" ? shareLink : settlementText;
 
+    const share: ShareData =
+      type === "link"
+        ? {
+            title: `${group.name} · SplitCost`,
+            text: `Join group "${group.name}" on SplitCost to split expenses, track balances, and settle up together.`,
+            url: shareLink,
+          }
+        : {
+            title: `${group.name} · Settlement summary`,
+            text: settlementText,
+          };
+
+    const outcome = await shareOrCopy({ share, clipboardText });
+
+    if (outcome === "copied") {
+      toast({
+        title: "Copied to clipboard",
+        description:
+          type === "link"
+            ? "Paste the link in chat or email for your group."
+            : "Paste the summary in chat, email, or notes.",
+      });
+    } else if (outcome === "failed") {
+      toast({
+        title: "Could not share or copy",
+        description: "Your browser blocked clipboard access. Try again or copy the link from the address bar.",
+        variant: "destructive",
+      });
+    }
   };
 
 
@@ -636,20 +684,21 @@ export default function GroupResponsesPage({
 
     const lines = settlements.map(
       (s) =>
-        `${s.fromName} pays ${s.toName} ${formatCurrency(
-          s.amount,
-          group.currency
-        )}`
+        `${memberNameForViewer(s.fromId, s.fromName, viewerMemberId)} pays ${memberNameForViewer(
+          s.toId,
+          s.toName,
+          viewerMemberId
+        )} ${formatCurrency(s.amount, group.currency)}`
     );
 
-    return `
-          Settlement Summary
-
-          ${lines.join("\n")}
-
-          View full details here:
-          ${shareLink}
-      `.trim();
+    return [
+      "Settlement Summary",
+      "",
+      ...lines,
+      "",
+      "View full details here:",
+      shareLink,
+    ].join("\n");
   };
 
   const handleExportExpenses = () => {
@@ -711,12 +760,7 @@ export default function GroupResponsesPage({
         ]
       }
       await addExpense(groupId!, data);
-      // Invalidate so the dashboard query refetches once. Avoids the previous
-      // pattern of an extra manual loadGroupDetails call alongside React state
-      // mutation.
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.groupDashboard(groupId!),
-      });
+      await invalidateGroupDashboard(queryClient, groupId!);
     } catch (error) {
       // toast.error("Failed to delete expense");
     } finally {
@@ -727,42 +771,142 @@ export default function GroupResponsesPage({
   /* ======================================================
      UI
   ====================================================== */
+  const settlementCount = settlements.length;
+
+  if (device === "mobile") {
+    return (
+      <Layout variant="minimal">
+        <MobileGroupDashboard
+          groupId={groupId}
+          isAdminView={isAdminView}
+          group={group}
+          expenses={expenses}
+          groupedExpenses={groupedExpenses}
+          groupBy={groupBy}
+          setGroupBy={setGroupBy}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          shouldTitleCase={shouldTitleCase}
+          expandedGroups={expandedGroups}
+          setExpandedGroups={setExpandedGroups}
+          balances={balances}
+          settlements={settlements}
+          totalExpenses={totalExpenses}
+          search={search}
+          setSearch={setSearch}
+          visibleCount={visibleCount}
+          copyLink={shareGroupContent}
+          openRow={openRow}
+          setOpenRow={setOpenRow}
+          settlingIndex={settlingIndex}
+          settleConfirmation={settleConfirmation}
+          setSettleConfirmation={setSettleConfirmation}
+          handleSettle={handleSettle}
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+          chartData={chartData}
+          viewerMemberId={viewerMemberId}
+          onViewerMemberIdChange={onViewerMemberIdChange}
+        />
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
-      <div className="container py-6 space-y-6">
+      <div className="container space-y-5 py-5 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] sm:space-y-6 sm:py-6 lg:pb-6">
         {/* HEADER */}
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon-sm" asChild>
-            <Link href={isAdminView ? ADMIN_BASE_PATH : "/"}>
-              <ArrowLeft />
-            </Link>
-          </Button>
-
-          {/* Middle content takes remaining space */}
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center">
-              <SmartTooltip text={group.name} className="text-2xl font-bold" />
-            </div>
-            <AvatarGroup names={group.members.map((m) => m.name)} />
-          </div>
-
-          {/* Right aligned */}
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" asChild>
-              <Link href={`/group/${groupId}/edit`}>
-                <Pencil className="w-4 h-4" />
+        <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3">
+          <div className="flex min-w-0 flex-1 items-start gap-2 sm:items-center sm:gap-3">
+            <Button variant="ghost" size="icon-sm" className="mt-0.5 shrink-0 sm:mt-0" asChild>
+              <Link href={isAdminView ? ADMIN_BASE_PATH : "/"} aria-label="Back">
+                <ArrowLeft className="h-5 w-5" />
               </Link>
             </Button>
-            <Button variant="outline" size="sm" onClick={() => copyLink("link")}>
-              <Share2 className="w-4 h-4" />
+            <div className="min-w-0 flex-1 space-y-2">
+              <SmartTooltip
+                text={group.name}
+                className="block truncate text-xl font-bold leading-tight sm:text-2xl"
+              />
+              <AvatarGroup
+                names={group.members.map((m) => m.name)}
+                overlayNames={group.members.map((m) =>
+                  memberLabelWithYouSuffix(m.id, m.name, viewerMemberId)
+                )}
+                className="max-w-full"
+              />
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center justify-end gap-2 sm:justify-start">
+            <Button variant="outline" size="sm" className="h-9 flex-1 sm:flex-initial" asChild>
+              <Link href={`/group/${groupId}/edit`}>
+                <Pencil className="h-4 w-4" />
+                <span className="sm:hidden">Edit</span>
+              </Link>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 flex-1 sm:flex-initial"
+              type="button"
+              title="Share group link"
+              aria-label="Share group link"
+              onClick={() => shareGroupContent("link")}
+            >
+              <Share2 className="h-4 w-4" />
+              <span className="sm:hidden">Share</span>
+            </Button>
+            <Button asChild size="sm" className="hidden h-9 sm:inline-flex">
+              <Link href={`/group/${groupId}/add-expense`}>
+                <Plus className="h-4 w-4" />
+                Add expense
+              </Link>
             </Button>
           </div>
+        </header>
+
+        {/* Summary strip — matches dashboard-style overview */}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
+          {[
+            {
+              label: "Group total",
+              value: formatCurrency(totalExpenses, group.currency),
+              hint: `${expenses.length} expense${expenses.length === 1 ? "" : "s"}`,
+            },
+            {
+              label: "Members",
+              value: String(group.members.length),
+              hint: "In this group",
+            },
+            {
+              label: "Settlements",
+              value: String(settlementCount),
+              hint: settlementCount === 1 ? "Suggested transfer" : "Suggested transfers",
+            },
+            {
+              label: "Currency",
+              value: group.currency || "—",
+              hint: "Group default",
+            },
+          ].map((stat) => (
+            <Card key={stat.label} className="border-border/80 shadow-sm">
+              <CardContent className="p-3 sm:p-4">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground sm:text-xs">
+                  {stat.label}
+                </p>
+                <p className="mt-1 truncate text-base font-semibold tabular-nums text-foreground sm:text-lg">
+                  {stat.value}
+                </p>
+                <p className="mt-0.5 truncate text-[11px] text-muted-foreground sm:text-xs">{stat.hint}</p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
-        {/* MAIN GRID */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* MAIN: insights first on mobile, expenses + chart on desktop left */}
+        <div className="flex flex-col gap-6 lg:grid lg:grid-cols-3 lg:gap-6">
           {/* EXPENSE LIST */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className="order-2 space-y-4 lg:order-1 lg:col-span-2">
             {/* Filters */}
             <Card>
               <CardContent className="p-4">
@@ -813,11 +957,11 @@ export default function GroupResponsesPage({
 
             {/* Expenses */}
             <Card>
-              <CardHeader className="flex flex-row items-start justify-between gap-4">
+              <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 {/* LEFT */}
-                <div className="space-y-1">
-                  <CardTitle className="flex items-center gap-2">
-                    <Wallet className="w-5 h-5 text-primary" />
+                <div className="min-w-0 space-y-1">
+                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                    <Wallet className="h-5 w-5 shrink-0 text-primary" />
                     Expenses
                   </CardTitle>
 
@@ -837,7 +981,7 @@ export default function GroupResponsesPage({
                 </div>
 
                 {/* RIGHT */}
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:shrink-0 sm:justify-end">
                   {/* View Toggle */}
                   <div className="flex items-center rounded-lg border bg-muted p-0.5">
                     <button
@@ -968,41 +1112,38 @@ export default function GroupResponsesPage({
 
                       return (
                         <div key={title} className="relative">
-                          {/* ✅ STICKY GROUP HEADER */}
-                          <div className="sticky top-[64px] z-10 bg-background">
-                            <button
-                              onClick={() =>
-                                setExpandedGroups((p) => ({
-                                  ...p,
-                                  [title]: !isOpen,
-                                }))
-                              }
-                              className="w-full flex items-center justify-between px-4 py-3 border-b hover:bg-muted/40 transition"
-                            >
-                              <div className="flex items-center gap-2 min-w-0 flex-1">
-                                {isOpen ? (
-                                  <ChevronDown className="w-4 h-4 shrink-0" />
-                                ) : (
-                                  <ChevronRight className="w-4 h-4 shrink-0" />
-                                )}
+                          <div className="sticky top-14 z-10 border-b border-border/60 bg-background/95 backdrop-blur-sm sm:top-16 supports-[backdrop-filter]:bg-background/80">
+                              <button
+                                onClick={() =>
+                                  setExpandedGroups((p) => ({
+                                    ...p,
+                                    [title]: !isOpen,
+                                  }))
+                                }
+                                className="flex w-full items-center justify-between border-b px-4 py-3 transition hover:bg-muted/40"
+                              >
+                                <div className="flex min-w-0 flex-1 items-center gap-2">
+                                  {isOpen ? (
+                                    <ChevronDown className="w-4 h-4 shrink-0" />
+                                  ) : (
+                                    <ChevronRight className="w-4 h-4 shrink-0" />
+                                  )}
 
-                                <div className="text-left min-w-0 flex-1">
-                                  <div
-                                    className="font-semibold truncate"
-                                  >
-                                    {shouldTitleCase ? toTitleCase(title) : title}
+                                  <div className="min-w-0 flex-1 text-left">
+                                    <div className="truncate font-semibold">
+                                      {formatExpenseGroupHeaderTitle(title, groupBy, shouldTitleCase)}
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                      {list.length} expenses
+                                    </p>
                                   </div>
-                                  <p className="text-xs text-muted-foreground">
-                                    {list.length} expenses
-                                  </p>
                                 </div>
-                              </div>
 
-                              <span className="font-semibold shrink-0 ml-2">
-                                {formatCurrency(groupTotal, group.currency)}
-                              </span>
-                            </button>
-                          </div>
+                                <span className="ml-2 shrink-0 font-semibold">
+                                  {formatCurrency(groupTotal, group.currency)}
+                                </span>
+                              </button>
+                            </div>
 
                           {/* ✅ EXPENSE ITEMS */}
                           {isOpen &&
@@ -1052,7 +1193,7 @@ export default function GroupResponsesPage({
                                       {/* PAID BY */}
                                       <div className="text-xs md:text-base text-muted-foreground mt-0.5 flex items-center gap-1">
                                         <SmartTooltip
-                                          text={getExpensePaidByLabel(expense)}
+                                          text={getExpensePaidByLabel(expense, viewerMemberId)}
                                           disableMobileTooltip
                                         />
                                         <span className="shrink-0">paid</span>
@@ -1062,20 +1203,24 @@ export default function GroupResponsesPage({
                                       {/* PARTICIPANTS */}
                                       <AvatarGroup
                                         names={expense.participants
-                                          .map(p => p.user)          // get the user object
-                                          .filter((u): u is UserInterface => !!u) // type guard to remove null/undefined
-                                          .map(u => u.name)           // map to name
-                                        }
+                                          .map((p) => p.user)
+                                          .filter((u): u is UserInterface => !!u)
+                                          .map((u) => u.name)}
+                                        overlayNames={expense.participants
+                                          .map((p) => p.user)
+                                          .filter((u): u is UserInterface => !!u)
+                                          .map((u) =>
+                                            memberLabelWithYouSuffix(u.id, u.name, viewerMemberId)
+                                          )}
                                         className="mt-2"
                                         label=""
-                                        disableMobileTooltip
                                       />
 
                                     </div>
 
                                     {/* AMOUNT */}
-                                    <div className="flex flex-col items-end justify-center shrink-0">
-                                      <p className="font-semibold whitespace-nowrap text-sm mb-[12px]">
+                                    <div className="flex shrink-0 flex-col items-end justify-start pt-0.5">
+                                      <p className="text-sm font-semibold tabular-nums whitespace-nowrap">
                                         {formatCurrency(
                                           expense.amount,
                                           expense.currency
@@ -1102,25 +1247,25 @@ export default function GroupResponsesPage({
             </Card>
           </div>
 
-          {/* INSIGHTS – SCROLL AFTER EXPENSES ON MOBILE */}
-          <div className="space-y-4 order-2 lg:order-none sticky top-[80px] self-start">
+          <div className="order-1 space-y-4 lg:sticky lg:top-20 lg:order-2 lg:col-span-1 lg:self-start">
             {/* Balances */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-blue-500" />
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                  <Users className="h-5 w-5 shrink-0 text-primary" />
                   Balances
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3 max-h-[17rem] overflow-y-auto">
+              <CardContent className="max-h-none space-y-3 overflow-visible sm:max-h-[min(22rem,50vh)] sm:overflow-y-auto lg:max-h-[17rem] lg:overflow-y-auto">
                 {group.members.map((m) => {
                   const bal = balances[m.id];
+                  const displayName = memberNameForViewer(m.id, m.name, viewerMemberId);
 
                   return (
                     <div key={m.id} className="flex justify-between items-center">
                       <div className="flex items-center gap-2 min-w-0">
                         <UserAvatar name={m.name} />
-                        <SmartTooltip text={m.name} />
+                        <SmartTooltip text={displayName} />
                       </div>
                       <span
                         className={`font-semibold text-sm flex-shrink-0 ${bal > 0
@@ -1141,24 +1286,24 @@ export default function GroupResponsesPage({
 
             {/* Settle Up */}
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <ArrowRight className="w-5 h-5 text-secondary" />
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                  <ArrowRight className="h-5 w-5 shrink-0 text-primary" />
                   Who pays whom
                 </CardTitle>
 
                 {(expenses.length > 0 || settlements.length > 0) && (
                   <button
-                    onClick={() => copyLink("settlement")}
+                    onClick={() => shareGroupContent("settlement")}
                     className="p-2 rounded-md hover:bg-muted transition"
-                    title="Copy settlement summary"
+                    title="Share settlement summary"
                   >
                     <Share2 className="w-4 h-4 text-muted-foreground" />
                   </button>
                 )}
               </CardHeader>
 
-              <CardContent className="space-y-3 max-h-[16rem] overflow-y-auto">
+              <CardContent className="max-h-none space-y-3 overflow-visible sm:max-h-[min(20rem,45vh)] sm:overflow-y-auto lg:max-h-[16rem] lg:overflow-y-auto">
                 {/* 🚫 NO EXPENSES YET */}
                 {expenses.length === 0 && (
                   <p className="text-sm text-muted-foreground text-center">
@@ -1183,9 +1328,9 @@ export default function GroupResponsesPage({
                       {/* ROW */}
                       <div className="flex items-start justify-between gap-3 py-2">
                         <div className="flex-1 min-w-0 text-sm leading-snug break-words">
-                          <span>{s.fromName}</span>{" "}
+                          <span>{memberNameForViewer(s.fromId, s.fromName, viewerMemberId)}</span>{" "}
                           <span className="font-semibold">pays</span>{" "}
-                          <span>{s.toName}</span>
+                          <span>{memberNameForViewer(s.toId, s.toName, viewerMemberId)}</span>
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -1249,7 +1394,15 @@ export default function GroupResponsesPage({
                   </AlertDialogTitle>
                   <AlertDialogDescription className="text-xs">
                     {settleConfirmation
-                      ? `This will mark that ${settleConfirmation.settlement.fromName} paid ${settleConfirmation.settlement.toName} ${formatCurrency(settleConfirmation.settlement.amount, group.currency)} by adding a settlement entry to the group.`
+                      ? `This will mark that ${memberNameForViewer(
+                          settleConfirmation.settlement.fromId,
+                          settleConfirmation.settlement.fromName,
+                          viewerMemberId
+                        )} paid ${memberNameForViewer(
+                          settleConfirmation.settlement.toId,
+                          settleConfirmation.settlement.toName,
+                          viewerMemberId
+                        )} ${formatCurrency(settleConfirmation.settlement.amount, group.currency)} by adding a settlement entry to the group.`
                       : ""}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
@@ -1280,7 +1433,15 @@ export default function GroupResponsesPage({
 
           </div>
         </div>
+
+        <Link
+          href={`/group/${groupId}/add-expense`}
+          className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom,0px))] right-[max(1.25rem,env(safe-area-inset-right,0px))] z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/25 transition hover:bg-primary/92 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-[0.97] lg:hidden"
+          aria-label="Add expense"
+        >
+          <Plus className="h-7 w-7" strokeWidth={2.25} />
+        </Link>
       </div>
-    </Layout >
+    </Layout>
   );
 }

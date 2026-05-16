@@ -347,35 +347,41 @@ export const ReceiptIcon = ({ className, size = 24, style }: IconProps) => (
   </svg>
 );
 
-export const BrandIcon = ({ className, size = 24, style }: IconProps) => (
-  (() => {
-    const gradientId = React.useId();
+export const BrandIcon = ({ className, size = 24, style }: IconProps) => {
+  const rawId = React.useId().replace(/:/g, "");
+  const gradientId = `sc-brand-${rawId}`;
 
-    return (
-      <svg
-        width={size}
-        height={size}
-        viewBox="0 0 24 24"
-        className={cn("fill-none", className)}
-        style={style}
-        xmlns="http://www.w3.org/2000/svg"
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 40 40"
+      className={cn("shrink-0", className)}
+      style={style}
+      xmlns="http://www.w3.org/2000/svg"
+      role="img"
+      aria-label="SplitCost"
+    >
+      <defs>
+        <linearGradient id={gradientId} x1="6" y1="5" x2="34" y2="35" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#0B132B" />
+          <stop offset="1" stopColor="#2563FF" />
+        </linearGradient>
+      </defs>
+      <rect width="40" height="40" rx="11" fill={`url(#${gradientId})`} />
+      <text
+        x="20"
+        y="26.5"
+        textAnchor="middle"
+        fill="#FFFFFF"
+        style={{ fontSize: "22px", fontWeight: 700, fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif" }}
       >
-        <rect x="1" y="1" width="22" height="22" rx="7" fill={`url(#${gradientId})`} />
-        <path d="M7.5 6.5A1.5 1.5 0 0 1 9 5h6a1.5 1.5 0 0 1 1.5 1.5V7h-9v-.5Z" fill="#DFF8EF" />
-        <path d="M6 8.5A2.5 2.5 0 0 1 8.5 6H15.5A2.5 2.5 0 0 1 18 8.5v6.5A4 4 0 0 1 14 19H10a4 4 0 0 1-4-4V8.5Z" fill="#FFFAF1" />
-        <path d="M8.2 10.2h6.1M8.2 12.8H12" stroke="#249678" strokeWidth="1.6" strokeLinecap="round" />
-        <circle cx="15.7" cy="15.7" r="3.1" fill="#FF8A4C" />
-        <path d="M14.3 15.7h2.8M15.7 14.3v2.8" stroke="#fff" strokeWidth="1.4" strokeLinecap="round" />
-        <defs>
-          <linearGradient id={gradientId} x1="3.5" y1="2.5" x2="20.5" y2="21" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#39B494" />
-            <stop offset="1" stopColor="#20896F" />
-          </linearGradient>
-        </defs>
-      </svg>
-    );
-  })()
-);
+        S
+      </text>
+      <rect x="8" y="17.5" width="24" height="5" rx="2" fill="#2563FF" />
+    </svg>
+  );
+};
 
 export const CashIcon = ({ className, size = 24, style }: IconProps) => (
   <svg

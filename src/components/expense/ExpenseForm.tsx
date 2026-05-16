@@ -8,6 +8,7 @@ import { UserAvatar } from "@/components/ui/UserAvatar";
 import { EXPENSE_CATEGORIES, type CategoryKey, type SubcategoryId } from "@/components/icons/CategoryIcons";
 import { cn } from "@/lib/utils";
 import { detectCategoryFromDescription, ExpenseFormInterface, ExpenseParticipantsRequest, ExpenseRequest, type SplitType, UserInterface } from "@/lib/storage";
+import { memberNameForViewer } from "@/lib/groupExpenseLabels";
 import { Users } from "lucide-react";
 import { EXPENSE_DESCRIPTION_MAX, ExpenseSchema } from "@/lib/validations/expense.schema";
 import { formatAmount, formatDateForDB, getCurrencyDifference, getRoundedDifference } from "../ui/formatters";
@@ -22,6 +23,10 @@ import type { ExpenseAttachment } from "@/lib/expenseAttachments";
 interface ExpenseFormProps {
   members: UserInterface[];
   defaultCurrency?: string;
+  /** When adding (no initialData), pre-select paid-by if it matches a member id. */
+  defaultPaidByUserId?: string;
+  /** Optional "who are you?" id for `Name (You)` labels in paid-by and participants. */
+  viewerMemberId?: string | null;
   initialData?: ExpenseFormInterface;
   initialAttachment?: ExpenseAttachment | null;
   onSubmit: (data: ExpenseRequest) => void;
@@ -36,6 +41,8 @@ type EditablePayer = {
 export function ExpenseForm({
   members,
   defaultCurrency = "USD",
+  defaultPaidByUserId,
+  viewerMemberId,
   initialData,
   initialAttachment = null,
   onSubmit,
@@ -43,13 +50,19 @@ export function ExpenseForm({
 }: ExpenseFormProps) {
   const initialPayers = initialData?.payers || [];
   const hasInitialMultiplePayers = initialPayers.length > 0;
+  const initialSinglePaidBy =
+    hasInitialMultiplePayers
+      ? ""
+      : initialData?.paidByUserId ||
+        (defaultPaidByUserId &&
+        members.some((m) => m.id === defaultPaidByUserId)
+          ? defaultPaidByUserId
+          : "");
 
   const [description, setDescription] = useState(initialData?.description || "");
   const [amount, setAmount] = useState(initialData?.amount?.toString() || "");
   const [currency, setCurrency] = useState(initialData?.currency || defaultCurrency);
-  const [paidByUserId, setPaidBy] = useState(
-    hasInitialMultiplePayers ? "" : (initialData?.paidByUserId || "")
-  );
+  const [paidByUserId, setPaidBy] = useState(initialSinglePaidBy);
   const [category, setCategory] = useState<CategoryKey | "">(initialData?.category || "");
   const [subcategory, setSubcategory] = useState<SubcategoryId>(initialData?.subcategory || "");
   const [splitType, setSplitType] = useState<any>(initialData?.splitType || "equal");
@@ -453,7 +466,12 @@ export function ExpenseForm({
               {isMultiplePayers
                 ? `${payers.filter((payer) => payer.amount && payer.amount > 0).length} people`
                 : paidByUserId
-                  ? members.find((m) => m.id === paidByUserId)?.name || "Select member..."
+                  ? (() => {
+                      const m = members.find((mem) => mem.id === paidByUserId);
+                      if (!m) return "Select member...";
+                      if (viewerMemberId && m.id === viewerMemberId) return "You";
+                      return m.name;
+                    })()
                   : "Select member..."}
             </button>
             {errors.paidByUserId && (
@@ -574,6 +592,11 @@ export function ExpenseForm({
             {members.map((member) => {
               const isSelected = selectedUserIds.includes(member.id);
               const participant = participants.find((p) => p.userId === member.id);
+              const memberLabel = memberNameForViewer(
+                member.id,
+                member.name,
+                viewerMemberId
+              );
 
               return (
                 <div
@@ -592,7 +615,7 @@ export function ExpenseForm({
                     className="flex items-center gap-3 flex-1 text-left"
                   >
                     <div className="relative">
-                      <UserAvatar name={member.name} />
+                      <UserAvatar name={member.name} overlayName={memberLabel} />
                       {isSelected && (
                         <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center ring-2 ring-white">
                           <div className="w-full h-full bg-green-500 rounded-full flex items-center justify-center">
@@ -603,7 +626,7 @@ export function ExpenseForm({
                     </div>
                     <div className="flex flex-col">
                       <span className={cn("text-sm font-medium", isSelected ? "text-foreground" : "text-muted-foreground")}>
-                        {member.name}
+                        {memberLabel}
                       </span>
                       {/* Show calculated amount in Percentage Mode for better context */}
                       {isSelected && splitType === "percentage" && (
@@ -672,6 +695,7 @@ export function ExpenseForm({
         open={showPaidBy}
         onClose={() => setShowPaidBy(false)}
         members={members}
+        viewerMemberId={viewerMemberId}
         currency={currency}
         expenseAmount={Number(amount || 0)}
         paidByUserId={paidByUserId}

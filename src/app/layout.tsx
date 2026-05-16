@@ -26,7 +26,7 @@ const siteUrl = getSiteUrl();
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#2ea786",
+  themeColor: "#2563FF",
 };
 
 export const metadata: Metadata = {

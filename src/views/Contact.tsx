@@ -84,7 +84,7 @@ export default function ContactPage() {
     name: `Contact ${APP_NAME}`,
     url: getCanonicalUrl("/contact"),
     description:
-      "Contact Splitcost for support, product feedback, bug reports, and partnership inquiries.",
+      "Contact SplitCost for support, product feedback, bug reports, and partnership inquiries.",
   };
 
   return (
@@ -104,7 +104,7 @@ export default function ContactPage() {
               Support, feedback, and product questions
             </div>
             <h1 className="text-3xl font-bold text-foreground md:text-4xl">
-              Contact Splitcost Support
+              Contact SplitCost Support
             </h1>
             <p className="mt-4 text-lg text-muted-foreground">
               Need help with a shared expense group, a bill split, or a feature question?

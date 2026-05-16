@@ -20,6 +20,7 @@ import {
   invalidateGroupDashboard,
   useExpenseQuery,
 } from "@/lib/queries";
+import { getGroupViewerMemberId } from "@/lib/groupViewer";
 
 export default function EditExpensePage({ groupId, expenseId }: { groupId: string; expenseId: string }) {
   const router = useRouter();
@@ -49,7 +50,7 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
 
   if (!group || !expense) {
     return (
-      <Layout>
+      <Layout variant="minimal">
         <div className="container py-12 text-center">
           <p className="text-muted-foreground">Expense not found</p>
           <Button asChild className="mt-4">
@@ -59,6 +60,12 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
       </Layout>
     );
   }
+
+  const storedViewerId = getGroupViewerMemberId(groupId);
+  const editViewerMemberId =
+    storedViewerId && group.members.some((m) => m.id === storedViewerId)
+      ? storedViewerId
+      : null;
 
   const handleSubmit = async (data: Parameters<typeof updateExpense>[2]) => {
     setIsSubmitting(true);
@@ -94,7 +101,7 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
   return (
     <>
       <div className="hidden md:block">
-        <Layout>
+        <Layout variant="minimal">
           <div className="container py-6 md:py-8 max-w-2xl">
             <Button variant="ghost" size="sm" asChild className="mb-4">
               <Link href={`/group/${groupId}`}>
@@ -118,6 +125,7 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
                   <ExpenseForm
                     members={group.members}
                     defaultCurrency={group.currency}
+                    viewerMemberId={editViewerMemberId}
                     initialData={{
                       ...expense
                     }}
@@ -135,6 +143,7 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
         <ExpenseFormMobile
           members={group.members}
           defaultCurrency={group.currency}
+          viewerMemberId={editViewerMemberId}
           groupId={groupId}
           initialData={{
             ...expense

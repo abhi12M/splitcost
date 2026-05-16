@@ -4,9 +4,13 @@ import { Footer } from "./Footer";
 
 interface LayoutProps {
   children: ReactNode;
+  /** Immersive in-app shell: no site header/footer (e.g. mobile group dashboard). */
+  variant?: "default" | "minimal";
 }
 
-export function Layout({ children }: LayoutProps) {
+export function Layout({ children, variant = "default" }: LayoutProps) {
+  const showChrome = variant === "default";
+
   return (
     <div className="min-h-screen flex flex-col">
       <a
@@ -15,11 +19,11 @@ export function Layout({ children }: LayoutProps) {
       >
         Skip to content
       </a>
-      <Header />
+      {showChrome ? <Header /> : null}
       <main id="main-content" className="flex-1">
         {children}
       </main>
-      <Footer />
+      {showChrome ? <Footer /> : null}
     </div>
   );
 }

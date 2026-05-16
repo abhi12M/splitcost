@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 
+import { BrandWordmark } from "@/components/brand/BrandWordmark"
 import { BrandIcon } from "@/components/icons/CategoryIcons"
 import { APP_NAME } from "@/lib/constants"
 
@@ -13,10 +14,10 @@ export function Footer() {
           <div className="md:col-span-2">
             <Link
               href="/"
-              className="flex items-center gap-2.5 mb-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
+              className="flex items-center gap-3 mb-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-xl"
             >
-              <BrandIcon className="w-11 h-11" />
-              <span className="text-lg font-bold text-foreground">{APP_NAME}</span>
+              <BrandIcon className="w-11 h-11" size={44} />
+              <BrandWordmark className="text-lg" />
             </Link>
             <p className="text-sm text-muted-foreground max-w-sm">
               A free expense splitting app for friends, roommates, couples, and
