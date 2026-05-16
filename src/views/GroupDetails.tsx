@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Plus,
@@ -58,9 +58,8 @@ import {
   UserInterface,
 } from "@/lib/storage";
 import {
-  fetchGroupDashboard,
   invalidateGroupDashboard,
-  queryKeys,
+  useGroupDashboardQuery,
 } from "@/lib/queries";
 import { SingleSelect } from "@/components/ui/single-select";
 import { formatExpenseGroupHeaderTitle, toTitleCase } from "@/components/ui/formatters";
@@ -442,11 +441,7 @@ export default function GroupResponsesPage({
   isAdminView?: boolean;
 }) {
   const queryClient = useQueryClient();
-  const dashboardQuery = useQuery<GroupDashboardInterface | null>({
-    queryKey: queryKeys.groupDashboard(groupId),
-    queryFn: () => fetchGroupDashboard(groupId),
-    enabled: Boolean(groupId),
-  });
+  const dashboardQuery = useGroupDashboardQuery(groupId);
 
   const group = dashboardQuery.data?.group ?? null;
   const expenses = dashboardQuery.data?.expenses ?? [];

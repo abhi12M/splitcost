@@ -5,11 +5,11 @@ export const GROUP_NAME_MAX = 50;
 export const MEMBER_NAME_MAX = 30;
 export const MEMBERS_MIN = 2;
 export const MEMBERS_MAX = 50;
-export const MEMBERS_VISIBLE = 8;
 
 export const MemberNameSchema = z
   .string()
   .trim()
+  .min(1, "Member name is required.")
   .max(
     MEMBER_NAME_MAX,
     `Member name can't exceed ${MEMBER_NAME_MAX} characters.`

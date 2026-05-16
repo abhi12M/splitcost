@@ -7,6 +7,8 @@ import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { GroupForm } from "@/components/group/GroupForm";
+import { GroupFormMobile } from "@/components/group/GroupFormMobile";
+import { Spinner } from "@/components/ui/Spinner";
 import { createGroup } from "@/lib/storage";
 import { getEncryptedItem, migrateLocalStorageKey, setEncryptedItem } from "@/lib/localStorage";
 import { LOCAL_CURRENCY_KEY, LOCAL_GROUPS_KEY } from "@/lib/constants";
@@ -25,7 +27,6 @@ export default function CreateGroupPage() {
     try {
       const group = await createGroup(data.name, data.currency, data.members);
 
-      // Save to local list
       if (group) {
         const existing = getEncryptedItem<string[]>(LOCAL_GROUPS_KEY, []);
         if (!existing.includes(group.id)) {
@@ -35,38 +36,52 @@ export default function CreateGroupPage() {
 
         router.push(`/group/${group.id}`);
       }
-    } catch (error) {
+    } catch {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Layout>
-      <div className="container py-8 max-w-xl">
-        <Button variant="ghost" onClick={() => router.back()} className="mb-6">
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back
-        </Button>
-        <Card>
-          <CardHeader>
-            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-              <Users className="text-primary" />
-            </div>
-            <CardTitle>Create a Group</CardTitle>
-            <CardDescription>
-              Start tracking shared expenses with flexible splits, multiple payer
-              support, and a shareable group link.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <GroupForm
-              onSubmit={handleCreate}
-              isSubmitting={isSubmitting}
-              submitLabel="Create Group"
-              initialData={{ name: "", currency: defaultCurrency, members: [] }}
-            />
-          </CardContent>
-        </Card>
+    <>
+      <div className="hidden md:block">
+        <Layout>
+          <div className="container max-w-xl py-8">
+            <Button variant="ghost" onClick={() => router.back()} className="mb-6">
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back
+            </Button>
+            <Card>
+              <CardHeader>
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                  <Users className="text-primary" />
+                </div>
+                <CardTitle>Create a Group</CardTitle>
+                <CardDescription>
+                  Start tracking shared expenses with flexible splits, multiple payer
+                  support, and a shareable group link.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <GroupForm
+                  onSubmit={handleCreate}
+                  isSubmitting={isSubmitting}
+                  submitLabel="Create Group"
+                  initialData={{ name: "", currency: defaultCurrency, members: [] }}
+                />
+              </CardContent>
+            </Card>
+          </div>
+        </Layout>
       </div>
-    </Layout>
+
+      <div className="block md:hidden">
+        <GroupFormMobile
+          backHref="/"
+          initialCurrency={defaultCurrency}
+          onSubmit={handleCreate}
+        />
+      </div>
+
+      <Spinner show={isSubmitting} message="Creating..." />
+    </>
   );
 }

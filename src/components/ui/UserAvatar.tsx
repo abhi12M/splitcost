@@ -109,8 +109,8 @@ export function AvatarGroup({
 }: AvatarGroupProps) {
   const device = useDeviceType();
 
-  const effectiveSize = getResponsiveAvatarSize(device);
-  const effectiveMax = device === "mobile" ? 4 : max;
+  const effectiveSize = size ?? getResponsiveAvatarSize(device);
+  const effectiveMax = max || 4;
 
   const resolvedShowBelow =
     showBelow !== undefined ? showBelow : device === "mobile";

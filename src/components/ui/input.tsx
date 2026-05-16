@@ -11,6 +11,8 @@ interface NumericProps {
   currency?: string;
   postfix?: string;
   unstyled?: boolean;
+  /** Renders only the native input — for fields inside custom bordered containers. */
+  embed?: boolean;
   formatOnBlur?: "currency" | "number";
 }
 
@@ -28,6 +30,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       currency = "INR",
       postfix,
       unstyled = false,
+      embed = false,
       formatOnBlur,
       onChange,
       onBlur,
@@ -73,6 +76,67 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             maxValue !== undefined ? ` and ${formatAmount(maxValue, currency)}` : ""
           }`
         : null;
+
+    const embedClassName = cn(
+      "min-w-0 w-full bg-transparent text-sm leading-normal text-foreground",
+      "placeholder:text-muted-foreground",
+      "focus:outline-none focus-visible:ring-0",
+      "disabled:cursor-not-allowed disabled:opacity-50",
+      "aria-[invalid=true]:text-destructive",
+      className,
+    );
+
+    if (embed) {
+      return (
+        <input
+          inputMode={inputMode}
+          ref={ref}
+          type={type}
+          {...props}
+          value={displayValue}
+          className={embedClassName}
+          onKeyDown={(e) => {
+            if (isNumeric && ["-", "+", "e", "E"].includes(e.key)) {
+              e.preventDefault();
+            }
+            onKeyDown?.(e);
+          }}
+          onFocus={(e) => {
+            setIsFocused(true);
+            if (isNumeric) {
+              setDraftValue(rawValue);
+            }
+            onFocus?.(e);
+          }}
+          onBlur={(e) => {
+            setIsFocused(false);
+            setDraftValue(null);
+            onBlur?.(e);
+          }}
+          onChange={(e) => {
+            if (!isNumeric) return onChange?.(e);
+
+            const nextValue = e.target.value;
+            if (nextValue === "") {
+              setDraftValue(nextValue);
+              return onChange?.(e);
+            }
+            if (!regex.test(nextValue)) return;
+
+            const num = Number(nextValue);
+            if (Number.isNaN(num)) return;
+
+            if (maxIntegerDigits !== undefined) {
+              const [integerPart = ""] = nextValue.split(".");
+              if (integerPart.length > maxIntegerDigits) return;
+            }
+
+            setDraftValue(nextValue);
+            onChange?.(e);
+          }}
+        />
+      );
+    }
 
     return (
       <div className="space-y-1 w-full">

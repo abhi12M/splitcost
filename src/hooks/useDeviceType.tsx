@@ -68,3 +68,23 @@ export function useDeviceType(): DeviceType {
 export function isMobileViewportWidth(width = typeof window !== "undefined" ? window.innerWidth : 0) {
   return width < BREAKPOINTS.mobile;
 }
+
+/** Tailwind `md` breakpoint — matches `hidden md:block` layout switches. */
+const MD_BREAKPOINT = 768;
+
+export function useMdUp(): boolean {
+  return useSyncExternalStore(
+    (onStoreChange) => {
+      if (typeof window === "undefined") return () => undefined;
+      const mq = window.matchMedia(`(min-width: ${MD_BREAKPOINT}px)`);
+      const handler = () => onStoreChange();
+      mq.addEventListener("change", handler);
+      return () => mq.removeEventListener("change", handler);
+    },
+    () =>
+      typeof window !== "undefined"
+        ? window.matchMedia(`(min-width: ${MD_BREAKPOINT}px)`).matches
+        : true,
+    () => true
+  );
+}

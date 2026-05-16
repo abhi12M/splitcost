@@ -11,6 +11,7 @@ import {
   type EditExpenseInterface,
   type GroupDashboardInterface,
   type GroupResponse,
+  type UserInterface,
 } from "@/lib/storage";
 import { clearCachedExpense, readCachedExpense } from "@/lib/expenseCache";
 
@@ -19,8 +20,6 @@ export const queryKeys = {
   group: (groupId: string) => ["group", groupId] as const,
   groupDashboard: (groupId: string) => ["group-dashboard", groupId] as const,
   expense: (expenseId: string) => ["expense", expenseId] as const,
-  groupSummaries: (groupIds: string[]) =>
-    ["group-summaries", [...groupIds].sort().join("|")] as const,
 };
 
 // Mirrors the sessionStorage cache TTL/freshness window. Within this window
@@ -33,6 +32,15 @@ export async function fetchGroupDashboard(
   groupId: string
 ): Promise<GroupDashboardInterface | null> {
   return loadGroupDetails(groupId);
+}
+
+export function useGroupDashboardQuery(groupId: string) {
+  return useQuery<GroupDashboardInterface | null>({
+    queryKey: queryKeys.groupDashboard(groupId),
+    queryFn: () => fetchGroupDashboard(groupId),
+    enabled: Boolean(groupId),
+    staleTime: GROUP_STALE_TIME,
+  });
 }
 
 // Returns the group for `groupId`, hydrating from the dashboard query's
@@ -76,17 +84,74 @@ export function useExpenseQuery(expenseId: string) {
   });
 }
 
+function patchUserName(
+  user: UserInterface | null,
+  nameById: Map<string, string>
+): UserInterface | null {
+  if (!user) return user;
+  const name = nameById.get(user.id);
+  return name ? { ...user, name } : user;
+}
+
+/** Merge an updated group into the dashboard cache (member names in expenses). */
+function patchDashboardWithGroup(
+  current: GroupDashboardInterface | null | undefined,
+  group: GroupResponse
+): GroupDashboardInterface | null | undefined {
+  if (!current) return current;
+
+  const nameById = new Map(group.members.map((member) => [member.id, member.name]));
+
+  return {
+    group,
+    expenses: current.expenses.map((expense) => ({
+      ...expense,
+      paidBy: patchUserName(expense.paidBy, nameById),
+      payers: expense.payers?.map((payer) => ({
+        ...payer,
+        user: patchUserName(payer.user, nameById)!,
+      })),
+      participants: expense.participants.map((participant) => ({
+        ...participant,
+        user: patchUserName(participant.user, nameById)!,
+      })),
+    })),
+  };
+}
+
+/** Immediately sync group + dashboard caches after a group metadata/member mutation. */
+export function applyGroupResponseToCache(
+  queryClient: QueryClient,
+  groupId: string,
+  group: GroupResponse
+) {
+  queryClient.setQueryData(queryKeys.group(groupId), group);
+  queryClient.setQueryData<GroupDashboardInterface | null>(
+    queryKeys.groupDashboard(groupId),
+    (current) => patchDashboardWithGroup(current, group)
+  );
+}
+
 // Convenience helper: invalidate every query that depends on a group's
-// dashboard data. Mutations (add / update / delete expense, settle up, etc.)
-// should call this after a successful save so the dashboard refreshes in the
-// background without forcing the user to wait on a re-fetch.
-export function invalidateGroupDashboard(
+// dashboard or member list. Mutations (add / update / delete expense, settle up,
+// edit group, etc.) should call this after a successful save.
+export async function invalidateGroupDashboard(
   queryClient: QueryClient,
   groupId: string
 ) {
-  queryClient.invalidateQueries({
-    queryKey: queryKeys.groupDashboard(groupId),
-  });
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: queryKeys.group(groupId) }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.groupDashboard(groupId) }),
+  ]);
+}
+
+/** Invalidate and refetch group data so the next screen shows fresh members. */
+export async function refreshGroupData(
+  queryClient: QueryClient,
+  groupId: string
+) {
+  await invalidateGroupDashboard(queryClient, groupId);
+  await queryClient.refetchQueries({ queryKey: queryKeys.groupDashboard(groupId) });
 }
 
 export function invalidateExpense(
