@@ -128,7 +128,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   ];
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={plusJakarta.className}>
         <GoogleAnalytics />
         <Suspense fallback={null}>

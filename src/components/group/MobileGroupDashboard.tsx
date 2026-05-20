@@ -60,6 +60,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ThemeMenuItems } from "@/components/theme/ThemeToggle";
 import { UserAvatar, AvatarGroup } from "@/components/ui/UserAvatar";
 import { formatCurrency } from "@/lib/avatar-utils";
 import {
@@ -282,6 +283,8 @@ export function MobileGroupDashboard({
                   Share settlement summary
                 </DropdownMenuItem>
               ) : null}
+              <DropdownMenuSeparator />
+              <ThemeMenuItems />
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="gap-2 rounded-lg py-2.5 pl-2 pr-2 text-sm font-medium"

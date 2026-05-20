@@ -499,8 +499,8 @@ export function ExpenseForm({
                     "flex-1 flex items-center justify-center rounded-lg transition-all duration-200 px-1 py-2 sm:px-3 sm:py-2.5",
                     "gap-1 sm:gap-3",
                     isActive
-                      ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
-                      : "text-muted-foreground hover:bg-white/50 hover:text-foreground"
+                      ? "bg-card text-primary shadow-sm ring-1 ring-border/60"
+                      : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                   )}
                 >
                   {/* Icon scales down on mobile (w-3.5) */}
@@ -617,7 +617,7 @@ export function ExpenseForm({
                     <div className="relative">
                       <UserAvatar name={member.name} overlayName={memberLabel} />
                       {isSelected && (
-                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center ring-2 ring-white">
+                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-card rounded-full flex items-center justify-center ring-2 ring-background">
                           <div className="w-full h-full bg-green-500 rounded-full flex items-center justify-center">
                             <Check className="w-2.5 h-2.5 text-white" />
                           </div>

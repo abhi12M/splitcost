@@ -649,7 +649,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                     <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-500/10">
                       <Users className="text-orange-600" />
                     </div>
-                    <Badge variant="outline" className="mb-3 w-fit border-orange-200 bg-white/70 text-orange-700">
+                    <Badge variant="outline" className="mb-3 w-fit border-orange-200 bg-card/70 text-orange-700 dark:text-orange-300">
                       Manage members with confidence
                     </Badge>
                     <CardTitle className="text-2xl">Edit group</CardTitle>
@@ -779,9 +779,9 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                         onClick={() => openMemberSheet(member.key)}
                         className={cn(
                           "w-full rounded-[22px] border bg-card p-4 text-left transition hover:-translate-y-0.5 hover:shadow-card",
-                          member.balanceInfo.tone === "positive" && "border-emerald-200 bg-gradient-to-r from-emerald-50/90 to-white",
-                          member.balanceInfo.tone === "negative" && "border-rose-200 bg-gradient-to-r from-rose-50/90 to-white",
-                          member.balanceInfo.tone === "neutral" && "border-border bg-gradient-to-r from-white to-muted/10"
+                          member.balanceInfo.tone === "positive" && "border-emerald-200 bg-gradient-to-r from-emerald-50/90 to-card dark:from-emerald-950/40",
+                          member.balanceInfo.tone === "negative" && "border-rose-200 bg-gradient-to-r from-rose-50/90 to-card dark:from-rose-950/40",
+                          member.balanceInfo.tone === "neutral" && "border-border bg-gradient-to-r from-card to-muted/10"
                         )}
                       >
                         <div className="grid grid-cols-[auto,minmax(0,1fr),auto] items-center gap-3">
@@ -790,7 +790,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                             <div className="flex items-center gap-2">
                               <p className="truncate font-semibold">{member.name}</p>
                               {!member.isExisting ? (
-                                <Badge variant="outline" className="border-dashed bg-white/70">
+                                <Badge variant="outline" className="border-dashed bg-card/70">
                                   New
                                 </Badge>
                               ) : null}
@@ -807,7 +807,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                                   "border-white/60",
                                   member.balanceInfo.tone === "positive" && "bg-emerald-100 text-emerald-700",
                                   member.balanceInfo.tone === "negative" && "bg-rose-100 text-rose-700",
-                                  member.balanceInfo.tone === "neutral" && "bg-white text-muted-foreground"
+                                  member.balanceInfo.tone === "neutral" && "bg-card text-muted-foreground"
                                 )}
                               >
                                 {member.balanceInfo.label}

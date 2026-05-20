@@ -33,6 +33,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
+      url: getCanonicalUrl("/groups"),
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    {
       url: getCanonicalUrl("/privacy"),
       lastModified: now,
       changeFrequency: "yearly",

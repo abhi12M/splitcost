@@ -1,5 +1,6 @@
 export const APP_NAME = "SplitCost";
 export const LOCAL_GROUPS_KEY = "my_groups";
+export const MY_GROUPS_UPDATED_EVENT = "my-groups-updated";
 /** Logical key prefix for per-group "who are you?" viewer member id (see groupViewer.ts). */
 export const LOCAL_GROUP_VIEWER_KEY_PREFIX = "sc_group_viewer_";
 export const LOCAL_CURRENCY_KEY = "my_currency";

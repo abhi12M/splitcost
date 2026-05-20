@@ -347,41 +347,7 @@ export const ReceiptIcon = ({ className, size = 24, style }: IconProps) => (
   </svg>
 );
 
-export const BrandIcon = ({ className, size = 24, style }: IconProps) => {
-  const rawId = React.useId().replace(/:/g, "");
-  const gradientId = `sc-brand-${rawId}`;
-
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 40 40"
-      className={cn("shrink-0", className)}
-      style={style}
-      xmlns="http://www.w3.org/2000/svg"
-      role="img"
-      aria-label="SplitCost"
-    >
-      <defs>
-        <linearGradient id={gradientId} x1="6" y1="5" x2="34" y2="35" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#0B132B" />
-          <stop offset="1" stopColor="#2563FF" />
-        </linearGradient>
-      </defs>
-      <rect width="40" height="40" rx="11" fill={`url(#${gradientId})`} />
-      <text
-        x="20"
-        y="26.5"
-        textAnchor="middle"
-        fill="#FFFFFF"
-        style={{ fontSize: "22px", fontWeight: 700, fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif" }}
-      >
-        S
-      </text>
-      <rect x="8" y="17.5" width="24" height="5" rx="2" fill="#2563FF" />
-    </svg>
-  );
-};
+export { BrandIcon } from "@/components/brand/BrandIcon";
 
 export const CashIcon = ({ className, size = 24, style }: IconProps) => (
   <svg

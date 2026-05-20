@@ -413,6 +413,8 @@ export default function ExpenseFormMobile({
             names={participantNames}
             overlayNames={participantOverlayNames}
             isShowTotalMemberText={false}
+            size="sm"
+            max={10}
           />
           <Settings
             className={cn(

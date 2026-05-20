@@ -3,7 +3,7 @@
 import Link from "next/link"
 
 import { BrandWordmark } from "@/components/brand/BrandWordmark"
-import { BrandIcon } from "@/components/icons/CategoryIcons"
+import { BrandIcon } from "@/components/brand/BrandIcon"
 import { APP_NAME } from "@/lib/constants"
 
 export function Footer() {
