@@ -127,7 +127,7 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
         side="bottom"
         className={cn(
           "flex flex-col gap-0 overflow-hidden rounded-t-[20px] border-x-0 border-b-0 p-0",
-          "bottom-[var(--mobile-nav-offset)] h-[calc(100dvh-var(--mobile-nav-offset))] max-h-[calc(100dvh-var(--mobile-nav-offset))]",
+          "bottom-[var(--mobile-nav-offset)] max-h-[calc(100dvh-var(--mobile-nav-offset))]",
           "[&>button]:hidden"
         )}
         style={{ "--mobile-nav-offset": MOBILE_BOTTOM_NAV_OFFSET } as CSSProperties}
@@ -137,26 +137,24 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
           Site navigation, settings, and quick links
         </SheetDescription>
 
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden pt-3">
-          <div className="flex min-h-0 flex-1 flex-col justify-between overflow-hidden">
-            {MENU_SECTIONS.map((section, sectionIndex) => (
-              <div key={section.title}>
-                {sectionIndex > 0 ? (
-                  <div className="mx-4 border-t border-border" role="presentation" />
-                ) : null}
-                <p className="px-4 pb-0.5 pt-3 text-[13px] font-medium text-muted-foreground">
-                  {section.title}
-                </p>
-                <nav aria-label={section.title}>
-                  {section.links.map((link) => (
-                    <MenuRow key={`${section.title}-${link.href}`} {...link} onNavigate={close} />
-                  ))}
-                </nav>
-              </div>
-            ))}
-          </div>
+        <div className="overflow-y-auto overscroll-contain pt-3 pb-4">
+          {MENU_SECTIONS.map((section, sectionIndex) => (
+            <div key={section.title}>
+              {sectionIndex > 0 ? (
+                <div className="mx-4 border-t border-border" role="presentation" />
+              ) : null}
+              <p className="px-4 pb-0.5 pt-3 text-[13px] font-medium text-muted-foreground">
+                {section.title}
+              </p>
+              <nav aria-label={section.title}>
+                {section.links.map((link) => (
+                  <MenuRow key={`${section.title}-${link.href}`} {...link} onNavigate={close} />
+                ))}
+              </nav>
+            </div>
+          ))}
 
-          <div className="shrink-0 pb-4 pt-2">
+          <div className="pt-2">
             <div className="mx-4 border-t border-border" role="presentation" />
             <div className="pt-3">
               <LightModeToggle />

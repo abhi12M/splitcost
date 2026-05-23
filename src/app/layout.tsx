@@ -10,7 +10,6 @@ import AppProviders from "@/components/providers/AppProviders";
 import {
   DEFAULT_OG_IMAGE,
   SITE_DESCRIPTION,
-  SITE_KEYWORDS,
   SITE_NAME,
   SITE_TITLE,
   getSiteUrl,
@@ -38,7 +37,6 @@ export const metadata: Metadata = {
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
-  keywords: SITE_KEYWORDS,
   alternates: {
     canonical: siteUrl,
   },

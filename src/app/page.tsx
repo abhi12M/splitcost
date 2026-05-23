@@ -1,35 +1,27 @@
 import type { Metadata } from "next";
 
+import { buildFaqPageJsonLd } from "@/lib/faq";
 import { buildMetadata } from "@/lib/seo";
 import HomePage from "@/views/Index";
 
 export const metadata: Metadata = buildMetadata({
   title:
-    "Split Expenses & Track Shared Bills With Friends, Roommates, and Trips",
+    "Split Expenses App for Bill Sharing & Group Expense Tracking",
   description:
-    "SplitCost is a free group expense tracker for friends, roommates, couples, and travel groups. Split bills equally, by percent, or with custom shares. It supports multiple payers per expense, lets you edit group details, see balances in real time, and settle up in the fewest payments — no sign-up required.",
+    "SplitCost is a smart split expenses app to track shared bills, manage group payments, split travel costs, and organise roommate or couple expenses easily.",
   path: "/",
-  keywords: [
-    "split expenses",
-    "expense splitter",
-    "group expense tracker",
-    "trip expense tracker",
-    "roommate expense tracker",
-    "bill split calculator",
-    "shared expense app",
-    "settle up app",
-    "split bills with friends",
-    "travel expense app",
-    "multiple payers expense tracker",
-    "shared expense app no signup",
-    "edit group expenses",
-    "split rent and utilities",
-    "vacation expense tracker",
-    "free splitwise alternative",
-    "shared bills calculator",
-  ],
 });
 
 export default function Page() {
-  return <HomePage />;
+  const faqJsonLd = buildFaqPageJsonLd();
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+      <HomePage />
+    </>
+  );
 }

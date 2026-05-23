@@ -22,70 +22,29 @@ import {
 } from "@/components/ui/accordion";
 import { brandStyles, landingSection } from "@/lib/brand-styles";
 import { APP_NAME } from "@/lib/constants";
+import { FAQ_ITEMS } from "@/lib/faq";
 import { cn } from "@/lib/utils";
 
-type FaqItem = {
+type FaqDisplayItem = {
   question: string;
   answer: string;
   icon: LucideIcon;
 };
 
-const faqs: FaqItem[] = [
-  {
-    question: `What is ${APP_NAME}?`,
-    answer: `${APP_NAME} is a shared expense management platform that helps groups track expenses, split bills fairly, manage balances, and settle payments easily.`,
-    icon: Info,
-  },
-  {
-    question: `Does ${APP_NAME} support different currencies?`,
-    answer: `Yes. Multi-currency support makes ${APP_NAME} useful for international travel expenses and shared payments across different currencies.`,
-    icon: Globe,
-  },
-  {
-    question: `Do I need to create an account to use ${APP_NAME}?`,
-    answer: `No. You can create a group and start tracking shared expenses instantly without requiring everyone to sign up.`,
-    icon: User,
-  },
-  {
-    question: "Can I upload receipts or attachments?",
-    answer:
-      "Yes. You can attach receipts, invoices, and payment screenshots to keep every expense organized and easy to verify.",
-    icon: FileText,
-  },
-  {
-    question: `How can I split expenses in ${APP_NAME}?`,
-    answer:
-      "You can split bills equally, by percentage, or with custom amounts depending on how your group wants to share expenses.",
-    icon: PieChart,
-  },
-  {
-    question: "Can multiple people pay for the same expense?",
-    answer: `Yes. ${APP_NAME} supports multiple payers for a single expense, making it easier to manage shared bookings, travel costs, and group payments.`,
-    icon: Users,
-  },
-  {
-    question: `Can I track travel expenses with ${APP_NAME}?`,
-    answer: `Absolutely. ${APP_NAME} is designed for trips, vacations, and travel groups to help organize transport, hotel bookings, food expenses, and shared costs.`,
-    icon: Luggage,
-  },
-  {
-    question: "Can I export expense reports?",
-    answer: `Yes. ${APP_NAME} allows you to download expense reports and balance summaries for records, reimbursements, or planning purposes.`,
-    icon: Download,
-  },
-  {
-    question: `Is ${APP_NAME} mobile friendly?`,
-    answer: `Yes. ${APP_NAME} is optimized for mobile devices, making it easy to track shared expenses and group payments on the go.`,
-    icon: Smartphone,
-  },
-  {
-    question: `Who can use ${APP_NAME}?`,
-    answer: `${APP_NAME} works well for roommates, couples, travel groups, friends, teams, events, and anyone managing shared expenses together.`,
-    icon: Users,
-  },
+const faqs: FaqDisplayItem[] = [
+  { ...FAQ_ITEMS[0], icon: Info },
+  { ...FAQ_ITEMS[1], icon: Globe },
+  { ...FAQ_ITEMS[2], icon: User },
+  { ...FAQ_ITEMS[3], icon: FileText },
+  { ...FAQ_ITEMS[4], icon: PieChart },
+  { ...FAQ_ITEMS[5], icon: Users },
+  { ...FAQ_ITEMS[6], icon: Luggage },
+  { ...FAQ_ITEMS[7], icon: Download },
+  { ...FAQ_ITEMS[8], icon: Smartphone },
+  { ...FAQ_ITEMS[9], icon: Users },
 ];
 
-function FaqCard({ faq, index }: { faq: FaqItem; index: number }) {
+function FaqCard({ faq, index }: { faq: FaqDisplayItem; index: number }) {
   const Icon = faq.icon;
 
   return (
@@ -124,29 +83,12 @@ function FaqCard({ faq, index }: { faq: FaqItem; index: number }) {
 }
 
 export function FaqSection() {
-  const faqJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: faqs.map((faq) => ({
-      "@type": "Question",
-      name: faq.question,
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: faq.answer,
-      },
-    })),
-  };
-
   return (
     <section
       id="faq"
       className={cn(landingSection.default, landingSection.padding)}
       aria-labelledby="faq-heading"
     >
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
-      />
       <div className="container">
         <header className="mx-auto mb-8 max-w-3xl text-center sm:mb-12 md:mb-14">
           <p className={cn("mb-5", brandStyles.sectionBadge)}>
