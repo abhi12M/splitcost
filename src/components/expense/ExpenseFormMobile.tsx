@@ -414,7 +414,7 @@ export default function ExpenseFormMobile({
             overlayNames={participantOverlayNames}
             isShowTotalMemberText={false}
             size="sm"
-            max={10}
+            max={8}
           />
           <Settings
             className={cn(

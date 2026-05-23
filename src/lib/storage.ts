@@ -88,6 +88,8 @@ export interface ExpenseResponse {
   date: string;
   participants: ExpenseParticipantsResponse[];
   attachmentDataUrl?: string | null;
+  /** Present on expenses from `load_group_details` dashboard RPC. */
+  attachment_data_url?: string | null;
   createdAt: string;
   updatedAt?: string;
 }

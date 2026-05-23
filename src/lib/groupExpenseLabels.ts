@@ -1,6 +1,11 @@
+import { formatSummaryName } from "@/components/ui/formatters";
 import type { GroupDashboardInterface, UserInterface } from "@/lib/storage";
 
 export type DashboardExpense = GroupDashboardInterface["expenses"][number];
+
+export function expenseHasAttachment(expense: DashboardExpense): boolean {
+  return Boolean(expense.attachmentDataUrl ?? expense.attachment_data_url);
+}
 
 export function memberNameForViewer(
   memberId: string,
@@ -21,6 +26,15 @@ export function memberLabelWithYouSuffix(
   return name;
 }
 
+/** Viewer-aware label with the same short name format as expense detail (who paid, balances, settlements). */
+export function memberDisplayNameForViewer(
+  memberId: string,
+  name: string,
+  viewerMemberId: string | null | undefined
+): string {
+  return formatSummaryName(memberNameForViewer(memberId, name, viewerMemberId));
+}
+
 export function getExpensePayers(expense: DashboardExpense): UserInterface[] {
   if (expense.payers?.length) {
     return expense.payers
@@ -36,7 +50,9 @@ export function getExpensePaidByLabel(
   viewerMemberId?: string | null
 ) {
   const payers = getExpensePayers(expense);
-  const labels = payers.map((p) => memberNameForViewer(p.id, p.name, viewerMemberId));
+  const labels = payers.map((p) =>
+    memberDisplayNameForViewer(p.id, p.name, viewerMemberId)
+  );
 
   if (labels.length === 0) return "Unknown payer";
   if (labels.length === 1) return labels[0];

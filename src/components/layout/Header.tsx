@@ -2,13 +2,17 @@
 
 import Link from "next/link";
 import { Users } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 import { BrandWordmark } from "@/components/brand/BrandWordmark";
 import { BrandIcon } from "@/components/brand/BrandIcon";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Button } from "@/components/ui/button";
+import { useDeviceType } from "@/hooks/useDeviceType";
 import { useMyGroupsCount } from "@/hooks/useMyGroupsCount";
 import { cn } from "@/lib/utils";
+
+const SCROLL_IDLE_MS = 250;
 
 function MyGroupsCountBadge({ count, className }: { count: number; className?: string }) {
   if (count <= 0) {
@@ -30,65 +34,94 @@ function MyGroupsCountBadge({ count, className }: { count: number; className?: s
 
 export function Header() {
   const groupsCount = useMyGroupsCount();
+  const deviceType = useDeviceType();
+  const isMobile = deviceType === "mobile";
+  const [headerVisible, setHeaderVisible] = useState(true);
+  const scrollIdleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const onScroll = () => {
+      setHeaderVisible(false);
+
+      if (scrollIdleRef.current) {
+        clearTimeout(scrollIdleRef.current);
+      }
+
+      scrollIdleRef.current = setTimeout(() => {
+        setHeaderVisible(true);
+      }, SCROLL_IDLE_MS);
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (scrollIdleRef.current) {
+        clearTimeout(scrollIdleRef.current);
+      }
+    };
+  }, []);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/90 backdrop-blur-lg supports-[backdrop-filter]:bg-background/75">
-      <div className="container flex h-14 sm:h-16 items-center justify-between gap-3">
-        <Link
-          href="/"
-          className="flex min-w-0 items-center gap-2 sm:gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-xl"
+    <div
+      className={cn(
+        "fixed inset-x-0 top-0 z-50 px-3 pt-2 sm:pt-3",
+        "transition-all duration-300 ease-out motion-reduce:transition-none",
+        headerVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-3 pointer-events-none"
+      )}
+      aria-hidden={!headerVisible}
+    >
+      <header className="w-full rounded-xl border border-border/60 bg-card shadow-card">
+        <div
+          className={cn(
+            "flex items-center gap-3 px-4 py-3",
+            isMobile ? "justify-center" : "justify-between sm:h-16 sm:py-0"
+          )}
         >
-          <BrandIcon className="w-9 h-9" size={36} />
-          <BrandWordmark className="text-lg sm:text-xl truncate" />
-        </Link>
+          <Link
+            href="/"
+            className={cn(
+              "flex min-w-0 items-center gap-2 sm:gap-3",
+              "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg",
+              isMobile && "justify-center"
+            )}
+          >
+            <BrandIcon className="h-9 w-9" size={36} />
+            <BrandWordmark className="text-lg sm:text-xl truncate" />
+          </Link>
 
-        <nav className="flex shrink-0 items-center gap-0.5 sm:gap-1" aria-label="Primary">
-          <Button
-            asChild
-            size="sm"
-            variant="default"
-            className="relative hidden h-8 gap-1.5 px-3 text-xs sm:inline-flex sm:h-9 sm:text-sm"
+          <nav
+            className="hidden shrink-0 items-center gap-0.5 sm:flex sm:gap-1"
+            aria-label="Primary"
           >
-            <Link href="/groups">
-              <Users className="h-4 w-4" />
-              My groups
-              <MyGroupsCountBadge count={groupsCount} />
-            </Link>
-          </Button>
-          <Button
-            asChild
-            size="sm"
-            variant="default"
-            className="relative h-8 px-2.5 text-xs sm:hidden"
-          >
-            <Link
-              href="/groups"
-              aria-label={
-                groupsCount > 0 ? `My groups, ${groupsCount} saved` : "My groups"
-              }
+            <Button
+              asChild
+              size="sm"
+              variant="default"
+              className="relative h-8 gap-1.5 px-3 text-xs sm:h-9 sm:text-sm"
             >
-              <Users className="h-4 w-4" />
-              <MyGroupsCountBadge
-                count={groupsCount}
-                className="absolute -right-1 -top-1 h-4 min-w-4 bg-background px-1 text-[10px] text-primary"
-              />
+              <Link href="/groups">
+                <Users className="h-4 w-4" />
+                My groups
+                <MyGroupsCountBadge count={groupsCount} />
+              </Link>
+            </Button>
+            <ThemeToggle />
+            <Link
+              href="/#faq"
+              className="px-2.5 py-2 sm:px-3 text-xs sm:text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              FAQ
             </Link>
-          </Button>
-          <ThemeToggle />
-          <Link
-            href="/faq"
-            className="px-2.5 py-2 sm:px-3 text-xs sm:text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          >
-            FAQ
-          </Link>
-          <Link
-            href="/contact"
-            className="px-2.5 py-2 sm:px-3 text-xs sm:text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          >
-            Contact
-          </Link>
-        </nav>
-      </div>
-    </header>
+            <Link
+              href="/contact"
+              className="px-2.5 py-2 sm:px-3 text-xs sm:text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              Contact
+            </Link>
+          </nav>
+        </div>
+      </header>
+    </div>
   );
 }

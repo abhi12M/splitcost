@@ -27,12 +27,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { UserAvatar } from "@/components/ui/UserAvatar";
-import { useKeyboardLayout } from "@/hooks/useKeyboardOffset";
+import { MobileGroupFormLayout } from "@/components/group/MobileGroupFormLayout";
 import { formatCurrency } from "@/lib/avatar-utils";
 import { MEMBERS_MAX } from "@/lib/validations/group.schema";
 import { cn } from "@/lib/utils";
-
-const HEADER_HEIGHT = 94;
 
 function StatChip({
   children,
@@ -110,62 +108,59 @@ export function EditGroupMobile({
   isSubmitting = false,
   isDeleting = false,
 }: EditGroupMobileProps) {
-  const { keyboardOffset } = useKeyboardLayout();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   return (
     <>
-      <div className="fixed top-0 left-0 right-0 z-50 touch-none overscroll-none bg-background">
-        <div className="flex h-[2.7rem] items-center justify-between border-b px-4">
-          <Link href={`/group/${groupId}`}>
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <span className="font-medium">Edit group</span>
-          <button
-            type="button"
-            onClick={onSaveGroup}
-            disabled={isSubmitting}
-            aria-label="Save group"
-          >
-            {isSubmitting ? (
-              <Loader2 className="h-5 w-5 animate-spin text-primary" />
-            ) : (
-              <Check className="h-5 w-5 text-primary" />
-            )}
-          </button>
-        </div>
+      <MobileGroupFormLayout
+        header={
+          <>
+            <div className="flex h-[2.7rem] items-center justify-between border-b px-4">
+              <Link href={`/group/${groupId}`}>
+                <ArrowLeft className="h-5 w-5" />
+              </Link>
+              <span className="font-medium">Edit group</span>
+              <button
+                type="button"
+                onClick={onSaveGroup}
+                disabled={isSubmitting}
+                aria-label="Save group"
+              >
+                {isSubmitting ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                ) : (
+                  <Check className="h-5 w-5 text-primary" />
+                )}
+              </button>
+            </div>
 
-        <div className="flex items-center gap-2 overflow-x-auto border-b px-3 py-2.5">
-          <StatChip>
-            <Users className="h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={1.75} />
-            <span className="text-foreground">
-              {memberCards.length} member{memberCards.length === 1 ? "" : "s"}
-            </span>
-          </StatChip>
+            <div className="flex items-center gap-2 overflow-x-auto border-b px-3 py-2.5">
+              <StatChip>
+                <Users className="h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={1.75} />
+                <span className="text-foreground">
+                  {memberCards.length} member{memberCards.length === 1 ? "" : "s"}
+                </span>
+              </StatChip>
 
-          <StatChip>
-            <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={1.75} />
-            <span className="text-foreground">{currency}</span>
-          </StatChip>
+              <StatChip>
+                <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={1.75} />
+                <span className="text-foreground">{currency}</span>
+              </StatChip>
 
-          <StatChip>
-            <TrendingUp className="h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={1.75} />
-            <span className="text-emerald-600">{summary.getBackCount} gets back</span>
-            <span className="text-muted-foreground" aria-hidden>
-              ·
-            </span>
-            <span className="text-rose-600">{summary.oweCount} owes</span>
-          </StatChip>
-        </div>
-      </div>
-
-      <div
-        className="fixed left-0 right-0 overflow-y-auto overscroll-contain bg-background"
-        style={{
-          top: HEADER_HEIGHT,
-          bottom: keyboardOffset,
-          WebkitOverflowScrolling: "touch",
-        }}
+              <StatChip>
+                <TrendingUp
+                  className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                  strokeWidth={1.75}
+                />
+                <span className="text-emerald-600">{summary.getBackCount} gets back</span>
+                <span className="text-muted-foreground" aria-hidden>
+                  ·
+                </span>
+                <span className="text-rose-600">{summary.oweCount} owes</span>
+              </StatChip>
+            </div>
+          </>
+        }
       >
         <div className="space-y-5 p-4">
           <GroupFormFieldBox
@@ -192,11 +187,11 @@ export function EditGroupMobile({
               onChange={onNewMemberNameChange}
               onAdd={onAddMember}
               disabled={memberCards.length >= MEMBERS_MAX}
-              invalid={!!errors.members}
+              invalid={Boolean(errors.members || errors.memberName || errors.memberExists)}
               placeholder={
                 memberCards.length >= MEMBERS_MAX
                   ? `Maximum ${MEMBERS_MAX} members`
-                  : "Add people"
+                  : "Add member"
               }
             />
 
@@ -277,15 +272,20 @@ export function EditGroupMobile({
             </Button>
           </div>
         </div>
-      </div>
+      </MobileGroupFormLayout>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent className="max-w-[320px] rounded-2xl">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete group?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete {groupName.trim() || "this group"} and all of its
-              expenses. This cannot be undone.
+            <AlertDialogDescription className="space-y-2">
+              <span className="block">
+                Are you absolutely sure you want to delete this group?
+              </span>
+              <span className="block">
+                All expenses, balances, and records for ALL members will be permanently removed.
+                This action cannot be undone.
+              </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

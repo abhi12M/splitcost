@@ -119,6 +119,39 @@ function patchDashboardWithGroup(
   };
 }
 
+/** Truthy placeholder until dashboard refetch returns the real storage path. */
+const DASHBOARD_ATTACHMENT_PRESENT = "attached";
+
+/** Update attachment indicator for one expense in the dashboard list cache. */
+export function patchExpenseAttachmentInDashboard(
+  queryClient: QueryClient,
+  groupId: string,
+  expenseId: string,
+  hasAttachment: boolean
+) {
+  const path = hasAttachment ? DASHBOARD_ATTACHMENT_PRESENT : null;
+
+  queryClient.setQueryData<GroupDashboardInterface | null>(
+    queryKeys.groupDashboard(groupId),
+    (current) => {
+      if (!current) return current;
+
+      return {
+        ...current,
+        expenses: current.expenses.map((expense) =>
+          expense.id === expenseId
+            ? {
+                ...expense,
+                attachmentDataUrl: path,
+                attachment_data_url: path,
+              }
+            : expense
+        ),
+      };
+    }
+  );
+}
+
 /** Immediately sync group + dashboard caches after a group metadata/member mutation. */
 export function applyGroupResponseToCache(
   queryClient: QueryClient,

@@ -35,16 +35,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserAvatar, AvatarGroup } from "@/components/ui/UserAvatar";
 import { formatCurrency } from "@/lib/avatar-utils";
+import type { CategoryKey } from "@/components/icons/CategoryIcons";
+import { ExpenseListCategoryIcon } from "@/components/expense/ExpenseListCategoryIcon";
 import {
-  getCategoryIcon,
-  EXPENSE_CATEGORIES,
-  type CategoryKey,
-} from "@/components/icons/CategoryIcons";
-import {
+  expenseHasAttachment,
   getExpensePaidByLabel,
   getExpensePayers,
+  memberDisplayNameForViewer,
   memberLabelWithYouSuffix,
-  memberNameForViewer,
 } from "@/lib/groupExpenseLabels";
 import {
   clearGroupViewerMemberId,
@@ -679,7 +677,7 @@ export default function GroupResponsesPage({
 
     const lines = settlements.map(
       (s) =>
-        `${memberNameForViewer(s.fromId, s.fromName, viewerMemberId)} pays ${memberNameForViewer(
+        `${memberDisplayNameForViewer(s.fromId, s.fromName, viewerMemberId)} pays ${memberDisplayNameForViewer(
           s.toId,
           s.toName,
           viewerMemberId
@@ -1143,16 +1141,6 @@ export default function GroupResponsesPage({
                           {/* ✅ EXPENSE ITEMS */}
                           {isOpen &&
                             list.map((expense) => {
-                              const IconComponent = getCategoryIcon(
-                                expense.category as CategoryKey,
-                                expense.subcategory
-                              );
-
-                              const categoryColor =
-                                EXPENSE_CATEGORIES[
-                                  expense.category as CategoryKey
-                                ]?.color || "category-uncategorized";
-
                               return (
                                 <div
                                   key={expense.id}
@@ -1162,18 +1150,12 @@ export default function GroupResponsesPage({
                                     href={`/group/${groupId}/expense/${expense.id}`}
                                     className="flex gap-3 p-4"
                                   >
-                                    {/* CATEGORY ICON */}
-                                    <div
-                                      className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                                      style={{
-                                        backgroundColor: `hsl(var(--${categoryColor}) / 0.15)`,
-                                      }}
-                                    >
-                                      <IconComponent
-                                        className="w-5 h-5"
-                                        style={{ color: `hsl(var(--${categoryColor}))` }}
-                                      />
-                                    </div>
+                                    <ExpenseListCategoryIcon
+                                      category={expense.category as CategoryKey}
+                                      subcategory={expense.subcategory}
+                                      hasAttachment={expenseHasAttachment(expense)}
+                                      containerClassName="rounded-xl"
+                                    />
 
                                     {/* CONTENT */}
                                     <div className="min-w-0 flex-1">
@@ -1254,7 +1236,7 @@ export default function GroupResponsesPage({
               <CardContent className="max-h-none space-y-3 overflow-visible sm:max-h-[min(22rem,50vh)] sm:overflow-y-auto lg:max-h-[17rem] lg:overflow-y-auto">
                 {group.members.map((m) => {
                   const bal = balances[m.id];
-                  const displayName = memberNameForViewer(m.id, m.name, viewerMemberId);
+                  const displayName = memberDisplayNameForViewer(m.id, m.name, viewerMemberId);
 
                   return (
                     <div key={m.id} className="flex justify-between items-center">
@@ -1323,9 +1305,9 @@ export default function GroupResponsesPage({
                       {/* ROW */}
                       <div className="flex items-start justify-between gap-3 py-2">
                         <div className="flex-1 min-w-0 text-sm leading-snug break-words">
-                          <span>{memberNameForViewer(s.fromId, s.fromName, viewerMemberId)}</span>{" "}
+                          <span>{memberDisplayNameForViewer(s.fromId, s.fromName, viewerMemberId)}</span>{" "}
                           <span className="font-semibold">pays</span>{" "}
-                          <span>{memberNameForViewer(s.toId, s.toName, viewerMemberId)}</span>
+                          <span>{memberDisplayNameForViewer(s.toId, s.toName, viewerMemberId)}</span>
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -1389,11 +1371,11 @@ export default function GroupResponsesPage({
                   </AlertDialogTitle>
                   <AlertDialogDescription className="text-xs">
                     {settleConfirmation
-                      ? `This will mark that ${memberNameForViewer(
+                      ? `This will mark that ${memberDisplayNameForViewer(
                           settleConfirmation.settlement.fromId,
                           settleConfirmation.settlement.fromName,
                           viewerMemberId
-                        )} paid ${memberNameForViewer(
+                        )} paid ${memberDisplayNameForViewer(
                           settleConfirmation.settlement.toId,
                           settleConfirmation.settlement.toName,
                           viewerMemberId

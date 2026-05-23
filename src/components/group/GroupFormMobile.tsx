@@ -9,12 +9,10 @@ import { AddMemberInputBox } from "@/components/group/AddMemberInputBox";
 import { GroupFormFieldBox } from "@/components/group/GroupFormFieldBox";
 import { AvatarGroup, UserAvatar } from "@/components/ui/UserAvatar";
 import { CURRENCIES } from "@/constants";
-import { useKeyboardLayout } from "@/hooks/useKeyboardOffset";
+import { MobileGroupFormLayout } from "@/components/group/MobileGroupFormLayout";
 import { GroupSchema, MemberNameSchema, MEMBERS_MAX } from "@/lib/validations/group.schema";
 import { toast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
-
-const HEADER_HEIGHT = 75;
 
 interface GroupFormMobileProps {
   backHref?: string;
@@ -38,8 +36,6 @@ export function GroupFormMobile({
     memberName?: string;
     memberExists?: string;
   }>({});
-  const { keyboardOffset } = useKeyboardLayout();
-
   const currencyMeta = CURRENCIES.find((c) => c.code === currency);
 
   const validate = useCallback(() => {
@@ -154,37 +150,31 @@ export function GroupFormMobile({
   };
 
   return (
-    <>
-      <div className="fixed top-0 left-0 right-0 z-50 touch-none overscroll-none bg-background">
-        <div className="flex h-[2.7rem] items-center justify-between border-b px-4">
-          <Link href={backHref}>
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <span className="font-medium">Create group</span>
-          <button type="button" onClick={handleSubmit} aria-label="Create group">
-            <Check className="h-5 w-5 text-primary" />
-          </button>
-        </div>
+    <MobileGroupFormLayout
+      header={
+        <>
+          <div className="flex h-[2.7rem] items-center justify-between border-b px-4">
+            <Link href={backHref}>
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+            <span className="font-medium">Create group</span>
+            <button type="button" onClick={handleSubmit} aria-label="Create group">
+              <Check className="h-5 w-5 text-primary" />
+            </button>
+          </div>
 
-        <div className="flex items-center gap-2 border-b px-4 py-1">
-          <span className="text-sm text-muted-foreground">Members:</span>
-          {members.length > 0 ? (
-            <AvatarGroup names={members} isShowTotalMemberText={false} size="sm" max={12} />
-          ) : (
-            <span className="text-xs text-muted-foreground">None yet</span>
-          )}
-        </div>
-      </div>
-
-      <div
-        className="fixed left-0 right-0 overflow-y-auto overscroll-contain bg-background"
-        style={{
-          top: HEADER_HEIGHT,
-          bottom: keyboardOffset,
-          WebkitOverflowScrolling: "touch",
-        }}
-      >
-        <div className="space-y-5 p-4">
+          <div className="flex items-center gap-2 border-b px-4 py-1">
+            <span className="text-sm text-muted-foreground">Members:</span>
+            {members.length > 0 ? (
+              <AvatarGroup names={members} isShowTotalMemberText={false} size="sm" max={8} />
+            ) : (
+              <span className="text-xs text-muted-foreground">None yet</span>
+            )}
+          </div>
+        </>
+      }
+    >
+      <div className="space-y-5 p-4">
           <GroupFormFieldBox
             icon={Users}
             htmlFor="group-name"
@@ -238,7 +228,7 @@ export function GroupFormMobile({
               onChange={setNewMember}
               onAdd={handleAddMember}
               disabled={members.length >= MEMBERS_MAX}
-              invalid={!!errors.members}
+              invalid={Boolean(errors.members || errors.memberName || errors.memberExists)}
               placeholder={
                 members.length >= MEMBERS_MAX ? "Maximum members reached" : "Add member"
               }
@@ -273,8 +263,7 @@ export function GroupFormMobile({
               </div>
             ) : null}
           </div>
-        </div>
       </div>
-    </>
+    </MobileGroupFormLayout>
   );
 }

@@ -250,6 +250,24 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
     }));
   }, [groupName]);
 
+  useEffect(() => {
+    const trimmed = newMemberName.trim();
+    if (!trimmed) {
+      setErrors((prev) => ({ ...prev, memberName: undefined, memberExists: undefined }));
+      return;
+    }
+    const memberResult = MemberNameSchema.safeParse(newMemberName);
+    setErrors((prev) => ({
+      ...prev,
+      memberName: memberResult.success ? undefined : memberResult.error.issues[0]?.message,
+      memberExists: members.some(
+        (member) => member.name.trim().toLowerCase() === trimmed.toLowerCase()
+      )
+        ? "This member is already in the group."
+        : undefined,
+    }));
+  }, [newMemberName, members]);
+
   const balances = useMemo(() => {
     const baseMembers = dashboard?.group.members ?? [];
     return calculateBalances(dashboard?.expenses ?? [], baseMembers);
@@ -730,6 +748,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                     <Input
                       value={newMemberName}
                       onChange={(event) => setNewMemberName(event.target.value)}
+                      aria-invalid={Boolean(errors.memberName || errors.memberExists)}
                       placeholder={
                         members.length >= MEMBERS_MAX
                           ? `Maximum ${MEMBERS_MAX} members reached`
@@ -837,6 +856,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
           </div>
         </div>
       </Layout>
+      </div>
 
       <EditGroupMemberSheet
         open={isMemberSheetOpen}
@@ -853,7 +873,6 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
         onRemoveMember={handleRemoveSelectedMember}
         enableBackButtonClose={!isMdUp}
       />
-      </div>
     </>
   );
 }

@@ -125,7 +125,7 @@ function UseCaseCard({ item }: { item: UseCaseItem }) {
   const Icon = item.icon;
 
   return (
-    <article className="flex h-full min-w-[220px] snap-center flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm sm:min-w-0 dark:border-border/80">
+    <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm dark:border-border/80">
       <div className="relative px-3 pt-3">
         <div
           className={cn(
@@ -249,7 +249,7 @@ export function UseCasesSection() {
           </p>
         </header>
 
-        <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-2 snap-x snap-mandatory sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-5 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-3 xl:grid-cols-5 xl:gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-5 xl:gap-4">
           {useCases.map((item) => (
             <UseCaseCard key={item.title} item={item} />
           ))}

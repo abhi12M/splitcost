@@ -208,7 +208,7 @@ export function GroupsListSection({ adminMode = false }: { adminMode?: boolean }
                           onDelete={() => handleDeleteGroup(group.id)}
                           isDeleting={deletingGroupId === group.id}
                           deleteTitle="Delete group?"
-                          deleteDescription={`Are you sure you want to delete ${group.name}? This will remove the group and its expenses.`}
+                          deleteDescription="Are you absolutely sure you want to delete this group? All expenses, balances, and records for ALL members will be permanently removed. This action cannot be undone."
                           stopPropagation
                         />
                       ) : null}

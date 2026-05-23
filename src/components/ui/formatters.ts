@@ -117,6 +117,41 @@ export function formatExpenseGroupHeaderTitle(
   return shouldTitleCase ? toTitleCase(title) : title;
 }
 
+export const YOU_DISPLAY_SUFFIX = " (You)";
+
+/** Short display name for expense summaries: trim, truncate long first names, abbreviate last name. */
+export function formatSummaryNameCore(name: string): string {
+  const normalized = name.trim().replace(/\s+/g, " ");
+
+  if (!normalized) {
+    return "Unknown";
+  }
+
+  const parts = normalized.split(" ");
+  const firstName = parts[0];
+  const secondName = parts[1];
+  const maxFirstNameLength = secondName ? 11 : 10;
+  const trimmedFirstName =
+    firstName.length > maxFirstNameLength
+      ? `${firstName.slice(0, maxFirstNameLength)}...`
+      : firstName;
+
+  if (!secondName) {
+    return trimmedFirstName;
+  }
+
+  return `${trimmedFirstName} ${secondName.charAt(0).toUpperCase()}.`;
+}
+
+/** Like {@link formatSummaryNameCore}, preserving a trailing ` (You)` suffix when present. */
+export function formatSummaryName(name: string): string {
+  if (name.endsWith(YOU_DISPLAY_SUFFIX)) {
+    const core = name.slice(0, -YOU_DISPLAY_SUFFIX.length);
+    return `${formatSummaryNameCore(core)}${YOU_DISPLAY_SUFFIX}`;
+  }
+  return formatSummaryNameCore(name);
+}
+
 export const formatDisplayDateTime = (date?: string | Date | null) => {
   if (!date) {
     return "N/A";

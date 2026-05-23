@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
+import { MobileBottomNav } from "./MobileBottomNav";
 
 interface LayoutProps {
   children: ReactNode;
@@ -20,10 +21,18 @@ export function Layout({ children, variant = "default" }: LayoutProps) {
         Skip to content
       </a>
       {showChrome ? <Header /> : null}
-      <main id="main-content" className="flex-1">
+      <main
+        id="main-content"
+        className={
+          showChrome
+            ? "flex-1 pt-[4.75rem] pb-[calc(4.25rem+env(safe-area-inset-bottom,0px))] sm:pt-20 sm:pb-0"
+            : "flex-1"
+        }
+      >
         {children}
       </main>
       {showChrome ? <Footer /> : null}
+      {showChrome ? <MobileBottomNav /> : null}
     </div>
   );
 }

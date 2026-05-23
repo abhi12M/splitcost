@@ -59,10 +59,13 @@ import {
 import {
   evictExpense,
   invalidateGroupDashboard,
+  patchExpenseAttachmentInDashboard,
+  queryKeys,
   useExpenseQuery,
 } from "@/lib/queries";
 import { getGroupViewerMemberId } from "@/lib/groupViewer";
 import { memberNameForViewer } from "@/lib/groupExpenseLabels";
+import { formatSummaryName } from "@/components/ui/formatters";
 import {
   dismissAttachmentUpload,
   useAttachmentUpload,
@@ -79,39 +82,6 @@ function memberName(
   const m = members.find((member) => member.id === userId);
   if (!m) return "Unknown";
   return memberNameForViewer(m.id, m.name, viewerMemberId);
-}
-
-const YOU_DISPLAY_SUFFIX = " (You)";
-
-function formatSummaryNameCore(name: string) {
-  const normalized = name.trim().replace(/\s+/g, " ");
-
-  if (!normalized) {
-    return "Unknown";
-  }
-
-  const parts = normalized.split(" ");
-  const firstName = parts[0];
-  const secondName = parts[1];
-  const maxFirstNameLength = secondName ? 11 : 10;
-  const trimmedFirstName =
-    firstName.length > maxFirstNameLength
-      ? `${firstName.slice(0, maxFirstNameLength)}...`
-      : firstName;
-
-  if (!secondName) {
-    return trimmedFirstName;
-  }
-
-  return `${trimmedFirstName} ${secondName.charAt(0).toUpperCase()}.`;
-}
-
-function formatSummaryName(name: string) {
-  if (name.endsWith(YOU_DISPLAY_SUFFIX)) {
-    const core = name.slice(0, -YOU_DISPLAY_SUFFIX.length);
-    return `${formatSummaryNameCore(core)}${YOU_DISPLAY_SUFFIX}`;
-  }
-  return formatSummaryNameCore(name);
 }
 
 function getDateTimeMs(date?: string | Date | null) {
@@ -333,7 +303,7 @@ export default function ExpenseDetailsPage({
   const setAttachment = (next: ExpenseAttachment | null) => {
     setAttachmentOverride(next);
     queryClient.setQueryData<EditExpenseInterface | null>(
-      ["expense", expenseId],
+      queryKeys.expense(expenseId),
       (current) =>
         current
           ? {
@@ -341,11 +311,20 @@ export default function ExpenseDetailsPage({
               expense: {
                 ...current.expense,
                 attachment: next,
-                attachmentDataUrl: next ? current.expense.attachmentDataUrl : null,
+                attachmentDataUrl: next
+                  ? current.expense.attachmentDataUrl ?? "attached"
+                  : null,
               },
             }
           : current
     );
+    patchExpenseAttachmentInDashboard(
+      queryClient,
+      groupId,
+      expenseId,
+      Boolean(next)
+    );
+    void invalidateGroupDashboard(queryClient, groupId);
   };
 
   const [isDeletingExpense, setIsDeletingExpense] = useState(false);

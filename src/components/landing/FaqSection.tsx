@@ -135,6 +135,7 @@ export function FaqSection() {
 
   return (
     <section
+      id="faq"
       className="bg-background py-12 sm:py-16 md:py-20"
       aria-labelledby="faq-heading"
     >

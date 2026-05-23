@@ -29,10 +29,12 @@ import {
   User,
 } from "lucide-react";
 
+import { ExpenseListCategoryIcon } from "@/components/expense/ExpenseListCategoryIcon";
 import {
+  expenseHasAttachment,
   getExpensePaidByLabel,
+  memberDisplayNameForViewer,
   memberLabelWithYouSuffix,
-  memberNameForViewer,
 } from "@/lib/groupExpenseLabels";
 import type { GroupDashboardInterface, UserInterface } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
@@ -63,11 +65,7 @@ import {
 import { ThemeMenuItems } from "@/components/theme/ThemeToggle";
 import { UserAvatar, AvatarGroup } from "@/components/ui/UserAvatar";
 import { formatCurrency } from "@/lib/avatar-utils";
-import {
-  getCategoryIcon,
-  EXPENSE_CATEGORIES,
-  type CategoryKey,
-} from "@/components/icons/CategoryIcons";
+import type { CategoryKey } from "@/components/icons/CategoryIcons";
 import { formatExpenseGroupHeaderTitle } from "@/components/ui/formatters";
 import { cn } from "@/lib/utils";
 import { ADMIN_BASE_PATH } from "@/lib/constants";
@@ -601,30 +599,18 @@ export function MobileGroupDashboard({
                   </button>
                   {isOpen &&
                     list.map((expense) => {
-                      const IconComponent = getCategoryIcon(
-                        expense.category as CategoryKey,
-                        expense.subcategory
-                      );
-                      const categoryColor =
-                        EXPENSE_CATEGORIES[expense.category as CategoryKey]?.color ||
-                        "category-uncategorized";
                       return (
                         <Link
                           key={expense.id}
                           href={`/group/${groupId}/expense/${expense.id}`}
                           className="flex gap-3 border-t border-border/60 px-3 py-3 active:bg-muted/50"
                         >
-                          <div
-                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
-                            style={{
-                              backgroundColor: `hsl(var(--${categoryColor}) / 0.15)`,
-                            }}
-                          >
-                            <IconComponent
-                              className="h-5 w-5"
-                              style={{ color: `hsl(var(--${categoryColor}))` }}
-                            />
-                          </div>
+                          <ExpenseListCategoryIcon
+                            category={expense.category as CategoryKey}
+                            subcategory={expense.subcategory}
+                            hasAttachment={expenseHasAttachment(expense)}
+                            containerClassName="rounded-sm"
+                          />
                           <div className="min-w-0 flex-1">
                             <p className="truncate font-medium leading-snug">{expense.description}</p>
                             <p className="mt-0.5 text-xs text-muted-foreground">
@@ -642,6 +628,7 @@ export function MobileGroupDashboard({
                                   memberLabelWithYouSuffix(u.id, u.name, viewerMemberId)
                                 )}
                               className="mt-2"
+                              size="sm"
                               label=""
                             />
                           </div>
@@ -669,7 +656,7 @@ export function MobileGroupDashboard({
                   : bal > 0.01
                     ? "Gets back"
                     : "Owes group";
-              const displayName = memberNameForViewer(m.id, m.name, viewerMemberId);
+              const displayName = memberDisplayNameForViewer(m.id, m.name, viewerMemberId);
 
               return (
                 <li key={m.id} className="flex items-center gap-3 px-3 py-3.5">
@@ -710,11 +697,11 @@ export function MobileGroupDashboard({
                     <div className="flex items-start justify-between gap-2">
                       <p className="min-w-0 flex-1 text-sm leading-snug">
                         <span className="font-medium">
-                          {memberNameForViewer(s.fromId, s.fromName, viewerMemberId)}
+                          {memberDisplayNameForViewer(s.fromId, s.fromName, viewerMemberId)}
                         </span>{" "}
                         <span className="text-muted-foreground">pays</span>{" "}
                         <span className="font-medium">
-                          {memberNameForViewer(s.toId, s.toName, viewerMemberId)}
+                          {memberDisplayNameForViewer(s.toId, s.toName, viewerMemberId)}
                         </span>
                       </p>
                       <div className="flex shrink-0 items-center gap-2">
@@ -765,38 +752,32 @@ export function MobileGroupDashboard({
 
         <nav
           aria-label="Group sections"
-          className="fixed bottom-[max(1rem,env(safe-area-inset-bottom,0px))] left-1/2 z-40 -translate-x-1/2 rounded-full border border-border/80 bg-background/95 p-1 shadow-lg shadow-black/15 backdrop-blur-md supports-[backdrop-filter]:bg-background/85"
+          className="fixed bottom-[max(1rem,env(safe-area-inset-bottom,0px))] left-1/2 z-40 -translate-x-1/2 rounded-2xl border border-border/80 bg-background/95 p-1 shadow-lg shadow-black/15 backdrop-blur-md supports-[backdrop-filter]:bg-background/85"
         >
-          <TabsList className="flex h-auto items-center gap-1 bg-transparent p-0">
+          <TabsList className="flex h-auto items-stretch gap-0.5 bg-transparent p-0">
             <TabsTrigger
               value="expenses"
               aria-label="Expenses"
-              className="group flex h-[2rem] items-center gap-2 rounded-full px-3.5 text-xs font-semibold text-muted-foreground transition-all hover:text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
+              className="flex min-w-[4.25rem] flex-col items-center justify-center gap-0.5 rounded-xl px-3 py-2 text-[10px] font-semibold leading-tight text-muted-foreground transition-all hover:text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
             >
               <Receipt className="h-4 w-4 shrink-0" aria-hidden />
-              <span className="hidden whitespace-nowrap group-data-[state=active]:inline">
-                Expenses
-              </span>
+              <span className="whitespace-nowrap">Expenses</span>
             </TabsTrigger>
             <TabsTrigger
               value="balances"
               aria-label="Balances"
-              className="group flex h-[2rem] items-center gap-2 rounded-full px-3.5 text-xs font-semibold text-muted-foreground transition-all hover:text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
+              className="flex min-w-[4.25rem] flex-col items-center justify-center gap-0.5 rounded-xl px-3 py-2 text-[10px] font-semibold leading-tight text-muted-foreground transition-all hover:text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
             >
               <Scale className="h-4 w-4 shrink-0" aria-hidden />
-              <span className="hidden whitespace-nowrap group-data-[state=active]:inline">
-                Balances
-              </span>
+              <span className="whitespace-nowrap">Balances</span>
             </TabsTrigger>
             <TabsTrigger
               value="settlements"
               aria-label="Settlements"
-              className="group flex h-[2rem] items-center gap-2 rounded-full px-3.5 text-xs font-semibold text-muted-foreground transition-all hover:text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
+              className="flex min-w-[4.25rem] flex-col items-center justify-center gap-0.5 rounded-xl px-3 py-2 text-[10px] font-semibold leading-tight text-muted-foreground transition-all hover:text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
             >
               <Handshake className="h-4 w-4 shrink-0" aria-hidden />
-              <span className="hidden whitespace-nowrap group-data-[state=active]:inline">
-                Settlements
-              </span>
+              <span className="whitespace-nowrap">Settlements</span>
             </TabsTrigger>
           </TabsList>
         </nav>
@@ -804,7 +785,7 @@ export function MobileGroupDashboard({
 
       <Link
         href={`/group/${groupId}/add-expense`}
-        className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+5.25rem)] right-[max(1.25rem,env(safe-area-inset-right,0px))] z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 transition hover:bg-primary/92 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-[0.97]"
+        className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+5.75rem)] right-[max(1.25rem,env(safe-area-inset-right,0px))] z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 transition hover:bg-primary/92 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-[0.97]"
         aria-label="Add expense"
       >
         <Plus className="h-7 w-7" strokeWidth={2.25} />
@@ -821,11 +802,11 @@ export function MobileGroupDashboard({
             <AlertDialogTitle className="text-lg">Record this settlement?</AlertDialogTitle>
             <AlertDialogDescription className="text-sm">
               {settleConfirmation
-                ? `This will record that ${memberNameForViewer(
+                ? `This will record that ${memberDisplayNameForViewer(
                   settleConfirmation.settlement.fromId,
                   settleConfirmation.settlement.fromName,
                   viewerMemberId
-                )} paid ${memberNameForViewer(
+                )} paid ${memberDisplayNameForViewer(
                   settleConfirmation.settlement.toId,
                   settleConfirmation.settlement.toName,
                   viewerMemberId

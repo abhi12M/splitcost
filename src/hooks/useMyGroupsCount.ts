@@ -13,9 +13,8 @@ function readMyGroupsCount(): number {
 
 export function useMyGroupsCount(): number {
   const pathname = usePathname();
-  const [count, setCount] = useState(() =>
-    typeof window !== "undefined" ? readMyGroupsCount() : 0
-  );
+  // Always start at 0 so SSR and the first client render match; refresh after mount.
+  const [count, setCount] = useState(0);
 
   const refreshCount = useCallback(() => {
     setCount(readMyGroupsCount());

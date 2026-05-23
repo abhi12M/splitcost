@@ -312,6 +312,7 @@ BEGIN
               JOIN users participant_user ON participant_user.id = ep.user_id
               WHERE ep.expense_id = e.id
             ),
+            'attachment_data_url', e.attachment_data_url,
             'createdAt', e.created_at,
             'updatedAt', e.updated_at
           )

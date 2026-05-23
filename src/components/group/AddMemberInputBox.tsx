@@ -28,7 +28,7 @@ export function AddMemberInputBox({
   return (
     <div
       className={cn(
-        "flex h-12 w-full items-center border bg-card",
+        "flex h-12 w-full scroll-mt-3 scroll-mb-3 items-center border bg-card",
         invalid ? "border-destructive" : "border-border",
         className
       )}
@@ -38,13 +38,14 @@ export function AddMemberInputBox({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         disabled={disabled}
+        aria-invalid={invalid}
+        className="h-full flex-1 border-0 bg-transparent px-3 text-base shadow-none focus-visible:ring-0"
         onKeyDown={(e) => {
           if (e.key === "Enter" && value.trim()) {
             e.preventDefault();
             onAdd();
           }
         }}
-        className="h-full flex-1 border-0 bg-transparent px-3 shadow-none focus-visible:ring-0"
       />
       <div className="h-6 w-px shrink-0 bg-border" aria-hidden />
       <button
