@@ -14,6 +14,7 @@ import {
   ChevronRight,
   ChevronUp,
   Handshake,
+  Download,
   MoreHorizontal,
   Pencil,
   Plus,
@@ -150,6 +151,7 @@ export type MobileGroupDashboardProps = {
   visibleCount: number;
   /** Native share when supported; otherwise copies to the clipboard. */
   copyLink: (type: "link" | "settlement") => Promise<void>;
+  onExportExpenses: () => void;
   openRow: number | null;
   setOpenRow: (n: number | null) => void;
   settlingIndex: number | null;
@@ -187,6 +189,7 @@ export function MobileGroupDashboard({
   setSearch,
   visibleCount,
   copyLink,
+  onExportExpenses,
   openRow,
   setOpenRow,
   settlingIndex,
@@ -281,6 +284,10 @@ export function MobileGroupDashboard({
                   Share settlement summary
                 </DropdownMenuItem>
               ) : null}
+              <DropdownMenuItem onClick={onExportExpenses} disabled={!expenses.length}>
+                <Download className="mr-2 h-4 w-4" />
+                Export expenses
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <ThemeMenuItems />
               <DropdownMenuSeparator />

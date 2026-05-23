@@ -789,6 +789,7 @@ export default function GroupResponsesPage({
           setSearch={setSearch}
           visibleCount={visibleCount}
           copyLink={shareGroupContent}
+          onExportExpenses={handleExportExpenses}
           openRow={openRow}
           setOpenRow={setOpenRow}
           settlingIndex={settlingIndex}
