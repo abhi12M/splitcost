@@ -301,8 +301,8 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
                     : (<span aria-invalid={ariaInvalid}
                       className="w-full px-3 py-2.5 text-sm
                           border border-border border-b-2 rounded-[5px]
-                          aria-[invalid=true]:border-red-500
-                          aria-[invalid=true]:border-b-red-600">
+                          aria-[invalid=true]:border-destructive
+                          aria-[invalid=true]:border-b-destructive">
                       {placeholder}
                     </span>)
                 )}

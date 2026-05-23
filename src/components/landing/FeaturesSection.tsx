@@ -19,9 +19,10 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { brandFeatureAccent, brandStyles, landingSection } from "@/lib/brand-styles";
 import { cn } from "@/lib/utils";
 
-type FeatureAccent = "violet" | "emerald" | "orange" | "blue";
+type FeatureAccent = "brand" | "emerald" | "orange";
 
 type FeatureItem = {
   title: string;
@@ -34,21 +35,14 @@ const accentStyles: Record<
   FeatureAccent,
   { iconBg: string; iconColor: string }
 > = {
-  violet: {
-    iconBg: "bg-violet-100 dark:bg-violet-950/50",
-    iconColor: "text-violet-600",
-  },
+  brand: brandFeatureAccent,
   emerald: {
     iconBg: "bg-emerald-100 dark:bg-emerald-950/50",
-    iconColor: "text-emerald-600",
+    iconColor: "text-emerald-600 dark:text-emerald-400",
   },
   orange: {
     iconBg: "bg-orange-100 dark:bg-orange-950/50",
-    iconColor: "text-orange-600",
-  },
-  blue: {
-    iconBg: "bg-blue-100 dark:bg-blue-950/50",
-    iconColor: "text-blue-600",
+    iconColor: "text-orange-600 dark:text-orange-400",
   },
 };
 
@@ -58,7 +52,7 @@ const features: FeatureItem[] = [
     description:
       "Start tracking shared expenses instantly without creating an account or logging in.",
     icon: UserRoundX,
-    accent: "violet",
+    accent: "brand",
   },
   {
     title: "Flexible Expense Splitting",
@@ -79,14 +73,14 @@ const features: FeatureItem[] = [
     description:
       "See who paid, who owes, and get smart settlement suggestions in real time.",
     icon: Scale,
-    accent: "blue",
+    accent: "brand",
   },
   {
     title: "Shareable Expense Groups",
     description:
       "Share group links with friends, roommates, or travel partners — they join in seconds.",
     icon: Link2,
-    accent: "violet",
+    accent: "brand",
   },
   {
     title: "Multi-Currency Support",
@@ -107,7 +101,7 @@ const features: FeatureItem[] = [
     description:
       "Export expense summaries as CSV for records or tax documentation.",
     icon: Download,
-    accent: "blue",
+    accent: "brand",
   },
 ];
 
@@ -143,16 +137,21 @@ function FeatureCard({ feature }: { feature: FeatureItem }) {
 
 function FeaturesCta() {
   return (
-    <div className="mt-5 overflow-hidden rounded-[1.75rem] border border-violet-100 bg-gradient-to-br from-violet-50 via-card to-violet-50/80 p-5 shadow-card ring-1 ring-violet-100/60 dark:border-violet-900/40 dark:bg-violet-950/25 dark:from-violet-950/40 dark:via-card dark:to-violet-950/20 dark:shadow-none dark:ring-violet-900/30 sm:p-8 lg:p-5">
+    <div className={cn("mt-5 p-5 sm:p-8 lg:p-5", brandStyles.ctaPanel)}>
       <div className="grid min-w-0 items-center gap-5 sm:gap-6 lg:grid-cols-[1.1fr_1fr_1fr] lg:gap-8">
         <div className="flex min-w-0 flex-col items-center gap-3 text-center md:flex-row md:items-center md:gap-4 md:text-left">
-          <span className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-full bg-violet-600 text-white shadow-lg md:flex lg:h-20 lg:w-20">
+          <span
+            className={cn(
+              "hidden h-16 w-16 shrink-0 md:flex lg:h-20 lg:w-20",
+              brandStyles.ctaIconCircle
+            )}
+          >
             <Wallet className="h-9 w-9 lg:h-12 lg:w-12" strokeWidth={2} aria-hidden />
           </span>
           <div className="min-w-0 max-w-full">
             <p className="text-balance text-lg font-bold leading-tight text-foreground sm:text-xl">
               Manage Shared Expenses Without the{" "}
-              <span className="text-violet-600">Confusion</span>
+              <span className={brandStyles.headingAccent}>Confusion</span>
             </p>
             <p className="mt-1.5 text-pretty text-sm text-muted-foreground">
               From trips and roommate bills to events and everyday spending, SplitCost keeps
@@ -165,7 +164,7 @@ function FeaturesCta() {
           <Button
             asChild
             size="lg"
-            className="h-12 w-full rounded-xl bg-violet-600 px-5 text-base font-semibold text-white shadow-md hover:bg-violet-700 hover:shadow-lg sm:max-w-xs sm:self-center sm:px-6"
+            className="h-12 w-full rounded-xl px-5 text-base font-semibold sm:max-w-xs sm:self-center sm:px-6"
           >
             <Link href="/create-group">
               Create Your First Group
@@ -178,7 +177,7 @@ function FeaturesCta() {
                 key={label}
                 className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground sm:text-xs"
               >
-                <Icon className="h-3.5 w-3.5 shrink-0 text-violet-500" aria-hidden />
+                <Icon className={cn("h-3.5 w-3.5 shrink-0", brandStyles.iconSm)} aria-hidden />
                 {label}
               </li>
             ))}
@@ -203,21 +202,21 @@ function FeaturesCta() {
 export function FeaturesSection() {
   return (
     <section
-      className="bg-background py-12 sm:py-16 md:py-20"
-      aria-labelledby="features-heading"
+      className={cn(landingSection.default, landingSection.padding)}
+      id="features"
+      aria-labelledby="features"
     >
       <div className="container">
         <header className="mx-auto mb-10 max-w-3xl text-center sm:mb-12 md:mb-14">
-          <p className="mb-5 inline-flex items-center justify-center gap-2 rounded-full bg-violet-100 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.12em] text-violet-700 dark:bg-violet-950/40 dark:text-violet-300">
+          <p className={cn("mb-5", brandStyles.sectionBadge)}>
             <Sparkles className="h-3.5 w-3.5" aria-hidden />
             Everything you need
           </p>
           <h2
-            id="features-heading"
             className="text-balance text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl md:text-[2.75rem] md:leading-tight"
           >
             Flexible Shared Expense Management for{" "}
-            <span className="text-violet-600">Real-World Groups</span>
+            <span className={brandStyles.headingAccent}>Real-World Groups</span>
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-pretty text-sm text-muted-foreground sm:text-base">
             SplitCost helps you split bills fairly, manage shared expenses, track balances,

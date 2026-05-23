@@ -20,6 +20,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { brandStyles, landingSection } from "@/lib/brand-styles";
 import { APP_NAME } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
@@ -90,21 +91,24 @@ function FaqCard({ faq, index }: { faq: FaqItem; index: number }) {
   return (
     <AccordionItem
       value={`faq-${index}`}
-      className="overflow-hidden rounded-2xl border border-b-0 border-border/80 bg-card shadow-sm transition-shadow data-[state=open]:shadow-md dark:border-border/60"
+      className="group overflow-hidden rounded-2xl border border-b-0 border-border/80 bg-card shadow-sm transition-shadow data-[state=open]:shadow-md dark:border-border/60"
     >
       <div className="p-5 sm:p-6">
-        <div className="flex gap-4">
+        <div className="flex items-center gap-4 group-data-[state=open]:items-start">
           <span
-            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-950/50"
+            className={cn(
+              "flex h-14 w-14 shrink-0 items-center justify-center rounded-full",
+              brandStyles.iconCircle
+            )}
             aria-hidden
           >
-            <Icon className="h-7 w-7 text-violet-600 dark:text-violet-400" strokeWidth={2} />
+            <Icon className={cn("h-7 w-7", brandStyles.icon)} strokeWidth={2} />
           </span>
           <div className="min-w-0 flex-1">
             <AccordionTrigger
               className={cn(
-                "gap-3 py-0 text-left text-[15px] font-bold leading-snug text-foreground hover:no-underline sm:text-base",
-                "[&>svg]:h-4 [&>svg]:w-4 [&>svg]:shrink-0 [&>svg]:text-violet-600 dark:[&>svg]:text-violet-400"
+                "w-full gap-3 py-0 text-left text-[15px] font-bold leading-snug text-foreground hover:no-underline sm:text-base",
+                "[&>svg]:h-4 [&>svg]:w-4 [&>svg]:shrink-0 [&>svg]:self-center [&>svg]:text-primary dark:[&>svg]:text-primary/90"
               )}
             >
               {faq.question}
@@ -136,7 +140,7 @@ export function FaqSection() {
   return (
     <section
       id="faq"
-      className="bg-background py-12 sm:py-16 md:py-20"
+      className={cn(landingSection.default, landingSection.padding)}
       aria-labelledby="faq-heading"
     >
       <script
@@ -144,17 +148,16 @@ export function FaqSection() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
       <div className="container">
-        <header className="mx-auto mb-10 max-w-3xl text-center sm:mb-12 md:mb-14">
-          <p className="mb-5 inline-flex items-center justify-center gap-2 rounded-full bg-violet-100 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.12em] text-violet-700 dark:bg-violet-950/40 dark:text-violet-300">
+        <header className="mx-auto mb-8 max-w-3xl text-center sm:mb-12 md:mb-14">
+          <p className={cn("mb-5", brandStyles.sectionBadge)}>
             <CircleHelp className="h-3.5 w-3.5" aria-hidden />
             FAQs
           </p>
           <h2
-            id="faq-heading"
             className="text-balance text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl md:text-[2.75rem] md:leading-tight"
           >
             Frequently Asked Questions About{" "}
-            <span className="text-violet-600">{APP_NAME}</span>
+            <span className={brandStyles.headingAccent}>{APP_NAME}</span>
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-pretty text-sm text-muted-foreground sm:text-base">
             Everything you need to know about shared expense tracking, bill splitting, group
@@ -164,7 +167,7 @@ export function FaqSection() {
 
         <Accordion
           type="multiple"
-          defaultValue={faqs.map((_, index) => `faq-${index}`)}
+          defaultValue={[]}
           className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2"
         >
           {faqs.map((faq, index) => (

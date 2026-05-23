@@ -4,36 +4,38 @@ import Image from "next/image";
 
 import { cn } from "@/lib/utils";
 
+const LOGO_WIDTH = 1349;
+const LOGO_HEIGHT = 315;
+
 type BrandIconProps = {
   className?: string;
-  size?: number;
+  /** Intrinsic height passed to Next/Image (display size via className). */
+  height?: number;
 };
 
-/** Theme-aware brand symbol (transparent PNG, no background). */
-export function BrandIcon({ className, size = 36 }: BrandIconProps) {
+/** Theme-aware SplitCost wordmark logo. */
+export function BrandIcon({ className, height = 36 }: BrandIconProps) {
+  const width = Math.round((height * LOGO_WIDTH) / LOGO_HEIGHT);
+  const imageClass = cn("w-auto object-contain object-left", className);
+
   return (
-    <span
-      className={cn("relative inline-block shrink-0", className)}
-      style={{ width: size, height: size }}
-    >
+    <>
       <Image
-        src="/brand-logo-light.png"
-        alt=""
-        fill
-        sizes={`${size}px`}
-        className="object-contain dark:hidden"
-        aria-hidden
+        src="/logo-light.png"
+        alt="SplitCost"
+        width={width}
+        height={height}
+        className={cn(imageClass, "dark:hidden")}
         priority
       />
       <Image
-        src="/brand-logo-dark.png"
-        alt=""
-        fill
-        sizes={`${size}px`}
-        className="hidden object-contain dark:block"
-        aria-hidden
+        src="/logo-dark.png"
+        alt="SplitCost"
+        width={width}
+        height={height}
+        className={cn(imageClass, "hidden dark:block")}
         priority
       />
-    </span>
+    </>
   );
 }

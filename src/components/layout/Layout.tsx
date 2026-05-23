@@ -25,7 +25,7 @@ export function Layout({ children, variant = "default" }: LayoutProps) {
         id="main-content"
         className={
           showChrome
-            ? "flex-1 pt-[4.75rem] pb-[calc(4.25rem+env(safe-area-inset-bottom,0px))] sm:pt-20 sm:pb-0"
+            ? "flex-1 pt-[4.25rem] sm:pt-20"
             : "flex-1"
         }
       >

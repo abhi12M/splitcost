@@ -7,7 +7,9 @@ import { Bug, Clock3, Handshake, Mail, Send } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { brandStyles } from "@/lib/brand-styles";
 import { APP_NAME } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import { getCanonicalUrl } from "@/lib/seo";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -96,11 +98,11 @@ export default function ContactPage() {
         />
 
         <div className="relative overflow-hidden rounded-[2rem] border border-border/70 bg-card/80 p-6 shadow-card md:p-10">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-r from-primary/10 via-secondary/10 to-primary/5 blur-3xl" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 hidden h-32 bg-gradient-to-r from-primary/10 via-secondary/10 to-primary/5 sm:block dark:hidden" />
 
           <div className="relative mb-8 max-w-2xl md:mb-10">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border/80 bg-background/80 px-3 py-1 text-sm text-muted-foreground">
-              <Mail className="h-4 w-4 text-secondary" />
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-sm text-muted-foreground dark:bg-primary-muted">
+              <Mail className={cn("h-4 w-4 shrink-0", brandStyles.icon)} />
               Support, feedback, and product questions
             </div>
             <h1 className="text-3xl font-bold text-foreground md:text-4xl">
@@ -118,7 +120,7 @@ export default function ContactPage() {
               Prefer email? Reach us directly at{" "}
               <a
                 href="mailto:contact@splitcost.in"
-                className="font-medium text-secondary underline underline-offset-4 transition-colors hover:text-secondary/80"
+                className="font-medium text-primary underline underline-offset-4 transition-colors hover:text-primary/80 dark:text-primary/90"
               >
                 contact@splitcost.in
               </a>
@@ -159,8 +161,13 @@ export default function ContactPage() {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
               <Card className="border-border/80">
                 <CardHeader className="text-center sm:text-left">
-                  <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl gradient-coral sm:mx-0 mx-auto">
-                    <Mail className="h-8 w-8 text-secondary-foreground" />
+                  <div
+                    className={cn(
+                      "mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl sm:mx-0",
+                      brandStyles.iconCircle
+                    )}
+                  >
+                    <Mail className={cn("h-8 w-8", brandStyles.icon)} />
                   </div>
                   <CardTitle className="text-2xl leading-tight">Send a Message</CardTitle>
                   <CardDescription>

@@ -3,16 +3,8 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 import { formatCurrency } from "@/lib/avatar-utils";
+import { chartPalette } from "@/lib/brand-styles";
 import { SmartTooltip } from "@/components/ui/smartTooltip";
-
-const COLORS = [
-  "#0088FE",
-  "#00C49F",
-  "#FFBB28",
-  "#FF8042",
-  "#8884d8",
-  "#82ca9d",
-];
 
 interface ExpenseChartProps {
   data: { name: string; value: number }[];
@@ -43,7 +35,7 @@ export default function ExpenseChart({
               {data.map((_, index) => (
                 <Cell
                   key={`cell-${index}`}
-                  fill={COLORS[index % COLORS.length]}
+                  fill={chartPalette[index % chartPalette.length]}
                   stroke="transparent"
                 />
               ))}
@@ -69,7 +61,7 @@ export default function ExpenseChart({
             <div className="flex items-center gap-3 min-w-0">
               <div
                 className="w-3 h-3 rounded-full shrink-0"
-                style={{ backgroundColor: COLORS[i % COLORS.length] }}
+                style={{ backgroundColor: chartPalette[i % chartPalette.length] }}
               />
               <SmartTooltip text={item.name} />
             </div>

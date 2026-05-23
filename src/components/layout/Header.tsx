@@ -4,7 +4,6 @@ import Link from "next/link";
 import { Users } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-import { BrandWordmark } from "@/components/brand/BrandWordmark";
 import { BrandIcon } from "@/components/brand/BrandIcon";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Button } from "@/components/ui/button";
@@ -86,8 +85,7 @@ export function Header() {
               isMobile && "justify-center"
             )}
           >
-            <BrandIcon className="h-9 w-9" size={36} />
-            <BrandWordmark className="text-lg sm:text-xl truncate" />
+            <BrandIcon className="h-8 w-auto sm:h-9" height={36} />
           </Link>
 
           <nav

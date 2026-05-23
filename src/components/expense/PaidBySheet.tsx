@@ -328,7 +328,7 @@ export default function PaidBySheet({
                 className={cn(
                   "font-medium",
                   isExact && "text-primary",
-                  isOver && "text-red-500"
+                  isOver && "text-destructive"
                 )}
               >
                 {formatAmount(Math.abs(difference), currency)}{" "}

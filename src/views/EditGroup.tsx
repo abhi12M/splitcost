@@ -30,6 +30,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useMdUp } from "@/hooks/useDeviceType";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
+import { balanceStyles } from "@/lib/brand-styles";
 import { formatCurrency } from "@/lib/avatar-utils";
 import { LOCAL_GROUPS_KEY } from "@/lib/constants";
 import { getEncryptedItem, setEncryptedItem } from "@/lib/localStorage";
@@ -662,12 +663,12 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
           <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
             <div className="space-y-6">
               <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-                <Card className="overflow-hidden border-0 bg-[radial-gradient(circle_at_top_left,_rgba(249,115,22,0.16),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(20,184,166,0.16),_transparent_28%)] shadow-sm">
+                <Card className="overflow-hidden border-0 bg-[radial-gradient(circle_at_top_left,_hsl(var(--primary)/0.12),_transparent_34%),radial-gradient(circle_at_bottom_right,_hsl(var(--secondary)/0.08),_transparent_28%)] shadow-sm">
                   <CardHeader className="pb-4">
-                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-500/10">
-                      <Users className="text-orange-600" />
+                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10">
+                      <Users className="text-primary" />
                     </div>
-                    <Badge variant="outline" className="mb-3 w-fit border-orange-200 bg-card/70 text-orange-700 dark:text-orange-300">
+                    <Badge variant="outline" className="mb-3 w-fit border-primary/20 bg-card/70 text-primary dark:text-primary/90">
                       Manage members with confidence
                     </Badge>
                     <CardTitle className="text-2xl">Edit group</CardTitle>
@@ -714,17 +715,17 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                     <p className="text-sm text-muted-foreground">Members</p>
                     <p className="mt-2 text-2xl font-semibold">{memberCards.length}</p>
                   </div>
-                  <div className="rounded-2xl border bg-emerald-50 p-4">
-                    <p className="text-sm text-emerald-700">Gets back</p>
-                    <p className="mt-2 text-2xl font-semibold text-emerald-700">{summary.getBackCount}</p>
+                  <div className={balanceStyles.positiveCard}>
+                    <p className={balanceStyles.positiveCardLabel}>Gets back</p>
+                    <p className={balanceStyles.positiveCardValue}>{summary.getBackCount}</p>
                   </div>
-                  <div className="rounded-2xl border bg-rose-50 p-4">
-                    <p className="text-sm text-rose-700">Owes</p>
-                    <p className="mt-2 text-2xl font-semibold text-rose-700">{summary.oweCount}</p>
+                  <div className={balanceStyles.negativeCard}>
+                    <p className={balanceStyles.negativeCardLabel}>Owes</p>
+                    <p className={balanceStyles.negativeCardValue}>{summary.oweCount}</p>
                   </div>
-                  <div className="rounded-2xl border bg-amber-50 p-4 sm:col-span-3">
-                    <p className="text-sm text-amber-800">Total unsettled amount</p>
-                    <p className="mt-2 text-2xl font-semibold text-amber-900">
+                  <div className={balanceStyles.warningCard}>
+                    <p className={balanceStyles.warningCardLabel}>Total unsettled amount</p>
+                    <p className={balanceStyles.warningCardValue}>
                       {formatCurrency(unsettledTotal, currency)}
                     </p>
                   </div>
@@ -798,8 +799,8 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                         onClick={() => openMemberSheet(member.key)}
                         className={cn(
                           "w-full rounded-[22px] border bg-card p-4 text-left transition hover:-translate-y-0.5 hover:shadow-card",
-                          member.balanceInfo.tone === "positive" && "border-emerald-200 bg-gradient-to-r from-emerald-50/90 to-card dark:from-emerald-950/40",
-                          member.balanceInfo.tone === "negative" && "border-rose-200 bg-gradient-to-r from-rose-50/90 to-card dark:from-rose-950/40",
+                          member.balanceInfo.tone === "positive" && balanceStyles.positiveMemberBorder,
+                          member.balanceInfo.tone === "negative" && balanceStyles.negativeMemberBorder,
                           member.balanceInfo.tone === "neutral" && "border-border bg-gradient-to-r from-card to-muted/10"
                         )}
                       >
@@ -824,8 +825,8 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                                 variant="outline"
                                 className={cn(
                                   "border-white/60",
-                                  member.balanceInfo.tone === "positive" && "bg-emerald-100 text-emerald-700",
-                                  member.balanceInfo.tone === "negative" && "bg-rose-100 text-rose-700",
+                                  member.balanceInfo.tone === "positive" && balanceStyles.positiveBadge,
+                                  member.balanceInfo.tone === "negative" && balanceStyles.negativeBadge,
                                   member.balanceInfo.tone === "neutral" && "bg-card text-muted-foreground"
                                 )}
                               >
@@ -834,8 +835,8 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                               <p
                                 className={cn(
                                   "mt-2 truncate text-sm font-semibold",
-                                  member.balanceInfo.tone === "positive" && "text-emerald-700",
-                                  member.balanceInfo.tone === "negative" && "text-rose-700",
+                                  member.balanceInfo.tone === "positive" && balanceStyles.positiveText,
+                                  member.balanceInfo.tone === "negative" && balanceStyles.negativeText,
                                   member.balanceInfo.tone === "neutral" && "text-foreground"
                                 )}
                               >

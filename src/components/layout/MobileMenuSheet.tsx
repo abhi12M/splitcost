@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import {
   Briefcase,
@@ -12,11 +13,9 @@ import {
   Shield,
   Star,
   Sun,
-  UserPlus,
-  Users,
   type LucideIcon,
 } from "lucide-react";
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties, type MouseEvent } from "react";
 
 import {
   Sheet,
@@ -44,25 +43,23 @@ type MenuLink = {
 
 const MENU_SECTIONS: { title: string; links: MenuLink[] }[] = [
   {
-    title: "Start here",
+    title: "Product",
     links: [
-      { href: "/create-group", label: "Create a group", icon: UserPlus },
-      { href: "/groups", label: "My groups", icon: Users },
-    ],
-  },
-  {
-    title: "Learn",
-    links: [
-      { href: "/#how-it-works-heading", label: "How it works", icon: CircleHelp },
-      { href: "/#features-heading", label: "Features", icon: Star },
-      { href: "/#use-cases-heading", label: "Use cases", icon: Briefcase },
-      { href: "/#faq", label: "FAQ", icon: MessageCircleQuestion },
+      { href: "/#how-it-works", label: "How it works", icon: CircleHelp },
+      { href: "/#features", label: "Features", icon: Star },
+      { href: "/#use-cases", label: "Use cases", icon: Briefcase },
     ],
   },
   {
     title: "Support",
     links: [
+      { href: "/#faq", label: "FAQ", icon: MessageCircleQuestion },
       { href: "/contact", label: "Contact", icon: Mail },
+    ],
+  },
+  {
+    title: "Legal",
+    links: [
       { href: "/privacy", label: "Privacy", icon: Shield },
       { href: "/terms", label: "Terms", icon: FileText },
     ],
@@ -75,10 +72,21 @@ function MenuRow({
   icon: Icon,
   onNavigate,
 }: MenuLink & { onNavigate: () => void }) {
+  const router = useRouter();
+
+  const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    onNavigate();
+
+    window.setTimeout(() => {
+      router.push(href);
+    }, 0);
+  };
+
   return (
     <Link
       href={href}
-      onClick={onNavigate}
+      onClick={handleClick}
       className="flex items-center gap-3 px-4 py-3 text-[15px] font-medium text-foreground transition-colors hover:bg-muted/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
     >
       <Icon className="h-[22px] w-[22px] shrink-0 text-primary" strokeWidth={1.5} aria-hidden />

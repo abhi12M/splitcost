@@ -59,12 +59,12 @@
 
     --gradient-primary: linear-gradient(135deg, hsl(221 100% 52%) 0%, hsl(221 95% 62%) 100%);
     --gradient-coral: linear-gradient(135deg, hsl(222 55% 24%) 0%, hsl(221 100% 50%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(258 55% 97%) 45%, hsl(221 100% 97%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(214 32% 97%) 50%, hsl(221 55% 97%) 100%);
 
     --shadow-sm: 0 1px 2px hsl(222 47% 11% / 0.04);
     --shadow-md: 0 4px 12px hsl(222 47% 11% / 0.08);
     --shadow-lg: 0 12px 32px hsl(222 47% 11% / 0.12);
-    --shadow-glow: 0 0 24px hsl(221 100% 57% / 0.28);
+    --shadow-glow: var(--shadow-md);
 
     --sidebar-background: 214 30% 96%;
     --sidebar-foreground: 222 40% 18%;
@@ -86,9 +86,9 @@
     --popover: 222 40% 10%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 221 100% 60%;
-    --primary-foreground: 222 47% 8%;
-    --primary-muted: 221 55% 18%;
+    --primary: 221 78% 62%;
+    --primary-foreground: 0 0% 100%;
+    --primary-muted: 221 40% 18%;
 
     --secondary: 214 20% 88%;
     --secondary-foreground: 222 47% 11%;
@@ -110,25 +110,25 @@
 
     --border: 222 28% 18%;
     --input: 222 28% 18%;
-    --ring: 221 100% 60%;
+    --ring: 221 78% 62%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(221 100% 48%) 0%, hsl(221 90% 58%) 100%);
-    --gradient-coral: linear-gradient(135deg, hsl(222 45% 18%) 0%, hsl(221 100% 52%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(221 72% 48%) 0%, hsl(221 68% 56%) 100%);
+    --gradient-coral: linear-gradient(135deg, hsl(222 45% 18%) 0%, hsl(221 72% 50%) 100%);
     --gradient-hero: linear-gradient(180deg, hsl(222 47% 7%) 0%, hsl(222 40% 11%) 100%);
 
     --shadow-sm: 0 1px 2px hsl(0 0% 0% / 0.25);
     --shadow-md: 0 4px 12px hsl(0 0% 0% / 0.35);
     --shadow-lg: 0 12px 32px hsl(0 0% 0% / 0.45);
-    --shadow-glow: 0 0 28px hsl(221 100% 55% / 0.35);
+    --shadow-glow: var(--shadow-md);
 
     --sidebar-background: 222 44% 8%;
     --sidebar-foreground: 210 40% 96%;
-    --sidebar-primary: 221 100% 58%;
-    --sidebar-primary-foreground: 222 47% 8%;
+    --sidebar-primary: 221 78% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 222 30% 14%;
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 222 28% 16%;
-    --sidebar-ring: 221 100% 58%;
+    --sidebar-ring: 221 78% 60%;
   }
 }
 
@@ -140,6 +140,11 @@
   html {
     scroll-behavior: smooth;
   }
+
+  [id] {
+    scroll-margin-top: 5rem;
+  }
+
 
   body {
     @apply bg-background text-foreground antialiased;

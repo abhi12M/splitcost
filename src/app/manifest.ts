@@ -17,34 +17,22 @@ export default function manifest(): MetadataRoute.Manifest {
     categories: ["finance", "productivity"],
     icons: [
       {
-        src: "/icon.svg",
-        type: "image/svg+xml",
-        sizes: "any",
-        purpose: "any",
-      },
-      {
-        src: "/apple-icon.svg",
-        type: "image/svg+xml",
-        sizes: "180x180",
-        purpose: "any",
-      },
-      {
-        src: "/brand-app-icon-dark.png",
-        type: "image/png",
-        sizes: "512x512",
-        purpose: "any",
-      },
-      {
-        src: "/icon-192.png",
-        type: "image/png",
+        src: "/android-chrome-192x192.png",
         sizes: "192x192",
+        type: "image/png",
         purpose: "any",
       },
       {
-        src: "/icon-512.png",
-        type: "image/png",
+        src: "/android-chrome-512x512.png",
         sizes: "512x512",
+        type: "image/png",
         purpose: "any",
+      },
+      {
+        src: "/android-chrome-512x512.png",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "maskable",
       },
     ],
   };

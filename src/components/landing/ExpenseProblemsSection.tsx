@@ -17,9 +17,10 @@ import {
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { brandProblemAccent, brandStyles, landingSection } from "@/lib/brand-styles";
 import { cn } from "@/lib/utils";
 
-type ProblemAccent = "violet" | "emerald" | "orange" | "blue";
+type ProblemAccent = "brand" | "emerald" | "orange";
 
 type ProblemCardConfig = {
   title: string;
@@ -40,20 +41,13 @@ const accentStyles: Record<
     accentBg: string;
   }
 > = {
-  violet: {
-    iconWrap: "bg-violet-600 text-white ring-violet-100 dark:ring-violet-900",
-    bar: "bg-violet-500",
-    scene: "bg-violet-50 dark:bg-violet-950/35",
-    panelBorder: "border-violet-100 dark:border-violet-900/50",
-    accentIcon: "text-violet-600",
-    accentBg: "bg-violet-100 dark:bg-violet-950/50",
-  },
+  brand: brandProblemAccent,
   emerald: {
     iconWrap: "bg-emerald-600 text-white ring-emerald-100 dark:ring-emerald-900",
     bar: "bg-emerald-500",
     scene: "bg-emerald-50 dark:bg-emerald-950/35",
     panelBorder: "border-emerald-100 dark:border-emerald-900/50",
-    accentIcon: "text-emerald-600",
+    accentIcon: "text-emerald-600 dark:text-emerald-400",
     accentBg: "bg-emerald-100 dark:bg-emerald-950/50",
   },
   orange: {
@@ -61,16 +55,8 @@ const accentStyles: Record<
     bar: "bg-orange-500",
     scene: "bg-orange-50 dark:bg-orange-950/35",
     panelBorder: "border-orange-100 dark:border-orange-900/50",
-    accentIcon: "text-orange-600",
+    accentIcon: "text-orange-600 dark:text-orange-400",
     accentBg: "bg-orange-100 dark:bg-orange-950/50",
-  },
-  blue: {
-    iconWrap: "bg-blue-600 text-white ring-blue-100 dark:ring-blue-900",
-    bar: "bg-blue-500",
-    scene: "bg-blue-50 dark:bg-blue-950/35",
-    panelBorder: "border-blue-100 dark:border-blue-900/50",
-    accentIcon: "text-blue-600",
-    accentBg: "bg-blue-100 dark:bg-blue-950/50",
   },
 };
 
@@ -124,7 +110,7 @@ const chatClaims = [
 
 function WhoPaidLastScene() {
   return (
-    <ProblemSceneLayout accent="violet" panelTitle="Group chat" bottomIcon={MessageSquare}>
+    <ProblemSceneLayout accent="brand" panelTitle="Group chat" bottomIcon={MessageSquare}>
       <ul className="space-y-1.5 text-[10px] font-medium">
         {chatClaims.map(({ name, note, amount }) => (
           <li key={name} className="flex items-center justify-between gap-2">
@@ -132,7 +118,7 @@ function WhoPaidLastScene() {
               <span className="font-semibold text-foreground">{name}</span>
               <span className="text-muted-foreground"> · {note}</span>
             </span>
-            <span className="shrink-0 tabular-nums text-violet-600">{amount}</span>
+            <span className={cn("shrink-0 tabular-nums", brandStyles.headingAccent)}>{amount}</span>
           </li>
         ))}
       </ul>
@@ -197,12 +183,12 @@ const travelReceiptItems = [
 
 function TravelExpensesScene() {
   return (
-    <ProblemSceneLayout accent="blue" panelTitle="Trip expenses" bottomIcon={Plane}>
+    <ProblemSceneLayout accent="brand" panelTitle="Trip expenses" bottomIcon={Plane}>
       <ul className="space-y-1.5 text-[10px] font-medium">
         {travelReceiptItems.map(({ label, amount, icon: Icon }) => (
           <li key={label} className="flex items-center justify-between gap-2">
             <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
-              <Icon className="h-3 w-3 shrink-0 text-blue-600" strokeWidth={2.25} aria-hidden />
+              <Icon className={cn("h-3 w-3 shrink-0", brandStyles.icon)} strokeWidth={2.25} aria-hidden />
               <span className="truncate">{label}</span>
             </span>
             <span className="shrink-0 tabular-nums text-foreground">{amount}</span>
@@ -211,7 +197,7 @@ function TravelExpensesScene() {
       </ul>
       <div className="mt-2 flex items-center justify-between border-t border-border/60 pt-2 text-[10px] font-bold">
         <span className="text-muted-foreground">Total</span>
-        <span className="tabular-nums text-blue-600">$181.00</span>
+        <span className={cn("tabular-nums", brandStyles.headingAccent)}>$181.00</span>
       </div>
     </ProblemSceneLayout>
   );
@@ -221,7 +207,7 @@ const problemCards: ProblemCardConfig[] = [
   {
     title: "Who Paid Last?",
     description: "Tracking shared expenses in chats and notes becomes messy quickly.",
-    accent: "violet",
+    accent: "brand",
     icon: MessageCircle,
     illustration: <WhoPaidLastScene />,
   },
@@ -242,7 +228,7 @@ const problemCards: ProblemCardConfig[] = [
   {
     title: "Travel Expenses Get Chaotic",
     description: "Trip costs, dinners, transport, and bookings are hard to organize manually.",
-    accent: "blue",
+    accent: "brand",
     icon: Luggage,
     illustration: <TravelExpensesScene />,
   },
@@ -282,12 +268,17 @@ function ProblemCard({ card }: { card: ProblemCardConfig }) {
 export function ExpenseProblemsSection() {
   return (
     <section
-      className="bg-background py-12 sm:py-16 md:py-20"
+      className={cn(landingSection.default, landingSection.padding)}
       aria-labelledby="expense-problems-heading"
     >
       <div className="container">
         <header className="mx-auto mb-10 max-w-3xl text-center sm:mb-12 md:mb-14">
-          <p className="mb-4 inline-flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-violet-600">
+          <p
+            className={cn(
+              "mb-4 inline-flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-[0.14em]",
+              brandStyles.headingAccent
+            )}
+          >
             <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
             Common expense problems
           </p>
@@ -296,7 +287,7 @@ export function ExpenseProblemsSection() {
             className="text-balance text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl md:text-4xl"
           >
             Splitting expenses shouldn&apos;t be this{" "}
-            <span className="text-violet-600">complicated</span>
+            <span className={brandStyles.headingAccent}>complicated</span>
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-pretty text-sm text-muted-foreground sm:text-base">
             From travel expenses to roommate bills, managing shared payments manually often leads
@@ -308,16 +299,6 @@ export function ExpenseProblemsSection() {
           {problemCards.map((card) => (
             <ProblemCard key={card.title} card={card} />
           ))}
-        </div>
-
-        <div className="mt-10 text-center sm:mt-12">
-          <Link
-            href="/create-group"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-primary transition-colors hover:text-primary/80"
-          >
-            See how SplitCost fixes this
-            <ArrowRight className="h-4 w-4" aria-hidden />
-          </Link>
         </div>
       </div>
     </section>

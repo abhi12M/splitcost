@@ -3,18 +3,25 @@
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, Shield, Smartphone, Sparkles, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { landingSection } from "@/lib/brand-styles";
+import { cn } from "@/lib/utils";
 
 export function HeroSection() {
   return (
-    <section className="gradient-hero relative overflow-hidden py-16 sm:py-24 lg:py-10">
+    <section
+      className={cn(
+        "gradient-hero relative overflow-hidden border-b pt-6 pb-12 sm:py-24 lg:py-10",
+        landingSection.divider
+      )}
+    >
       {/* Decorative background elements */}
       <div
-        className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 h-[800px] w-[1200px] rounded-full bg-primary/[0.04] blur-3xl"
+        className="pointer-events-none absolute left-1/2 top-0 hidden h-[800px] w-[1200px] -translate-x-1/2 rounded-full bg-primary/[0.04] blur-3xl sm:block dark:hidden"
         aria-hidden
       />
       
       <div className="container relative z-10 mx-auto px-4 text-center">
-        <div className="mb-8 flex justify-center">
+        <div className="mb-6 flex justify-center sm:mb-8">
           <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-sm font-semibold text-primary">
             <Sparkles className="h-4 w-4" aria-hidden />
             Smart Expense Sharing

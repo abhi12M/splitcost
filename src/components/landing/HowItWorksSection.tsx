@@ -19,9 +19,10 @@ import {
 } from "@/components/icons/CategoryIcons";
 import { Button } from "@/components/ui/button";
 import { AvatarGroup, UserAvatar } from "@/components/ui/UserAvatar";
+import { brandStepAccent, brandStyles, landingSection } from "@/lib/brand-styles";
 import { cn } from "@/lib/utils";
 
-type StepAccent = "violet" | "emerald" | "blue" | "orange";
+type StepAccent = "brand" | "emerald" | "orange";
 
 type StepConfig = {
   number: number;
@@ -42,33 +43,20 @@ const stepAccentStyles: Record<
     arrow: string;
   }
 > = {
-  violet: {
-    badgeBg: "bg-violet-100 dark:bg-violet-950/60",
-    badgeText: "text-violet-700 dark:text-violet-300",
-    iconBg: "bg-violet-100 dark:bg-violet-950/50",
-    iconColor: "text-violet-600",
-    arrow: "text-violet-400",
-  },
+  brand: brandStepAccent,
   emerald: {
     badgeBg: "bg-emerald-100 dark:bg-emerald-950/60",
-    badgeText: "text-emerald-700 dark:text-emerald-300",
+    badgeText: "text-emerald-700 dark:text-emerald-400",
     iconBg: "bg-emerald-100 dark:bg-emerald-950/50",
-    iconColor: "text-emerald-600",
-    arrow: "text-emerald-400",
-  },
-  blue: {
-    badgeBg: "bg-blue-100 dark:bg-blue-950/60",
-    badgeText: "text-blue-700 dark:text-blue-300",
-    iconBg: "bg-blue-100 dark:bg-blue-950/50",
-    iconColor: "text-blue-600",
-    arrow: "text-blue-400",
+    iconColor: "text-emerald-600 dark:text-emerald-400",
+    arrow: "text-emerald-400 dark:text-emerald-500/70",
   },
   orange: {
     badgeBg: "bg-orange-100 dark:bg-orange-950/60",
-    badgeText: "text-orange-700 dark:text-orange-300",
+    badgeText: "text-orange-700 dark:text-orange-400",
     iconBg: "bg-orange-100 dark:bg-orange-950/50",
-    iconColor: "text-orange-600",
-    arrow: "text-orange-400",
+    iconColor: "text-orange-600 dark:text-orange-400",
+    arrow: "text-orange-400 dark:text-orange-500/70",
   },
 };
 
@@ -136,7 +124,12 @@ function CreateGroupMockup() {
     <MockupCard>
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-base dark:bg-violet-950/50">
+          <span
+            className={cn(
+              "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-base",
+              brandStyles.iconCircle
+            )}
+          >
             🏖️
           </span>
           <div className="min-w-0">
@@ -267,7 +260,7 @@ const steps: StepConfig[] = [
     description:
       "Organize expenses for trips, roommates, events, or everyday shared spending.",
     icon: Users,
-    accent: "violet",
+    accent: "brand",
     mockup: <CreateGroupMockup />,
   },
   {
@@ -284,7 +277,7 @@ const steps: StepConfig[] = [
     title: "Track Balances",
     description: "See who paid, who owes, and every group balance in real time.",
     icon: BarChart3,
-    accent: "blue",
+    accent: "brand",
     mockup: <TrackBalancesMockup />,
   },
   {
@@ -375,10 +368,15 @@ const trustPoints = [
 
 function HowItWorksCta() {
   return (
-    <div className="mt-5 overflow-hidden rounded-[1.75rem] border border-violet-100 bg-gradient-to-br from-violet-50 via-card to-violet-50/80 p-5 shadow-card ring-1 ring-violet-100/60 dark:border-violet-900/40 dark:bg-violet-950/25 dark:from-violet-950/40 dark:via-card dark:to-violet-950/20 dark:shadow-none dark:ring-violet-900/30 sm:p-8 lg:p-5">
+    <div className={cn("mt-5 p-5 sm:p-8 lg:p-5", brandStyles.ctaPanel)}>
       <div className="grid min-w-0 items-center gap-5 sm:gap-6 lg:grid-cols-[1.1fr_1fr_1fr] lg:gap-8">
         <div className="flex min-w-0 flex-col items-center gap-3 text-center md:flex-row md:items-center md:gap-4 md:text-left">
-          <span className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-full bg-violet-600 text-white shadow-lg md:flex lg:h-20 lg:w-20">
+          <span
+            className={cn(
+              "hidden h-16 w-16 shrink-0 md:flex lg:h-20 lg:w-20",
+              brandStyles.ctaIconCircle
+            )}
+          >
             <Wallet className="h-9 w-9 lg:h-12 lg:w-12" strokeWidth={2} aria-hidden />
           </span>
           <div className="min-w-0 max-w-full">
@@ -395,7 +393,7 @@ function HowItWorksCta() {
           <Button
             asChild
             size="lg"
-            className="h-12 w-full rounded-xl bg-violet-600 px-5 text-base font-semibold text-white shadow-md hover:bg-violet-700 hover:shadow-lg sm:max-w-xs sm:self-center sm:px-6"
+            className="h-12 w-full rounded-xl px-5 text-base font-semibold sm:max-w-xs sm:self-center sm:px-6"
           >
             <Link href="/create-group">
               Create Your First Group
@@ -408,7 +406,7 @@ function HowItWorksCta() {
                 key={point}
                 className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground sm:text-xs"
               >
-                <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-violet-500" aria-hidden />
+                <CheckCircle2 className={cn("h-3.5 w-3.5 shrink-0", brandStyles.iconSm)} aria-hidden />
                 {point}
               </li>
             ))}
@@ -433,22 +431,22 @@ function HowItWorksCta() {
 export function HowItWorksSection() {
   return (
     <section
-      className="bg-muted/30 py-12 sm:py-16 md:py-20"
-      aria-labelledby="how-it-works-heading"
+      className={cn(landingSection.alternate, landingSection.padding)}
+      aria-labelledby="how-it-works" id="how-it-works"
     >
       <div className="container">
         <header className="mx-auto mb-10 max-w-3xl text-center sm:mb-12 md:mb-14">
-          <p className="mb-5 inline-flex items-center justify-center gap-2 rounded-full bg-violet-100 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.12em] text-violet-700 dark:bg-violet-950/40 dark:text-violet-300">
+          <p className={cn("mb-5", brandStyles.sectionBadge)}>
             <Sparkles className="h-3.5 w-3.5" aria-hidden />
             Simple Expense Management
           </p>
           <h2
-            id="how-it-works-heading"
+            
             className="text-balance text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl md:text-5xl"
           >
             One Simple Way to
             <br />
-            <span className="text-violet-600">Track, Split &amp; Settle</span> Expenses
+            <span className={brandStyles.headingAccent}>Track, Split &amp; Settle</span> Expenses
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-pretty text-sm text-muted-foreground sm:text-base">
             SplitCost helps groups manage shared bills, track balances, organize travel expenses,

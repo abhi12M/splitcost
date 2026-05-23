@@ -12,9 +12,10 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { brandStyles, brandUseCaseAccent, landingSection } from "@/lib/brand-styles";
 import { cn } from "@/lib/utils";
 
-type UseCaseAccent = "violet" | "emerald" | "rose" | "blue" | "cyan";
+type UseCaseAccent = "brand" | "emerald" | "rose" | "cyan";
 
 type UseCaseItem = {
   title: string;
@@ -35,29 +36,18 @@ const accentStyles: Record<
     sceneBg: string;
   }
 > = {
-  violet: {
-    iconBg: "bg-violet-600",
-    tagBg: "bg-violet-100 dark:bg-violet-950/50",
-    tagText: "text-violet-700 dark:text-violet-300",
-    sceneBg: "from-violet-50/80 to-sky-50/80 dark:from-violet-950/30 dark:to-sky-950/20",
-  },
+  brand: brandUseCaseAccent,
   emerald: {
     iconBg: "bg-emerald-600",
     tagBg: "bg-emerald-100 dark:bg-emerald-950/50",
-    tagText: "text-emerald-700 dark:text-emerald-300",
+    tagText: "text-emerald-700 dark:text-emerald-400",
     sceneBg: "from-emerald-50/80 to-teal-50/80 dark:from-emerald-950/30 dark:to-teal-950/20",
   },
   rose: {
     iconBg: "bg-rose-500",
     tagBg: "bg-rose-100 dark:bg-rose-950/50",
-    tagText: "text-rose-700 dark:text-rose-300",
+    tagText: "text-rose-700 dark:text-rose-400",
     sceneBg: "from-rose-50/80 to-pink-50/80 dark:from-rose-950/30 dark:to-pink-950/20",
-  },
-  blue: {
-    iconBg: "bg-blue-600",
-    tagBg: "bg-blue-100 dark:bg-blue-950/50",
-    tagText: "text-blue-700 dark:text-blue-300",
-    sceneBg: "from-blue-50/80 to-indigo-50/80 dark:from-blue-950/30 dark:to-indigo-950/20",
   },
   cyan: {
     iconBg: "bg-cyan-600",
@@ -75,7 +65,7 @@ const useCases: UseCaseItem[] = [
     image: "/landing/use-cases/use-case-travel.png",
     imageAlt: "Friends planning a trip together",
     icon: Luggage,
-    accent: "violet",
+    accent: "brand",
     tags: ["Trips", "Bookings", "Transport", "Food", "Travel Expenses"],
   },
   {
@@ -105,7 +95,7 @@ const useCases: UseCaseItem[] = [
     image: "/landing/use-cases/use-case-friends.png",
     imageAlt: "Friends at a social gathering",
     icon: Users,
-    accent: "blue",
+    accent: "brand",
     tags: ["Dinners", "Parties", "Concerts", "Event Costs"],
   },
   {
@@ -177,7 +167,7 @@ function UseCaseCard({ item }: { item: UseCaseItem }) {
 
 function UseCasesCta() {
   return (
-    <div className="mt-5 overflow-hidden rounded-[1.75rem] border border-violet-100 bg-gradient-to-br from-violet-50/90 via-violet-50/50 to-card p-6 shadow-card ring-1 ring-violet-100/60 dark:border-violet-900/40 dark:from-violet-950/35 dark:via-card dark:to-violet-950/15 dark:ring-violet-900/30 sm:p-8">
+    <div className={cn("mt-5 p-6 sm:p-8", brandStyles.ctaPanel)}>
       <div className="grid items-center gap-6 md:grid-cols-[minmax(11rem,1fr)_1.15fr_minmax(11rem,1fr)] md:gap-4 lg:gap-6">
         <div className="hidden items-end justify-center md:flex md:justify-start">
           <Image
@@ -198,11 +188,7 @@ function UseCasesCta() {
             Whether you&apos;re planning a trip, managing roommate bills, or tracking everyday
             shared spending, SplitCost keeps every expense organized in one place.
           </p>
-          <Button
-            asChild
-            size="lg"
-            className="h-11 rounded-xl bg-violet-600 px-6 text-sm font-semibold text-white shadow-md hover:bg-violet-700 sm:h-12 sm:text-base"
-          >
+          <Button asChild size="lg" className="h-11 rounded-xl px-6 text-sm font-semibold sm:h-12 sm:text-base">
             <Link href="/create-group">
               Start Tracking Expenses
               <ArrowRight className="ml-1 h-4 w-4 sm:h-5 sm:w-5" />
@@ -227,21 +213,21 @@ function UseCasesCta() {
 export function UseCasesSection() {
   return (
     <section
-      className="bg-background py-12 sm:py-16 md:py-20"
-      aria-labelledby="use-cases-heading"
+      className={cn(landingSection.alternate, landingSection.padding)}
+      aria-labelledby="use-cases" id="use-cases"
     >
       <div className="container">
         <header className="mx-auto mb-10 max-w-3xl text-center sm:mb-12 md:mb-14">
-          <p className="mb-5 inline-flex items-center justify-center gap-2 rounded-full bg-violet-100 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.12em] text-violet-700 dark:bg-violet-950/40 dark:text-violet-300">
+          <p className={cn("mb-5", brandStyles.sectionBadge)}>
             <Sparkles className="h-3.5 w-3.5" aria-hidden />
             Use Cases
           </p>
           <h2
-            id="use-cases-heading"
+
             className="text-balance text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl md:text-[2.75rem] md:leading-tight"
           >
-            Perfect for <span className="text-violet-600">Every</span> Shared Expense{" "}
-            <span className="text-violet-600">Situation</span>
+            Perfect for <span className={brandStyles.headingAccent}>Every</span> Shared Expense{" "}
+            <span className={brandStyles.headingAccent}>Situation</span>
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-pretty text-sm text-muted-foreground sm:text-base">
             From travel expenses and roommate bills to events and everyday group payments,

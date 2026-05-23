@@ -2,22 +2,20 @@
 
 import Link from "next/link"
 
-import { BrandWordmark } from "@/components/brand/BrandWordmark"
 import { BrandIcon } from "@/components/brand/BrandIcon"
 import { APP_NAME } from "@/lib/constants"
 
 export function Footer() {
   return (
     <footer className="border-t border-border bg-muted/30 pb-[calc(4.25rem+env(safe-area-inset-bottom,0px))] sm:pb-0">
-      <div className="container py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="md:col-span-2">
+      <div className="container pt-10 pb-8 sm:pt-16 sm:pb-12 md:pt-20">
+        <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-5">
+          <div className="col-span-2 sm:col-span-3 lg:col-span-2">
             <Link
               href="/"
               className="flex items-center gap-3 mb-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-xl"
             >
-              <BrandIcon className="w-11 h-11" size={44} />
-              <BrandWordmark className="text-lg" />
+              <BrandIcon className="h-10 w-auto" height={40} />
             </Link>
             <p className="text-sm text-muted-foreground max-w-sm">
               A free expense splitting app for friends, roommates, couples, and
@@ -28,6 +26,36 @@ export function Footer() {
 
           <nav aria-label="Product links">
             <p className="font-semibold text-foreground mb-4">Product</p>
+            <ul className="space-y-2.5">
+              <li>
+                <Link
+                  href="/#how-it-works"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
+                >
+                  How it works
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/#features"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
+                >
+                  Features
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/#use-cases"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
+                >
+                  Use cases
+                </Link>
+              </li>
+            </ul>
+          </nav>
+
+          <nav aria-label="Support links">
+            <p className="font-semibold text-foreground mb-4">Support</p>
             <ul className="space-y-2.5">
               <li>
                 <Link
@@ -56,7 +84,7 @@ export function Footer() {
                   href="/privacy"
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
                 >
-                  Privacy Policy
+                  Privacy
                 </Link>
               </li>
               <li>
@@ -64,7 +92,7 @@ export function Footer() {
                   href="/terms"
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
                 >
-                  Terms of Service
+                  Terms
                 </Link>
               </li>
             </ul>

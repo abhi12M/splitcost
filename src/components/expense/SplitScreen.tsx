@@ -776,7 +776,7 @@ export default function SplitScreen(props: SplitScreenProps) {
                         <div className="flex w-full items-center gap-2 justify-between px-4">
                             <div className="flex-1 text-sm text-center">
                                 {tab.footer.selected.count === 0 ? (
-                                    <span className="text-red-500 text-sm">{tab.footer.message?.error}</span>
+                                    <span className="text-sm text-destructive">{tab.footer.message?.error}</span>
                                 ) : (
                                     <>
                                         {formatAmount(tab.footer.selected.totalValue, currency)} {tab.footer.message?.distribution}
@@ -813,7 +813,7 @@ export default function SplitScreen(props: SplitScreenProps) {
                                 className={cn(
                                     "font-medium",
                                     difference === 0 && "text-primary",
-                                    isOver && "text-red-500"
+                                    isOver && "text-destructive"
                                 )}
                             >
                                 {formatAmount(Math.abs(difference), currency)} {isOver ? "over" : "left"}
@@ -836,7 +836,7 @@ export default function SplitScreen(props: SplitScreenProps) {
                                 className={cn(
                                     "font-medium",
                                     difference === 0 && "text-primary",
-                                    isOver && "text-red-500"
+                                    isOver && "text-destructive"
                                 )}
                             >
                                 {Math.abs(difference)}% {isOver ? "over" : "left"}

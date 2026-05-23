@@ -25,6 +25,7 @@ import { useBackButtonClose } from "@/hooks/useBackButtonClose"
 import { toast } from "@/hooks/use-toast"
 import { ToastAction } from "../ui/toast"
 import { AvatarGroup } from "../ui/UserAvatar"
+import { fieldErrorStyles } from "@/lib/brand-styles"
 import { cn } from "@/lib/utils"
 import { ExpenseAttachmentControl } from "./ExpenseAttachmentControl"
 import type { ExpenseAttachment } from "@/lib/expenseAttachments"
@@ -420,7 +421,7 @@ export default function ExpenseFormMobile({
             className={cn(
               "w-4 h-4 cursor-pointer transition-colors",
               errors.split
-                ? "text-red-500 hover:text-red-600"
+                ? fieldErrorStyles.textHover
                 : "text-muted-foreground hover:text-foreground"
             )}
             onClick={handleOpenSlitScreen}
@@ -514,7 +515,7 @@ export default function ExpenseFormMobile({
               aria-invalid={!!(errors.paidByUserId || errors.payers)}
               className={cn(
                 "px-3 py-2.5 text-sm border border-border border-b-2 rounded-[5px] font-medium",
-                "aria-[invalid=true]:border-red-500 aria-[invalid=true]:border-b-red-600"
+                fieldErrorStyles.borderAria
               )}
             >
               {isMultiplePayers
@@ -539,7 +540,7 @@ export default function ExpenseFormMobile({
               aria-invalid={!!errors.split}
               className={cn(
                 "px-3 py-2.5 text-sm border border-border border-b-2 rounded-[5px] font-medium",
-                errors.split && "border-red-500 border-b-red-600 text-red-600"
+                errors.split && fieldErrorStyles.border
               )}
               onClick={() => handleOpenSlitScreen()}
             >
@@ -558,8 +559,8 @@ export default function ExpenseFormMobile({
         <Popover modal open={showCalendar} onOpenChange={setShowCalendar}>
           <PopoverTrigger asChild>
             <button className="flex items-center gap-2 text-sm font-medium">
-              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                <CalendarIcon className="w-4 h-4 text-blue-600" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 dark:bg-primary-muted">
+                <CalendarIcon className="h-4 w-4 text-primary dark:text-primary/90" />
               </div>
 
               <span>

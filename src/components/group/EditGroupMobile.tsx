@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { MobileGroupFormLayout } from "@/components/group/MobileGroupFormLayout";
+import { balanceStyles } from "@/lib/brand-styles";
 import { formatCurrency } from "@/lib/avatar-utils";
 import { MEMBERS_MAX } from "@/lib/validations/group.schema";
 import { cn } from "@/lib/utils";
@@ -152,11 +153,11 @@ export function EditGroupMobile({
                   className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
                   strokeWidth={1.75}
                 />
-                <span className="text-emerald-600">{summary.getBackCount} gets back</span>
+                <span className={balanceStyles.positiveSummary}>{summary.getBackCount} gets back</span>
                 <span className="text-muted-foreground" aria-hidden>
                   ·
                 </span>
-                <span className="text-rose-600">{summary.oweCount} owes</span>
+                <span className={balanceStyles.negativeSummary}>{summary.oweCount} owes</span>
               </StatChip>
             </div>
           </>
@@ -210,8 +211,8 @@ export function EditGroupMobile({
                   onClick={() => onOpenMember(member.key)}
                   className={cn(
                     "flex w-full items-center gap-3 rounded-2xl border bg-card p-3 text-left transition active:scale-[0.99]",
-                    member.balanceInfo.tone === "positive" && "border-emerald-200/80",
-                    member.balanceInfo.tone === "negative" && "border-rose-200/80"
+                    member.balanceInfo.tone === "positive" && balanceStyles.positiveMemberBorderSubtle,
+                    member.balanceInfo.tone === "negative" && balanceStyles.negativeMemberBorderSubtle
                   )}
                 >
                   <UserAvatar name={member.name} className="h-10 w-10 shrink-0" />
@@ -229,10 +230,8 @@ export function EditGroupMobile({
                         variant="outline"
                         className={cn(
                           "h-5 text-[10px] font-normal",
-                          member.balanceInfo.tone === "positive" &&
-                            "border-emerald-200 bg-emerald-50 text-emerald-700",
-                          member.balanceInfo.tone === "negative" &&
-                            "border-rose-200 bg-rose-50 text-rose-700",
+                          member.balanceInfo.tone === "positive" && balanceStyles.positiveBadge,
+                          member.balanceInfo.tone === "negative" && balanceStyles.negativeBadge,
                           member.balanceInfo.tone === "neutral" && "text-muted-foreground"
                         )}
                       >
@@ -242,8 +241,8 @@ export function EditGroupMobile({
                         <span
                           className={cn(
                             "text-xs font-medium",
-                            member.balanceInfo.tone === "positive" && "text-emerald-700",
-                            member.balanceInfo.tone === "negative" && "text-rose-700"
+                            member.balanceInfo.tone === "positive" && balanceStyles.positiveText,
+                            member.balanceInfo.tone === "negative" && balanceStyles.negativeText
                           )}
                         >
                           {formatCurrency(member.balanceInfo.value, currency)}

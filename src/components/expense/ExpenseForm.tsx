@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { EXPENSE_CATEGORIES, type CategoryKey, type SubcategoryId } from "@/components/icons/CategoryIcons";
+import { fieldErrorStyles, validationStyles } from "@/lib/brand-styles";
 import { cn } from "@/lib/utils";
 import { detectCategoryFromDescription, ExpenseFormInterface, ExpenseParticipantsRequest, ExpenseRequest, type SplitType, UserInterface } from "@/lib/storage";
 import { memberNameForViewer } from "@/lib/groupExpenseLabels";
@@ -522,7 +523,11 @@ export function ExpenseForm({
           <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="flex justify-between text-xs font-medium uppercase tracking-wider text-muted-foreground">
               <span>Allocated</span>
-              <span className={validationState.isValid ? "text-green-600" : "text-red-500"}>
+              <span
+                className={
+                  validationState.isValid ? validationStyles.validText : validationStyles.invalidText
+                }
+              >
                 {validationState.diff === 0
                   ? "Balanced"
                   : `${Math.abs(validationState.diff).toFixed(2)}${splitType === 'percentage' ? '%' : ''} ${validationState.diff > 0 ? 'Left' : 'Over'}`}
@@ -532,7 +537,7 @@ export function ExpenseForm({
               <div
                 className={cn(
                   "h-full transition-all duration-500 ease-out rounded-full",
-                  validationState.isValid ? "bg-green-500" : "bg-primary"
+                  validationState.isValid ? validationStyles.validBg : "bg-primary"
                 )}
                 style={{
                   width: `${Math.min(validationState.percentageOfTotal ?? 0, 100)}%`
@@ -618,7 +623,7 @@ export function ExpenseForm({
                       <UserAvatar name={member.name} overlayName={memberLabel} />
                       {isSelected && (
                         <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-card rounded-full flex items-center justify-center ring-2 ring-background">
-                          <div className="w-full h-full bg-green-500 rounded-full flex items-center justify-center">
+                          <div className="flex h-full w-full items-center justify-center rounded-full bg-success">
                             <Check className="w-2.5 h-2.5 text-white" />
                           </div>
                         </div>
