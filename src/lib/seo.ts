@@ -4,7 +4,7 @@ export const SITE_NAME = "SplitCost";
 export const SITE_TITLE =
   "SplitCost | Split expenses with friends, roommates, and travel groups";
 export const SITE_DESCRIPTION =
-  "SplitCost is a free group expense tracker that helps friends, roommates, and travel groups split bills, support multiple payers per expense, edit group details, track balances, and settle up faster.";
+  "SplitCost is a free group expense tracker that helps friends, roommates, and travel groups split bills, track balances, and settle up faster. It supports multiple payers per expense and lets you easily edit group details.";
 export const SITE_KEYWORDS = [
   "split expenses",
   "expense splitter",

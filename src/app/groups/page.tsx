@@ -8,6 +8,7 @@ export const metadata: Metadata = buildMetadata({
   description:
     "Open your recent expense groups and keep tracking shared bills with friends, roommates, and travel groups.",
   path: "/groups",
+  noIndex: true,
 });
 
 export default function Page() {

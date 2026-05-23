@@ -7,7 +7,7 @@ export const metadata: Metadata = buildMetadata({
   title:
     "Split Expenses & Track Shared Bills With Friends, Roommates, and Trips",
   description:
-    "SplitCost is a free group expense tracker for friends, roommates, couples, and travel groups. Split bills equally, by percent, or with custom shares, support multiple payers per expense, edit group details, see balances in real time, and settle up in the fewest payments — no sign-up required.",
+    "SplitCost is a free group expense tracker for friends, roommates, couples, and travel groups. Split bills equally, by percent, or with custom shares. It supports multiple payers per expense, lets you edit group details, see balances in real time, and settle up in the fewest payments — no sign-up required.",
   path: "/",
   keywords: [
     "split expenses",
