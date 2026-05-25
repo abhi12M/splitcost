@@ -1,5 +1,7 @@
 import CryptoJS from "crypto-js";
 
+import { LOCAL_GROUPS_KEY, MY_GROUPS_UPDATED_EVENT } from "@/lib/constants";
+
 const SECRET_KEY = "local-storage-v1"; // static, non-secret
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -61,6 +63,10 @@ export const setEncryptedItem = <T>(key: string, value: T): void => {
     const storedValue = isProduction ? encrypt(value) : JSON.stringify(value);
 
     localStorage.setItem(primaryKey, storedValue);
+
+    if (key === LOCAL_GROUPS_KEY && typeof window !== "undefined") {
+      window.dispatchEvent(new Event(MY_GROUPS_UPDATED_EVENT));
+    }
   } catch (error) {
     console.error("Encrypted set error:", error);
   }

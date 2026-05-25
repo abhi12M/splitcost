@@ -4,60 +4,6 @@ import { clearCachedExpense, saveCachedExpense } from "@/lib/expenseCache";
 
 export type SplitType = "equal" | "percentage" | "custom";
 
-// export interface Expense {
-//   id: string;// UUID
-//   groupId: string;//->group.id
-//   description: string;
-//   amount: number;
-//   currency: string;
-//   paidByUserId: string;//->user.id
-//   splitType: SplitType;
-//   category: CategoryKey;
-//   subcategory: SubcategoryId;
-//   date: Date;
-//   createdBy?: string;//->user.id
-//   createdAt: Date;
-//   updatedAt?: Date;
-// }
-
-// export interface User {
-//   id: string;// UUID
-//   name: string;
-//   email?: string;
-//   phone?: string;
-//   avatarUrl?: string;
-//   authProvider?: 'email' | 'google' | 'apple';
-//   isEmailVerified?: boolean;
-//   createdAt: Date;
-//   updatedAt?: Date;
-// }
-
-
-// export interface Group {
-//   id: string;// UUID
-//   name: string;
-//   currency: string;
-//   createdBy: string;//->user.id
-//   createdAt: Date;
-//   updatedAt?: Date;
-// }
-
-// export interface GroupMember {
-//   id: string;//uuid
-//   groupId: string;//->group.id
-//   userId: string;//->user.id
-//   role: 'admin' | 'member';
-//   nickname?: string;
-//   joinedAt: Date;
-//   isActive: boolean;
-// }
-// export interface ExpenseParticipants {
-//   id: string//uuid
-//   expense_id: string//->expense.id
-//   share_amount: number | null
-//   share_percent?: number | null
-//   user_id: string//->user.id
-// }
 export interface ExpenseParticipantsRequest {
   userId: string;
   amount: number | null;
@@ -96,6 +42,38 @@ export interface MemberRemovalCheckResponse {
   canRemove: boolean;
   message?: string;
 }
+
+/** Client-side removal check using dashboard expenses (no extra API call). */
+export function canRemoveGroupMember(
+  expenses: ExpenseResponse[],
+  member: Pick<GroupFormMember, "id" | "name">
+): MemberRemovalCheckResponse {
+  if (!member.id) {
+    return {
+      canRemove: true,
+      message: "This new member has not been saved yet and can be removed right away.",
+    };
+  }
+
+  const memberId = member.id;
+  const isInvolved = expenses.some((expense) => {
+    if (expense.paidBy?.id === memberId) return true;
+    if (expense.payers?.some((payer) => payer.user.id === memberId)) return true;
+    return expense.participants.some((participant) => participant.user.id === memberId);
+  });
+
+  if (isInvolved) {
+    return {
+      canRemove: false,
+      message: `${member.name} is involved in an expense in this group and cannot be removed.`,
+    };
+  }
+
+  return {
+    canRemove: true,
+    message: "This member can be removed from the group.",
+  };
+}
 export interface ExpenseResponse {
   id: string;
   groupId?: string;
@@ -110,6 +88,8 @@ export interface ExpenseResponse {
   date: string;
   participants: ExpenseParticipantsResponse[];
   attachmentDataUrl?: string | null;
+  /** Present on expenses from `load_group_details` dashboard RPC. */
+  attachment_data_url?: string | null;
   createdAt: string;
   updatedAt?: string;
 }
@@ -234,30 +214,6 @@ export async function updateGroup(
 
   if (!res.ok) {
     throw new Error(payload?.error || "Failed to update group");
-  }
-
-  return payload;
-}
-
-export async function checkGroupMemberRemoval(
-  groupId: string,
-  member: GroupFormMember
-): Promise<MemberRemovalCheckResponse> {
-  const res = await fetch(`/api/groups/${groupId}/members/check-removal`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      memberId: member.id,
-      memberName: member.name,
-    }),
-  });
-
-  const payload = await res.json().catch(() => null);
-
-  if (!res.ok) {
-    throw new Error(payload?.error || "Failed to validate member removal");
   }
 
   return payload;

@@ -1,12 +1,17 @@
 import { ReactNode } from "react";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
+import { MobileBottomNav } from "./MobileBottomNav";
 
 interface LayoutProps {
   children: ReactNode;
+  /** Immersive in-app shell: no site header/footer (e.g. mobile group dashboard). */
+  variant?: "default" | "minimal";
 }
 
-export function Layout({ children }: LayoutProps) {
+export function Layout({ children, variant = "default" }: LayoutProps) {
+  const showChrome = variant === "default";
+
   return (
     <div className="min-h-screen flex flex-col">
       <a
@@ -15,11 +20,19 @@ export function Layout({ children }: LayoutProps) {
       >
         Skip to content
       </a>
-      <Header />
-      <main id="main-content" className="flex-1">
+      {showChrome ? <Header /> : null}
+      <main
+        id="main-content"
+        className={
+          showChrome
+            ? "flex-1 pt-[4.25rem] sm:pt-20"
+            : "flex-1"
+        }
+      >
         {children}
       </main>
-      <Footer />
+      {showChrome ? <Footer /> : null}
+      {showChrome ? <MobileBottomNav /> : null}
     </div>
   );
 }

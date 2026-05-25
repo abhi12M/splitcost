@@ -4,9 +4,9 @@ import { buildMetadata } from "@/lib/seo";
 import ContactPage from "@/views/Contact";
 
 export const metadata: Metadata = buildMetadata({
-  title: "Contact Splitcost Support",
+  title: "Contact SplitCost Support",
   description:
-    "Contact Splitcost for expense tracker support, product feedback, bug reports, or partnership inquiries.",
+    "Contact SplitCost for expense tracker support, product feedback, bug reports, or partnership inquiries.",
   path: "/contact",
 });
 

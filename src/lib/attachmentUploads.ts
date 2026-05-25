@@ -25,6 +25,11 @@ import {
   type ExpenseAttachment,
 } from "@/lib/expenseAttachments";
 import { clearCachedExpense } from "@/lib/expenseCache";
+import {
+  invalidateGroupDashboard,
+  patchExpenseAttachmentInDashboard,
+  queryKeys,
+} from "@/lib/queries";
 import type { EditExpenseInterface } from "@/lib/storage";
 
 export type AttachmentUploadStatus = "uploading" | "error";
@@ -60,7 +65,7 @@ function commitToQuery(
   next: ExpenseAttachment | null
 ) {
   queryClient.setQueryData<EditExpenseInterface | null>(
-    ["expense", expenseId],
+    queryKeys.expense(expenseId),
     (current) =>
       current
         ? {
@@ -68,11 +73,28 @@ function commitToQuery(
             expense: {
               ...current.expense,
               attachment: next,
-              attachmentDataUrl: next ? current.expense.attachmentDataUrl : null,
+              attachmentDataUrl: next
+                ? current.expense.attachmentDataUrl ?? "attached"
+                : null,
             },
           }
         : current
   );
+
+  const groupId = queryClient.getQueryData<EditExpenseInterface | null>(
+    queryKeys.expense(expenseId)
+  )?.group?.id;
+
+  if (groupId) {
+    patchExpenseAttachmentInDashboard(
+      queryClient,
+      groupId,
+      expenseId,
+      Boolean(next)
+    );
+    void invalidateGroupDashboard(queryClient, groupId);
+  }
+
   // Drop the sessionStorage entry — the next read will pull fresh from the
   // server (which is now consistent with our React Query cache update).
   clearCachedExpense(expenseId);

@@ -347,35 +347,7 @@ export const ReceiptIcon = ({ className, size = 24, style }: IconProps) => (
   </svg>
 );
 
-export const BrandIcon = ({ className, size = 24, style }: IconProps) => (
-  (() => {
-    const gradientId = React.useId();
-
-    return (
-      <svg
-        width={size}
-        height={size}
-        viewBox="0 0 24 24"
-        className={cn("fill-none", className)}
-        style={style}
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <rect x="1" y="1" width="22" height="22" rx="7" fill={`url(#${gradientId})`} />
-        <path d="M7.5 6.5A1.5 1.5 0 0 1 9 5h6a1.5 1.5 0 0 1 1.5 1.5V7h-9v-.5Z" fill="#DFF8EF" />
-        <path d="M6 8.5A2.5 2.5 0 0 1 8.5 6H15.5A2.5 2.5 0 0 1 18 8.5v6.5A4 4 0 0 1 14 19H10a4 4 0 0 1-4-4V8.5Z" fill="#FFFAF1" />
-        <path d="M8.2 10.2h6.1M8.2 12.8H12" stroke="#249678" strokeWidth="1.6" strokeLinecap="round" />
-        <circle cx="15.7" cy="15.7" r="3.1" fill="#FF8A4C" />
-        <path d="M14.3 15.7h2.8M15.7 14.3v2.8" stroke="#fff" strokeWidth="1.4" strokeLinecap="round" />
-        <defs>
-          <linearGradient id={gradientId} x1="3.5" y1="2.5" x2="20.5" y2="21" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#39B494" />
-            <stop offset="1" stopColor="#20896F" />
-          </linearGradient>
-        </defs>
-      </svg>
-    );
-  })()
-);
+export { BrandIcon } from "@/components/brand/BrandIcon";
 
 export const CashIcon = ({ className, size = 24, style }: IconProps) => (
   <svg

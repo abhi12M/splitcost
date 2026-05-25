@@ -6,7 +6,7 @@ import TermsPage from "@/views/Terms";
 export const metadata: Metadata = buildMetadata({
   title: "Terms of Service",
   description:
-    "Review the Splitcost terms of service for using the expense tracker and shared group features.",
+    "Review the SplitCost terms of service for using the expense tracker and shared group features.",
   path: "/terms",
 });
 

@@ -13,7 +13,6 @@ const BREAKPOINTS = {
 // listener, which on a long expense list meant 200+ listeners and re-renders
 // per resize tick.
 const subscribers = new Set<() => void>();
-let cachedDevice: DeviceType = "desktop";
 let listenerAttached = false;
 
 function computeDevice(): DeviceType {
@@ -23,6 +22,9 @@ function computeDevice(): DeviceType {
   if (width < BREAKPOINTS.tablet) return "tablet";
   return "desktop";
 }
+
+let cachedDevice: DeviceType =
+  typeof window !== "undefined" ? computeDevice() : "desktop";
 
 function ensureListener() {
   if (listenerAttached || typeof window === "undefined") return;
@@ -48,6 +50,9 @@ function subscribe(cb: () => void) {
 }
 
 function getSnapshot(): DeviceType {
+  if (typeof window !== "undefined") {
+    cachedDevice = computeDevice();
+  }
   return cachedDevice;
 }
 
@@ -57,4 +62,29 @@ function getServerSnapshot(): DeviceType {
 
 export function useDeviceType(): DeviceType {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
+
+/** Same rule as mobile group dashboard (`device === "mobile"`). */
+export function isMobileViewportWidth(width = typeof window !== "undefined" ? window.innerWidth : 0) {
+  return width < BREAKPOINTS.mobile;
+}
+
+/** Tailwind `md` breakpoint — matches `hidden md:block` layout switches. */
+const MD_BREAKPOINT = 768;
+
+export function useMdUp(): boolean {
+  return useSyncExternalStore(
+    (onStoreChange) => {
+      if (typeof window === "undefined") return () => undefined;
+      const mq = window.matchMedia(`(min-width: ${MD_BREAKPOINT}px)`);
+      const handler = () => onStoreChange();
+      mq.addEventListener("change", handler);
+      return () => mq.removeEventListener("change", handler);
+    },
+    () =>
+      typeof window !== "undefined"
+        ? window.matchMedia(`(min-width: ${MD_BREAKPOINT}px)`).matches
+        : true,
+    () => true
+  );
 }

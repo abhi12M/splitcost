@@ -6,8 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { EXPENSE_CATEGORIES, type CategoryKey, type SubcategoryId } from "@/components/icons/CategoryIcons";
+import { fieldErrorStyles, validationStyles } from "@/lib/brand-styles";
 import { cn } from "@/lib/utils";
 import { detectCategoryFromDescription, ExpenseFormInterface, ExpenseParticipantsRequest, ExpenseRequest, type SplitType, UserInterface } from "@/lib/storage";
+import { memberNameForViewer } from "@/lib/groupExpenseLabels";
 import { Users } from "lucide-react";
 import { EXPENSE_DESCRIPTION_MAX, ExpenseSchema } from "@/lib/validations/expense.schema";
 import { formatAmount, formatDateForDB, getCurrencyDifference, getRoundedDifference } from "../ui/formatters";
@@ -22,6 +24,10 @@ import type { ExpenseAttachment } from "@/lib/expenseAttachments";
 interface ExpenseFormProps {
   members: UserInterface[];
   defaultCurrency?: string;
+  /** When adding (no initialData), pre-select paid-by if it matches a member id. */
+  defaultPaidByUserId?: string;
+  /** Optional "who are you?" id for `Name (You)` labels in paid-by and participants. */
+  viewerMemberId?: string | null;
   initialData?: ExpenseFormInterface;
   initialAttachment?: ExpenseAttachment | null;
   onSubmit: (data: ExpenseRequest) => void;
@@ -36,6 +42,8 @@ type EditablePayer = {
 export function ExpenseForm({
   members,
   defaultCurrency = "USD",
+  defaultPaidByUserId,
+  viewerMemberId,
   initialData,
   initialAttachment = null,
   onSubmit,
@@ -43,13 +51,19 @@ export function ExpenseForm({
 }: ExpenseFormProps) {
   const initialPayers = initialData?.payers || [];
   const hasInitialMultiplePayers = initialPayers.length > 0;
+  const initialSinglePaidBy =
+    hasInitialMultiplePayers
+      ? ""
+      : initialData?.paidByUserId ||
+        (defaultPaidByUserId &&
+        members.some((m) => m.id === defaultPaidByUserId)
+          ? defaultPaidByUserId
+          : "");
 
   const [description, setDescription] = useState(initialData?.description || "");
   const [amount, setAmount] = useState(initialData?.amount?.toString() || "");
   const [currency, setCurrency] = useState(initialData?.currency || defaultCurrency);
-  const [paidByUserId, setPaidBy] = useState(
-    hasInitialMultiplePayers ? "" : (initialData?.paidByUserId || "")
-  );
+  const [paidByUserId, setPaidBy] = useState(initialSinglePaidBy);
   const [category, setCategory] = useState<CategoryKey | "">(initialData?.category || "");
   const [subcategory, setSubcategory] = useState<SubcategoryId>(initialData?.subcategory || "");
   const [splitType, setSplitType] = useState<any>(initialData?.splitType || "equal");
@@ -453,7 +467,12 @@ export function ExpenseForm({
               {isMultiplePayers
                 ? `${payers.filter((payer) => payer.amount && payer.amount > 0).length} people`
                 : paidByUserId
-                  ? members.find((m) => m.id === paidByUserId)?.name || "Select member..."
+                  ? (() => {
+                      const m = members.find((mem) => mem.id === paidByUserId);
+                      if (!m) return "Select member...";
+                      if (viewerMemberId && m.id === viewerMemberId) return "You";
+                      return m.name;
+                    })()
                   : "Select member..."}
             </button>
             {errors.paidByUserId && (
@@ -481,8 +500,8 @@ export function ExpenseForm({
                     "flex-1 flex items-center justify-center rounded-lg transition-all duration-200 px-1 py-2 sm:px-3 sm:py-2.5",
                     "gap-1 sm:gap-3",
                     isActive
-                      ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
-                      : "text-muted-foreground hover:bg-white/50 hover:text-foreground"
+                      ? "bg-card text-primary shadow-sm ring-1 ring-border/60"
+                      : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                   )}
                 >
                   {/* Icon scales down on mobile (w-3.5) */}
@@ -504,7 +523,11 @@ export function ExpenseForm({
           <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="flex justify-between text-xs font-medium uppercase tracking-wider text-muted-foreground">
               <span>Allocated</span>
-              <span className={validationState.isValid ? "text-green-600" : "text-red-500"}>
+              <span
+                className={
+                  validationState.isValid ? validationStyles.validText : validationStyles.invalidText
+                }
+              >
                 {validationState.diff === 0
                   ? "Balanced"
                   : `${Math.abs(validationState.diff).toFixed(2)}${splitType === 'percentage' ? '%' : ''} ${validationState.diff > 0 ? 'Left' : 'Over'}`}
@@ -514,7 +537,7 @@ export function ExpenseForm({
               <div
                 className={cn(
                   "h-full transition-all duration-500 ease-out rounded-full",
-                  validationState.isValid ? "bg-green-500" : "bg-primary"
+                  validationState.isValid ? validationStyles.validBg : "bg-primary"
                 )}
                 style={{
                   width: `${Math.min(validationState.percentageOfTotal ?? 0, 100)}%`
@@ -574,6 +597,11 @@ export function ExpenseForm({
             {members.map((member) => {
               const isSelected = selectedUserIds.includes(member.id);
               const participant = participants.find((p) => p.userId === member.id);
+              const memberLabel = memberNameForViewer(
+                member.id,
+                member.name,
+                viewerMemberId
+              );
 
               return (
                 <div
@@ -592,10 +620,10 @@ export function ExpenseForm({
                     className="flex items-center gap-3 flex-1 text-left"
                   >
                     <div className="relative">
-                      <UserAvatar name={member.name} />
+                      <UserAvatar name={member.name} overlayName={memberLabel} />
                       {isSelected && (
-                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center ring-2 ring-white">
-                          <div className="w-full h-full bg-green-500 rounded-full flex items-center justify-center">
+                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-card rounded-full flex items-center justify-center ring-2 ring-background">
+                          <div className="flex h-full w-full items-center justify-center rounded-full bg-success">
                             <Check className="w-2.5 h-2.5 text-white" />
                           </div>
                         </div>
@@ -603,7 +631,7 @@ export function ExpenseForm({
                     </div>
                     <div className="flex flex-col">
                       <span className={cn("text-sm font-medium", isSelected ? "text-foreground" : "text-muted-foreground")}>
-                        {member.name}
+                        {memberLabel}
                       </span>
                       {/* Show calculated amount in Percentage Mode for better context */}
                       {isSelected && splitType === "percentage" && (
@@ -672,6 +700,7 @@ export function ExpenseForm({
         open={showPaidBy}
         onClose={() => setShowPaidBy(false)}
         members={members}
+        viewerMemberId={viewerMemberId}
         currency={currency}
         expenseAmount={Number(amount || 0)}
         paidByUserId={paidByUserId}

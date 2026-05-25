@@ -8,7 +8,9 @@ import {
   ExpenseFormInterface,
   ExpenseParticipantsRequest,
   ExpenseRequest,
+  UserInterface,
 } from "@/lib/storage"
+import { memberNameForViewer } from "@/lib/groupExpenseLabels"
 import { EXPENSE_DESCRIPTION_MAX, ExpenseSchema } from "@/lib/validations/expense.schema"
 import { CategoryKey, EXPENSE_CATEGORIES, SubcategoryId } from "../icons/CategoryIcons"
 import { formatAmount, formatDateForDB, getCurrencyDifference } from "../ui/formatters"
@@ -23,6 +25,7 @@ import { useBackButtonClose } from "@/hooks/useBackButtonClose"
 import { toast } from "@/hooks/use-toast"
 import { ToastAction } from "../ui/toast"
 import { AvatarGroup } from "../ui/UserAvatar"
+import { fieldErrorStyles } from "@/lib/brand-styles"
 import { cn } from "@/lib/utils"
 import { ExpenseAttachmentControl } from "./ExpenseAttachmentControl"
 import type { ExpenseAttachment } from "@/lib/expenseAttachments"
@@ -30,6 +33,9 @@ import type { ExpenseAttachment } from "@/lib/expenseAttachments"
 interface Props {
   members: any[]
   defaultCurrency?: string
+  /** When adding (no initialData), pre-select paid-by if it matches a member id. */
+  defaultPaidByUserId?: string
+  viewerMemberId?: string | null
   initialData?: ExpenseFormInterface,
   groupId?: string,
   initialAttachment?: ExpenseAttachment | null,
@@ -39,6 +45,8 @@ interface Props {
 export default function ExpenseFormMobile({
   members,
   defaultCurrency = "USD",
+  defaultPaidByUserId,
+  viewerMemberId,
   initialData,
   groupId,
   initialAttachment = null,
@@ -46,14 +54,20 @@ export default function ExpenseFormMobile({
 }: Props) {
   const initialPayers = initialData?.payers || [];
   const hasInitialMultiplePayers = initialPayers.length > 0;
+  const initialSinglePaidBy =
+    hasInitialMultiplePayers
+      ? ""
+      : initialData?.paidByUserId ||
+        (defaultPaidByUserId &&
+        members.some((m: { id: string }) => m.id === defaultPaidByUserId)
+          ? defaultPaidByUserId
+          : "");
 
   /* ---------------- state ---------------- */
   const [description, setDescription] = useState(initialData?.description || "");
   const [amount, setAmount] = useState(initialData?.amount?.toString() || "");
   const [currency, setCurrency] = useState(initialData?.currency || defaultCurrency);
-  const [paidByUserId, setPaidBy] = useState(
-    hasInitialMultiplePayers ? "" : (initialData?.paidByUserId || "")
-  );
+  const [paidByUserId, setPaidBy] = useState(initialSinglePaidBy);
   const [category, setCategory] = useState<CategoryKey>(initialData?.category || "uncategorized");
   const [subcategory, setSubcategory] = useState<SubcategoryId>(initialData?.subcategory || "general");
   const [splitType, setSplitType] = useState<any>(initialData?.splitType || "equal");
@@ -367,9 +381,13 @@ export default function ExpenseFormMobile({
 
   };
 
-  const userNamesFromParticipants = participants
-    .map(p => members.find(m => m.id === p.userId)?.name)
-    .filter((name): name is string => Boolean(name));
+  const participantMembers = participants
+    .map((p) => members.find((m: UserInterface) => m.id === p.userId))
+    .filter((m): m is UserInterface => Boolean(m));
+  const participantNames = participantMembers.map((m) => m.name);
+  const participantOverlayNames = participantMembers.map((m) =>
+    memberNameForViewer(m.id, m.name, viewerMemberId)
+  );
 
   return (
     <>
@@ -392,12 +410,18 @@ export default function ExpenseFormMobile({
         {/* Avatar row */}
         <div className="flex items-center gap-2 px-4 py-1 border-b">
           <span className="text-sm text-muted-foreground">With:</span>
-          <AvatarGroup names={userNamesFromParticipants} isShowTotalMemberText={false} />
+          <AvatarGroup
+            names={participantNames}
+            overlayNames={participantOverlayNames}
+            isShowTotalMemberText={false}
+            size="sm"
+            max={8}
+          />
           <Settings
             className={cn(
               "w-4 h-4 cursor-pointer transition-colors",
               errors.split
-                ? "text-red-500 hover:text-red-600"
+                ? fieldErrorStyles.textHover
                 : "text-muted-foreground hover:text-foreground"
             )}
             onClick={handleOpenSlitScreen}
@@ -491,13 +515,18 @@ export default function ExpenseFormMobile({
               aria-invalid={!!(errors.paidByUserId || errors.payers)}
               className={cn(
                 "px-3 py-2.5 text-sm border border-border border-b-2 rounded-[5px] font-medium",
-                "aria-[invalid=true]:border-red-500 aria-[invalid=true]:border-b-red-600"
+                fieldErrorStyles.borderAria
               )}
             >
               {isMultiplePayers
                 ? `${payers.filter(p => p.amount && p.amount > 0).length} people`
                 : paidByUserId
-                  ? members.find((m) => m.id === paidByUserId)?.name || "select member"
+                  ? (() => {
+                      const m = members.find((mem: UserInterface) => mem.id === paidByUserId);
+                      if (!m) return "select member";
+                      if (viewerMemberId && m.id === viewerMemberId) return "You";
+                      return m.name;
+                    })()
                   : "select member"}
             </button>
           </div>
@@ -511,7 +540,7 @@ export default function ExpenseFormMobile({
               aria-invalid={!!errors.split}
               className={cn(
                 "px-3 py-2.5 text-sm border border-border border-b-2 rounded-[5px] font-medium",
-                errors.split && "border-red-500 border-b-red-600 text-red-600"
+                errors.split && fieldErrorStyles.border
               )}
               onClick={() => handleOpenSlitScreen()}
             >
@@ -530,8 +559,8 @@ export default function ExpenseFormMobile({
         <Popover modal open={showCalendar} onOpenChange={setShowCalendar}>
           <PopoverTrigger asChild>
             <button className="flex items-center gap-2 text-sm font-medium">
-              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                <CalendarIcon className="w-4 h-4 text-blue-600" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 dark:bg-primary-muted">
+                <CalendarIcon className="h-4 w-4 text-primary dark:text-primary/90" />
               </div>
 
               <span>
@@ -574,6 +603,7 @@ export default function ExpenseFormMobile({
           amount={Number(amount)}
           currency={currency}
           members={members}
+          viewerMemberId={viewerMemberId}
           initialParticipants={participants}
           splitType={splitType}
           onConfirm={(data) => {
@@ -586,6 +616,7 @@ export default function ExpenseFormMobile({
         open={showPaidBy}
         onClose={() => setShowPaidBy(false)}
         members={members}
+        viewerMemberId={viewerMemberId}
         currency={currency}
         expenseAmount={Number(amount || 0)}
         paidByUserId={paidByUserId}

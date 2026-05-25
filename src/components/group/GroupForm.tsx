@@ -152,6 +152,7 @@ export function GroupForm({ initialData, onSubmit, submitLabel, isSubmitting }: 
                 value={newMember}
                 onChange={(e) => setNewMember(e.target.value)}
                 disabled={members.length >= MEMBERS_MAX}
+                aria-invalid={Boolean(errors.memberName || errors.memberExists)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && newMember.trim()) {
                     e.preventDefault();

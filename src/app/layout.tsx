@@ -10,7 +10,6 @@ import AppProviders from "@/components/providers/AppProviders";
 import {
   DEFAULT_OG_IMAGE,
   SITE_DESCRIPTION,
-  SITE_KEYWORDS,
   SITE_NAME,
   SITE_TITLE,
   getSiteUrl,
@@ -26,7 +25,8 @@ const siteUrl = getSiteUrl();
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#2ea786",
+  themeColor: "#2563FF",
+  interactiveWidget: "resizes-content",
 };
 
 export const metadata: Metadata = {
@@ -37,7 +37,6 @@ export const metadata: Metadata = {
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
-  keywords: SITE_KEYWORDS,
   alternates: {
     canonical: siteUrl,
   },
@@ -65,11 +64,12 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/favicon.svg", type: "image/svg+xml" },
-      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
     ],
-    shortcut: "/favicon.svg",
-    apple: [{ url: "/apple-icon.svg", type: "image/svg+xml" }],
+    shortcut: "/favicon.ico",
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
   manifest: "/manifest.webmanifest",
   robots: {
@@ -100,7 +100,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       "@type": "Organization",
       name: SITE_NAME,
       url: siteUrl,
-      logo: `${siteUrl}/icon.svg`,
+      logo: `${siteUrl}/android-chrome-512x512.png`,
     },
     {
       "@context": "https://schema.org",
@@ -128,7 +128,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   ];
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={plusJakarta.className}>
         <GoogleAnalytics />
         <Suspense fallback={null}>

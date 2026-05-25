@@ -2,59 +2,54 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
   ChevronRight,
   CircleDollarSign,
   Loader2,
-  PencilLine,
   Save,
   ShieldCheck,
-  UserMinus,
   Users,
   Wallet,
 } from "lucide-react";
 
+import { EditGroupMobile } from "@/components/group/EditGroupMobile";
+import { EditGroupMemberSheet } from "@/components/group/EditGroupMemberSheet";
 import { Layout } from "@/components/layout/Layout";
+import { Spinner } from "@/components/ui/Spinner";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useMdUp } from "@/hooks/useDeviceType";
 import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
+import { balanceStyles } from "@/lib/brand-styles";
 import { formatCurrency } from "@/lib/avatar-utils";
+import { LOCAL_GROUPS_KEY } from "@/lib/constants";
+import { getEncryptedItem, setEncryptedItem } from "@/lib/localStorage";
 import {
-  checkGroupMemberRemoval,
+  canRemoveGroupMember,
+  deleteGroup,
   GroupDashboardInterface,
   GroupFormMember,
-  loadGroupDetails,
   updateGroup,
 } from "@/lib/storage";
+import {
+  applyGroupResponseToCache,
+  refreshGroupData,
+  useGroupDashboardQuery,
+} from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import { GroupSchema, MemberNameSchema, MEMBERS_MAX } from "@/lib/validations/group.schema";
 
 type RemovalState = {
-  loading: boolean;
   canRemove: boolean;
   message: string;
 };
@@ -199,57 +194,80 @@ function EditGroupSkeleton() {
 
 export default function EditGroupPage({ groupId }: { groupId: string }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { toast } = useToast();
+  const isMdUp = useMdUp();
+  const dashboardQuery = useGroupDashboardQuery(groupId);
+  const dashboard = dashboardQuery.data ?? null;
+  const loading = dashboardQuery.isPending && dashboard === null;
+  const formInitializedForGroupId = useRef<string | null>(null);
 
-  const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [groupName, setGroupName] = useState("");
   const [currency, setCurrency] = useState("INR");
   const [members, setMembers] = useState<EditableMember[]>([]);
   const [newMemberName, setNewMemberName] = useState("");
   const [selectedMemberKey, setSelectedMemberKey] = useState<string | null>(null);
   const [isMemberSheetOpen, setIsMemberSheetOpen] = useState(false);
-  const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [renameValue, setRenameValue] = useState("");
-  const [removalState, setRemovalState] = useState<RemovalState>({
-    loading: false,
-    canRemove: true,
-    message: "",
-  });
   const [errors, setErrors] = useState<{
     groupName?: string;
     members?: string;
     memberName?: string;
     memberExists?: string;
   }>({});
-  const [dashboard, setDashboard] = useState<GroupDashboardInterface | null>(null);
+  const [memberRenameError, setMemberRenameError] = useState<string | undefined>();
 
   useEffect(() => {
-    if (!groupId) return;
-
-    setLoading(true);
-
-    loadGroupDetails(groupId)
-      .then((details) => {
-        if (!details?.group) {
-          setDashboard(null);
-          return;
-        }
-
-        setDashboard(details);
-        setGroupName(details.group.name);
-        setCurrency(details.group.currency);
-        setMembers(
-          details.group.members.map((member) => ({
-            key: member.id,
-            id: member.id,
-            name: member.name,
-          }))
-        );
-      })
-      .catch(() => setDashboard(null))
-      .finally(() => setLoading(false));
+    formInitializedForGroupId.current = null;
   }, [groupId]);
+
+  useEffect(() => {
+    if (!groupId || !dashboard?.group) return;
+    if (formInitializedForGroupId.current === groupId) return;
+
+    setGroupName(dashboard.group.name);
+    setCurrency(dashboard.group.currency);
+    setMembers(
+      dashboard.group.members.map((member) => ({
+        key: member.id,
+        id: member.id,
+        name: member.name,
+      }))
+    );
+    formInitializedForGroupId.current = groupId;
+  }, [groupId, dashboard]);
+
+  useEffect(() => {
+    if (!groupName.trim()) {
+      setErrors((prev) => ({ ...prev, groupName: undefined }));
+      return;
+    }
+    const nameResult = GroupSchema.shape.groupName.safeParse(groupName);
+    setErrors((prev) => ({
+      ...prev,
+      groupName: nameResult.success ? undefined : nameResult.error.issues[0]?.message,
+    }));
+  }, [groupName]);
+
+  useEffect(() => {
+    const trimmed = newMemberName.trim();
+    if (!trimmed) {
+      setErrors((prev) => ({ ...prev, memberName: undefined, memberExists: undefined }));
+      return;
+    }
+    const memberResult = MemberNameSchema.safeParse(newMemberName);
+    setErrors((prev) => ({
+      ...prev,
+      memberName: memberResult.success ? undefined : memberResult.error.issues[0]?.message,
+      memberExists: members.some(
+        (member) => member.name.trim().toLowerCase() === trimmed.toLowerCase()
+      )
+        ? "This member is already in the group."
+        : undefined,
+    }));
+  }, [newMemberName, members]);
 
   const balances = useMemo(() => {
     const baseMembers = dashboard?.group.members ?? [];
@@ -282,13 +300,11 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
       (acc, member) => {
         if (member.balanceInfo.tone === "positive") acc.getBackCount += 1;
         if (member.balanceInfo.tone === "negative") acc.oweCount += 1;
-        if (member.balanceInfo.tone === "neutral") acc.settledCount += 1;
         return acc;
       },
       {
         oweCount: 0,
         getBackCount: 0,
-        settledCount: 0,
       }
     );
   }, [memberCards]);
@@ -319,45 +335,17 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
     );
   }, [currency, dashboard, groupName, members]);
 
-  useEffect(() => {
-    if (!isMemberSheetOpen || !selectedMember) return;
-
-    if (!selectedMember.id) {
-      setRemovalState({
-        loading: false,
-        canRemove: true,
-        message: "This new member has not been saved yet and can be removed right away.",
-      });
-      return;
+  const removalState = useMemo((): RemovalState => {
+    if (!isMemberSheetOpen || !selectedMember) {
+      return { canRemove: true, message: "" };
     }
 
-    setRemovalState((current) => ({
-      ...current,
-      loading: true,
-      message: "",
-    }));
-
-    checkGroupMemberRemoval(groupId, selectedMember)
-      .then((result) => {
-        setRemovalState({
-          loading: false,
-          canRemove: result.canRemove,
-          message: result.message || "This member can be removed from the group.",
-        });
-      })
-      .catch((error) => {
-        const message =
-          error instanceof Error
-            ? error.message
-            : "Failed to check whether this member can be removed.";
-
-        setRemovalState({
-          loading: false,
-          canRemove: false,
-          message,
-        });
-      });
-  }, [groupId, isMemberSheetOpen, selectedMember]);
+    const result = canRemoveGroupMember(dashboard?.expenses ?? [], selectedMember);
+    return {
+      canRemove: result.canRemove,
+      message: result.message || "This member can be removed from the group.",
+    };
+  }, [dashboard?.expenses, isMemberSheetOpen, selectedMember]);
 
   const validateMembers = (nextMembers: EditableMember[]) => {
     const names = nextMembers.map((member) => member.name.trim());
@@ -438,45 +426,51 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
   };
 
   const openMemberSheet = (memberKey: string) => {
+    const member = members.find((entry) => entry.key === memberKey);
     setSelectedMemberKey(memberKey);
+    setMemberRenameError(undefined);
+    if (member) {
+      setRenameValue(member.name);
+    }
     setIsMemberSheetOpen(true);
   };
 
-  const handleRenameStart = () => {
-    if (!selectedMember) return;
-    setRenameValue(selectedMember.name);
-    setIsRenameDialogOpen(true);
-  };
+  const getMemberRenameError = useCallback(
+    (value: string, member: EditableMember | null): string | undefined => {
+      if (!member) return undefined;
 
-  const handleRenameSave = () => {
-    if (!selectedMember) return;
+      const nameResult = MemberNameSchema.safeParse(value);
+      if (!nameResult.success) {
+        return nameResult.error.issues[0].message;
+      }
 
-    const nameResult = MemberNameSchema.safeParse(renameValue);
-    if (!nameResult.success) {
-      toast({
-        title: "Invalid member name",
-        description: nameResult.error.issues[0].message,
-        variant: "destructive",
-      });
-      return;
+      const trimmedName = value.trim();
+      const hasDuplicate = members.some(
+        (entry) =>
+          entry !== member &&
+          entry.name.trim().toLowerCase() === trimmedName.toLowerCase()
+      );
+
+      if (hasDuplicate) {
+        return "Entered member name already exists in the group.";
+      }
+
+      return undefined;
+    },
+    [members]
+  );
+
+  const handleRenameSave = (): boolean => {
+    if (!selectedMember) return true;
+
+    const validationError = getMemberRenameError(renameValue, selectedMember);
+    if (validationError) {
+      setMemberRenameError(validationError);
+      return false;
     }
 
     const trimmedName = renameValue.trim();
-    const hasDuplicate = members.some(
-      (member) =>
-        member !== selectedMember &&
-        member.name.trim().toLowerCase() === trimmedName.toLowerCase()
-    );
-
-    if (hasDuplicate) {
-      toast({
-        title: "Name already used",
-        description: "Choose a different name for this member.",
-        variant: "destructive",
-      });
-      return;
-    }
-
+    setMemberRenameError(undefined);
     setMembers((currentMembers) =>
       currentMembers.map((member) =>
         member === selectedMember
@@ -484,8 +478,39 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
           : member
       )
     );
-    setIsRenameDialogOpen(false);
-    setRenameValue("");
+    return true;
+  };
+
+  const handleDeleteGroup = async () => {
+    setIsDeleting(true);
+    try {
+      const deleted = await deleteGroup(groupId);
+      if (!deleted) {
+        toast({
+          title: "Could not delete group",
+          description: "Please try again.",
+          variant: "destructive",
+        });
+        setIsDeleting(false);
+        return;
+      }
+
+      const existing = getEncryptedItem<string[]>(LOCAL_GROUPS_KEY, []);
+      setEncryptedItem(
+        LOCAL_GROUPS_KEY,
+        existing.filter((id) => id !== groupId)
+      );
+      router.push("/");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to delete group";
+      toast({
+        title: "Could not delete group",
+        description: message,
+        variant: "destructive",
+      });
+      setIsDeleting(false);
+    }
   };
 
   const handleRemoveSelectedMember = () => {
@@ -496,11 +521,6 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
     );
     setIsMemberSheetOpen(false);
     setSelectedMemberKey(null);
-    setRemovalState({
-      loading: false,
-      canRemove: true,
-      message: "",
-    });
     setErrors((current) => ({
       ...current,
       members: undefined,
@@ -519,17 +539,48 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
     setMembers(normalizedMembers);
 
     if (!validateMembers(normalizedMembers)) {
+      const names = normalizedMembers.map((member) => member.name.trim());
+      const result = GroupSchema.safeParse({ groupName: trimmedGroupName, members: names });
+      if (!result.success) {
+        const formatted = result.error.format();
+        const messages = [
+          formatted.groupName?._errors[0],
+          formatted.members?._errors[0],
+        ].filter(Boolean) as string[];
+        if (messages.length > 0) {
+          toast({
+            title: "Missing required details",
+            description: (
+              <div className="space-y-1">
+                {messages.map((msg, idx) => (
+                  <div key={idx}>
+                    {messages.length > 1 && "\u2022 "}
+                    {msg}
+                  </div>
+                ))}
+              </div>
+            ),
+            position: "center",
+            hideClose: true,
+            duration: Infinity,
+            action: <ToastAction altText="OK">OK</ToastAction>,
+          });
+        }
+      }
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      await updateGroup(groupId, {
+      const updated = await updateGroup(groupId, {
         name: trimmedGroupName,
         currency,
         members: normalizedMembers.map(({ id, name }) => ({ id, name })),
       });
+
+      applyGroupResponseToCache(queryClient, groupId, updated);
+      await refreshGroupData(queryClient, groupId);
 
       toast({
         title: "Group updated",
@@ -570,6 +621,29 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
 
   return (
     <>
+      <div className="block md:hidden">
+        <EditGroupMobile
+          groupId={groupId}
+          groupName={groupName}
+          onGroupNameChange={setGroupName}
+          currency={currency}
+          memberCards={memberCards}
+          newMemberName={newMemberName}
+          onNewMemberNameChange={setNewMemberName}
+          onAddMember={handleAddMember}
+          errors={errors}
+          summary={summary}
+          onOpenMember={openMemberSheet}
+          onSaveGroup={handleSaveGroup}
+          onDeleteGroup={handleDeleteGroup}
+          isSubmitting={isSubmitting}
+          isDeleting={isDeleting}
+        />
+        <Spinner show={isSubmitting} message="Saving..." />
+        <Spinner show={isDeleting} message="Deleting..." />
+      </div>
+
+      <div className="hidden md:block">
       <Layout>
         <div className="container max-w-4xl py-6 md:py-8">
           <div className="mb-6 flex items-center justify-between gap-3">
@@ -589,12 +663,12 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
           <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
             <div className="space-y-6">
               <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-                <Card className="overflow-hidden border-0 bg-[radial-gradient(circle_at_top_left,_rgba(249,115,22,0.16),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(20,184,166,0.16),_transparent_28%)] shadow-sm">
+                <Card className="overflow-hidden border-0 bg-[radial-gradient(circle_at_top_left,_hsl(var(--primary)/0.12),_transparent_34%),radial-gradient(circle_at_bottom_right,_hsl(var(--secondary)/0.08),_transparent_28%)] shadow-sm">
                   <CardHeader className="pb-4">
-                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-500/10">
-                      <Users className="text-orange-600" />
+                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10">
+                      <Users className="text-primary" />
                     </div>
-                    <Badge variant="outline" className="mb-3 w-fit border-orange-200 bg-white/70 text-orange-700">
+                    <Badge variant="outline" className="mb-3 w-fit border-primary/20 bg-card/70 text-primary dark:text-primary/90">
                       Manage members with confidence
                     </Badge>
                     <CardTitle className="text-2xl">Edit group</CardTitle>
@@ -641,17 +715,17 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                     <p className="text-sm text-muted-foreground">Members</p>
                     <p className="mt-2 text-2xl font-semibold">{memberCards.length}</p>
                   </div>
-                  <div className="rounded-2xl border bg-emerald-50 p-4">
-                    <p className="text-sm text-emerald-700">Gets back</p>
-                    <p className="mt-2 text-2xl font-semibold text-emerald-700">{summary.getBackCount}</p>
+                  <div className={balanceStyles.positiveCard}>
+                    <p className={balanceStyles.positiveCardLabel}>Gets back</p>
+                    <p className={balanceStyles.positiveCardValue}>{summary.getBackCount}</p>
                   </div>
-                  <div className="rounded-2xl border bg-rose-50 p-4">
-                    <p className="text-sm text-rose-700">Owes</p>
-                    <p className="mt-2 text-2xl font-semibold text-rose-700">{summary.oweCount}</p>
+                  <div className={balanceStyles.negativeCard}>
+                    <p className={balanceStyles.negativeCardLabel}>Owes</p>
+                    <p className={balanceStyles.negativeCardValue}>{summary.oweCount}</p>
                   </div>
-                  <div className="rounded-2xl border bg-amber-50 p-4 sm:col-span-3">
-                    <p className="text-sm text-amber-800">Total unsettled amount</p>
-                    <p className="mt-2 text-2xl font-semibold text-amber-900">
+                  <div className={balanceStyles.warningCard}>
+                    <p className={balanceStyles.warningCardLabel}>Total unsettled amount</p>
+                    <p className={balanceStyles.warningCardValue}>
                       {formatCurrency(unsettledTotal, currency)}
                     </p>
                   </div>
@@ -675,6 +749,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                     <Input
                       value={newMemberName}
                       onChange={(event) => setNewMemberName(event.target.value)}
+                      aria-invalid={Boolean(errors.memberName || errors.memberExists)}
                       placeholder={
                         members.length >= MEMBERS_MAX
                           ? `Maximum ${MEMBERS_MAX} members reached`
@@ -724,9 +799,9 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                         onClick={() => openMemberSheet(member.key)}
                         className={cn(
                           "w-full rounded-[22px] border bg-card p-4 text-left transition hover:-translate-y-0.5 hover:shadow-card",
-                          member.balanceInfo.tone === "positive" && "border-emerald-200 bg-gradient-to-r from-emerald-50/90 to-white",
-                          member.balanceInfo.tone === "negative" && "border-rose-200 bg-gradient-to-r from-rose-50/90 to-white",
-                          member.balanceInfo.tone === "neutral" && "border-border bg-gradient-to-r from-white to-muted/10"
+                          member.balanceInfo.tone === "positive" && balanceStyles.positiveMemberBorder,
+                          member.balanceInfo.tone === "negative" && balanceStyles.negativeMemberBorder,
+                          member.balanceInfo.tone === "neutral" && "border-border bg-gradient-to-r from-card to-muted/10"
                         )}
                       >
                         <div className="grid grid-cols-[auto,minmax(0,1fr),auto] items-center gap-3">
@@ -735,7 +810,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                             <div className="flex items-center gap-2">
                               <p className="truncate font-semibold">{member.name}</p>
                               {!member.isExisting ? (
-                                <Badge variant="outline" className="border-dashed bg-white/70">
+                                <Badge variant="outline" className="border-dashed bg-card/70">
                                   New
                                 </Badge>
                               ) : null}
@@ -750,9 +825,9 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                                 variant="outline"
                                 className={cn(
                                   "border-white/60",
-                                  member.balanceInfo.tone === "positive" && "bg-emerald-100 text-emerald-700",
-                                  member.balanceInfo.tone === "negative" && "bg-rose-100 text-rose-700",
-                                  member.balanceInfo.tone === "neutral" && "bg-white text-muted-foreground"
+                                  member.balanceInfo.tone === "positive" && balanceStyles.positiveBadge,
+                                  member.balanceInfo.tone === "negative" && balanceStyles.negativeBadge,
+                                  member.balanceInfo.tone === "neutral" && "bg-card text-muted-foreground"
                                 )}
                               >
                                 {member.balanceInfo.label}
@@ -760,8 +835,8 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                               <p
                                 className={cn(
                                   "mt-2 truncate text-sm font-semibold",
-                                  member.balanceInfo.tone === "positive" && "text-emerald-700",
-                                  member.balanceInfo.tone === "negative" && "text-rose-700",
+                                  member.balanceInfo.tone === "positive" && balanceStyles.positiveText,
+                                  member.balanceInfo.tone === "negative" && balanceStyles.negativeText,
                                   member.balanceInfo.tone === "neutral" && "text-foreground"
                                 )}
                               >
@@ -782,151 +857,23 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
           </div>
         </div>
       </Layout>
-
-      <Drawer open={isMemberSheetOpen} onOpenChange={setIsMemberSheetOpen}>
-        <DrawerContent className="mx-auto max-w-2xl rounded-t-[28px]">
-          {selectedMember ? (
-            <>
-              <DrawerHeader className="px-6 pt-5 text-left">
-                <div className="flex items-center gap-3">
-                  <UserAvatar name={selectedMember.name} className="h-12 w-12" />
-                  <div>
-                    <DrawerTitle>{selectedMember.name}</DrawerTitle>
-                    <DrawerDescription>
-                      {selectedMember.id
-                        ? "Manage this existing member."
-                        : "This is a new member that will be created when you save the group."}
-                    </DrawerDescription>
-                  </div>
-                </div>
-              </DrawerHeader>
-
-              <div className="space-y-4 px-6 pb-2">
-                <div className="rounded-2xl border bg-muted/30 p-4">
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Balance status</p>
-                  <p
-                    className={cn(
-                      "mt-2 text-base font-semibold",
-                      selectedMember.id && (balances[selectedMember.id] ?? 0) > 0.01 && "text-emerald-600",
-                      selectedMember.id && (balances[selectedMember.id] ?? 0) < -0.01 && "text-rose-600",
-                      (!selectedMember.id || Math.abs(balances[selectedMember.id] ?? 0) <= 0.01) && "text-foreground"
-                    )}
-                  >
-                    {(() => {
-                      const balanceInfo = getBalancePresentation(selectedMember.id ? balances[selectedMember.id] ?? 0 : 0);
-                      if (balanceInfo.tone === "neutral") return "This member is currently settled.";
-                      return `${balanceInfo.label} ${formatCurrency(balanceInfo.value, currency)}.`;
-                    })()}
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleRenameStart}
-                  className="flex w-full items-center justify-between rounded-2xl border p-4 text-left transition hover:border-primary/40 hover:bg-muted/20"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-2xl bg-primary/10 p-3 text-primary">
-                      <PencilLine className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="font-medium">Edit member name</p>
-                      <p className="text-sm text-muted-foreground">Open a focused popup to rename this member.</p>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                </button>
-
-                <div
-                  className={cn(
-                    "rounded-2xl border p-4",
-                    removalState.canRemove ? "border-rose-200 bg-rose-50/60" : "border-muted bg-muted/30"
-                  )}
-                >
-                  <div className="flex items-start gap-3">
-                    <div
-                      className={cn(
-                        "rounded-2xl p-3",
-                        removalState.canRemove ? "bg-rose-100 text-rose-600" : "bg-muted text-muted-foreground"
-                      )}
-                    >
-                      <UserMinus className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium">Remove from group</p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {removalState.loading
-                          ? "Checking whether this member is linked to any expense..."
-                          : removalState.canRemove
-                            ? "This member can be removed now."
-                            : removalState.message || "This member is involved in an expense in this group and cannot be removed."}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <DrawerFooter className="px-6 pb-6">
-                <Button
-                  variant="destructive"
-                  onClick={handleRemoveSelectedMember}
-                  disabled={removalState.loading || !removalState.canRemove}
-                >
-                  {removalState.loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserMinus className="w-4 h-4" />}
-                  Remove member
-                </Button>
-                <Button variant="outline" onClick={() => setIsMemberSheetOpen(false)}>
-                  Close
-                </Button>
-              </DrawerFooter>
-            </>
-          ) : null}
-        </DrawerContent>
-      </Drawer>
-
-      <Dialog open={isRenameDialogOpen} onOpenChange={setIsRenameDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Edit member name</DialogTitle>
-            <DialogDescription>
-              Update the visible name for this member. Past expenses stay connected to the same person.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2">
-            <Label htmlFor="rename-member">Member name</Label>
-            <Input
-              id="rename-member"
-              value={renameValue}
-              onChange={(event) => setRenameValue(event.target.value)}
-              placeholder="Enter member name"
-              autoFocus
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsRenameDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleRenameSave}>Save name</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <div className="sticky bottom-0 z-20 border-t bg-background/95 backdrop-blur md:hidden">
-        <div className="container flex items-center justify-between gap-3 py-3">
-          <div className="min-w-0">
-            <p className="text-sm font-medium">
-              {hasChanges ? "Unsaved changes" : "Everything saved"}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {memberCards.length} members, {summary.oweCount + summary.getBackCount} with balances
-            </p>
-          </div>
-          <Button onClick={handleSaveGroup} disabled={isSubmitting || !hasChanges} size="sm">
-            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            Save
-          </Button>
-        </div>
       </div>
+
+      <EditGroupMemberSheet
+        open={isMemberSheetOpen}
+        onOpenChange={setIsMemberSheetOpen}
+        selectedMember={selectedMember}
+        renameValue={renameValue}
+        renameError={memberRenameError}
+        onRenameValueChange={(value) => {
+          setRenameValue(value);
+          setMemberRenameError(getMemberRenameError(value, selectedMember));
+        }}
+        onRenameSave={handleRenameSave}
+        removalState={removalState}
+        onRemoveMember={handleRemoveSelectedMember}
+        enableBackButtonClose={!isMdUp}
+      />
     </>
   );
 }

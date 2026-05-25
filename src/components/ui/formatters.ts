@@ -77,8 +77,19 @@ export const formatDateForDB = (d: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
+const ISO_DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Parse `YYYY-MM-DD` as a local calendar date (avoids UTC shift from `new Date("YYYY-MM-DD")`). */
+function parseDateInput(date: string | Date): Date {
+  if (typeof date === "string" && ISO_DATE_ONLY.test(date.trim())) {
+    const [y, m, d] = date.trim().split("-").map(Number);
+    return new Date(y, m - 1, d);
+  }
+  return typeof date === "string" ? new Date(date) : date;
+}
+
 export const formatDisplayDate = (date: string | Date) => {
-  const value = typeof date === "string" ? new Date(date) : date;
+  const value = parseDateInput(date);
 
   if (Number.isNaN(value.getTime())) {
     return "";
@@ -91,12 +102,62 @@ export const formatDisplayDate = (date: string | Date) => {
   }).format(value);
 };
 
+export type ExpenseDashboardGroupBy = "date" | "paidBy" | "category" | "splitType";
+
+/** Label for grouped expense sections on the group dashboard (e.g. date → "9 May 2026"). */
+export function formatExpenseGroupHeaderTitle(
+  title: string,
+  groupBy: ExpenseDashboardGroupBy,
+  shouldTitleCase: boolean,
+): string {
+  if (!title) return title;
+  if (groupBy === "date" && ISO_DATE_ONLY.test(title.trim())) {
+    return formatDisplayDate(title) || title;
+  }
+  return shouldTitleCase ? toTitleCase(title) : title;
+}
+
+export const YOU_DISPLAY_SUFFIX = " (You)";
+
+/** Short display name for expense summaries: trim, truncate long first names, abbreviate last name. */
+export function formatSummaryNameCore(name: string): string {
+  const normalized = name.trim().replace(/\s+/g, " ");
+
+  if (!normalized) {
+    return "Unknown";
+  }
+
+  const parts = normalized.split(" ");
+  const firstName = parts[0];
+  const secondName = parts[1];
+  const maxFirstNameLength = secondName ? 11 : 10;
+  const trimmedFirstName =
+    firstName.length > maxFirstNameLength
+      ? `${firstName.slice(0, maxFirstNameLength)}...`
+      : firstName;
+
+  if (!secondName) {
+    return trimmedFirstName;
+  }
+
+  return `${trimmedFirstName} ${secondName.charAt(0).toUpperCase()}.`;
+}
+
+/** Like {@link formatSummaryNameCore}, preserving a trailing ` (You)` suffix when present. */
+export function formatSummaryName(name: string): string {
+  if (name.endsWith(YOU_DISPLAY_SUFFIX)) {
+    const core = name.slice(0, -YOU_DISPLAY_SUFFIX.length);
+    return `${formatSummaryNameCore(core)}${YOU_DISPLAY_SUFFIX}`;
+  }
+  return formatSummaryNameCore(name);
+}
+
 export const formatDisplayDateTime = (date?: string | Date | null) => {
   if (!date) {
     return "N/A";
   }
 
-  const value = typeof date === "string" ? new Date(date) : date;
+  const value = parseDateInput(date);
 
   if (Number.isNaN(value.getTime())) {
     return "N/A";

@@ -9,7 +9,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: [ADMIN_PARENT_PATH, `${ADMIN_PARENT_PATH}/`, "/group/", "/group/*"],
+        disallow: [ADMIN_PARENT_PATH, `${ADMIN_PARENT_PATH}/`, "/group/", "/group/*", "/groups"],
       },
     ],
     sitemap: getCanonicalUrl("/sitemap.xml"),

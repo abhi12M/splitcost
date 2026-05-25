@@ -51,7 +51,25 @@ const nextConfig = {
         ],
       },
       {
-        source: "/favicon.svg",
+        source: "/favicon.ico",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=604800, stale-while-revalidate=86400",
+          },
+        ],
+      },
+      {
+        source: "/favicon-:size.png",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=604800, stale-while-revalidate=86400",
+          },
+        ],
+      },
+      {
+        source: "/apple-touch-icon.png",
         headers: [
           {
             key: "Cache-Control",
@@ -87,16 +105,7 @@ const nextConfig = {
         ],
       },
       {
-        source: "/icon-192.png",
-        headers: [
-          {
-            key: "Cache-Control",
-            value: "public, max-age=604800, stale-while-revalidate=86400",
-          },
-        ],
-      },
-      {
-        source: "/icon-512.png",
+        source: "/android-chrome-:size.png",
         headers: [
           {
             key: "Cache-Control",

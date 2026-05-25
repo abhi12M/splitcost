@@ -9,7 +9,7 @@ const HomePage = dynamic(() => import("@/views/Index"));
 
 export const metadata: Metadata = buildMetadata({
   title: "Admin",
-  description: "Administrative dashboard for Splitcost groups.",
+  description: "Administrative dashboard for SplitCost groups.",
   path: ADMIN_BASE_PATH,
   noIndex: true,
 });
