@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import { GA_MEASUREMENT_ID } from "@/components/analytics/GoogleAnalytics";
 import { ADMIN_PARENT_PATH } from "@/lib/constants";
@@ -13,9 +13,7 @@ declare global {
   }
 }
 
-const isEnabled =
-  /^G-[A-Z0-9]+$/i.test(GA_MEASUREMENT_ID) &&
-  GA_MEASUREMENT_ID !== "G-XXXXXXXXXX";
+const isEnabled = /^G-[A-Z0-9]+$/i.test(GA_MEASUREMENT_ID);
 
 function shouldSkipAnalytics(pathname: string): boolean {
   return (
@@ -28,6 +26,7 @@ function shouldSkipAnalytics(pathname: string): boolean {
 export function GoogleAnalyticsPageTracker() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const hasTrackedInitialPageView = useRef(false);
 
   useEffect(() => {
     if (
@@ -35,6 +34,11 @@ export function GoogleAnalyticsPageTracker() {
       !pathname ||
       shouldSkipAnalytics(pathname)
     ) {
+      return;
+    }
+
+    if (!hasTrackedInitialPageView.current) {
+      hasTrackedInitialPageView.current = true;
       return;
     }
 
