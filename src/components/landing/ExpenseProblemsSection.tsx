@@ -1,6 +1,7 @@
+"use client";
+
 import {
   AlertTriangle,
-  ArrowRight,
   Bell,
   Building2,
   Calculator,
@@ -14,7 +15,7 @@ import {
   Utensils,
   type LucideIcon,
 } from "lucide-react";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
 import { brandProblemAccent, brandStyles, landingSection } from "@/lib/brand-styles";
@@ -22,9 +23,10 @@ import { cn } from "@/lib/utils";
 
 type ProblemAccent = "brand" | "emerald" | "orange";
 
+type ProblemKey = "whoPaidLast" | "confusingBalances" | "awkwardReminders" | "travelChaotic";
+
 type ProblemCardConfig = {
-  title: string;
-  description: string;
+  key: ProblemKey;
   accent: ProblemAccent;
   icon: LucideIcon;
   illustration: ReactNode;
@@ -203,38 +205,42 @@ function TravelExpensesScene() {
   );
 }
 
-const problemCards: ProblemCardConfig[] = [
+const problemCardConfigs: ProblemCardConfig[] = [
   {
-    title: "Who Paid Last?",
-    description: "Tracking shared expenses in chats and notes becomes messy quickly.",
+    key: "whoPaidLast",
     accent: "brand",
     icon: MessageCircle,
     illustration: <WhoPaidLastScene />,
   },
   {
-    title: "Confusing Group Balances",
-    description: "Manually calculating who owes what wastes time and causes mistakes.",
+    key: "confusingBalances",
     accent: "emerald",
     icon: Calculator,
     illustration: <GroupBalancesScene />,
   },
   {
-    title: "Awkward Payment Reminders",
-    description: "Following up on unpaid bills with friends or roommates feels uncomfortable.",
+    key: "awkwardReminders",
     accent: "orange",
     icon: Bell,
     illustration: <PaymentReminderScene />,
   },
   {
-    title: "Travel Expenses Get Chaotic",
-    description: "Trip costs, dinners, transport, and bookings are hard to organize manually.",
+    key: "travelChaotic",
     accent: "brand",
     icon: Luggage,
     illustration: <TravelExpensesScene />,
   },
 ];
 
-function ProblemCard({ card }: { card: ProblemCardConfig }) {
+function ProblemCard({
+  title,
+  description,
+  card,
+}: {
+  title: string;
+  description: string;
+  card: ProblemCardConfig;
+}) {
   const styles = accentStyles[card.accent];
   const Icon = card.icon;
 
@@ -253,9 +259,9 @@ function ProblemCard({ card }: { card: ProblemCardConfig }) {
       </div>
 
       <div className="flex flex-1 flex-col px-6 pb-6 pt-10 text-center">
-        <h3 className="mb-2 text-lg font-bold text-foreground">{card.title}</h3>
+        <h3 className="mb-2 text-lg font-bold text-foreground">{title}</h3>
         <p className="text-pretty text-sm leading-relaxed text-muted-foreground">
-          {card.description}
+          {description}
         </p>
         <div className="mt-6 flex justify-center" aria-hidden>
           <span className={cn("h-1 w-10 rounded-full", styles.bar)} />
@@ -266,6 +272,8 @@ function ProblemCard({ card }: { card: ProblemCardConfig }) {
 }
 
 export function ExpenseProblemsSection() {
+  const t = useTranslations("landing.problems");
+
   return (
     <section
       className={cn(landingSection.default, landingSection.padding)}
@@ -280,24 +288,28 @@ export function ExpenseProblemsSection() {
             )}
           >
             <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
-            Common expense problems
+            {t("badge")}
           </p>
           <h2
             id="expense-problems-heading"
             className="text-balance text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl md:text-4xl"
           >
-            Splitting expenses shouldn&apos;t be this{" "}
-            <span className={brandStyles.headingAccent}>complicated</span>
+            {t("title")}{" "}
+            <span className={brandStyles.headingAccent}>{t("titleHighlight")}</span>
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-pretty text-sm text-muted-foreground sm:text-base">
-            From travel expenses to roommate bills, managing shared payments manually often leads
-            to confusion, missed balances, and awkward reminders.
+            {t("description")}
           </p>
         </header>
 
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 xl:grid-cols-4">
-          {problemCards.map((card) => (
-            <ProblemCard key={card.title} card={card} />
+          {problemCardConfigs.map((card) => (
+            <ProblemCard
+              key={card.key}
+              card={card}
+              title={t(`items.${card.key}.title`)}
+              description={t(`items.${card.key}.description`)}
+            />
           ))}
         </div>
       </div>

@@ -2,8 +2,8 @@
 
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
@@ -76,11 +76,12 @@ import { SingleSelect } from "@/components/ui/single-select";
 function memberName(
   members: EditExpenseInterface["group"]["members"],
   userId: string | null,
-  viewerMemberId: string | null
+  viewerMemberId: string | null,
+  unknownLabel: string
 ) {
-  if (!userId) return "Unknown";
+  if (!userId) return unknownLabel;
   const m = members.find((member) => member.id === userId);
-  if (!m) return "Unknown";
+  if (!m) return unknownLabel;
   return memberNameForViewer(m.id, m.name, viewerMemberId);
 }
 
@@ -115,7 +116,8 @@ function shouldShowUpdatedAt(
 function calculateExpenseSettlements(
   members: EditExpenseInterface["group"]["members"],
   payers: { userId: string | null; amount: number }[],
-  participants: ExpenseParticipantsRequest[]
+  participants: ExpenseParticipantsRequest[],
+  unknownLabel: string
 ) {
   const balances = new Map<string, number>();
 
@@ -149,9 +151,9 @@ function calculateExpenseSettlements(
 
     settlements.push({
       fromId: debtors[debtorIndex].userId,
-      fromName: memberName(members, debtors[debtorIndex].userId, null),
+      fromName: memberName(members, debtors[debtorIndex].userId, null, unknownLabel),
       toId: creditors[creditorIndex].userId,
-      toName: memberName(members, creditors[creditorIndex].userId, null),
+      toName: memberName(members, creditors[creditorIndex].userId, null, unknownLabel),
       amount: Math.round(amount * 100) / 100,
     });
 
@@ -246,6 +248,8 @@ export default function ExpenseDetailsPage({
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const t = useTranslations("expense");
+  const tCommon = useTranslations("common");
   const attachmentInputRef = useRef<HTMLInputElement>(null);
 
   // React Query owns expense fetching. With initialData hydrated from the
@@ -380,7 +384,7 @@ export default function ExpenseDetailsPage({
     }
 
     setAttachmentSpinnerMessage(
-      attachment ? "Updating attachment..." : "Uploading attachment..."
+      attachment ? t("updatingAttachment") : t("uploadingAttachment")
     );
 
     let localAttachment: ExpenseAttachment | null = null;
@@ -405,7 +409,7 @@ export default function ExpenseDetailsPage({
 
   const handleDeleteAttachment = async () => {
     setIsAttachmentDeleteConfirmOpen(false);
-    setAttachmentSpinnerMessage("Deleting attachment...");
+    setAttachmentSpinnerMessage(t("deletingAttachment"));
 
     try {
       await deleteExpenseAttachment(expenseId);
@@ -464,9 +468,9 @@ export default function ExpenseDetailsPage({
 
     return details.expense.participants.map((participant: ExpenseParticipantsRequest) => ({
       ...participant,
-      name: memberName(details.group.members, participant.userId, viewerMemberId),
+      name: memberName(details.group.members, participant.userId, viewerMemberId, t("unknown")),
     }));
-  }, [details, viewerMemberId]);
+  }, [details, viewerMemberId, t]);
 
   if (loading) {
     return <ExpenseDetailsSkeleton />;
@@ -475,9 +479,9 @@ export default function ExpenseDetailsPage({
   if (!details) {
     return (
       <div className="flex h-dvh flex-col items-center justify-center gap-3 bg-background">
-        <p className="text-sm text-muted-foreground">Expense not found</p>
+        <p className="text-sm text-muted-foreground">{tCommon("expenseNotFound")}</p>
         <Button asChild>
-          <Link href={`/group/${groupId}`}>Back to group</Link>
+          <Link href={`/group/${groupId}`}>{t("backToGroup")}</Link>
         </Button>
       </div>
     );
@@ -497,20 +501,21 @@ export default function ExpenseDetailsPage({
   const payers = expense.payers?.length
     ? expense.payers.map((payer) => ({
         userId: payer.userId,
-        name: memberName(group.members, payer.userId, viewerMemberId),
+        name: memberName(group.members, payer.userId, viewerMemberId, t("unknown")),
         amount: payer.amount,
       }))
     : [
         {
           userId: expense.paidByUserId,
-          name: memberName(group.members, expense.paidByUserId, viewerMemberId),
+          name: memberName(group.members, expense.paidByUserId, viewerMemberId, t("unknown")),
           amount: expense.amount,
         },
       ];
   const netSettlements = calculateExpenseSettlements(
     group.members,
     payers.map(({ userId, amount }) => ({ userId, amount })),
-    expense.participants
+    expense.participants,
+    t("unknown")
   );
   const owedRows = participantRows.map((participant) => ({
     userId: participant.userId,
@@ -536,7 +541,7 @@ export default function ExpenseDetailsPage({
       <button
         type="button"
         onClick={() => attachmentInputRef.current?.click()}
-        aria-label={attachment ? "Replace attachment" : "Upload attachment"}
+        aria-label={attachment ? t("replaceAttachment") : t("uploadAttachment")}
         className={attachmentActionButtonClass}
         disabled={attachmentActionsDisabled}
       >
@@ -550,7 +555,7 @@ export default function ExpenseDetailsPage({
         <button
           type="button"
           onClick={() => setIsAttachmentDeleteConfirmOpen(true)}
-          aria-label="Delete attachment"
+          aria-label={t("deleteAttachment")}
           className={attachmentActionButtonClass}
           disabled={attachmentActionsDisabled}
         >
@@ -577,7 +582,7 @@ export default function ExpenseDetailsPage({
           <div className="flex h-14 items-center justify-between">
             <Link
               href={`/group/${groupId}`}
-              aria-label="Back to group"
+              aria-label={t("backToGroup")}
               className={headerIconButtonClass}
             >
               <ArrowLeft className="h-5 w-5" />
@@ -587,7 +592,7 @@ export default function ExpenseDetailsPage({
                 <button
                   type="button"
                   onClick={() => attachmentInputRef.current?.click()}
-                  aria-label="Upload attachment"
+                  aria-label={t("uploadAttachment")}
                   className={headerIconButtonClass}
                   disabled={attachmentActionsDisabled}
                 >
@@ -596,7 +601,7 @@ export default function ExpenseDetailsPage({
               )}
               <Link
                 href={`/group/${groupId}/edit-expense/${expenseId}`}
-                aria-label="Edit expense"
+                aria-label={t("editExpenseAria")}
                 className={headerIconButtonClass}
               >
                 <Pencil className="h-5 w-5" />
@@ -604,7 +609,7 @@ export default function ExpenseDetailsPage({
               <button
                 type="button"
                 onClick={() => setIsExpenseDeleteConfirmOpen(true)}
-                aria-label="Delete expense"
+                aria-label={t("deleteExpenseAria")}
                 className={headerIconButtonClass}
                 disabled={isDeletingExpense}
               >
@@ -635,7 +640,7 @@ export default function ExpenseDetailsPage({
                   onSelect={(groupId, itemId) =>
                     handleCategoryPatch(groupId as CategoryKey, itemId)
                   }
-                  inputPlaceholder="Search or select category"
+                  inputPlaceholder={t("searchCategory")}
                   fullscreenOnMobile
                   disabled={isUpdatingCategory}
                   trigger={
@@ -643,7 +648,7 @@ export default function ExpenseDetailsPage({
                       type="button"
                       disabled={isUpdatingCategory}
                       className="inline-flex h-12 items-center gap-1 rounded-md border border-foreground/15 bg-background/95 px-2.5 text-foreground shadow-sm disabled:opacity-60"
-                      aria-label="Patch category"
+                      aria-label={t("patchCategory")}
                     >
                       <IconComponent
                         className="h-8 w-8"
@@ -675,7 +680,7 @@ export default function ExpenseDetailsPage({
                   type="button"
                   className="mt-1 block shrink-0"
                   aria-label={
-                    isAttachmentUploading ? "Uploading attachment" : "Open attachment"
+                    isAttachmentUploading ? t("uploadingAttachment") : t("openAttachment")
                   }
                   onClick={() => {
                     if (!isAttachmentUploading) setIsViewerOpen(true);
@@ -703,7 +708,7 @@ export default function ExpenseDetailsPage({
                     {pendingUpload?.status === "error" && (
                       <div
                         className="absolute inset-0 flex items-center justify-center bg-destructive/40"
-                        title={pendingUpload.error ?? "Failed to save attachment"}
+                        title={pendingUpload.error ?? t("failedSaveAttachment")}
                       >
                         <AlertCircle className="h-5 w-5 text-white" />
                       </div>
@@ -722,16 +727,16 @@ export default function ExpenseDetailsPage({
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <span className="inline-flex items-center gap-1">
                     <CalendarDays className="h-3.5 w-3.5" />
-                    Expense date {formatDisplayDate(expense.date)}
+                    {t("expenseDate", { date: formatDisplayDate(expense.date) })}
                   </span>
                   <span className="inline-flex items-center gap-1">
                     <Users className="h-3.5 w-3.5" />
-                    {participantRows.length} split
+                    {t("splitCount", { count: participantRows.length })}
                   </span>
                 </div>
                 <div className="mt-2 space-y-1 text-xs text-muted-foreground">
-                  {createdAtLabel ? <p>Added on {createdAtLabel}</p> : null}
-                  {updatedAtLabel ? <p>Updated on {updatedAtLabel}</p> : null}
+                  {createdAtLabel ? <p>{t("addedOn", { date: createdAtLabel })}</p> : null}
+                  {updatedAtLabel ? <p>{t("updatedOn", { date: updatedAtLabel })}</p> : null}
                 </div>
               </div>
             </div>
@@ -746,7 +751,7 @@ export default function ExpenseDetailsPage({
                       <div className="flex min-w-0 items-center gap-2 text-sm">
                         <span className="truncate font-medium">
                           {formatSummaryName(payer.name)}{" "}
-                          <span className="font-normal text-muted-foreground">Paid</span>
+                          <span className="font-normal text-muted-foreground">{t("paidLabel")}</span>
                         </span>
                       </div>
                       <span className="shrink-0 font-medium">
@@ -757,8 +762,11 @@ export default function ExpenseDetailsPage({
 
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Users className="h-4 w-4" />
-                    {expense.splitType === "equal" ? "Split equally" :
-                      expense.splitType === "percentage" ? "Split by percentage" : "Split unequally"}
+                    {expense.splitType === "equal"
+                      ? t("splitEquallyLabel")
+                      : expense.splitType === "percentage"
+                        ? t("splitByPercentage")
+                        : t("splitUnequally")}
                   </div>
                 </div>
 
@@ -774,7 +782,7 @@ export default function ExpenseDetailsPage({
                         <div className="flex min-w-0 items-center gap-2 text-sm">
                           <span className="truncate font-medium">
                             {participant.name}{" "}
-                            <span className="font-normal text-muted-foreground">owed</span>
+                            <span className="font-normal text-muted-foreground">{t("owedLabel")}</span>
                           </span>
                         </div>
                         <span className="shrink-0 text-sm font-medium">
@@ -784,7 +792,7 @@ export default function ExpenseDetailsPage({
                     ))
                   ) : (
                     <div className="text-sm text-muted-foreground">
-                      {isSettlementExpense ? "This settlement is already balanced." : "No one owes anything."}
+                      {isSettlementExpense ? t("settlementBalanced") : t("noOneOwes")}
                     </div>
                   )}
                 </div>
@@ -830,21 +838,21 @@ export default function ExpenseDetailsPage({
         >
           <AlertDialogContent className="max-w-[290px] rounded-2xl">
             <AlertDialogHeader>
-              <AlertDialogTitle className="text-lg">Delete image?</AlertDialogTitle>
+              <AlertDialogTitle className="text-lg">{t("deleteImageTitle")}</AlertDialogTitle>
               <AlertDialogDescription className="text-xs">
-                This will permanently remove the attached image from this expense.
+                {t("deleteImageDescription")}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="mt-4 flex-row gap-2">
               <AlertDialogCancel className="mt-0 flex-1 rounded-xl border-none bg-muted hover:bg-muted/80">
-                Cancel
+                {tCommon("cancel")}
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDeleteAttachment}
                 disabled={Boolean(attachmentSpinnerMessage)}
                 className="flex-1 rounded-xl bg-destructive text-white hover:bg-destructive/90"
               >
-                Delete
+                {tCommon("delete")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -855,21 +863,21 @@ export default function ExpenseDetailsPage({
         >
           <AlertDialogContent className="max-w-[290px] rounded-2xl">
             <AlertDialogHeader>
-              <AlertDialogTitle className="text-lg">Delete expense?</AlertDialogTitle>
+              <AlertDialogTitle className="text-lg">{t("deleteExpenseTitle")}</AlertDialogTitle>
               <AlertDialogDescription className="text-xs">
-                This expense and its attached image will be permanently removed.
+                {t("deleteExpenseDescription")}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="mt-4 flex-row gap-2">
               <AlertDialogCancel className="mt-0 flex-1 rounded-xl border-none bg-muted hover:bg-muted/80">
-                Cancel
+                {tCommon("cancel")}
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDeleteExpense}
                 disabled={isDeletingExpense}
                 className="flex-1 rounded-xl bg-destructive text-white hover:bg-destructive/90"
               >
-                {isDeletingExpense ? "Deleting..." : "Delete"}
+                {isDeletingExpense ? tCommon("deleting") : tCommon("delete")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

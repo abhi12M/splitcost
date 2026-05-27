@@ -1,4 +1,7 @@
+"use client";
+
 import { ChangeEvent, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { ImagePlus, Loader2, Pencil, Trash2, X } from "lucide-react";
 
 import {
@@ -32,6 +35,8 @@ export function ExpenseAttachmentControl({
   onChange,
   compact = false,
 }: ExpenseAttachmentControlProps) {
+  const t = useTranslations("expense");
+  const tCommon = useTranslations("common");
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState("");
   const [isViewerOpen, setIsViewerOpen] = useState(false);
@@ -112,7 +117,7 @@ export function ExpenseAttachmentControl({
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
-        aria-label="Replace attachment"
+        aria-label={t("replaceAttachment")}
         className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-transparent text-foreground/70 transition-colors [-webkit-tap-highlight-color:transparent] hover:bg-transparent hover:text-foreground active:bg-transparent focus:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60 sm:hover:bg-muted"
         disabled={isReadingFile}
       >
@@ -125,7 +130,7 @@ export function ExpenseAttachmentControl({
       <button
         type="button"
         onClick={() => setIsDeleteConfirmOpen(true)}
-        aria-label="Remove attachment"
+        aria-label={t("removeAttachment")}
         className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-transparent text-foreground/70 transition-colors [-webkit-tap-highlight-color:transparent] hover:bg-transparent hover:text-foreground active:bg-transparent focus:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60 sm:hover:bg-muted"
         disabled={isReadingFile}
       >
@@ -160,8 +165,8 @@ export function ExpenseAttachmentControl({
               ? "border-primary bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
               : "border-transparent bg-transparent text-muted-foreground hover:text-primary"
           )}
-          aria-label={attachment ? "Open attachment" : "Add attachment"}
-          title={attachment ? "Open attachment" : "Add attachment"}
+          aria-label={attachment ? t("openAttachment") : t("addAttachment")}
+          title={attachment ? t("openAttachment") : t("addAttachment")}
           disabled={isReadingFile}
         >
           {attachmentIcon}
@@ -177,9 +182,9 @@ export function ExpenseAttachmentControl({
             type="button"
             className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:opacity-70"
             onClick={() => setIsViewerOpen(true)}
-            aria-label="Open attachment"
+            aria-label={t("openAttachment")}
             disabled={isReadingFile}
-            title="Open attachment"
+            title={t("openAttachment")}
           >
             {attachmentIcon}
           </button>
@@ -187,7 +192,7 @@ export function ExpenseAttachmentControl({
             type="button"
             className="min-w-0 flex-1 text-left"
             onClick={() => setIsViewerOpen(true)}
-            title="Open attachment"
+            title={t("openAttachment")}
             disabled={isReadingFile}
           >
             <span className="block truncate text-xs font-medium">
@@ -195,7 +200,7 @@ export function ExpenseAttachmentControl({
             </span>
             {!compact && (
               <span className="block text-[11px] text-muted-foreground">
-                {formatAttachmentSize(attachment.size) || "Attached file"}
+                {formatAttachmentSize(attachment.size) || t("attachedFile")}
               </span>
             )}
           </button>
@@ -203,7 +208,7 @@ export function ExpenseAttachmentControl({
             type="button"
             className="rounded-full p-1 text-muted-foreground hover:bg-background hover:text-foreground"
             onClick={() => setIsDeleteConfirmOpen(true)}
-            aria-label="Remove attachment"
+            aria-label={t("removeAttachment")}
             disabled={isReadingFile}
           >
             <X className="h-3.5 w-3.5" />
@@ -220,7 +225,7 @@ export function ExpenseAttachmentControl({
           disabled={isReadingFile}
         >
           {attachmentIcon}
-          <span>{compact ? "Add image" : `Attach image (max ${MAX_ATTACHMENT_SIZE_LABEL})`}</span>
+          <span>{compact ? t("addImage") : t("attachImage", { max: MAX_ATTACHMENT_SIZE_LABEL })}</span>
         </button>
       )}
 
@@ -243,21 +248,21 @@ export function ExpenseAttachmentControl({
       >
         <AlertDialogContent className="max-w-[290px] rounded-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-lg">Delete image?</AlertDialogTitle>
+            <AlertDialogTitle className="text-lg">{t("deleteImageTitle")}</AlertDialogTitle>
             <AlertDialogDescription className="text-xs">
-              This will remove the attached image from this expense.
+              {t("deleteImageDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-4 flex-row gap-2">
             <AlertDialogCancel className="mt-0 flex-1 rounded-xl border-none bg-muted hover:bg-muted/80">
-              Cancel
+              {tCommon("cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={clearAttachment}
               disabled={isReadingFile}
               className="flex-1 rounded-xl bg-destructive text-white hover:bg-destructive/90"
             >
-              Delete
+              {tCommon("delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

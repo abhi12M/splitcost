@@ -1,6 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { ArrowLeft, Users } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
@@ -18,6 +19,8 @@ if (typeof window !== "undefined") {
 }
 
 export default function CreateGroupPage() {
+  const t = useTranslations("group");
+  const tCommon = useTranslations("common");
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const defaultCurrency = getEncryptedItem(LOCAL_CURRENCY_KEY, "INR");
@@ -47,24 +50,21 @@ export default function CreateGroupPage() {
         <Layout>
           <div className="container max-w-xl py-8">
             <Button variant="ghost" onClick={() => router.back()} className="mb-6">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back
+              <ArrowLeft className="mr-2 h-4 w-4" /> {tCommon("back")}
             </Button>
             <Card>
               <CardHeader>
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
                   <Users className="text-primary" />
                 </div>
-                <CardTitle>Create a Group</CardTitle>
-                <CardDescription>
-                  Start tracking shared expenses with flexible splits, multiple payer
-                  support, and a shareable group link.
-                </CardDescription>
+                <CardTitle>{t("createGroupTitle")}</CardTitle>
+                <CardDescription>{t("createGroupDescription")}</CardDescription>
               </CardHeader>
               <CardContent>
                 <GroupForm
                   onSubmit={handleCreate}
                   isSubmitting={isSubmitting}
-                  submitLabel="Create Group"
+                  submitLabel={t("createGroupSubmit")}
                   initialData={{ name: "", currency: defaultCurrency, members: [] }}
                 />
               </CardContent>
@@ -81,7 +81,7 @@ export default function CreateGroupPage() {
         />
       </div>
 
-      <Spinner show={isSubmitting} message="Creating..." />
+      <Spinner show={isSubmitting} message={tCommon("creating")} />
     </>
   );
 }

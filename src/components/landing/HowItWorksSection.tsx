@@ -1,3 +1,5 @@
+"use client";
+
 import {
   ArrowRight,
   BarChart3,
@@ -9,7 +11,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { Fragment, type ReactNode } from "react";
 
 import {
@@ -24,10 +27,11 @@ import { cn } from "@/lib/utils";
 
 type StepAccent = "brand" | "emerald" | "orange";
 
+type StepKey = "createGroups" | "addExpenses" | "trackBalances" | "settleFaster";
+
 type StepConfig = {
   number: number;
-  title: string;
-  description: string;
+  key: StepKey;
   icon: LucideIcon;
   accent: StepAccent;
   mockup: ReactNode;
@@ -253,37 +257,31 @@ function SettleFasterMockup() {
   );
 }
 
-const steps: StepConfig[] = [
+const stepConfigs: StepConfig[] = [
   {
     number: 1,
-    title: "Create Groups",
-    description:
-      "Organize expenses for trips, roommates, events, or everyday shared spending.",
+    key: "createGroups",
     icon: Users,
     accent: "brand",
     mockup: <CreateGroupMockup />,
   },
   {
     number: 2,
-    title: "Add Expenses",
-    description:
-      "Record shared payments, bills, transport costs, dinners, and bookings in seconds.",
+    key: "addExpenses",
     icon: DollarSign,
     accent: "emerald",
     mockup: <AddExpensesMockup />,
   },
   {
     number: 3,
-    title: "Track Balances",
-    description: "See who paid, who owes, and every group balance in real time.",
+    key: "trackBalances",
     icon: BarChart3,
     accent: "brand",
     mockup: <TrackBalancesMockup />,
   },
   {
     number: 4,
-    title: "Settle Faster",
-    description: "Simplify settlements and avoid unnecessary payment confusion.",
+    key: "settleFaster",
     icon: Wallet,
     accent: "orange",
     mockup: <SettleFasterMockup />,
@@ -324,7 +322,15 @@ function StepConnector({ accent }: { accent: StepAccent }) {
   );
 }
 
-function HowItWorksStep({ step }: { step: StepConfig }) {
+function HowItWorksStep({
+  step,
+  title,
+  description,
+}: {
+  step: StepConfig;
+  title: string;
+  description: string;
+}) {
   const styles = stepAccentStyles[step.accent];
   const Icon = step.icon;
 
@@ -349,9 +355,9 @@ function HowItWorksStep({ step }: { step: StepConfig }) {
         >
           <Icon className={cn("h-7 w-7", styles.iconColor)} strokeWidth={2} aria-hidden />
         </div>
-        <h3 className="mb-2 text-lg font-bold text-foreground">{step.title}</h3>
+        <h3 className="mb-2 text-lg font-bold text-foreground">{title}</h3>
         <p className="text-pretty text-sm leading-relaxed text-muted-foreground">
-          {step.description}
+          {description}
         </p>
       </div>
 
@@ -360,13 +366,11 @@ function HowItWorksStep({ step }: { step: StepConfig }) {
   );
 }
 
-const trustPoints = [
-  "Free to start",
-  "No credit card required",
-  "Secure & Private",
-] as const;
+const trustPointKeys = ["freeToStart", "noCreditCard", "securePrivate"] as const;
 
 function HowItWorksCta() {
+  const t = useTranslations("landing.howItWorks");
+
   return (
     <div className={cn("mt-5 p-5 sm:p-8 lg:p-5", brandStyles.ctaPanel)}>
       <div className="grid min-w-0 items-center gap-5 sm:gap-6 lg:grid-cols-[1.1fr_1fr_1fr] lg:gap-8">
@@ -381,10 +385,10 @@ function HowItWorksCta() {
           </span>
           <div className="min-w-0 max-w-full">
             <p className="text-balance text-lg font-bold leading-tight text-foreground sm:text-xl">
-              Start Managing Shared Expenses Smarter
+              {t("cta.title")}
             </p>
             <p className="mt-1.5 text-pretty text-sm text-muted-foreground">
-              Join groups, add expenses, and settle up in just a few taps.
+              {t("cta.description")}
             </p>
           </div>
         </div>
@@ -396,18 +400,18 @@ function HowItWorksCta() {
             className="h-12 w-full rounded-xl px-5 text-base font-semibold sm:max-w-xs sm:self-center sm:px-6"
           >
             <Link href="/create-group">
-              Create Your First Group
+              {t("cta.button")}
               <ArrowRight className="ml-1 h-5 w-5 shrink-0" />
             </Link>
           </Button>
           <ul className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 sm:gap-x-4">
-            {trustPoints.map((point) => (
+            {trustPointKeys.map((key) => (
               <li
-                key={point}
+                key={key}
                 className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground sm:text-xs"
               >
                 <CheckCircle2 className={cn("h-3.5 w-3.5 shrink-0", brandStyles.iconSm)} aria-hidden />
-                {point}
+                {t(`trust.${key}`)}
               </li>
             ))}
           </ul>
@@ -416,7 +420,7 @@ function HowItWorksCta() {
         <div className="hidden justify-center lg:flex lg:justify-end">
           <Image
             src="/landing/how-it-works-cta-people.png"
-            alt="Three friends managing shared expenses on their phones with SplitCost"
+            alt={t("cta.imageAlt")}
             width={520}
             height={300}
             className="h-auto w-full max-w-[420px] object-contain"
@@ -429,6 +433,8 @@ function HowItWorksCta() {
 }
 
 export function HowItWorksSection() {
+  const t = useTranslations("landing.howItWorks");
+
   return (
     <section
       className={cn(landingSection.alternate, landingSection.padding)}
@@ -438,27 +444,30 @@ export function HowItWorksSection() {
         <header className="mx-auto mb-10 max-w-3xl text-center sm:mb-12 md:mb-14">
           <p className={cn("mb-5", brandStyles.sectionBadge)}>
             <Sparkles className="h-3.5 w-3.5" aria-hidden />
-            Simple Expense Management
+            {t("badge")}
           </p>
           <h2
-            
             className="text-balance text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl md:text-5xl"
           >
-            One Simple Way to
+            {t("title")}
             <br />
-            <span className={brandStyles.headingAccent}>Track, Split &amp; Settle</span> Expenses
+            <span className={brandStyles.headingAccent}>{t("titleHighlight")}</span>{" "}
+            {t("titleSuffix")}
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-pretty text-sm text-muted-foreground sm:text-base">
-            SplitCost helps groups manage shared bills, track balances, organize travel expenses,
-            and settle payments without spreadsheets or awkward reminders.
+            {t("description")}
           </p>
         </header>
 
         <div className="grid gap-6 md:grid-cols-2 xl:flex xl:items-stretch xl:gap-0">
-          {steps.map((step, index) => (
+          {stepConfigs.map((step, index) => (
             <Fragment key={step.number}>
-              <HowItWorksStep step={step} />
-              {index < steps.length - 1 ? <StepConnector accent={step.accent} /> : null}
+              <HowItWorksStep
+                step={step}
+                title={t(`items.${step.key}.title`)}
+                description={t(`items.${step.key}.description`)}
+              />
+              {index < stepConfigs.length - 1 ? <StepConnector accent={step.accent} /> : null}
             </Fragment>
           ))}
         </div>

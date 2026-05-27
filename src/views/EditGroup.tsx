@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
@@ -108,11 +108,14 @@ function calculateBalances(
   return balances;
 }
 
-function getBalancePresentation(balance: number) {
+function getBalancePresentation(
+  balance: number,
+  labels: { getsBack: string; owes: string; settled: string }
+) {
   if (balance > 0.01) {
     return {
       tone: "positive" as const,
-      label: "Gets back",
+      label: labels.getsBack,
       value: balance,
     };
   }
@@ -120,14 +123,14 @@ function getBalancePresentation(balance: number) {
   if (balance < -0.01) {
     return {
       tone: "negative" as const,
-      label: "Owes",
+      label: labels.owes,
       value: Math.abs(balance),
     };
   }
 
   return {
     tone: "neutral" as const,
-    label: "Settled",
+    label: labels.settled,
     value: 0,
   };
 }
@@ -193,6 +196,18 @@ function EditGroupSkeleton() {
 }
 
 export default function EditGroupPage({ groupId }: { groupId: string }) {
+  const t = useTranslations("editGroup");
+  const tDetails = useTranslations("groupDetails");
+  const tGroup = useTranslations("group");
+  const tCommon = useTranslations("common");
+  const balanceLabels = useMemo(
+    () => ({
+      getsBack: t("getsBack"),
+      owes: t("owes"),
+      settled: t("settled"),
+    }),
+    [t]
+  );
   const router = useRouter();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -264,7 +279,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
       memberExists: members.some(
         (member) => member.name.trim().toLowerCase() === trimmed.toLowerCase()
       )
-        ? "This member is already in the group."
+        ? tGroup("memberAlreadyAdded")
         : undefined,
     }));
   }, [newMemberName, members]);
@@ -285,14 +300,17 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
   const memberCards = useMemo(
     () =>
       members.map((member, index) => {
-        const balanceInfo = getBalancePresentation(member.id ? balances[member.id] ?? 0 : 0);
+        const balanceInfo = getBalancePresentation(
+          member.id ? balances[member.id] ?? 0 : 0,
+          balanceLabels
+        );
         return {
           ...member,
           balanceInfo,
           isExisting: Boolean(member.id),
         };
       }),
-    [balances, members]
+    [balanceLabels, balances, members]
   );
 
   const summary = useMemo(() => {
@@ -343,7 +361,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
     const result = canRemoveGroupMember(dashboard?.expenses ?? [], selectedMember);
     return {
       canRemove: result.canRemove,
-      message: result.message || "This member can be removed from the group.",
+      message: result.message || t("memberCanBeRemoved"),
     };
   }, [dashboard?.expenses, isMemberSheetOpen, selectedMember]);
 
@@ -375,7 +393,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
     if (new Set(names).size !== names.length) {
       setErrors((current) => ({
         ...current,
-        memberExists: "Each member name must be unique.",
+        memberExists: t("uniqueNamesRequired"),
       }));
       return false;
     }
@@ -406,7 +424,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
     if (members.some((member) => member.name.trim().toLowerCase() === trimmedName.toLowerCase())) {
       setErrors((current) => ({
         ...current,
-        memberExists: "This member is already in the group.",
+        memberExists: tGroup("memberAlreadyAdded"),
       }));
       return;
     }
@@ -452,7 +470,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
       );
 
       if (hasDuplicate) {
-        return "Entered member name already exists in the group.";
+        return t("renameDuplicate");
       }
 
       return undefined;
@@ -487,8 +505,8 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
       const deleted = await deleteGroup(groupId);
       if (!deleted) {
         toast({
-          title: "Could not delete group",
-          description: "Please try again.",
+          title: t("couldNotDelete"),
+          description: t("pleaseTryAgain"),
           variant: "destructive",
         });
         setIsDeleting(false);
@@ -503,9 +521,9 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
       router.push("/");
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Failed to delete group";
+        error instanceof Error ? error.message : t("failedDelete");
       toast({
-        title: "Could not delete group",
+        title: t("couldNotDelete"),
         description: message,
         variant: "destructive",
       });
@@ -549,7 +567,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
         ].filter(Boolean) as string[];
         if (messages.length > 0) {
           toast({
-            title: "Missing required details",
+            title: tCommon("missingRequired"),
             description: (
               <div className="space-y-1">
                 {messages.map((msg, idx) => (
@@ -563,7 +581,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
             position: "center",
             hideClose: true,
             duration: Infinity,
-            action: <ToastAction altText="OK">OK</ToastAction>,
+            action: <ToastAction altText={tCommon("ok")}>{tCommon("ok")}</ToastAction>,
           });
         }
       }
@@ -583,18 +601,18 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
       await refreshGroupData(queryClient, groupId);
 
       toast({
-        title: "Group updated",
-        description: "Group details and members were updated successfully.",
+        title: t("groupUpdated"),
+        description: t("groupUpdatedDescription"),
       });
 
       router.push(`/group/${groupId}`);
       router.refresh();
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Failed to update group";
+        error instanceof Error ? error.message : t("failedUpdate");
 
       toast({
-        title: "Could not save changes",
+        title: t("couldNotSave"),
         description: message,
         variant: "destructive",
       });
@@ -610,9 +628,9 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
     return (
       <Layout>
         <div className="container py-12 text-center">
-          <p className="text-muted-foreground">Group not found</p>
+          <p className="text-muted-foreground">{tCommon("groupNotFound")}</p>
           <Button asChild className="mt-4">
-            <Link href="/">Go Home</Link>
+            <Link href="/">{tCommon("goHome")}</Link>
           </Button>
         </div>
       </Layout>
@@ -639,8 +657,8 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
           isSubmitting={isSubmitting}
           isDeleting={isDeleting}
         />
-        <Spinner show={isSubmitting} message="Saving..." />
-        <Spinner show={isDeleting} message="Deleting..." />
+        <Spinner show={isSubmitting} message={tCommon("saving")} />
+        <Spinner show={isDeleting} message={tCommon("deleting")} />
       </div>
 
       <div className="hidden md:block">
@@ -650,13 +668,13 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
             <Button variant="ghost" size="sm" asChild>
               <Link href={`/group/${groupId}`}>
                 <ArrowLeft className="w-4 h-4" />
-                Back to group
+                {tDetails("backToGroup")}
               </Link>
             </Button>
 
             <Button onClick={handleSaveGroup} disabled={isSubmitting || !hasChanges}>
               {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              {hasChanges ? "Save changes" : "Up to date"}
+              {hasChanges ? t("saveChanges") : t("upToDate")}
             </Button>
           </div>
 
@@ -669,11 +687,11 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                       <Users className="text-primary" />
                     </div>
                     <Badge variant="outline" className="mb-3 w-fit border-primary/20 bg-card/70 text-primary dark:text-primary/90">
-                      Manage members with confidence
+                      {t("manageMembersBadge")}
                     </Badge>
-                    <CardTitle className="text-2xl">Edit group</CardTitle>
+                    <CardTitle className="text-2xl">{t("editGroupTitle")}</CardTitle>
                     <CardDescription>
-                      Update your group details and manage members safely without affecting unsettled balances.
+                      {t("editGroupDescription")}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="grid gap-4 md:grid-cols-2">

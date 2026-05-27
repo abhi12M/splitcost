@@ -13,6 +13,7 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import {
   Accordion,
@@ -22,7 +23,7 @@ import {
 } from "@/components/ui/accordion";
 import { brandStyles, landingSection } from "@/lib/brand-styles";
 import { APP_NAME } from "@/lib/constants";
-import { FAQ_ITEMS } from "@/lib/faq";
+import { FAQ_KEYS, getFaqItems, type FaqKey } from "@/lib/faq";
 import { cn } from "@/lib/utils";
 
 type FaqDisplayItem = {
@@ -31,18 +32,18 @@ type FaqDisplayItem = {
   icon: LucideIcon;
 };
 
-const faqs: FaqDisplayItem[] = [
-  { ...FAQ_ITEMS[0], icon: Info },
-  { ...FAQ_ITEMS[1], icon: Globe },
-  { ...FAQ_ITEMS[2], icon: User },
-  { ...FAQ_ITEMS[3], icon: FileText },
-  { ...FAQ_ITEMS[4], icon: PieChart },
-  { ...FAQ_ITEMS[5], icon: Users },
-  { ...FAQ_ITEMS[6], icon: Luggage },
-  { ...FAQ_ITEMS[7], icon: Download },
-  { ...FAQ_ITEMS[8], icon: Smartphone },
-  { ...FAQ_ITEMS[9], icon: Users },
-];
+const faqIcons: Record<FaqKey, LucideIcon> = {
+  whatIs: Info,
+  currencies: Globe,
+  account: User,
+  attachments: FileText,
+  splitMethods: PieChart,
+  multiplePayers: Users,
+  travel: Luggage,
+  export: Download,
+  mobile: Smartphone,
+  whoCanUse: Users,
+};
 
 function FaqCard({ faq, index }: { faq: FaqDisplayItem; index: number }) {
   const Icon = faq.icon;
@@ -83,6 +84,14 @@ function FaqCard({ faq, index }: { faq: FaqDisplayItem; index: number }) {
 }
 
 export function FaqSection() {
+  const tLanding = useTranslations("landing.faq");
+  const tFaq = useTranslations("faq");
+  const faqItems = getFaqItems(tFaq);
+  const faqs: FaqDisplayItem[] = FAQ_KEYS.map((key, index) => ({
+    ...faqItems[index],
+    icon: faqIcons[key],
+  }));
+
   return (
     <section
       id="faq"
@@ -93,17 +102,17 @@ export function FaqSection() {
         <header className="mx-auto mb-8 max-w-3xl text-center sm:mb-12 md:mb-14">
           <p className={cn("mb-5", brandStyles.sectionBadge)}>
             <CircleHelp className="h-3.5 w-3.5" aria-hidden />
-            FAQs
+            {tLanding("badge")}
           </p>
           <h2
+            id="faq-heading"
             className="text-balance text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl md:text-[2.75rem] md:leading-tight"
           >
-            Frequently Asked Questions About{" "}
+            {tLanding("title")}{" "}
             <span className={brandStyles.headingAccent}>{APP_NAME}</span>
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-pretty text-sm text-muted-foreground sm:text-base">
-            Everything you need to know about shared expense tracking, bill splitting, group
-            payments, and managing expenses with {APP_NAME}.
+            {tLanding("description", { appName: APP_NAME })}
           </p>
         </header>
 
@@ -113,7 +122,7 @@ export function FaqSection() {
           className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2"
         >
           {faqs.map((faq, index) => (
-            <FaqCard key={faq.question} faq={faq} index={index} />
+            <FaqCard key={FAQ_KEYS[index]} faq={faq} index={index} />
           ))}
         </Accordion>
       </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname } from "@/i18n/navigation";
 
 import { LOCAL_GROUPS_KEY, MY_GROUPS_UPDATED_EVENT } from "@/lib/constants";
 import { getEncryptedItem } from "@/lib/localStorage";

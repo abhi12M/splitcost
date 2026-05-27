@@ -1,19 +1,19 @@
 "use client";
 
-import Link from "next/link";
+import { useTranslations } from "next-intl";
 
-const NotFound = () => {
+import { Link } from "@/i18n/navigation";
+
+export default function NotFound() {
+  const t = useTranslations("notFound");
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">404</h1>
-        <p className="mb-4 text-xl text-muted-foreground">Oops! Page not found</p>
-        <Link href="/" className="text-primary underline hover:text-primary/90">
-          Return to Home
-        </Link>
-      </div>
-    </div>
+    <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center">
+      <h1 className="text-2xl font-bold">{t("title")}</h1>
+      <p className="text-muted-foreground">{t("description")}</p>
+      <Link href="/" className="text-primary underline hover:text-primary/90">
+        {t("goHome")}
+      </Link>
+    </main>
   );
-};
-
-export default NotFound;
+}

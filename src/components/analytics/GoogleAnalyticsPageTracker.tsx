@@ -1,10 +1,12 @@
 "use client";
 
-import { usePathname, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useRef } from "react";
 
 import { GA_MEASUREMENT_ID } from "@/components/analytics/GoogleAnalytics";
+import { usePathname } from "@/i18n/navigation";
 import { ADMIN_PARENT_PATH } from "@/lib/constants";
+import { stripLocalePrefix } from "@/lib/seo-i18n";
 
 declare global {
   interface Window {

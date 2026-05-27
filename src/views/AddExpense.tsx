@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { Spinner } from "@/components/ui/Spinner";
@@ -26,6 +26,8 @@ import { saveCachedExpense } from "@/lib/expenseCache";
 import { getGroupViewerMemberId } from "@/lib/groupViewer";
 
 export default function AddExpensePage({ groupId }: { groupId: string }) {
+  const t = useTranslations("expense");
+  const tCommon = useTranslations("common");
   const router = useRouter();
   const queryClient = useQueryClient();
   // React Query owns the group fetch and (when available) hydrates from the
@@ -47,9 +49,9 @@ export default function AddExpensePage({ groupId }: { groupId: string }) {
     return (
       <Layout variant="minimal">
         <div className="container py-12 text-center">
-          <p className="text-muted-foreground">Group not found</p>
+          <p className="text-muted-foreground">{tCommon("groupNotFound")}</p>
           <Button asChild className="mt-4">
-            <Link href="/">Go Home</Link>
+            <Link href="/">{tCommon("goHome")}</Link>
           </Button>
         </div>
       </Layout>
@@ -128,16 +130,16 @@ export default function AddExpensePage({ groupId }: { groupId: string }) {
             <Button variant="ghost" size="sm" asChild className="mb-4">
               <Link href={`/group/${groupId}`}>
                 <ArrowLeft className="w-4 h-4 mr-1" />
-                Back to group
+                {t("backToGroup")}
               </Link>
             </Button>
 
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-200">
               <Card>
                 <CardHeader className="pb-4">
-                  <CardTitle className="text-xl">Add Expense</CardTitle>
+                  <CardTitle className="text-xl">{t("addExpense")}</CardTitle>
                   <CardDescription className="truncate">
-                    Record a new expense for {group.name}
+                    {t("recordForGroup", { name: group.name })}
                   </CardDescription>
                 </CardHeader>
 
@@ -148,7 +150,7 @@ export default function AddExpensePage({ groupId }: { groupId: string }) {
                     defaultPaidByUserId={defaultPaidByUserId}
                     viewerMemberId={defaultPaidByUserId ?? null}
                     onSubmit={handleSubmit}
-                    submitLabel={isSubmitting ? "Adding..." : "Add Expense"}
+                    submitLabel={isSubmitting ? tCommon("adding") : t("addExpense")}
                   />
                 </CardContent>
               </Card>
@@ -168,7 +170,7 @@ export default function AddExpensePage({ groupId }: { groupId: string }) {
           onSubmit={handleSubmit}
         />
       </div>
-      <Spinner show={isSubmitting} message="Creating..." />
+      <Spinner show={isSubmitting} message={tCommon("creating")} />
     </>
   );
 }

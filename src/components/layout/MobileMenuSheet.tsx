@@ -1,8 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useTheme } from "next-themes";
 import {
   Briefcase,
   ChevronRight,
@@ -15,8 +12,11 @@ import {
   Sun,
   type LucideIcon,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useTheme } from "next-themes";
 import { useEffect, useState, type CSSProperties, type MouseEvent } from "react";
 
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import {
   Sheet,
   SheetContent,
@@ -24,6 +24,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
+import { Link, useRouter } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 
 /** Matches `MobileBottomNav` height (bar + safe area). */
@@ -36,32 +37,32 @@ type MobileMenuSheetProps = {
 };
 
 type MenuLink = {
-  href: string;
-  label: string;
+  href: "/" | "/#how-it-works" | "/#features" | "/#use-cases" | "/#faq" | "/contact" | "/privacy" | "/terms";
+  labelKey: "howItWorks" | "features" | "useCases" | "faq" | "contact" | "privacy" | "terms";
   icon: LucideIcon;
 };
 
-const MENU_SECTIONS: { title: string; links: MenuLink[] }[] = [
+const MENU_SECTIONS: { titleKey: "product" | "support" | "legal"; links: MenuLink[] }[] = [
   {
-    title: "Product",
+    titleKey: "product",
     links: [
-      { href: "/#how-it-works", label: "How it works", icon: CircleHelp },
-      { href: "/#features", label: "Features", icon: Star },
-      { href: "/#use-cases", label: "Use cases", icon: Briefcase },
+      { href: "/#how-it-works", labelKey: "howItWorks", icon: CircleHelp },
+      { href: "/#features", labelKey: "features", icon: Star },
+      { href: "/#use-cases", labelKey: "useCases", icon: Briefcase },
     ],
   },
   {
-    title: "Support",
+    titleKey: "support",
     links: [
-      { href: "/#faq", label: "FAQ", icon: MessageCircleQuestion },
-      { href: "/contact", label: "Contact", icon: Mail },
+      { href: "/#faq", labelKey: "faq", icon: MessageCircleQuestion },
+      { href: "/contact", labelKey: "contact", icon: Mail },
     ],
   },
   {
-    title: "Legal",
+    titleKey: "legal",
     links: [
-      { href: "/privacy", label: "Privacy", icon: Shield },
-      { href: "/terms", label: "Terms", icon: FileText },
+      { href: "/privacy", labelKey: "privacy", icon: Shield },
+      { href: "/terms", labelKey: "terms", icon: FileText },
     ],
   },
 ];
@@ -71,7 +72,12 @@ function MenuRow({
   label,
   icon: Icon,
   onNavigate,
-}: MenuLink & { onNavigate: () => void }) {
+}: {
+  href: MenuLink["href"];
+  label: string;
+  icon: LucideIcon;
+  onNavigate: () => void;
+}) {
   const router = useRouter();
 
   const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
@@ -91,12 +97,17 @@ function MenuRow({
     >
       <Icon className="h-[22px] w-[22px] shrink-0 text-primary" strokeWidth={1.5} aria-hidden />
       <span className="flex-1">{label}</span>
-      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/60" strokeWidth={2} aria-hidden />
+      <ChevronRight
+        className="h-4 w-4 shrink-0 text-muted-foreground/60"
+        strokeWidth={2}
+        aria-hidden
+      />
     </Link>
   );
 }
 
 function LightModeToggle() {
+  const t = useTranslations("layout");
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -108,17 +119,18 @@ function LightModeToggle() {
   return (
     <div className="mx-4 flex items-center gap-3 rounded-xl border border-border bg-background px-4 py-3">
       <Sun className="h-[22px] w-[22px] shrink-0 text-primary" strokeWidth={1.5} aria-hidden />
-      <span className="flex-1 text-[15px] font-medium text-foreground">Light mode</span>
+      <span className="flex-1 text-[15px] font-medium text-foreground">{t("lightMode")}</span>
       <Switch
         checked={isLight}
         onCheckedChange={(checked) => setTheme(checked ? "light" : "dark")}
-        aria-label="Toggle light mode"
+        aria-label={t("toggleLightMode")}
       />
     </div>
   );
 }
 
 export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
+  const t = useTranslations("layout");
   const close = () => onOpenChange(false);
 
   return (
@@ -132,23 +144,27 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
         )}
         style={{ "--mobile-nav-offset": MOBILE_BOTTOM_NAV_OFFSET } as CSSProperties}
       >
-        <SheetTitle className="sr-only">Menu</SheetTitle>
-        <SheetDescription className="sr-only">
-          Site navigation, settings, and quick links
-        </SheetDescription>
+        <SheetTitle className="sr-only">{t("menuSheetTitle")}</SheetTitle>
+        <SheetDescription className="sr-only">{t("menuSheetDescription")}</SheetDescription>
 
         <div className="overflow-y-auto overscroll-contain pt-3 pb-4">
           {MENU_SECTIONS.map((section, sectionIndex) => (
-            <div key={section.title}>
+            <div key={section.titleKey}>
               {sectionIndex > 0 ? (
                 <div className="mx-4 border-t border-border" role="presentation" />
               ) : null}
               <p className="px-4 pb-0.5 pt-3 text-[13px] font-medium text-muted-foreground">
-                {section.title}
+                {t(section.titleKey)}
               </p>
-              <nav aria-label={section.title}>
+              <nav aria-label={t(section.titleKey)}>
                 {section.links.map((link) => (
-                  <MenuRow key={`${section.title}-${link.href}`} {...link} onNavigate={close} />
+                  <MenuRow
+                    key={`${section.titleKey}-${link.href}`}
+                    href={link.href}
+                    label={t(link.labelKey)}
+                    icon={link.icon}
+                    onNavigate={close}
+                  />
                 ))}
               </nav>
             </div>
@@ -156,7 +172,10 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
 
           <div className="pt-2">
             <div className="mx-4 border-t border-border" role="presentation" />
-            <div className="pt-3">
+            <div className="flex items-center justify-between px-4 py-3">
+              <LanguageSwitcher variant="default" />
+            </div>
+            <div className="pt-1">
               <LightModeToggle />
             </div>
           </div>

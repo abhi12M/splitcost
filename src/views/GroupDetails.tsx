@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -80,14 +81,19 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+function ChartLoadingPlaceholder() {
+  const tCommon = useTranslations("common");
+  return (
+    <div className="h-[200px] w-full flex items-center justify-center text-sm text-muted-foreground">
+      {tCommon("loadingChart")}
+    </div>
+  );
+}
+
 // Recharts is ~100KB. Only load it when the user opens the chart view.
 const ExpenseChart = dynamic(() => import("@/components/group/ExpenseChart"), {
   ssr: false,
-  loading: () => (
-    <div className="h-[200px] w-full flex items-center justify-center text-sm text-muted-foreground">
-      Loading chart…
-    </div>
-  ),
+  loading: () => <ChartLoadingPlaceholder />,
 });
 
 /* ======================================================
@@ -269,17 +275,28 @@ function formatExportDate(value: string | Date) {
   return `${day}-${month}-${year}`;
 }
 
+type CsvLabels = {
+  date: string;
+  description: string;
+  category: string;
+  cost: string;
+  currency: string;
+  netMeaning: string;
+  totalBalance: string;
+};
+
 function buildExpensesCsv(
   group: GroupDashboardInterface["group"],
   expenses: GroupDashboardInterface["expenses"],
-  balances: Record<string, number>
+  balances: Record<string, number>,
+  labels: CsvLabels
 ) {
   const headers: Array<string | number> = [
-    "Date",
-    "Description",
-    "Category",
-    "Cost",
-    "Currency",
+    labels.date,
+    labels.description,
+    labels.category,
+    labels.cost,
+    labels.currency,
     ...group.members.map((member) => member.name),
   ];
 
@@ -289,7 +306,7 @@ function buildExpensesCsv(
     "",
     "",
     "",
-    ...group.members.map(() => "Net amount (+ gets back, - owes)"),
+    ...group.members.map(() => labels.netMeaning),
   ];
 
   const rows = expenses.map((expense) => {
@@ -323,7 +340,7 @@ function buildExpensesCsv(
 
   const totalBalanceRow: Array<string | number> = [
     formatExportDate(new Date()),
-    "Total balance",
+    labels.totalBalance,
     "",
     "",
     group.currency,
@@ -438,8 +455,31 @@ export default function GroupResponsesPage({
   groupId: string;
   isAdminView?: boolean;
 }) {
+  const t = useTranslations("groupDetails");
+  const tGroup = useTranslations("group");
+  const tCommon = useTranslations("common");
+  const youLabel = tGroup("you");
   const queryClient = useQueryClient();
   const dashboardQuery = useGroupDashboardQuery(groupId);
+
+  const groupByOptions = useMemo(
+    () => [
+      { value: "date" as const, label: t("groupByDate"), icon: Calendar },
+      { value: "paidBy" as const, label: t("groupByPaidBy"), icon: User },
+      { value: "category" as const, label: t("groupByCategory"), icon: Tag },
+      { value: "splitType" as const, label: t("groupBySplitType"), icon: Split },
+    ],
+    [t]
+  );
+
+  const sortOptions = useMemo(
+    () => [
+      { value: "date_desc" as const, label: t("sortNewest"), icon: ArrowUpDown },
+      { value: "amount_desc" as const, label: t("sortHighest"), icon: ArrowDown },
+      { value: "amount_asc" as const, label: t("sortLowest"), icon: ArrowUp },
+    ],
+    [t]
+  );
 
   const group = dashboardQuery.data?.group ?? null;
   const expenses = dashboardQuery.data?.expenses ?? [];
@@ -614,9 +654,9 @@ export default function GroupResponsesPage({
     return (
       <Layout>
         <div className="container py-12 text-center">
-          <p className="text-muted-foreground">Group not found</p>
+          <p className="text-muted-foreground">{tCommon("groupNotFound")}</p>
           <Button asChild className="mt-4">
-            <Link href="/">Go Home</Link>
+            <Link href="/">{tCommon("goHome")}</Link>
           </Button>
         </div>
       </Layout>
@@ -632,8 +672,8 @@ export default function GroupResponsesPage({
 
     if (type === "settlement" && !settlementText.trim()) {
       toast({
-        title: "Nothing to share yet",
-        description: "Add expenses so we can suggest who should pay whom.",
+        title: t("nothingToShare"),
+        description: t("nothingToShareHint"),
       });
       return;
     }
@@ -644,7 +684,7 @@ export default function GroupResponsesPage({
       type === "link"
         ? {
             title: `${group.name} · SplitCost`,
-            text: `Join group "${group.name}" on SplitCost to split expenses, track balances, and settle up together.`,
+            text: t("shareJoinText", { name: group.name }),
             url: shareLink,
           }
         : {
@@ -656,16 +696,16 @@ export default function GroupResponsesPage({
 
     if (outcome === "copied") {
       toast({
-        title: "Copied to clipboard",
+        title: t("copiedTitle"),
         description:
           type === "link"
-            ? "Paste the link in chat or email for your group."
-            : "Paste the summary in chat, email, or notes.",
+            ? t("copiedLinkHint")
+            : t("copiedSettlementHint"),
       });
     } else if (outcome === "failed") {
       toast({
-        title: "Could not share or copy",
-        description: "Your browser blocked clipboard access. Try again or copy the link from the address bar.",
+        title: t("shareFailedTitle"),
+        description: t("shareFailedHint"),
         variant: "destructive",
       });
     }
@@ -675,21 +715,20 @@ export default function GroupResponsesPage({
   const getSettlementText = () => {
     if (settlements.length === 0) return "";
 
-    const lines = settlements.map(
-      (s) =>
-        `${memberDisplayNameForViewer(s.fromId, s.fromName, viewerMemberId)} pays ${memberDisplayNameForViewer(
-          s.toId,
-          s.toName,
-          viewerMemberId
-        )} ${formatCurrency(s.amount, group.currency)}`
+    const lines = settlements.map((s) =>
+      t("settlementLine", {
+        from: memberDisplayNameForViewer(s.fromId, s.fromName, viewerMemberId),
+        to: memberDisplayNameForViewer(s.toId, s.toName, viewerMemberId),
+        amount: formatCurrency(s.amount, group.currency),
+      })
     );
 
     return [
-      "Settlement Summary",
+      t("settlementSummaryTitle"),
       "",
       ...lines,
       "",
-      "View full details here:",
+      t("viewDetailsHere"),
       shareLink,
     ].join("\n");
   };
@@ -699,16 +738,22 @@ export default function GroupResponsesPage({
 
     if (!exportExpenses.length) {
       toast({
-        title: "Nothing to export",
-        description: search
-          ? "No expenses match the current search."
-          : "Add an expense before exporting.",
+        title: t("nothingToExport"),
+        description: search ? t("noSearchExport") : t("addBeforeExport"),
       });
       return;
     }
 
     const exportBalances = calculateBalances(exportExpenses, group.members);
-    const csv = buildExpensesCsv(group, exportExpenses, exportBalances);
+    const csv = buildExpensesCsv(group, exportExpenses, exportBalances, {
+      date: t("exportDate"),
+      description: t("exportDescription"),
+      category: t("exportCategory"),
+      cost: t("exportCost"),
+      currency: t("exportCurrency"),
+      netMeaning: t("exportNetMeaning"),
+      totalBalance: t("exportTotalBalance"),
+    });
     const blob = new Blob([`\uFEFF${csv}`], {
       type: "text/csv;charset=utf-8;",
     });
@@ -724,8 +769,8 @@ export default function GroupResponsesPage({
     URL.revokeObjectURL(url);
 
     toast({
-      title: "Export ready",
-      description: `${exportExpenses.length} expense${exportExpenses.length === 1 ? "" : "s"} exported.`,
+      title: t("exportReady"),
+      description: t("exportReadyDescription", { count: exportExpenses.length }),
     });
   };
 
@@ -736,7 +781,10 @@ export default function GroupResponsesPage({
     try {
       setSettlingIndex(index);
       const data: ExpenseRequest = {
-        description: `Settlement between ${setlementData.fromName} and ${setlementData.toName}`,
+        description: t("settlementBetween", {
+          from: setlementData.fromName,
+          to: setlementData.toName,
+        }),
         category: "settlement",
         subcategory: "settle_up",
         amount: setlementData.amount,
@@ -813,7 +861,7 @@ export default function GroupResponsesPage({
         <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3">
           <div className="flex min-w-0 flex-1 items-start gap-2 sm:items-center sm:gap-3">
             <Button variant="ghost" size="icon-sm" className="mt-0.5 shrink-0 sm:mt-0" asChild>
-              <Link href={isAdminView ? ADMIN_BASE_PATH : "/"} aria-label="Back">
+              <Link href={isAdminView ? ADMIN_BASE_PATH : "/"} aria-label={tCommon("back")}>
                 <ArrowLeft className="h-5 w-5" />
               </Link>
             </Button>
@@ -825,7 +873,7 @@ export default function GroupResponsesPage({
               <AvatarGroup
                 names={group.members.map((m) => m.name)}
                 overlayNames={group.members.map((m) =>
-                  memberLabelWithYouSuffix(m.id, m.name, viewerMemberId)
+                  memberLabelWithYouSuffix(m.id, m.name, viewerMemberId, youLabel)
                 )}
                 className="max-w-full"
               />
@@ -835,7 +883,7 @@ export default function GroupResponsesPage({
             <Button variant="outline" size="sm" className="h-9 flex-1 sm:flex-initial" asChild>
               <Link href={`/group/${groupId}/edit`}>
                 <Pencil className="h-4 w-4" />
-                <span className="sm:hidden">Edit</span>
+                <span className="sm:hidden">{tCommon("edit")}</span>
               </Link>
             </Button>
             <Button
@@ -843,17 +891,17 @@ export default function GroupResponsesPage({
               size="sm"
               className="h-9 flex-1 sm:flex-initial"
               type="button"
-              title="Share group link"
-              aria-label="Share group link"
+              title={t("shareGroupLink")}
+              aria-label={t("shareGroupLink")}
               onClick={() => shareGroupContent("link")}
             >
               <Share2 className="h-4 w-4" />
-              <span className="sm:hidden">Share</span>
+              <span className="sm:hidden">{tCommon("share")}</span>
             </Button>
             <Button asChild size="sm" className="hidden h-9 sm:inline-flex">
               <Link href={`/group/${groupId}/add-expense`}>
                 <Plus className="h-4 w-4" />
-                Add expense
+                {t("addExpense")}
               </Link>
             </Button>
           </div>
@@ -863,24 +911,27 @@ export default function GroupResponsesPage({
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
           {[
             {
-              label: "Group total",
+              label: t("groupTotal"),
               value: formatCurrency(totalExpenses, group.currency),
-              hint: `${expenses.length} expense${expenses.length === 1 ? "" : "s"}`,
+              hint: t("expenseCount", { count: expenses.length }),
             },
             {
-              label: "Members",
+              label: t("membersStat"),
               value: String(group.members.length),
-              hint: "In this group",
+              hint: t("inThisGroup"),
             },
             {
-              label: "Settlements",
+              label: t("settlementsStat"),
               value: String(settlementCount),
-              hint: settlementCount === 1 ? "Suggested transfer" : "Suggested transfers",
+              hint:
+                settlementCount === 1
+                  ? t("suggestedTransfer")
+                  : t("suggestedTransfers"),
             },
             {
-              label: "Currency",
+              label: t("currencyStat"),
               value: group.currency || "—",
-              hint: "Group default",
+              hint: t("groupDefault"),
             },
           ].map((stat) => (
             <Card key={stat.label} className="border-border/80 shadow-sm">
@@ -910,7 +961,7 @@ export default function GroupResponsesPage({
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input
                       className="w-full pl-9 h-10 rounded-md border bg-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                      placeholder="Search expenses"
+                      placeholder={t("searchExpenses")}
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                     />
@@ -919,30 +970,30 @@ export default function GroupResponsesPage({
                   {/* Group By */}
                   <div className="col-span-12 sm:col-span-3">
                     <SingleSelect
-                      items={GROUP_BY_OPTIONS.map((m) => ({
+                      items={groupByOptions.map((m) => ({
                         id: m.value,
                         label: m.label,
                         icon: m.icon,
                       }))}
                       value={{ itemId: groupBy }}
                       onSelect={(_, itemId) => setGroupBy(itemId as GroupByValue)}
-                      placeholder="Group by"
-                      label="Group by"
+                      placeholder={t("groupBy")}
+                      label={t("groupBy")}
                     />
                   </div>
 
                   {/* Sort By */}
                   <div className="col-span-12 sm:col-span-4">
                     <SingleSelect
-                      items={SORT_OPTIONS.map((m) => ({
+                      items={sortOptions.map((m) => ({
                         id: m.value,
                         label: m.label,
                         icon: m.icon,
                       }))}
                       value={{ itemId: sortBy }}
                       onSelect={(_, itemId) => setSortBy(itemId as SortByValue)}
-                      placeholder="Sort by"
-                      label="Sort by"
+                      placeholder={t("sortBy")}
+                      label={t("sortBy")}
                     />
                   </div>
                 </div>
@@ -956,12 +1007,12 @@ export default function GroupResponsesPage({
                 <div className="min-w-0 space-y-1">
                   <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                     <Wallet className="h-5 w-5 shrink-0 text-primary" />
-                    Expenses
+                    {t("expensesTitle")}
                   </CardTitle>
 
                   <p className="text-sm text-muted-foreground flex flex-col sm:flex-row sm:items-center sm:gap-1">
                     <span>
-                      Total{" "}
+                      {t("totalLabel")}{" "}
                       <span className="font-semibold text-foreground">
                         {formatCurrency(totalExpenses, group.currency)}
                       </span>
@@ -969,7 +1020,7 @@ export default function GroupResponsesPage({
 
                     <span className="hidden sm:inline opacity-60">·</span>
 
-                    <span>{expenses.length} expenses</span>
+                    <span>{t("expenseCount", { count: expenses.length })}</span>
                   </p>
 
                 </div>
@@ -988,7 +1039,7 @@ export default function GroupResponsesPage({
                       )}
                     >
                       <List className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">List</span>
+                      <span className="hidden sm:inline">{tCommon("list")}</span>
                     </button>
 
                     <button
@@ -1001,7 +1052,7 @@ export default function GroupResponsesPage({
                       )}
                     >
                       <LayoutDashboard className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Chart</span>
+                      <span className="hidden sm:inline">{tCommon("chart")}</span>
                     </button>
                   </div>
 
@@ -1010,18 +1061,18 @@ export default function GroupResponsesPage({
                     size="sm"
                     onClick={handleExportExpenses}
                     disabled={!expenses.length}
-                    title="Export expenses"
+                    title={t("exportExpenses")}
                     className="h-auto px-0"
                   >
                     <Download className="w-4 h-4" />
-                    <span className="hidden sm:inline">Export</span>
+                    <span className="hidden sm:inline">{tCommon("export")}</span>
                   </Button>
 
                   {/* Add Button */}
                   <Button asChild size="sm">
                     <Link href={`/group/${groupId}/add-expense`}>
                       <Plus className="w-4 h-4" />
-                      <span className="hidden sm:inline">Add</span>
+                      <span className="hidden sm:inline">{tCommon("add")}</span>
                     </Link>
                   </Button>
                 </div>
@@ -1030,19 +1081,12 @@ export default function GroupResponsesPage({
               <CardContent className="p-0">
                 {search && visibleCount > 0 && (
                   <div className="px-4 py-2 text-sm text-muted-foreground">
-                    Showing{" "}
-                    <span className="font-medium text-foreground">
-                      {visibleCount}
-                    </span>{" "}
-                    expense{visibleCount !== 1 && "s"} for{" "}
-                    <span className="font-medium text-foreground">
-                      “{search}”
-                    </span>
+                    {t("showingSearch", { count: visibleCount, query: search })}
                     <button
                       className="ml-2 underline text-xs"
                       onClick={() => setSearch("")}
                     >
-                      Clear
+                      {tCommon("clear")}
                     </button>
                   </div>
                 )}
@@ -1055,10 +1099,10 @@ export default function GroupResponsesPage({
 
                     <div>
                       <p className="font-medium text-foreground">
-                        No expenses found
+                        {t("noExpensesFound")}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        Try a different keyword or clear your search
+                        {t("tryDifferentSearch")}
                       </p>
                     </div>
 
@@ -1068,7 +1112,7 @@ export default function GroupResponsesPage({
                         size="sm"
                         onClick={() => setSearch("")}
                       >
-                        Clear search
+                        {t("clearSearch")}
                       </Button>
                     )}
                   </div>
@@ -1082,17 +1126,17 @@ export default function GroupResponsesPage({
 
                     <div className="space-y-1">
                       <p className="font-semibold text-lg text-foreground">
-                        No expenses yet
+                        {t("noExpensesYet")}
                       </p>
                       <p className="text-sm text-muted-foreground max-w-xs">
-                        Start adding expenses to track who paid, who owes, and settle up easily.
+                        {t("startAddingHint")}
                       </p>
                     </div>
 
                     <Button asChild size="sm" className="shrink-0">
                       <Link href={`/group/${groupId}/add-expense`}>
                         <Plus className="w-4 h-4" />
-                        Add first expense
+                        {t("addFirstExpense")}
                       </Link>
                     </Button>
                   </div>
@@ -1128,7 +1172,7 @@ export default function GroupResponsesPage({
                                       {formatExpenseGroupHeaderTitle(title, groupBy, shouldTitleCase)}
                                     </div>
                                     <p className="text-xs text-muted-foreground">
-                                      {list.length} expenses
+                                      {t("expenseCount", { count: list.length })}
                                     </p>
                                   </div>
                                 </div>
@@ -1171,10 +1215,10 @@ export default function GroupResponsesPage({
                                       {/* PAID BY */}
                                       <div className="text-xs md:text-base text-muted-foreground mt-0.5 flex items-center gap-1">
                                         <SmartTooltip
-                                          text={getExpensePaidByLabel(expense, viewerMemberId)}
+                                          text={getExpensePaidByLabel(expense, viewerMemberId, youLabel, tGroup)}
                                           disableMobileTooltip
                                         />
-                                        <span className="shrink-0">paid</span>
+                                        <span className="shrink-0">{tCommon("paid")}</span>
                                       </div>
 
 
@@ -1188,7 +1232,7 @@ export default function GroupResponsesPage({
                                           .map((p) => p.user)
                                           .filter((u): u is UserInterface => !!u)
                                           .map((u) =>
-                                            memberLabelWithYouSuffix(u.id, u.name, viewerMemberId)
+                                            memberLabelWithYouSuffix(u.id, u.name, viewerMemberId, youLabel)
                                           )}
                                         className="mt-2"
                                         label=""
@@ -1231,7 +1275,7 @@ export default function GroupResponsesPage({
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                   <Users className="h-5 w-5 shrink-0 text-primary" />
-                  Balances
+                  {t("balances")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="max-h-none space-y-3 overflow-visible sm:max-h-[min(22rem,50vh)] sm:overflow-y-auto lg:max-h-[17rem] lg:overflow-y-auto">
@@ -1267,14 +1311,14 @@ export default function GroupResponsesPage({
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
                 <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                   <ArrowRight className="h-5 w-5 shrink-0 text-primary" />
-                  Who pays whom
+                  {t("whoPaysWhom")}
                 </CardTitle>
 
                 {(expenses.length > 0 || settlements.length > 0) && (
                   <button
                     onClick={() => shareGroupContent("settlement")}
                     className="p-2 rounded-md hover:bg-muted transition"
-                    title="Share settlement summary"
+                    title={t("shareSettlement")}
                   >
                     <Share2 className="w-4 h-4 text-muted-foreground" />
                   </button>
@@ -1285,14 +1329,14 @@ export default function GroupResponsesPage({
                 {/* 🚫 NO EXPENSES YET */}
                 {expenses.length === 0 && (
                   <p className="text-sm text-muted-foreground text-center">
-                    Add expenses to see who owes whom
+                    {t("addExpensesWhoOwes")}
                   </p>
                 )}
 
                 {/* ✅ EXPENSES EXIST BUT ALL SETTLED */}
                 {expenses.length > 0 && settlements.length === 0 && (
                   <p className="text-sm text-muted-foreground text-center">
-                    All settled 🎉
+                    {t("allSettledCelebration")}
                   </p>
                 )}
 
@@ -1300,15 +1344,15 @@ export default function GroupResponsesPage({
                 {settlements.map((s, i) => {
                   const isOpen = openRow === i;
                   const isLoading = settlingIndex === i;
+                  const fromName = memberDisplayNameForViewer(s.fromId, s.fromName, viewerMemberId);
+                  const toName = memberDisplayNameForViewer(s.toId, s.toName, viewerMemberId);
 
                   return (
                     <div key={i} className="border-b last:border-b-0">
                       {/* ROW */}
                       <div className="flex items-start justify-between gap-3 py-2">
                         <div className="flex-1 min-w-0 text-sm leading-snug break-words">
-                          <span>{memberDisplayNameForViewer(s.fromId, s.fromName, viewerMemberId)}</span>{" "}
-                          <span className="font-semibold">pays</span>{" "}
-                          <span>{memberDisplayNameForViewer(s.toId, s.toName, viewerMemberId)}</span>
+                          {tCommon("paysTo", { from: fromName, to: toName })}
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -1348,7 +1392,7 @@ export default function GroupResponsesPage({
                             {isLoading && (
                               <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                             )}
-                            {isLoading ? "Settling…" : "Settle up"}
+                            {isLoading ? t("settling") : t("settleUp")}
                           </button>
                         </div>
                       )}
@@ -1368,25 +1412,32 @@ export default function GroupResponsesPage({
               <AlertDialogContent className="max-w-[310px] rounded-2xl">
                 <AlertDialogHeader>
                   <AlertDialogTitle className="text-lg">
-                    Record this settlement?
+                    {t("recordSettlementTitle")}
                   </AlertDialogTitle>
                   <AlertDialogDescription className="text-xs">
                     {settleConfirmation
-                      ? `This will mark that ${memberDisplayNameForViewer(
-                          settleConfirmation.settlement.fromId,
-                          settleConfirmation.settlement.fromName,
-                          viewerMemberId
-                        )} paid ${memberDisplayNameForViewer(
-                          settleConfirmation.settlement.toId,
-                          settleConfirmation.settlement.toName,
-                          viewerMemberId
-                        )} ${formatCurrency(settleConfirmation.settlement.amount, group.currency)} by adding a settlement entry to the group.`
+                      ? t("recordSettlementDescriptionDesktop", {
+                          from: memberDisplayNameForViewer(
+                            settleConfirmation.settlement.fromId,
+                            settleConfirmation.settlement.fromName,
+                            viewerMemberId
+                          ),
+                          to: memberDisplayNameForViewer(
+                            settleConfirmation.settlement.toId,
+                            settleConfirmation.settlement.toName,
+                            viewerMemberId
+                          ),
+                          amount: formatCurrency(
+                            settleConfirmation.settlement.amount,
+                            group.currency
+                          ),
+                        })
                       : ""}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter className="flex-row gap-2 mt-4">
                   <AlertDialogCancel className="flex-1 mt-0 rounded-xl border-none bg-muted hover:bg-muted/80">
-                    Cancel
+                    {tCommon("cancel")}
                   </AlertDialogCancel>
                   <AlertDialogAction
                     onClick={() => {
@@ -1403,7 +1454,7 @@ export default function GroupResponsesPage({
                     }
                     className="flex-1 rounded-xl"
                   >
-                    Yes, settle up
+                    {tCommon("yesSettleUp")}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -1415,7 +1466,7 @@ export default function GroupResponsesPage({
         <Link
           href={`/group/${groupId}/add-expense`}
           className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom,0px))] right-[max(1.25rem,env(safe-area-inset-right,0px))] z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition hover:bg-primary/92 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-[0.97] lg:hidden"
-          aria-label="Add expense"
+          aria-label={t("addExpense")}
         >
           <Plus className="h-7 w-7" strokeWidth={2.25} />
         </Link>

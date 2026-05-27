@@ -1,14 +1,14 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { Menu, MessageCircle, Plus, Users, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState, type ReactNode } from "react";
 
 import { MobileMenuSheet } from "@/components/layout/MobileMenuSheet";
 import { useBackButtonClose } from "@/hooks/useBackButtonClose";
 import { useDeviceType } from "@/hooks/useDeviceType";
 import { useMyGroupsCount } from "@/hooks/useMyGroupsCount";
+import { Link, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 
 type TabId = "menu" | "groups" | "new" | "contact";
@@ -114,6 +114,7 @@ function resolveActiveTab(pathname: string, menuOpen: boolean): TabId | null {
 }
 
 export function MobileBottomNav() {
+  const t = useTranslations("layout");
   const deviceType = useDeviceType();
   const pathname = usePathname();
   const groupsCount = useMyGroupsCount();
@@ -134,21 +135,21 @@ export function MobileBottomNav() {
   return (
     <>
       <nav
-        aria-label="Mobile"
+        aria-label={t("mobileNav")}
         className="fixed inset-x-0 bottom-0 z-[60] border-t border-border bg-background sm:hidden"
       >
         <div className="grid grid-cols-4 divide-x divide-border pb-[env(safe-area-inset-bottom,0px)]">
           <NavButton
             active={activeTab === "menu"}
-            label={menuOpen ? "Close" : "Menu"}
+            label={menuOpen ? t("close") : t("menu")}
             onClick={() => setMenuOpen((open) => !open)}
             ariaExpanded={menuOpen}
-            ariaLabel={menuOpen ? "Close menu" : "Open menu"}
+            ariaLabel={menuOpen ? t("closeMenu") : t("openMenu")}
           >
             <MenuToggleIcon open={menuOpen} />
           </NavButton>
 
-          <NavButton active={activeTab === "groups"} label="Groups" href="/groups">
+          <NavButton active={activeTab === "groups"} label={t("groups")} href="/groups">
             <span className="relative inline-flex">
               <Users
                 className={cn(
@@ -162,13 +163,16 @@ export function MobileBottomNav() {
             </span>
           </NavButton>
 
-          <NavButton active={activeTab === "new"} label="New" href="/create-group">
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary" aria-hidden>
+          <NavButton active={activeTab === "new"} label={t("new")} href="/create-group">
+            <span
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-primary"
+              aria-hidden
+            >
               <Plus className="h-4 w-4 text-primary-foreground" strokeWidth={2.5} />
             </span>
           </NavButton>
 
-          <NavButton active={activeTab === "contact"} label="Contact" href="/contact">
+          <NavButton active={activeTab === "contact"} label={t("contact")} href="/contact">
             <MessageCircle
               className={cn(
                 "h-6 w-6",

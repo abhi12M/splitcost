@@ -1,12 +1,16 @@
+import { getTranslations } from "next-intl/server";
+
 import { Layout } from "@/components/layout/Layout";
 import { APP_NAME } from "@/lib/constants";
 import { getCanonicalUrl } from "@/lib/seo";
 
-export default function TermsPage() {
+export default async function TermsPage() {
+  const t = await getTranslations("terms");
+
   const termsJsonLd = {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    name: `${APP_NAME} Terms of Service`,
+    name: t("jsonLdName", { appName: APP_NAME }),
     url: getCanonicalUrl("/terms"),
     isPartOf: {
       "@type": "WebSite",
@@ -19,13 +23,13 @@ export default function TermsPage() {
         {
           "@type": "ListItem",
           position: 1,
-          name: "Home",
+          name: t("breadcrumbHome"),
           item: getCanonicalUrl("/"),
         },
         {
           "@type": "ListItem",
           position: 2,
-          name: "Terms of Service",
+          name: t("breadcrumbTerms"),
           item: getCanonicalUrl("/terms"),
         },
       ],
@@ -42,95 +46,78 @@ export default function TermsPage() {
 
         <div>
           <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-8">
-            Terms of Service
+            {t("title")}
           </h1>
 
           <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6 text-muted-foreground">
-            <p className="text-base leading-7">
-              These Terms of Service govern your use of {APP_NAME}. The product
-              helps groups record shared expenses, calculate balances, and
-              simplify settlements, but users remain responsible for reviewing
-              entries and resolving payment disputes.
-            </p>
+            <p className="text-base leading-7">{t("intro", { appName: APP_NAME })}</p>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mt-8 mb-4">1. Acceptance of Terms</h2>
-              <p>
-                By accessing or using {APP_NAME}, you agree to these Terms of
-                Service. If you do not agree, you should stop using the
-                service.
-              </p>
+              <h2 className="text-xl font-semibold text-foreground mt-8 mb-4">
+                {t("section1Title")}
+              </h2>
+              <p>{t("section1Body", { appName: APP_NAME })}</p>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mt-8 mb-4">2. Description of Service</h2>
-              <p>
-                {APP_NAME} is a web-based expense tracker that allows groups to
-                create shared expense records, assign payers and participants,
-                and review balances. The service is provided on an "as is" and
-                "as available" basis.
-              </p>
+              <h2 className="text-xl font-semibold text-foreground mt-8 mb-4">
+                {t("section2Title")}
+              </h2>
+              <p>{t("section2Body", { appName: APP_NAME })}</p>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mt-8 mb-4">3. User Responsibilities</h2>
-              <p>
-                You are responsible for:
-              </p>
+              <h2 className="text-xl font-semibold text-foreground mt-8 mb-4">
+                {t("section3Title")}
+              </h2>
+              <p>{t("section3Intro")}</p>
               <ul className="list-disc pl-6 space-y-2">
-                <li>The accuracy of expense data you enter</li>
-                <li>Keeping your group links secure</li>
-                <li>Using the service in compliance with applicable laws</li>
-                <li>Not using the service for illegal, harmful, or unauthorized purposes</li>
+                <li>{t("section3Item1")}</li>
+                <li>{t("section3Item2")}</li>
+                <li>{t("section3Item3")}</li>
+                <li>{t("section3Item4")}</li>
               </ul>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mt-8 mb-4">4. Limitation of Liability</h2>
-              <p>
-                {APP_NAME} is a calculation and record-keeping tool. We are not
-                responsible for:
-              </p>
+              <h2 className="text-xl font-semibold text-foreground mt-8 mb-4">
+                {t("section4Title")}
+              </h2>
+              <p>{t("section4Intro", { appName: APP_NAME })}</p>
               <ul className="list-disc pl-6 space-y-2">
-                <li>Disputes between users regarding expenses</li>
-                <li>Inaccurate calculations due to user input errors</li>
-                <li>Loss of data due to technical issues</li>
-                <li>Any financial decisions made based on our calculations</li>
+                <li>{t("section4Item1")}</li>
+                <li>{t("section4Item2")}</li>
+                <li>{t("section4Item3")}</li>
+                <li>{t("section4Item4")}</li>
               </ul>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mt-8 mb-4">5. Intellectual Property</h2>
-              <p>
-                The {APP_NAME} name, logo, design elements, and related content
-                are owned by {APP_NAME} or its licensors. You may not reuse our
-                branding without permission.
-              </p>
+              <h2 className="text-xl font-semibold text-foreground mt-8 mb-4">
+                {t("section5Title")}
+              </h2>
+              <p>{t("section5Body", { appName: APP_NAME })}</p>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mt-8 mb-4">6. Modifications</h2>
-              <p>
-                We may update these terms from time to time. Continued use of
-                the service after an update means you accept the revised terms.
-              </p>
+              <h2 className="text-xl font-semibold text-foreground mt-8 mb-4">
+                {t("section6Title")}
+              </h2>
+              <p>{t("section6Body")}</p>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mt-8 mb-4">7. Termination</h2>
-              <p>
-                We may suspend or terminate access if we believe a user has
-                violated these terms or used the service in a way that harms the
-                platform or other users.
-              </p>
+              <h2 className="text-xl font-semibold text-foreground mt-8 mb-4">
+                {t("section7Title")}
+              </h2>
+              <p>{t("section7Body")}</p>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mt-8 mb-4">8. Contact</h2>
-              <p>
-                For questions about these terms, please contact us through the
-                Contact page.
-              </p>
+              <h2 className="text-xl font-semibold text-foreground mt-8 mb-4">
+                {t("section8Title")}
+              </h2>
+              <p>{t("section8Body")}</p>
             </section>
           </div>
         </div>

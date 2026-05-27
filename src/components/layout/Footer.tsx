@@ -1,11 +1,15 @@
-"use client"
+"use client";
 
-import Link from "next/link"
+import { useTranslations } from "next-intl";
 
-import { BrandIcon } from "@/components/brand/BrandIcon"
-import { APP_NAME } from "@/lib/constants"
+import { BrandIcon } from "@/components/brand/BrandIcon";
+import { APP_NAME } from "@/lib/constants";
+import { Link } from "@/i18n/navigation";
 
 export function Footer() {
+  const t = useTranslations("layout");
+  const year = new Date().getFullYear();
+
   return (
     <footer className="border-t border-border bg-muted/30 pb-[calc(4.25rem+env(safe-area-inset-bottom,0px))] sm:pb-0">
       <div className="container pt-10 pb-8 sm:pt-16 sm:pb-12 md:pt-20">
@@ -17,22 +21,18 @@ export function Footer() {
             >
               <BrandIcon className="h-10 w-auto" height={40} />
             </Link>
-            <p className="text-sm text-muted-foreground max-w-sm">
-              A free expense splitting app for friends, roommates, couples, and
-              travel groups. Track shared bills, balances, and settlements
-              without sign-up.
-            </p>
+            <p className="text-sm text-muted-foreground max-w-sm">{t("footerTagline")}</p>
           </div>
 
-          <nav aria-label="Product links">
-            <p className="font-semibold text-foreground mb-4">Product</p>
+          <nav aria-label={t("product")}>
+            <p className="font-semibold text-foreground mb-4">{t("product")}</p>
             <ul className="space-y-2.5">
               <li>
                 <Link
                   href="/#how-it-works"
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
                 >
-                  How it works
+                  {t("howItWorks")}
                 </Link>
               </li>
               <li>
@@ -40,7 +40,7 @@ export function Footer() {
                   href="/#features"
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
                 >
-                  Features
+                  {t("features")}
                 </Link>
               </li>
               <li>
@@ -48,21 +48,21 @@ export function Footer() {
                   href="/#use-cases"
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
                 >
-                  Use cases
+                  {t("useCases")}
                 </Link>
               </li>
             </ul>
           </nav>
 
-          <nav aria-label="Support links">
-            <p className="font-semibold text-foreground mb-4">Support</p>
+          <nav aria-label={t("support")}>
+            <p className="font-semibold text-foreground mb-4">{t("support")}</p>
             <ul className="space-y-2.5">
               <li>
                 <Link
                   href="/#faq"
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
                 >
-                  FAQ
+                  {t("faq")}
                 </Link>
               </li>
               <li>
@@ -70,21 +70,21 @@ export function Footer() {
                   href="/contact"
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
                 >
-                  Contact
+                  {t("contact")}
                 </Link>
               </li>
             </ul>
           </nav>
 
-          <nav aria-label="Legal links">
-            <p className="font-semibold text-foreground mb-4">Legal</p>
+          <nav aria-label={t("legal")}>
+            <p className="font-semibold text-foreground mb-4">{t("legal")}</p>
             <ul className="space-y-2.5">
               <li>
                 <Link
                   href="/privacy"
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
                 >
-                  Privacy
+                  {t("privacy")}
                 </Link>
               </li>
               <li>
@@ -92,7 +92,7 @@ export function Footer() {
                   href="/terms"
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
                 >
-                  Terms
+                  {t("terms")}
                 </Link>
               </li>
             </ul>
@@ -101,13 +101,11 @@ export function Footer() {
 
         <div className="mt-8 pt-8 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-sm text-muted-foreground">
-            {"(c)"} {new Date().getFullYear()} {APP_NAME}. All rights reserved.
+            {t("footerRights", { year, appName: APP_NAME })}
           </p>
-          <p className="text-xs text-muted-foreground">
-            Split bills clearly, track balances accurately, and settle up faster
-          </p>
+          <p className="text-xs text-muted-foreground">{t("footerMotto")}</p>
         </div>
       </div>
     </footer>
-  )
+  );
 }

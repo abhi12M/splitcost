@@ -1,4 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { AnimatePresence, motion } from "framer-motion";
 import { Plus, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserAvatar } from "@/components/ui/UserAvatar";
-import { MEMBERS_MAX, GroupSchema, MemberNameSchema } from "@/lib/validations/group.schema";
+import { MEMBERS_MAX, MEMBERS_MIN, MEMBER_NAME_MAX, GROUP_NAME_MAX } from "@/lib/validations/group.schema";
+import { createGroupSchemas } from "@/lib/validations/group.schema.i18n";
 import { CURRENCIES } from "@/constants";
 
 interface GroupFormProps {
@@ -21,6 +25,21 @@ interface GroupFormProps {
 }
 
 export function GroupForm({ initialData, onSubmit, submitLabel, isSubmitting }: GroupFormProps) {
+  const t = useTranslations("group");
+  const tVal = useTranslations("group.validation");
+  const { GroupSchema, MemberNameSchema } = useMemo(
+    () =>
+      createGroupSchemas({
+        memberNameRequired: tVal("memberNameRequired"),
+        memberNameMax: tVal("memberNameMax", { max: MEMBER_NAME_MAX }),
+        groupNameRequired: tVal("groupNameRequired"),
+        groupNameMax: tVal("groupNameMax", { max: GROUP_NAME_MAX }),
+        membersMin: tVal("membersMin", { min: MEMBERS_MIN }),
+        membersMax: tVal("membersMax", { max: MEMBERS_MAX }),
+      }),
+    [tVal]
+  );
+
   const [groupName, setGroupName] = useState(initialData?.name || "");
   const [currency, setCurrency] = useState(initialData?.currency || "INR");
   const [members, setMembers] = useState<string[]>(initialData?.members || []);
@@ -85,7 +104,7 @@ export function GroupForm({ initialData, onSubmit, submitLabel, isSubmitting }: 
     setErrors(prev => ({
       ...prev,
       memberName: memberResult.success ? undefined : memberResult.error.issues[0]?.message,
-      memberExists: members.includes(trimmedMember) ? "Member already added." : undefined,
+      memberExists: members.includes(trimmedMember) ? t("memberAlreadyAdded") : undefined,
     }));
   }, [newMember, members]);
 
@@ -96,7 +115,7 @@ export function GroupForm({ initialData, onSubmit, submitLabel, isSubmitting }: 
       return;
     }
     if (members.includes(newMember.trim())) {
-      setErrors(prev => ({ ...prev, memberExists: "Member already added." }));
+      setErrors(prev => ({ ...prev, memberExists: t("memberAlreadyAdded") }));
       return;
     }
     setMembers([...members, newMember.trim()]);
@@ -118,18 +137,18 @@ export function GroupForm({ initialData, onSubmit, submitLabel, isSubmitting }: 
       }
     }}>
       <div className="space-y-2">
-        <Label htmlFor="groupName">Group Name<span className="text-destructive">*</span></Label>
+        <Label htmlFor="groupName">{t("groupName")}<span className="text-destructive">*</span></Label>
         <Input
           id="groupName"
           value={groupName}
           onChange={(e) => setGroupName(e.target.value)}
-          placeholder="e.g., Paris Trip 2024"
+          placeholder={t("groupNamePlaceholder")}
         />
         {errors.groupName && <span className="text-xs text-destructive">{errors.groupName}</span>}
       </div>
 
       <div className="space-y-2">
-        <Label>Default Currency</Label>
+        <Label>{t("defaultCurrency")}</Label>
         <Select value={currency} onValueChange={setCurrency}>
           <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -143,12 +162,12 @@ export function GroupForm({ initialData, onSubmit, submitLabel, isSubmitting }: 
       </div>
 
       <div className="space-y-3">
-        <Label>Members <span className="text-destructive">*</span></Label>
+        <Label>{t("members")} <span className="text-destructive">*</span></Label>
         <div className="space-y-2">
           <div className="flex gap-2">
             <div className="flex-1 relative">
               <Input
-                placeholder={members.length >= MEMBERS_MAX ? "Max reached" : "Enter name"}
+                placeholder={members.length >= MEMBERS_MAX ? t("maxReached") : t("enterName")}
                 value={newMember}
                 onChange={(e) => setNewMember(e.target.value)}
                 disabled={members.length >= MEMBERS_MAX}

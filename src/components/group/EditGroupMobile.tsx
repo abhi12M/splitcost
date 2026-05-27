@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import {
   ArrowLeft,
   Check,
@@ -109,6 +110,8 @@ export function EditGroupMobile({
   isSubmitting = false,
   isDeleting = false,
 }: EditGroupMobileProps) {
+  const t = useTranslations("group");
+  const tCommon = useTranslations("common");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   return (
@@ -120,12 +123,12 @@ export function EditGroupMobile({
               <Link href={`/group/${groupId}`}>
                 <ArrowLeft className="h-5 w-5" />
               </Link>
-              <span className="font-medium">Edit group</span>
+              <span className="font-medium">{t("editGroup")}</span>
               <button
                 type="button"
                 onClick={onSaveGroup}
                 disabled={isSubmitting}
-                aria-label="Save group"
+                aria-label={t("saveGroup")}
               >
                 {isSubmitting ? (
                   <Loader2 className="h-5 w-5 animate-spin text-primary" />
@@ -139,7 +142,7 @@ export function EditGroupMobile({
               <StatChip>
                 <Users className="h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={1.75} />
                 <span className="text-foreground">
-                  {memberCards.length} member{memberCards.length === 1 ? "" : "s"}
+                  {t("memberCount", { count: memberCards.length })}
                 </span>
               </StatChip>
 
@@ -153,11 +156,11 @@ export function EditGroupMobile({
                   className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
                   strokeWidth={1.75}
                 />
-                <span className={balanceStyles.positiveSummary}>{summary.getBackCount} gets back</span>
+                <span className={balanceStyles.positiveSummary}>{t("getsBackCount", { count: summary.getBackCount })}</span>
                 <span className="text-muted-foreground" aria-hidden>
                   ·
                 </span>
-                <span className={balanceStyles.negativeSummary}>{summary.oweCount} owes</span>
+                <span className={balanceStyles.negativeSummary}>{t("owesCount", { count: summary.oweCount })}</span>
               </StatChip>
             </div>
           </>
@@ -174,7 +177,7 @@ export function EditGroupMobile({
               id="edit-group-name"
               value={groupName}
               onChange={(e) => onGroupNameChange(e.target.value)}
-              placeholder="Enter group name (e.g., Trip to Goa)"
+              placeholder={t("enterGroupNamePlaceholder")}
               aria-invalid={!!errors.groupName}
             />
           </GroupFormFieldBox>
@@ -191,8 +194,8 @@ export function EditGroupMobile({
               invalid={Boolean(errors.members || errors.memberName || errors.memberExists)}
               placeholder={
                 memberCards.length >= MEMBERS_MAX
-                  ? `Maximum ${MEMBERS_MAX} members`
-                  : "Add member"
+                  ? t("maximumMembers", { max: MEMBERS_MAX })
+                  : t("addMember")
               }
             />
 
@@ -221,7 +224,7 @@ export function EditGroupMobile({
                       <span className="truncate text-sm font-medium">{member.name}</span>
                       {!member.isExisting ? (
                         <Badge variant="outline" className="h-5 shrink-0 border-dashed text-[10px]">
-                          New
+                          {t("newBadge")}
                         </Badge>
                       ) : null}
                     </div>
@@ -256,9 +259,9 @@ export function EditGroupMobile({
             </div>
           </div>
           <div className="rounded-xl border border-destructive/30 p-4">
-            <p className="text-sm font-medium">Delete group</p>
+            <p className="text-sm font-medium">{t("deleteGroup")}</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Permanently removes this group and all its expenses.
+              {t("deleteGroupHint")}
             </p>
             <Button
               type="button"
@@ -267,7 +270,7 @@ export function EditGroupMobile({
               className="mt-3 w-full border-destructive text-destructive hover:bg-destructive/5"
               onClick={() => setDeleteDialogOpen(true)}
             >
-              Delete group
+              {t("deleteGroup")}
             </Button>
           </div>
         </div>
@@ -276,19 +279,18 @@ export function EditGroupMobile({
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent className="max-w-[320px] rounded-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete group?</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteGroupTitle")}</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <span className="block">
-                Are you absolutely sure you want to delete this group?
+                {t("deleteGroupConfirm")}
               </span>
               <span className="block">
-                All expenses, balances, and records for ALL members will be permanently removed.
-                This action cannot be undone.
+                {t("deleteGroupWarning")}
               </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>{tCommon("cancel")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={isDeleting}
@@ -297,7 +299,7 @@ export function EditGroupMobile({
                 void onDeleteGroup();
               }}
             >
-              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Delete"}
+              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : tCommon("delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

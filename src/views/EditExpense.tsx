@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
@@ -25,6 +25,8 @@ import { getGroupViewerMemberId } from "@/lib/groupViewer";
 export default function EditExpensePage({ groupId, expenseId }: { groupId: string; expenseId: string }) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const t = useTranslations("expense");
+  const tCommon = useTranslations("common");
   // React Query backs the expense fetch. Hydrating from sessionStorage means
   // navigating view -> edit within the staleTime window (30s) renders the
   // form instantly with zero new network requests.
@@ -52,9 +54,9 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
     return (
       <Layout variant="minimal">
         <div className="container py-12 text-center">
-          <p className="text-muted-foreground">Expense not found</p>
+          <p className="text-muted-foreground">{tCommon("expenseNotFound")}</p>
           <Button asChild className="mt-4">
-            <Link href="/">Go Home</Link>
+            <Link href="/">{tCommon("goHome")}</Link>
           </Button>
         </div>
       </Layout>
@@ -106,7 +108,7 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
             <Button variant="ghost" size="sm" asChild className="mb-4">
               <Link href={`/group/${groupId}`}>
                 <ArrowLeft className="w-4 h-4" />
-                Back to group
+                {t("backToGroup")}
               </Link>
             </Button>
 
@@ -115,8 +117,8 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
                 <CardHeader className="pb-4">
                   <div className="flex items-start justify-between">
                     <div>
-                      <CardTitle className="text-xl">Edit Expense</CardTitle>
-                      <CardDescription>Modify the expense details</CardDescription>
+                      <CardTitle className="text-xl">{t("editExpense")}</CardTitle>
+                      <CardDescription>{t("editDescription")}</CardDescription>
                     </div>
                   </div>
                 </CardHeader>
@@ -131,7 +133,7 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
                     }}
                     initialAttachment={attachment}
                     onSubmit={handleSubmit}
-                    submitLabel={isSubmitting ? "Saving..." : "Save Changes"}
+                    submitLabel={isSubmitting ? tCommon("saving") : t("saveChanges")}
                   />
                 </CardContent>
               </Card>
@@ -152,7 +154,7 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
           onSubmit={handleSubmit}
         />
       </div>
-      <Spinner show={isSubmitting} message="Saving..." />
+      <Spinner show={isSubmitting} message={tCommon("saving")} />
     </>
   );
 }

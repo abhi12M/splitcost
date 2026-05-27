@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useTranslations } from "next-intl";
 import { ArrowLeft, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "../ui/UserAvatar";
@@ -293,6 +294,9 @@ export function buildSplitScreenVM(params: {
 
 export default function SplitScreen(props: SplitScreenProps) {
     const { onClose, amount, currency, members, viewerMemberId, initialParticipants, splitType, onConfirm } = props;
+    const t = useTranslations("expense");
+    const tCommon = useTranslations("common");
+    const youLabel = useTranslations("group")("you");
     const { keyboardOffset } = useKeyboardLayout();
     const swipeHandlers = useSwipeable({
         onSwipedLeft: () => {
@@ -343,8 +347,13 @@ export default function SplitScreen(props: SplitScreenProps) {
         })
     );
 
-    const activeTab = vm.tabs.find((t) => t.id === vm.selectedTab)!;
-    const headerTitle = SPLIT_HEADER_TITLES[vm.selectedTab];
+    const activeTab = vm.tabs.find((tab) => tab.id === vm.selectedTab)!;
+    const headerTitle =
+        vm.selectedTab === "equal"
+            ? t("splitEqualTitle")
+            : vm.selectedTab === "custom"
+              ? t("splitCustomTitle")
+              : t("splitPercentTitle");
 
     function updateVM(updater: (prev: SplitScreenVM) => SplitScreenVM) {
         setVM((prev) => updater(prev));
@@ -511,12 +520,12 @@ export default function SplitScreen(props: SplitScreenProps) {
             };
             if (!data?.participants?.length) {
                 toast({
-                    title: "Whoops!",
-                    description: tab.footer.message.error,
+                    title: tCommon("whoops"),
+                    description: t("selectOneToSplit"),
                     position: "center",
                     hideClose: true,
                     duration: Infinity,
-                    action: <ToastAction altText="OK">OK</ToastAction>,
+                    action: <ToastAction altText={tCommon("ok")}>{tCommon("ok")}</ToastAction>,
                 });
                 return;
             }
@@ -545,12 +554,12 @@ export default function SplitScreen(props: SplitScreenProps) {
                 }
 
                 toast({
-                    title: "Whoops!",
+                    title: tCommon("whoops"),
                     description: errMsg,
                     position: "center",
                     hideClose: true,
                     duration: Infinity,
-                    action: <ToastAction altText="OK">OK</ToastAction>,
+                    action: <ToastAction altText={tCommon("ok")}>{tCommon("ok")}</ToastAction>,
                 });
                 return;
             }
@@ -568,12 +577,12 @@ export default function SplitScreen(props: SplitScreenProps) {
             }
 
             toast({
-                title: "Whoops!",
+                title: tCommon("whoops"),
                 description: errMsg,
                 position: "center",
                 hideClose: true,
                 duration: Infinity,
-                action: <ToastAction altText="OK">OK</ToastAction>,
+                action: <ToastAction altText={tCommon("ok")}>{tCommon("ok")}</ToastAction>,
             });
             return;
         }
@@ -597,7 +606,7 @@ export default function SplitScreen(props: SplitScreenProps) {
                         <span className="font-medium">{headerTitle}</span>
                         <InfoSheetButton
                             title={headerTitle}
-                            description={getSplitInfoText(vm.selectedTab, amount, currency)}
+                            description={getSplitInfoText(vm.selectedTab, t)}
                         />
                     </div>
                     <Check onClick={() => {
@@ -643,7 +652,7 @@ export default function SplitScreen(props: SplitScreenProps) {
                 }}
             >
                 {activeTab.id === "equal" && activeTab.members.map((m) => {
-                    const rowLabel = memberNameForViewer(m.id, m.name, viewerMemberId);
+                    const rowLabel = memberNameForViewer(m.id, m.name, viewerMemberId, youLabel);
                     return (
                     <div key={m.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
                         <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -675,7 +684,7 @@ export default function SplitScreen(props: SplitScreenProps) {
                 })}
 
                 {activeTab.id === "custom" && activeTab.members.map((m) => {
-                    const rowLabel = memberNameForViewer(m.id, m.name, viewerMemberId);
+                    const rowLabel = memberNameForViewer(m.id, m.name, viewerMemberId, youLabel);
                     return (
                     <div key={m.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
                         <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -717,7 +726,7 @@ export default function SplitScreen(props: SplitScreenProps) {
                 })}
 
                 {activeTab.id === "percentage" && activeTab.members.map((m) => {
-                    const rowLabel = memberNameForViewer(m.id, m.name, viewerMemberId);
+                    const rowLabel = memberNameForViewer(m.id, m.name, viewerMemberId, youLabel);
                     return (
                     <div key={m.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
                         <div className="flex items-center gap-2 min-w-0 flex-1">

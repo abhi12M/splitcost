@@ -3,6 +3,13 @@ import type { GroupDashboardInterface, UserInterface } from "@/lib/storage";
 
 export type DashboardExpense = GroupDashboardInterface["expenses"][number];
 
+export type GroupExpenseTranslateFn = (
+  key: string,
+  values?: Record<string, string | number>
+) => string;
+
+const DEFAULT_YOU = "You";
+
 export function expenseHasAttachment(expense: DashboardExpense): boolean {
   return Boolean(expense.attachmentDataUrl ?? expense.attachment_data_url);
 }
@@ -10,9 +17,10 @@ export function expenseHasAttachment(expense: DashboardExpense): boolean {
 export function memberNameForViewer(
   memberId: string,
   name: string,
-  viewerMemberId: string | null | undefined
+  viewerMemberId: string | null | undefined,
+  youLabel: string = DEFAULT_YOU
 ): string {
-  if (viewerMemberId && memberId === viewerMemberId) return "You";
+  if (viewerMemberId && memberId === viewerMemberId) return youLabel;
   return name;
 }
 
@@ -20,9 +28,10 @@ export function memberNameForViewer(
 export function memberLabelWithYouSuffix(
   memberId: string,
   name: string,
-  viewerMemberId: string | null | undefined
+  viewerMemberId: string | null | undefined,
+  youLabel: string = DEFAULT_YOU
 ): string {
-  if (viewerMemberId && memberId === viewerMemberId) return `${name} (You)`;
+  if (viewerMemberId && memberId === viewerMemberId) return `${name} (${youLabel})`;
   return name;
 }
 
@@ -30,9 +39,12 @@ export function memberLabelWithYouSuffix(
 export function memberDisplayNameForViewer(
   memberId: string,
   name: string,
-  viewerMemberId: string | null | undefined
+  viewerMemberId: string | null | undefined,
+  youLabel: string = DEFAULT_YOU
 ): string {
-  return formatSummaryName(memberNameForViewer(memberId, name, viewerMemberId));
+  return formatSummaryName(
+    memberNameForViewer(memberId, name, viewerMemberId, youLabel)
+  );
 }
 
 export function getExpensePayers(expense: DashboardExpense): UserInterface[] {
@@ -47,19 +59,30 @@ export function getExpensePayers(expense: DashboardExpense): UserInterface[] {
 
 export function getExpensePaidByLabel(
   expense: DashboardExpense,
-  viewerMemberId?: string | null
+  viewerMemberId?: string | null,
+  youLabel: string = DEFAULT_YOU,
+  t?: GroupExpenseTranslateFn
 ) {
   const payers = getExpensePayers(expense);
   const labels = payers.map((p) =>
-    memberDisplayNameForViewer(p.id, p.name, viewerMemberId)
+    memberDisplayNameForViewer(p.id, p.name, viewerMemberId, youLabel)
   );
 
-  if (labels.length === 0) return "Unknown payer";
+  const unknown = t?.("unknownPayer") ?? "Unknown payer";
+  const paidByTwo = (first: string, second: string) =>
+    t?.("paidByTwo", { first, second }) ?? `${first} & ${second}`;
+  const youPlusOthers = (count: number) =>
+    t?.("youPlusOthers", { count }) ??
+    `You + ${count} other${count === 1 ? "" : "s"}`;
+  const peopleCount = (count: number) =>
+    t?.("peopleCount", { count }) ?? `${count} people`;
+
+  if (labels.length === 0) return unknown;
   if (labels.length === 1) return labels[0];
-  if (labels.length === 2) return `${labels[0]} & ${labels[1]}`;
+  if (labels.length === 2) return paidByTwo(labels[0], labels[1]);
   if (viewerMemberId && payers.some((p) => p.id === viewerMemberId)) {
     const others = payers.length - 1;
-    return `You + ${others} other${others === 1 ? "" : "s"}`;
+    return youPlusOthers(others);
   }
-  return `${payers.length} people`;
+  return peopleCount(payers.length);
 }

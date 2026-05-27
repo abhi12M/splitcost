@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { ArrowLeft, Check, ChevronDown, Users, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { SingleSelect } from "@/components/ui/single-select";
@@ -10,7 +11,13 @@ import { GroupFormFieldBox } from "@/components/group/GroupFormFieldBox";
 import { AvatarGroup, UserAvatar } from "@/components/ui/UserAvatar";
 import { CURRENCIES } from "@/constants";
 import { MobileGroupFormLayout } from "@/components/group/MobileGroupFormLayout";
-import { GroupSchema, MemberNameSchema, MEMBERS_MAX } from "@/lib/validations/group.schema";
+import {
+  GROUP_NAME_MAX,
+  MEMBER_NAME_MAX,
+  MEMBERS_MAX,
+  MEMBERS_MIN,
+} from "@/lib/validations/group.schema";
+import { createGroupSchemas } from "@/lib/validations/group.schema.i18n";
 import { toast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 
@@ -25,6 +32,22 @@ export function GroupFormMobile({
   initialCurrency = "INR",
   onSubmit,
 }: GroupFormMobileProps) {
+  const t = useTranslations("group");
+  const tCommon = useTranslations("common");
+  const tVal = useTranslations("group.validation");
+  const { GroupSchema, MemberNameSchema } = useMemo(
+    () =>
+      createGroupSchemas({
+        memberNameRequired: tVal("memberNameRequired"),
+        memberNameMax: tVal("memberNameMax", { max: MEMBER_NAME_MAX }),
+        groupNameRequired: tVal("groupNameRequired"),
+        groupNameMax: tVal("groupNameMax", { max: GROUP_NAME_MAX }),
+        membersMin: tVal("membersMin", { min: MEMBERS_MIN }),
+        membersMax: tVal("membersMax", { max: MEMBERS_MAX }),
+      }),
+    [tVal]
+  );
+
   const [groupName, setGroupName] = useState("");
   const [currency, setCurrency] = useState(initialCurrency);
   const [members, setMembers] = useState<string[]>([]);
@@ -81,13 +104,13 @@ export function GroupFormMobile({
     setErrors((prev) => ({
       ...prev,
       memberName: memberResult.success ? undefined : memberResult.error.issues[0]?.message,
-      memberExists: members.includes(trimmed) ? "Member already added." : undefined,
+      memberExists: members.includes(trimmed) ? t("memberAlreadyAdded") : undefined,
     }));
   }, [newMember, members]);
 
   const handleAddMember = () => {
     if (members.length >= MEMBERS_MAX) {
-      setErrors((prev) => ({ ...prev, members: `Maximum ${MEMBERS_MAX} members allowed.` }));
+      setErrors((prev) => ({ ...prev, members: tVal("membersMax", { max: MEMBERS_MAX }) }));
       return;
     }
     const result = MemberNameSchema.safeParse(newMember);
@@ -97,7 +120,7 @@ export function GroupFormMobile({
     }
     const trimmed = newMember.trim();
     if (members.some((m) => m.toLowerCase() === trimmed.toLowerCase())) {
-      setErrors((prev) => ({ ...prev, memberExists: "Member already added." }));
+      setErrors((prev) => ({ ...prev, memberExists: t("memberAlreadyAdded") }));
       return;
     }
     setMembers([...members, trimmed]);
@@ -121,7 +144,7 @@ export function GroupFormMobile({
     if (messages.length === 0) return;
 
     toast({
-      title: "Missing required details",
+      title: tCommon("missingRequired"),
       description: (
         <div className="space-y-1">
           {messages.map((msg, idx) => (
@@ -135,7 +158,7 @@ export function GroupFormMobile({
       position: "center",
       hideClose: true,
       duration: Infinity,
-      action: <ToastAction altText="OK">OK</ToastAction>,
+      action: <ToastAction altText={tCommon("ok")}>{tCommon("ok")}</ToastAction>,
     });
   };
 
@@ -157,18 +180,18 @@ export function GroupFormMobile({
             <Link href={backHref}>
               <ArrowLeft className="h-5 w-5" />
             </Link>
-            <span className="font-medium">Create group</span>
-            <button type="button" onClick={handleSubmit} aria-label="Create group">
+            <span className="font-medium">{t("createGroup")}</span>
+            <button type="button" onClick={handleSubmit} aria-label={t("createGroup")}>
               <Check className="h-5 w-5 text-primary" />
             </button>
           </div>
 
           <div className="flex items-center gap-2 border-b px-4 py-1">
-            <span className="text-sm text-muted-foreground">Members:</span>
+            <span className="text-sm text-muted-foreground">{t("membersLabel")}</span>
             {members.length > 0 ? (
               <AvatarGroup names={members} isShowTotalMemberText={false} size="sm" max={8} />
             ) : (
-              <span className="text-xs text-muted-foreground">None yet</span>
+              <span className="text-xs text-muted-foreground">{t("noneYet")}</span>
             )}
           </div>
         </>
@@ -185,7 +208,7 @@ export function GroupFormMobile({
               id="group-name"
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
-              placeholder="Enter group name (e.g., Trip to Goa)"
+              placeholder={t("enterGroupNamePlaceholder")}
               aria-invalid={!!errors.groupName}
             />
           </GroupFormFieldBox>
@@ -201,7 +224,7 @@ export function GroupFormMobile({
               }))}
               value={{ itemId: currency }}
               onSelect={(_, itemId) => setCurrency(itemId)}
-              inputPlaceholder="Search currency..."
+              inputPlaceholder={t("searchCurrency")}
               fullscreenOnMobile
               isDisplayId
               trigger={
@@ -212,7 +235,7 @@ export function GroupFormMobile({
                   <span className="min-w-0 flex-1 truncate px-3 text-left text-sm font-medium text-foreground">
                     {currencyMeta
                       ? `${currencyMeta.symbol} ${currencyMeta.code} · ${currencyMeta.name}`
-                      : "Select currency"}
+                      : t("selectCurrency")}
                   </span>
                   <ChevronDown
                     className="mr-3 h-4 w-4 shrink-0 text-muted-foreground"
@@ -230,7 +253,7 @@ export function GroupFormMobile({
               disabled={members.length >= MEMBERS_MAX}
               invalid={Boolean(errors.members || errors.memberName || errors.memberExists)}
               placeholder={
-                members.length >= MEMBERS_MAX ? "Maximum members reached" : "Add member"
+                members.length >= MEMBERS_MAX ? t("maximumMembersReached") : t("addMember")
               }
             />
 
@@ -254,7 +277,7 @@ export function GroupFormMobile({
                       type="button"
                       onClick={() => setMembers(members.filter((m) => m !== name))}
                       className="text-muted-foreground hover:text-destructive"
-                      aria-label={`Remove ${name}`}
+                      aria-label={tCommon("removeName", { name })}
                     >
                       <X className="h-4 w-4" />
                     </button>

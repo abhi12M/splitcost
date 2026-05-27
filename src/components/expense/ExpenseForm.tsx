@@ -1,4 +1,7 @@
+"use client";
+
 import { useState, useEffect, useMemo, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { Check, Percent, Equal, Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +14,8 @@ import { cn } from "@/lib/utils";
 import { detectCategoryFromDescription, ExpenseFormInterface, ExpenseParticipantsRequest, ExpenseRequest, type SplitType, UserInterface } from "@/lib/storage";
 import { memberNameForViewer } from "@/lib/groupExpenseLabels";
 import { Users } from "lucide-react";
-import { EXPENSE_DESCRIPTION_MAX, ExpenseSchema } from "@/lib/validations/expense.schema";
+import { EXPENSE_DESCRIPTION_MAX } from "@/lib/validations/expense.schema";
+import { createExpenseSchema } from "@/lib/validations/expense.schema.i18n";
 import { formatAmount, formatDateForDB, getCurrencyDifference, getRoundedDifference } from "../ui/formatters";
 import { Textarea } from "../ui/textarea";
 import { SingleSelect } from "../ui/single-select";
@@ -49,6 +53,20 @@ export function ExpenseForm({
   onSubmit,
   submitLabel,
 }: ExpenseFormProps) {
+  const t = useTranslations("expense");
+  const tCommon = useTranslations("common");
+  const youLabel = useTranslations("group")("you");
+  const ExpenseSchema = useMemo(
+    () =>
+      createExpenseSchema({
+        descriptionRequired: t("validation.descriptionRequired"),
+        descriptionMax: t("validation.descriptionMax", { max: EXPENSE_DESCRIPTION_MAX }),
+        amountRequired: t("validation.amountRequired"),
+        paidByRequired: t("validation.paidByRequired"),
+      }),
+    [t]
+  );
+
   const initialPayers = initialData?.payers || [];
   const hasInitialMultiplePayers = initialPayers.length > 0;
   const initialSinglePaidBy =
@@ -335,9 +353,17 @@ export function ExpenseForm({
   }
 
   const splitTypeData: { type: SplitType, label: string, icon: React.ElementType, info: string }[] = [
-    { type: "equal", label: "Equally", icon: Equal, info: 'The amount is divided equally among all selected participants.' },
-    { type: "percentage", label: "By %", icon: Percent, info: "Specify what percentage of the amount each participant should pay.\nValue must be between 1.00% and 99.00%" },
-    { type: "custom", label: "Custom", icon: Calculator, info: `Specify exactly how much each selected participant owes.\nValue must be between ${formatAmount(Number(1), currency)} and ${amount ? formatAmount(Number(amount) - 1, currency) : 'the amount'}.` },
+    { type: "equal", label: t("splitEqually"), icon: Equal, info: t("splitEqualInfo") },
+    { type: "percentage", label: t("splitByPercent"), icon: Percent, info: t("splitPercentInfo") },
+    {
+      type: "custom",
+      label: t("splitCustom"),
+      icon: Calculator,
+      info: t("splitCustomInfo", {
+        min: formatAmount(Number(1), currency),
+        max: amount ? formatAmount(Number(amount) - 1, currency) : t("theAmount"),
+      }),
+    },
   ];
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -349,11 +375,11 @@ export function ExpenseForm({
             {/* 2. Description Text Area (Fluid Width) */}
             <div className="grow space-y-2">
               <Label htmlFor="description" required={true}>
-                Description
+                {t("description")}
               </Label>
               <Textarea
                 id="description"
-                placeholder="What is this for?"
+                placeholder={t("descriptionPlaceholder")}
                 value={description}
                 maxLength={EXPENSE_DESCRIPTION_MAX}
                 onChange={(e) => setDescription(e.target.value)}
@@ -373,7 +399,7 @@ export function ExpenseForm({
           {/* Category Field */}
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-foreground">
-              Category<span className="text-destructive">*</span>
+              {t("category")}<span className="text-destructive">*</span>
             </label>
 
             <SingleSelect
@@ -389,7 +415,7 @@ export function ExpenseForm({
               }))}
               value={{ groupId: category, itemId: subcategory }}
               onSelect={(groupId, itemId) => handleSubcategorySelect(groupId!, itemId)}
-              placeholder="Choose category"
+              placeholder={t("chooseCategory")}
               ariaInvalid={!!errors.category}
             />
             {errors.category && (
@@ -399,7 +425,7 @@ export function ExpenseForm({
 
           <div className="space-y-2">
             <Label htmlFor="amount" required>
-              Amount
+              {t("amount")}
             </Label>
 
             {/* Currency + Amount Group */}
@@ -453,7 +479,7 @@ export function ExpenseForm({
 
           {/* Paid By */}
           <div className="space-y-2">
-            <Label required={true}>Paid by</Label>
+            <Label required={true}>{t("paidBy")}</Label>
             <button
               type="button"
               onClick={() => setShowPaidBy(true)}
@@ -465,15 +491,15 @@ export function ExpenseForm({
               )}
             >
               {isMultiplePayers
-                ? `${payers.filter((payer) => payer.amount && payer.amount > 0).length} people`
+                ? `${payers.filter((payer) => payer.amount && payer.amount > 0).length} ${tCommon("people")}`
                 : paidByUserId
                   ? (() => {
                       const m = members.find((mem) => mem.id === paidByUserId);
-                      if (!m) return "Select member...";
-                      if (viewerMemberId && m.id === viewerMemberId) return "You";
+                      if (!m) return tCommon("selectMember");
+                      if (viewerMemberId && m.id === viewerMemberId) return youLabel;
                       return m.name;
                     })()
-                  : "Select member..."}
+                  : tCommon("selectMember")}
             </button>
             {errors.paidByUserId && (
               <div className="text-xs text-destructive">{errors.paidByUserId}</div>
@@ -486,7 +512,7 @@ export function ExpenseForm({
       <div className="space-y-6">
         {/* 1. Split Type Segmented Control */}
         <div className="space-y-3">
-          <Label required={true}>How should this be split?</Label>
+          <Label required={true}>{t("howToSplit")}</Label>
 
           <div className="flex w-full p-1 bg-muted/50 rounded-xl border border-border/50">
             {splitTypeData.map(({ type, label, icon: Icon, info }) => {
@@ -522,15 +548,15 @@ export function ExpenseForm({
         {splitType !== "equal" && (
           <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="flex justify-between text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              <span>Allocated</span>
+              <span>{t("allocated")}</span>
               <span
                 className={
                   validationState.isValid ? validationStyles.validText : validationStyles.invalidText
                 }
               >
                 {validationState.diff === 0
-                  ? "Balanced"
-                  : `${Math.abs(validationState.diff).toFixed(2)}${splitType === 'percentage' ? '%' : ''} ${validationState.diff > 0 ? 'Left' : 'Over'}`}
+                  ? t("balanced")
+                  : `${Math.abs(validationState.diff).toFixed(2)}${splitType === 'percentage' ? '%' : ''} ${validationState.diff > 0 ? t("left") : t("over")}`}
               </span>
             </div>
             <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
@@ -556,7 +582,7 @@ export function ExpenseForm({
               <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground shrink-0" />
 
               <Label required={true} className="text-xs sm:text-sm truncate shrink-0">
-                Participants
+                {t("participants")}
               </Label>
 
               <span className={cn(
@@ -567,13 +593,11 @@ export function ExpenseForm({
               )}>
                 {selectedUserIds.length === 0 ? (
                   <>
-                    {/* Mobile: Short Text */}
-                    <span className="sm:hidden">Required</span>
-                    {/* Desktop: Long Text */}
-                    <span className="hidden sm:inline">Select at least one</span>
+                    <span className="sm:hidden">{tCommon("required")}</span>
+                    <span className="hidden sm:inline">{tCommon("selectAtLeastOne")}</span>
                   </>
                 ) : (
-                  `${selectedUserIds.length} selected`
+                  tCommon("selectedCount", { count: selectedUserIds.length })
                 )}
               </span>
             </div>
@@ -588,7 +612,7 @@ export function ExpenseForm({
                 "text-primary hover:text-primary/80 hover:bg-primary/5"
               )}
             >
-              Select All
+              {tCommon("selectAll")}
             </Button>
             )}
           </div>
@@ -600,7 +624,8 @@ export function ExpenseForm({
               const memberLabel = memberNameForViewer(
                 member.id,
                 member.name,
-                viewerMemberId
+                viewerMemberId,
+                youLabel
               );
 
               return (

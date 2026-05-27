@@ -2,7 +2,8 @@
 
 import type { SyntheticEvent } from "react";
 import { useState } from "react";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { Loader2, MoreVertical, Pencil, Trash2 } from "lucide-react";
 
 import {
@@ -42,12 +43,14 @@ export function ActionMenu({
   isDeleting = false,
   deleteTitle,
   deleteDescription,
-  deleteLabel = "Delete",
+  deleteLabel,
   align = "end",
   contentClassName,
   triggerClassName,
   stopPropagation = false,
 }: ActionMenuProps) {
+  const t = useTranslations("actionMenu");
+  const resolvedDeleteLabel = deleteLabel ?? t("delete");
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const stopClickPropagation = (event: SyntheticEvent) => {
@@ -79,7 +82,7 @@ export function ActionMenu({
         <DropdownMenuTrigger asChild>
           <button
             type="button"
-            aria-label="Open actions"
+            aria-label={t("openActions")}
             disabled={isDeleting}
             onClick={stopTriggerEvent}
             className={cn(
@@ -104,7 +107,7 @@ export function ActionMenu({
             <DropdownMenuItem asChild className="rounded-lg cursor-pointer gap-2 py-2">
               <Link href={editHref} onClick={stopPropagation ? stopClickPropagation : undefined}>
                 <Pencil className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm">Edit</span>
+                <span className="text-sm">{t("edit")}</span>
               </Link>
             </DropdownMenuItem>
           ) : null}
@@ -115,7 +118,7 @@ export function ActionMenu({
               className="rounded-lg cursor-pointer gap-2 py-2 text-destructive focus:text-destructive focus:bg-destructive/10"
             >
               <Trash2 className="w-4 h-4" />
-              <span className="text-sm">{deleteLabel}</span>
+              <span className="text-sm">{resolvedDeleteLabel}</span>
             </DropdownMenuItem>
           ) : null}
         </DropdownMenuContent>
@@ -133,14 +136,14 @@ export function ActionMenu({
         </AlertDialogHeader>
         <AlertDialogFooter className="flex-row gap-2 mt-4">
           <AlertDialogCancel className="flex-1 mt-0 rounded-xl border-none bg-muted hover:bg-muted/80">
-            Cancel
+            {t("cancel")}
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleConfirmDelete}
             disabled={isDeleting}
             className="flex-1 rounded-xl bg-destructive hover:bg-destructive/90 text-white"
           >
-            {isDeleting ? "Deleting..." : deleteLabel}
+            {isDeleting ? t("deleting") : resolvedDeleteLabel}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

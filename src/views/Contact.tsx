@@ -3,6 +3,7 @@
 import { type FormEvent, useState } from "react";
 import { motion } from "framer-motion";
 import { Bug, Clock3, Handshake, Mail, Send } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 export default function ContactPage() {
+  const t = useTranslations("contact");
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState({
@@ -29,18 +31,18 @@ export default function ContactPage() {
   const contactReasons = [
     {
       icon: Bug,
-      title: "Bug reports",
-      description: "Share what broke, what device you used, and how to reproduce it.",
+      title: t("reasonBugTitle"),
+      description: t("reasonBugDescription"),
     },
     {
       icon: Handshake,
-      title: "Feedback and partnerships",
-      description: "Tell us what your group needs or reach out about collaboration.",
+      title: t("reasonFeedbackTitle"),
+      description: t("reasonFeedbackDescription"),
     },
     {
       icon: Clock3,
-      title: "Fast review",
-      description: "We read every message and prioritize support that blocks active groups.",
+      title: t("reasonFastTitle"),
+      description: t("reasonFastDescription"),
     },
   ];
 
@@ -60,8 +62,8 @@ export default function ContactPage() {
       if (!res.ok) throw new Error();
 
       toast({
-        title: "Message sent!",
-        description: "We'll get back to you as soon as possible.",
+        title: t("toastSuccessTitle"),
+        description: t("toastSuccessDescription"),
       });
 
       setForm({
@@ -70,10 +72,10 @@ export default function ContactPage() {
         subject: "",
         message: "",
       });
-    } catch (error) {
+    } catch {
       toast({
-        title: "Error",
-        description: "Something went wrong. Please try again.",
+        title: t("toastErrorTitle"),
+        description: t("toastErrorDescription"),
       });
     }
 
@@ -83,10 +85,9 @@ export default function ContactPage() {
   const contactJsonLd = {
     "@context": "https://schema.org",
     "@type": "ContactPage",
-    name: `Contact ${APP_NAME}`,
+    name: t("jsonLdName", { appName: APP_NAME }),
     url: getCanonicalUrl("/contact"),
-    description:
-      "Contact SplitCost for support, product feedback, bug reports, and partnership inquiries.",
+    description: t("jsonLdDescription", { appName: APP_NAME }),
   };
 
   return (
@@ -103,21 +104,15 @@ export default function ContactPage() {
           <div className="relative mb-8 max-w-2xl md:mb-10">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-sm text-muted-foreground dark:bg-primary-muted">
               <Mail className={cn("h-4 w-4 shrink-0", brandStyles.icon)} />
-              Support, feedback, and product questions
+              {t("badge")}
             </div>
             <h1 className="text-3xl font-bold text-foreground md:text-4xl">
-              Contact SplitCost Support
+              {t("title", { appName: APP_NAME })}
             </h1>
-            <p className="mt-4 text-lg text-muted-foreground">
-              Need help with a shared expense group, a bill split, or a feature question?
-              Use the form below to reach the {APP_NAME} team.
-            </p>
-            <p className="mt-3 text-muted-foreground">
-              Send bug reports, feedback, partnership inquiries, or questions about how
-              the product works for friends, roommates, travel groups, and events.
-            </p>
+            <p className="mt-4 text-lg text-muted-foreground">{t("intro", { appName: APP_NAME })}</p>
+            <p className="mt-3 text-muted-foreground">{t("introSecondary")}</p>
             <p className="mt-4 text-sm text-muted-foreground">
-              Prefer email? Reach us directly at{" "}
+              {t("preferEmail")}{" "}
               <a
                 href="mailto:contact@splitcost.in"
                 className="font-medium text-primary underline underline-offset-4 transition-colors hover:text-primary/80 dark:text-primary/90"
@@ -132,10 +127,8 @@ export default function ContactPage() {
             <motion.div initial={{ opacity: 0, x: -24 }} animate={{ opacity: 1, x: 0 }}>
               <Card className="border-border/80 bg-background/70">
                 <CardHeader>
-                  <CardTitle className="text-2xl leading-tight">What to include</CardTitle>
-                  <CardDescription>
-                    A little context helps us answer faster and avoid back-and-forth.
-                  </CardDescription>
+                  <CardTitle className="text-2xl leading-tight">{t("whatToIncludeTitle")}</CardTitle>
+                  <CardDescription>{t("whatToIncludeDescription")}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {contactReasons.map(({ icon: Icon, title, description }) => (
@@ -169,32 +162,29 @@ export default function ContactPage() {
                   >
                     <Mail className={cn("h-8 w-8", brandStyles.icon)} />
                   </div>
-                  <CardTitle className="text-2xl leading-tight">Send a Message</CardTitle>
-                  <CardDescription>
-                    Ask for support, share feedback, or tell us what would make{" "}
-                    {APP_NAME} more useful for your group.
-                  </CardDescription>
+                  <CardTitle className="text-2xl leading-tight">{t("formTitle")}</CardTitle>
+                  <CardDescription>{t("formDescription", { appName: APP_NAME })}</CardDescription>
                 </CardHeader>
 
                 <CardContent>
                   <form onSubmit={handleSubmit} className="space-y-5">
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div className="space-y-2">
-                        <Label htmlFor="name">Name</Label>
+                        <Label htmlFor="name">{t("nameLabel")}</Label>
                         <Input
                           id="name"
-                          placeholder="Your name"
+                          placeholder={t("namePlaceholder")}
                           value={form.name}
                           onChange={(e) => setForm({ ...form, name: e.target.value })}
                           required
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
+                        <Label htmlFor="email">{t("emailLabel")}</Label>
                         <Input
                           id="email"
                           type="email"
-                          placeholder="you@example.com"
+                          placeholder={t("emailPlaceholder")}
                           value={form.email}
                           onChange={(e) => setForm({ ...form, email: e.target.value })}
                           required
@@ -203,10 +193,10 @@ export default function ContactPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="subject">Subject</Label>
+                      <Label htmlFor="subject">{t("subjectLabel")}</Label>
                       <Input
                         id="subject"
-                        placeholder="What's this about?"
+                        placeholder={t("subjectPlaceholder")}
                         value={form.subject}
                         onChange={(e) => setForm({ ...form, subject: e.target.value })}
                         required
@@ -214,10 +204,10 @@ export default function ContactPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="message">Message</Label>
+                      <Label htmlFor="message">{t("messageLabel")}</Label>
                       <Textarea
                         id="message"
-                        placeholder="Tell us more..."
+                        placeholder={t("messagePlaceholder")}
                         rows={6}
                         value={form.message}
                         onChange={(e) => setForm({ ...form, message: e.target.value })}
@@ -228,11 +218,11 @@ export default function ContactPage() {
 
                     <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={isSubmitting}>
                       {isSubmitting ? (
-                        "Sending..."
+                        t("sending")
                       ) : (
                         <>
                           <Send className="mr-2 h-4 w-4" />
-                          Send Message
+                          {t("sendMessage")}
                         </>
                       )}
                     </Button>

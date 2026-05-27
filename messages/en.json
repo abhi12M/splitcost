@@ -1,0 +1,786 @@
+{
+  "metadata": {
+    "siteName": "SplitCost",
+    "home": {
+      "title": "Split Expenses App for Bill Sharing & Group Expense Tracking",
+      "description": "SplitCost is a smart split expenses app to track shared bills, manage group payments, split travel costs, and organise roommate or couple expenses easily."
+    },
+    "notFound": {
+      "title": "Page not found",
+      "description": "The page you are looking for does not exist on SplitCost."
+    },
+    "contact": {
+      "title": "Contact SplitCost",
+      "description": "Get in touch with the SplitCost team for support, feedback, or partnership inquiries."
+    },
+    "groups": {
+      "title": "My expense groups",
+      "description": "View and manage your shared expense groups on SplitCost."
+    },
+    "createGroup": {
+      "title": "Create a new expense group",
+      "description": "Start a new group to track shared bills and split expenses with friends, roommates, or travel companions."
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "description": "Learn how SplitCost handles your data and privacy."
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "description": "Read the terms and conditions for using SplitCost."
+    },
+    "group": {
+      "title": "Group expenses",
+      "description": "Track balances, expenses, and settlements for this expense group.",
+      "titleWithName": "{name} | Group expenses",
+      "descriptionWithName": "View {name} expenses, balances, and settlements in {currency}."
+    },
+    "addExpense": {
+      "title": "Add expense",
+      "description": "Add a new shared expense for this group."
+    },
+    "editGroup": {
+      "title": "Edit group",
+      "description": "Edit the name, currency, and members for this group."
+    },
+    "editExpense": {
+      "title": "Edit expense",
+      "description": "Edit this shared expense for the group."
+    },
+    "expenseDetails": {
+      "title": "Expense details",
+      "description": "View expense details, split, and attachment for this group."
+    }
+  },
+  "layout": {
+    "skipToContent": "Skip to content",
+    "primaryNav": "Primary",
+    "mobileNav": "Mobile",
+    "myGroups": "My groups",
+    "groupsCount": "{count, plural, =1 {1 group} other {# groups}}",
+    "faq": "FAQ",
+    "contact": "Contact",
+    "menu": "Menu",
+    "closeMenu": "Close menu",
+    "openMenu": "Open menu",
+    "close": "Close",
+    "groups": "Groups",
+    "new": "New",
+    "product": "Product",
+    "support": "Support",
+    "legal": "Legal",
+    "howItWorks": "How it works",
+    "features": "Features",
+    "useCases": "Use cases",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "lightMode": "Light mode",
+    "toggleLightMode": "Toggle light mode",
+    "menuSheetTitle": "Menu",
+    "menuSheetDescription": "Site navigation, settings, and quick links",
+    "footerTagline": "A free expense splitting app for friends, roommates, couples, and travel groups. Track shared bills, balances, and settlements without sign-up.",
+    "footerRights": "(c) {year} {appName}. All rights reserved.",
+    "footerMotto": "Split bills clearly, track balances accurately, and settle up faster"
+  },
+  "languageSwitcher": {
+    "label": "Language",
+    "current": "Current language: {language}",
+    "select": "Select language"
+  },
+  "notFound": {
+    "title": "404 — Page not found",
+    "description": "Sorry, we could not find that page.",
+    "goHome": "Go to homepage"
+  },
+  "hero": {
+    "badge": "Smart Expense Sharing",
+    "title": "Smart Split Expenses App for",
+    "titleHighlight": "Shared Bills & Group Payments",
+    "subtitle": "Track shared expenses, split bills instantly, manage balances, and simplify group payments with one easy expense sharing platform.",
+    "startFree": "Start Free",
+    "createGroup": "Create a Group",
+    "trustFree": "100% Free to start",
+    "trustNoCard": "No credit card required",
+    "trustDevices": "Works on Web & Mobile"
+  },
+  "landing": {
+    "features": {
+      "badge": "Everything you need",
+      "title": "Flexible Shared Expense Management for",
+      "titleHighlight": "Real-World Groups",
+      "description": "SplitCost helps you split bills fairly, manage shared expenses, track balances, and organize group payments without spreadsheets or complicated calculations.",
+      "items": {
+        "noAccount": {
+          "title": "No Account Required",
+          "description": "Start tracking shared expenses instantly without creating an account or logging in."
+        },
+        "flexibleSplit": {
+          "title": "Flexible Expense Splitting",
+          "description": "Split bills equally, by percentage, or with custom amounts for every situation."
+        },
+        "multiplePayers": {
+          "title": "Multiple Payers",
+          "description": "Track expenses where one or multiple people contribute to a single payment."
+        },
+        "autoBalances": {
+          "title": "Automatic Balances & Settlements",
+          "description": "See who paid, who owes, and get smart settlement suggestions in real time."
+        },
+        "shareableGroups": {
+          "title": "Shareable Expense Groups",
+          "description": "Share group links with friends, roommates, or travel partners — they join in seconds."
+        },
+        "multiCurrency": {
+          "title": "Multi-Currency Support",
+          "description": "Perfect for international trips, roommates abroad, and cross-currency group payments."
+        },
+        "receipts": {
+          "title": "Receipts & Attachments",
+          "description": "Add receipts, invoices, or screenshots so every expense has clear proof."
+        },
+        "downloadReports": {
+          "title": "Download Expense Reports",
+          "description": "Export expense summaries as CSV for records or tax documentation."
+        }
+      },
+      "cta": {
+        "title": "Manage Shared Expenses Without the",
+        "titleHighlight": "Confusion",
+        "description": "From trips and roommate bills to events and everyday spending, SplitCost keeps every shared payment organized in one place.",
+        "button": "Create Your First Group",
+        "imageAlt": "Friends organizing shared trip and roommate expenses with SplitCost"
+      },
+      "trust": {
+        "freeToStart": "Free to start",
+        "noCreditCard": "No credit card required",
+        "anyDevice": "Works on any device"
+      }
+    },
+    "problems": {
+      "badge": "Common expense problems",
+      "title": "Splitting expenses shouldn't be this",
+      "titleHighlight": "complicated",
+      "description": "From travel expenses to roommate bills, managing shared payments manually often leads to confusion, missed balances, and awkward reminders.",
+      "items": {
+        "whoPaidLast": {
+          "title": "Who Paid Last?",
+          "description": "Tracking shared expenses in chats and notes becomes messy quickly."
+        },
+        "confusingBalances": {
+          "title": "Confusing Group Balances",
+          "description": "Manually calculating who owes what wastes time and causes mistakes."
+        },
+        "awkwardReminders": {
+          "title": "Awkward Payment Reminders",
+          "description": "Following up on unpaid bills with friends or roommates feels uncomfortable."
+        },
+        "travelChaotic": {
+          "title": "Travel Expenses Get Chaotic",
+          "description": "Trip costs, dinners, transport, and bookings are hard to organize manually."
+        }
+      }
+    },
+    "howItWorks": {
+      "badge": "Simple Expense Management",
+      "title": "One Simple Way to",
+      "titleHighlight": "Track, Split & Settle",
+      "titleSuffix": "Expenses",
+      "description": "SplitCost helps groups manage shared bills, track balances, organize travel expenses, and settle payments without spreadsheets or awkward reminders.",
+      "items": {
+        "createGroups": {
+          "title": "Create Groups",
+          "description": "Organize expenses for trips, roommates, events, or everyday shared spending."
+        },
+        "addExpenses": {
+          "title": "Add Expenses",
+          "description": "Record shared payments, bills, transport costs, dinners, and bookings in seconds."
+        },
+        "trackBalances": {
+          "title": "Track Balances",
+          "description": "See who paid, who owes, and every group balance in real time."
+        },
+        "settleFaster": {
+          "title": "Settle Faster",
+          "description": "Simplify settlements and avoid unnecessary payment confusion."
+        }
+      },
+      "cta": {
+        "title": "Start Managing Shared Expenses Smarter",
+        "description": "Join groups, add expenses, and settle up in just a few taps.",
+        "button": "Create Your First Group",
+        "imageAlt": "Three friends managing shared expenses on their phones with SplitCost"
+      },
+      "trust": {
+        "freeToStart": "Free to start",
+        "noCreditCard": "No credit card required",
+        "securePrivate": "Secure & Private"
+      }
+    },
+    "useCases": {
+      "badge": "Use Cases",
+      "title": "Perfect for",
+      "titleHighlight1": "Every",
+      "titleMiddle": "Shared Expense",
+      "titleHighlight2": "Situation",
+      "description": "From travel expenses and roommate bills to events and everyday group payments, SplitCost makes shared expense management simple and organized.",
+      "items": {
+        "travel": {
+          "title": "Travel Groups",
+          "description": "Track hotel bookings, transport, food, and trip expenses with one shared travel expense tracker.",
+          "imageAlt": "Friends planning a trip together",
+          "tags": {
+            "trips": "Trips",
+            "bookings": "Bookings",
+            "transport": "Transport",
+            "food": "Food",
+            "travelExpenses": "Travel Expenses"
+          }
+        },
+        "roommates": {
+          "title": "Roommates",
+          "description": "Manage rent, groceries, utility bills, and shared household expenses without confusion.",
+          "imageAlt": "Roommates in a shared living room",
+          "tags": {
+            "rent": "Rent",
+            "groceries": "Groceries",
+            "utilities": "Utility Bills",
+            "household": "Household Expenses"
+          }
+        },
+        "couples": {
+          "title": "Couples & Partners",
+          "description": "Keep shared spending organized for daily expenses, subscriptions, dinners, and travel plans.",
+          "imageAlt": "Couple reviewing shared expenses on a phone",
+          "tags": {
+            "daily": "Daily Expenses",
+            "subscriptions": "Subscriptions",
+            "dinners": "Dinners",
+            "travelPlans": "Travel Plans"
+          }
+        },
+        "friends": {
+          "title": "Friends & Events",
+          "description": "Split group dinners, parties, concerts, and event costs fairly with flexible expense sharing.",
+          "imageAlt": "Friends at a social gathering",
+          "tags": {
+            "dinners": "Dinners",
+            "parties": "Parties",
+            "concerts": "Concerts",
+            "eventCosts": "Event Costs"
+          }
+        },
+        "teams": {
+          "title": "Teams & Communities",
+          "description": "Organize shared payments, reimbursements, and group expenses for teams, clubs, and communities.",
+          "imageAlt": "Team collaborating around a laptop",
+          "tags": {
+            "reimbursements": "Reimbursements",
+            "groupExpenses": "Group Expenses",
+            "teams": "Teams",
+            "communities": "Communities"
+          }
+        }
+      },
+      "cta": {
+        "title": "One Expense Tracker for Every Group",
+        "description": "Whether you're planning a trip, managing roommate bills, or tracking everyday shared spending, SplitCost keeps every expense organized in one place.",
+        "button": "Start Tracking Expenses",
+        "phoneImageAlt": "SplitCost mobile app on a phone"
+      }
+    },
+    "faq": {
+      "badge": "FAQs",
+      "title": "Frequently Asked Questions About",
+      "description": "Everything you need to know about shared expense tracking, bill splitting, group payments, and managing expenses with {appName}."
+    }
+  },
+  "faq": {
+    "whatIs": {
+      "question": "What is {appName}?",
+      "answer": "{appName} is a free group expense tracker that helps friends, roommates, and travel groups split bills, track balances, and settle up faster."
+    },
+    "currencies": {
+      "question": "Does {appName} support different currencies?",
+      "answer": "Yes. You can set a group currency when creating or editing a group, which makes {appName} useful for international trips and shared payments across currencies."
+    },
+    "account": {
+      "question": "Do I need to create an account to use {appName}?",
+      "answer": "No. You can create a group and start tracking shared expenses instantly. Share a group link so others can join without everyone needing to sign up."
+    },
+    "attachments": {
+      "question": "Can I upload receipts or attachments?",
+      "answer": "Yes. You can attach receipts, invoices, and payment screenshots to keep every expense organized and easy to verify."
+    },
+    "splitMethods": {
+      "question": "How can I split expenses in {appName}?",
+      "answer": "You can split bills equally, by percentage, or with custom amounts depending on how your group wants to share each expense."
+    },
+    "multiplePayers": {
+      "question": "Can multiple people pay for the same expense?",
+      "answer": "Yes. {appName} supports multiple payers for a single expense, which is helpful for shared bookings, travel costs, and group payments."
+    },
+    "travel": {
+      "question": "Can I track travel expenses with {appName}?",
+      "answer": "Yes. {appName} works well for trips and travel groups, including transport, hotels, food, and other shared travel costs."
+    },
+    "export": {
+      "question": "Can I export expense reports?",
+      "answer": "Yes. You can download expense reports and balance summaries for records, reimbursements, or planning."
+    },
+    "mobile": {
+      "question": "Is {appName} mobile friendly?",
+      "answer": "Yes. {appName} is optimized for phones and tablets, so you can add expenses and check balances on the go."
+    },
+    "whoCanUse": {
+      "question": "Who can use {appName}?",
+      "answer": "{appName} works well for roommates, couples, travel groups, friends, teams, events, and anyone managing shared expenses together."
+    }
+  },
+  "common": {
+    "back": "Back",
+    "cancel": "Cancel",
+    "ok": "OK",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "close": "Close",
+    "save": "Save",
+    "add": "Add",
+    "goHome": "Go Home",
+    "groupNotFound": "Group not found",
+    "expenseNotFound": "Expense not found",
+    "loadingChart": "Loading chart…",
+    "whoops": "Whoops!",
+    "missingRequired": "Missing required details",
+    "required": "Required",
+    "selectAtLeastOne": "Select at least one",
+    "selectAll": "Select All",
+    "selectedCount": "{count} selected",
+    "creating": "Creating...",
+    "saving": "Saving...",
+    "deleting": "Deleting...",
+    "adding": "Adding...",
+    "recording": "Recording…",
+    "paid": "paid",
+    "paysTo": "{from} pays {to}",
+    "people": "people",
+    "selectMember": "Select member...",
+    "selectMemberShort": "select member",
+    "removeName": "Remove {name}",
+    "edit": "Edit",
+    "share": "Share",
+    "clear": "Clear",
+    "list": "List",
+    "chart": "Chart",
+    "export": "Export",
+    "yesSettleUp": "Yes, settle up"
+  },
+  "groups": {
+    "titleYour": "Your Groups",
+    "titleAll": "All Groups",
+    "subtitle": "Open a recent expense group and keep tracking shared bills",
+    "subtitleAdmin": "Admin view of all expense groups",
+    "totalGroups": "Total groups: {count}",
+    "newGroup": "New group",
+    "deleteTitle": "Delete group?",
+    "deleteDescription": "Are you absolutely sure you want to delete this group? All expenses, balances, and records for ALL members will be permanently removed. This action cannot be undone.",
+    "created": "Created {date}",
+    "updated": "Updated {date}",
+    "latestExpenseActivity": "Latest expense activity {date}",
+    "total": "Total",
+    "createCardTitle": "Create New Group",
+    "createCardSubtitle": "Start tracking shared expenses"
+  },
+  "createGroup": {
+    "back": "Back",
+    "title": "Create a Group",
+    "description": "Start tracking shared expenses with flexible splits, multiple payer support, and a shareable group link.",
+    "submitLabel": "Create Group"
+  },
+  "contact": {
+    "jsonLdName": "Contact {appName}",
+    "jsonLdDescription": "Contact {appName} for support, product feedback, bug reports, and partnership inquiries.",
+    "badge": "Support, feedback, and product questions",
+    "title": "Contact {appName} Support",
+    "intro": "Need help with a shared expense group, a bill split, or a feature question? Use the form below to reach the {appName} team.",
+    "introSecondary": "Send bug reports, feedback, partnership inquiries, or questions about how the product works for friends, roommates, travel groups, and events.",
+    "preferEmail": "Prefer email? Reach us directly at",
+    "whatToIncludeTitle": "What to include",
+    "whatToIncludeDescription": "A little context helps us answer faster and avoid back-and-forth.",
+    "reasonBugTitle": "Bug reports",
+    "reasonBugDescription": "Share what broke, what device you used, and how to reproduce it.",
+    "reasonFeedbackTitle": "Feedback and partnerships",
+    "reasonFeedbackDescription": "Tell us what your group needs or reach out about collaboration.",
+    "reasonFastTitle": "Fast review",
+    "reasonFastDescription": "We read every message and prioritize support that blocks active groups.",
+    "formTitle": "Send a Message",
+    "formDescription": "Ask for support, share feedback, or tell us what would make {appName} more useful for your group.",
+    "nameLabel": "Name",
+    "namePlaceholder": "Your name",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@example.com",
+    "subjectLabel": "Subject",
+    "subjectPlaceholder": "What's this about?",
+    "messageLabel": "Message",
+    "messagePlaceholder": "Tell us more...",
+    "sending": "Sending...",
+    "sendMessage": "Send Message",
+    "toastSuccessTitle": "Message sent!",
+    "toastSuccessDescription": "We'll get back to you as soon as possible.",
+    "toastErrorTitle": "Error",
+    "toastErrorDescription": "Something went wrong. Please try again."
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "intro": "This Privacy Policy explains what information {appName} uses to run shared expense groups, how that data is stored, and what choices you have. We aim to collect only the information needed to help groups track expenses, balances, and settlements.",
+    "section1Title": "1. Information We Collect",
+    "section1Intro": "{appName} collects the information required to create and manage shared expense groups:",
+    "section1Item1": "Group names, member names, and currency preferences",
+    "section1Item2": "Expense entries such as descriptions, amounts, payers, and participants",
+    "section1Item3": "Technical and analytics data that helps us improve performance and usability",
+    "section2Title": "2. How We Store Your Data",
+    "section2Body": "Group and expense data may be stored locally on your device and on secure third-party infrastructure so shared group links work across devices and sessions. We use reasonable technical safeguards to protect data in transit and at rest, but no internet-based system can be guaranteed to be completely secure.",
+    "section3Title": "3. Third-Party Services",
+    "section3Intro": "We may use third-party services that support the product, such as:",
+    "section3Item1": "Analytics (Google Analytics)",
+    "section3Item2": "Hosting, database, and infrastructure providers",
+    "section3Item3": "Email and support tooling when you contact us",
+    "section3Outro": "These providers may process limited technical or usage data on our behalf as described in their own privacy policies.",
+    "section4Title": "4. Cookies",
+    "section4Body": "{appName} may use cookies or similar technologies for analytics, session continuity, and product functionality. You can manage many of these preferences through your browser settings.",
+    "section5Title": "5. Your Rights",
+    "section5Intro": "Depending on your location, you may have the right to:",
+    "section5Item1": "Request access to the data associated with your use of the service",
+    "section5Item2": "Delete expense data that you control",
+    "section5Item3": "Limit analytics through browser controls or privacy tools",
+    "section6Title": "6. Policy Updates",
+    "section6Body": "We may update this Privacy Policy when the product, legal requirements, or data practices change. Continued use of the service after an update means the revised policy applies.",
+    "section7Title": "7. Contact Us",
+    "section7Body": "If you have questions about this Privacy Policy or want to request help related to your data, please contact us through the Contact page.",
+    "jsonLdName": "{appName} Privacy Policy",
+    "breadcrumbHome": "Home",
+    "breadcrumbPrivacy": "Privacy Policy"
+  },
+  "terms": {
+    "title": "Terms of Service",
+    "intro": "These Terms of Service govern your use of {appName}. The product helps groups record shared expenses, calculate balances, and simplify settlements, but users remain responsible for reviewing entries and resolving payment disputes.",
+    "section1Title": "1. Acceptance of Terms",
+    "section1Body": "By accessing or using {appName}, you agree to these Terms of Service. If you do not agree, you should stop using the service.",
+    "section2Title": "2. Description of Service",
+    "section2Body": "{appName} is a web-based expense tracker that allows groups to create shared expense records, assign payers and participants, and review balances. The service is provided on an \"as is\" and \"as available\" basis.",
+    "section3Title": "3. User Responsibilities",
+    "section3Intro": "You are responsible for:",
+    "section3Item1": "The accuracy of expense data you enter",
+    "section3Item2": "Keeping your group links secure",
+    "section3Item3": "Using the service in compliance with applicable laws",
+    "section3Item4": "Not using the service for illegal, harmful, or unauthorized purposes",
+    "section4Title": "4. Limitation of Liability",
+    "section4Intro": "{appName} is a calculation and record-keeping tool. We are not responsible for:",
+    "section4Item1": "Disputes between users regarding expenses",
+    "section4Item2": "Inaccurate calculations due to user input errors",
+    "section4Item3": "Loss of data due to technical issues",
+    "section4Item4": "Any financial decisions made based on our calculations",
+    "section5Title": "5. Intellectual Property",
+    "section5Body": "The {appName} name, logo, design elements, and related content are owned by {appName} or its licensors. You may not reuse our branding without permission.",
+    "section6Title": "6. Modifications",
+    "section6Body": "We may update these terms from time to time. Continued use of the service after an update means you accept the revised terms.",
+    "section7Title": "7. Termination",
+    "section7Body": "We may suspend or terminate access if we believe a user has violated these terms or used the service in a way that harms the platform or other users.",
+    "section8Title": "8. Contact",
+    "section8Body": "For questions about these terms, please contact us through the Contact page.",
+    "jsonLdName": "{appName} Terms of Service",
+    "breadcrumbHome": "Home",
+    "breadcrumbTerms": "Terms of Service"
+  },
+  "theme": {
+    "appearance": "Appearance",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "actionMenu": {
+    "openActions": "Open actions",
+    "edit": "Edit",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "deleting": "Deleting..."
+  },
+  "group": {
+    "you": "You",
+    "unknownPayer": "Unknown payer",
+    "paidByTwo": "{first} & {second}",
+    "youPlusOthers": "You + {count, plural, one {# other} other {# others}}",
+    "peopleCount": "{count} people",
+    "createGroup": "Create group",
+    "createGroupTitle": "Create a Group",
+    "createGroupDescription": "Start tracking shared expenses with flexible splits, multiple payer support, and a shareable group link.",
+    "createGroupSubmit": "Create Group",
+    "groupName": "Group Name",
+    "defaultCurrency": "Default Currency",
+    "members": "Members",
+    "groupNamePlaceholder": "e.g., Paris Trip 2024",
+    "enterName": "Enter name",
+    "maxReached": "Max reached",
+    "memberAlreadyAdded": "Member already added.",
+    "membersLabel": "Members:",
+    "noneYet": "None yet",
+    "enterGroupNamePlaceholder": "Enter group name (e.g., Trip to Goa)",
+    "searchCurrency": "Search currency...",
+    "selectCurrency": "Select currency",
+    "addMember": "Add member",
+    "maximumMembersReached": "Maximum members reached",
+    "maximumMembers": "Maximum {max} members",
+    "addPeople": "Add people",
+    "editGroup": "Edit group",
+    "saveGroup": "Save group",
+    "memberCount": "{count, plural, one {# member} other {# members}}",
+    "getsBackCount": "{count} gets back",
+    "owesCount": "{count} owes",
+    "newBadge": "New",
+    "deleteGroup": "Delete group",
+    "deleteGroupHint": "Permanently removes this group and all its expenses.",
+    "deleteGroupTitle": "Delete group?",
+    "deleteGroupConfirm": "Are you absolutely sure you want to delete this group?",
+    "deleteGroupWarning": "All expenses, balances, and records for ALL members will be permanently removed. This action cannot be undone.",
+    "memberName": "Member name",
+    "renameHint": "Name changes are saved when you save the group.",
+    "removeMember": "Remove member",
+    "removeMemberHint": "Only if not linked to any expense.",
+    "removeMemberBlocked": "This member is in an expense and cannot be removed.",
+    "validation": {
+      "memberNameRequired": "Member name is required.",
+      "memberNameMax": "Member name can't exceed {max} characters.",
+      "groupNameRequired": "Group name is required.",
+      "groupNameMax": "Group name can't exceed {max} characters.",
+      "membersMin": "At least {min} members are required.",
+      "membersMax": "Maximum {max} members allowed."
+    }
+  },
+  "groupDetails": {
+    "backToGroup": "Back to group",
+    "addExpense": "Add expense",
+    "editGroup": "Edit group",
+    "shareGroupLink": "Share group link",
+    "shareSettlement": "Share settlement summary",
+    "exportExpenses": "Export expenses",
+    "whoAreYou": "Who are you?",
+    "whoAreYouDescription": "Choose your member so balances and labels show correctly on this device.",
+    "clearSelection": "Clear selection",
+    "totalExpenses": "Total expenses",
+    "youAreOwed": "You're owed",
+    "youOwe": "You owe",
+    "youAreSettled": "You're settled",
+    "yourBalance": "Your balance",
+    "setYourProfile": "Set your profile",
+    "searchExpenses": "Search expenses",
+    "filters": "Filters",
+    "filtersDescription": "Choose how expenses are grouped and sorted.",
+    "groupBy": "Group by",
+    "sortBy": "Sort by",
+    "resetAll": "Reset all",
+    "groupByDate": "Date",
+    "groupByPaidBy": "Paid by",
+    "groupByCategory": "Category",
+    "groupBySplitType": "Split type",
+    "sortNewest": "Newest first",
+    "sortHighest": "Highest amount",
+    "sortLowest": "Lowest amount",
+    "quickByDate": "By date",
+    "quickByPerson": "By person",
+    "quickByCategory": "By category",
+    "quickNewest": "Newest",
+    "quickHighest": "Highest $",
+    "quickLowest": "Lowest $",
+    "showingMatches": "Showing {count, plural, one {# match} other {# matches}}",
+    "clearSearch": "Clear search",
+    "noExpensesFound": "No expenses found",
+    "tryDifferentSearch": "Try a different keyword or clear your search",
+    "noExpensesYet": "No expenses yet",
+    "noExpensesHint": "Add the first expense to start splitting with the group.",
+    "addFirstExpense": "Add first expense",
+    "expenseCount": "{count, plural, one {# expense} other {# expenses}}",
+    "tabExpenses": "Expenses",
+    "tabBalances": "Balances",
+    "tabSettlements": "Settlements",
+    "balances": "Balances",
+    "settledUp": "Settled up",
+    "getsBack": "Gets back",
+    "owesGroup": "Owes group",
+    "addExpensesForSettlements": "Add expenses to see settlements.",
+    "allSettledForNow": "All settled for now.",
+    "settleUp": "Settle up",
+    "settling": "Settling…",
+    "recordSettlementTitle": "Record this settlement?",
+    "recordSettlementDescription": "This will record that {from} paid {to} {amount}.",
+    "recordSettlementDescriptionDesktop": "This will mark that {from} paid {to} {amount} by adding a settlement entry to the group.",
+    "groupTotal": "Group total",
+    "membersStat": "Members",
+    "inThisGroup": "In this group",
+    "settlementsStat": "Settlements",
+    "suggestedTransfer": "Suggested transfer",
+    "suggestedTransfers": "Suggested transfers",
+    "currencyStat": "Currency",
+    "groupDefault": "Group default",
+    "expensesTitle": "Expenses",
+    "totalLabel": "Total",
+    "whoPaysWhom": "Who pays whom",
+    "addExpensesWhoOwes": "Add expenses to see who owes whom",
+    "allSettledCelebration": "All settled 🎉",
+    "showingSearch": "Showing {count} {count, plural, one {match} other {matches}} for “{query}”",
+    "startAddingHint": "Start adding expenses to track who paid, who owes, and settle up easily.",
+    "listView": "List view",
+    "chartView": "Chart view",
+    "groupMenu": "Group menu",
+    "groupSections": "Group sections",
+    "nothingToShare": "Nothing to share yet",
+    "nothingToShareHint": "Add expenses so we can suggest who should pay whom.",
+    "copiedTitle": "Copied to clipboard",
+    "copiedLinkHint": "Paste the link in chat or email for your group.",
+    "copiedSettlementHint": "Paste the summary in chat, email, or notes.",
+    "shareFailedTitle": "Could not share or copy",
+    "shareFailedHint": "Your browser blocked clipboard access. Try again or copy the link from the address bar.",
+    "shareJoinText": "Join group \"{name}\" on SplitCost to split expenses, track balances, and settle up together.",
+    "settlementSummaryTitle": "Settlement Summary",
+    "settlementLine": "{from} pays {to} {amount}",
+    "viewDetailsHere": "View full details here:",
+    "nothingToExport": "Nothing to export",
+    "noSearchExport": "No expenses match the current search.",
+    "addBeforeExport": "Add an expense before exporting.",
+    "exportReady": "Export ready",
+    "exportReadyDescription": "{count, plural, one {# expense exported.} other {# expenses exported.}}",
+    "exportDate": "Date",
+    "exportDescription": "Description",
+    "exportCategory": "Category",
+    "exportCost": "Cost",
+    "exportCurrency": "Currency",
+    "exportNetMeaning": "Net amount (+ gets back, - owes)",
+    "exportTotalBalance": "Total balance",
+    "settlementBetween": "Settlement between {from} and {to}"
+  },
+  "editGroup": {
+    "getsBack": "Gets back",
+    "owes": "Owes",
+    "settled": "Settled",
+    "memberAlreadyInGroup": "This member is already in the group.",
+    "memberCanBeRemoved": "This member can be removed from the group.",
+    "uniqueNamesRequired": "Each member name must be unique.",
+    "renameDuplicate": "Entered member name already exists in the group.",
+    "couldNotDelete": "Could not delete group",
+    "pleaseTryAgain": "Please try again.",
+    "failedDelete": "Failed to delete group",
+    "groupUpdated": "Group updated",
+    "groupUpdatedDescription": "Group details and members were updated successfully.",
+    "failedUpdate": "Failed to update group",
+    "couldNotSave": "Could not save changes",
+    "saveChanges": "Save changes",
+    "upToDate": "Up to date",
+    "manageMembersBadge": "Manage members with confidence",
+    "editGroupTitle": "Edit group",
+    "editGroupDescription": "Update your group details and manage members safely without affecting unsettled balances.",
+    "groupNameLabel": "Group name",
+    "groupNamePlaceholder": "e.g., Goa Trip",
+    "defaultCurrencyLabel": "Default currency",
+    "addNewMember": "Add a new member",
+    "tapToEdit": "Tap to edit or remove",
+    "newMemberReady": "New member, ready to save",
+    "noBalance": "No balance"
+  },
+  "expense": {
+    "addExpense": "Add Expense",
+    "addExpenseMobile": "Add expense",
+    "editExpense": "Edit expense",
+    "editDescription": "Modify the expense details",
+    "recordForGroup": "Record a new expense for {name}",
+    "saveChanges": "Save Changes",
+    "description": "Description",
+    "descriptionPlaceholder": "What is this for?",
+    "category": "Category",
+    "chooseCategory": "Choose category",
+    "amount": "Amount",
+    "paidBy": "Paid by",
+    "howToSplit": "How should this be split?",
+    "splitEqually": "Equally",
+    "splitByPercent": "By %",
+    "splitCustom": "Custom",
+    "splitEqualInfo": "The amount is divided equally among all selected participants.",
+    "splitPercentInfo": "Specify what percentage of the amount each participant should pay.\nValue must be between 1.00% and 99.00%",
+    "splitCustomInfo": "Specify exactly how much each selected participant owes.\nValue must be between {min} and {max}.",
+    "theAmount": "the amount",
+    "participants": "Participants",
+    "allocated": "Allocated",
+    "balanced": "Balanced",
+    "left": "Left",
+    "over": "Over",
+    "withLabel": "With:",
+    "andSplit": "and split",
+    "equally": "equally",
+    "unequally": "unequally",
+    "searchCategory": "Search or select category",
+    "searchCurrency": "Search or select currency...",
+    "paidBySingle": "Paid by one person",
+    "paidBySingleDesc": "One person paid the entire amount.",
+    "paidByMultiple": "Paid by multiple people",
+    "paidByMultipleDesc": "Split the payment between multiple people.\nMake sure the total matches the expense.",
+    "singleTab": "Single",
+    "multipleTab": "Multiple",
+    "closePaidByDialog": "Close paid by dialog",
+    "paidShort": "short",
+    "paidOver": "over",
+    "paidLeft": "left",
+    "paidOf": "{paid} of {total}",
+    "paidAmountsShort": "The paid amounts don't add up to {total}. You're {diff} short.",
+    "paidAmountsOver": "The paid amounts don't add up to {total}. You're {diff} over.",
+    "enterAmountForOne": "Please enter an amount for at least one person.",
+    "splitEqualTitle": "Split Equally",
+    "splitCustomTitle": "Custom Amounts",
+    "splitPercentTitle": "Split by Percentage",
+    "splitEqualTab": "Equal",
+    "splitCustomTab": "Custom",
+    "splitPercentTab": "Percent",
+    "adjustSplit": "Adjust Split",
+    "selectOneToSplit": "You must select at least one person to split with.",
+    "all": "All",
+    "attachImage": "Attach image (max {max})",
+    "addImage": "Add image",
+    "openAttachment": "Open attachment",
+    "addAttachment": "Add attachment",
+    "replaceAttachment": "Replace attachment",
+    "removeAttachment": "Remove attachment",
+    "attachedFile": "Attached file",
+    "deleteImageTitle": "Delete image?",
+    "deleteImageDescription": "This will remove the attached image from this expense.",
+    "validation": {
+      "descriptionRequired": "Enter a description.",
+      "descriptionMax": "Description can't exceed {max} characters.",
+      "amountRequired": "Enter an amount.",
+      "paidByRequired": "Select who paid."
+    },
+    "paidByTotalMismatch": "Paid by total is {paid} but expense is {total}. Please adjust paid by amounts to continue.",
+    "splitTotalMismatch": "Split total is {split} but expense is {total}. Please adjust split to continue.",
+    "attachImageOnly": "Please attach an image file.",
+    "attachMaxSize": "Attachment must be {max} or smaller.",
+    "unknown": "Unknown",
+    "splitEquallyLabel": "Split equally",
+    "splitByPercentage": "Split by percentage",
+    "splitUnequally": "Split unequally",
+    "settlementBalanced": "This settlement is already balanced.",
+    "noOneOwes": "No one owes anything.",
+    "uploadingAttachment": "Uploading attachment...",
+    "updatingAttachment": "Updating attachment...",
+    "deletingAttachment": "Deleting attachment...",
+    "uploadAttachment": "Upload attachment",
+    "deleteAttachment": "Delete attachment",
+    "backToGroup": "Back to group",
+    "editExpenseAria": "Edit expense",
+    "deleteExpenseAria": "Delete expense",
+    "patchCategory": "Patch category",
+    "failedSaveAttachment": "Failed to save attachment",
+    "deleteExpenseTitle": "Delete expense?",
+    "deleteExpenseDescription": "This expense and its attached image will be permanently removed.",
+    "expenseDate": "Expense date {date}",
+    "splitCount": "{count} split",
+    "addedOn": "Added on {date}",
+    "updatedOn": "Updated on {date}",
+    "paidLabel": "Paid",
+    "owedLabel": "owed"
+  }
+}

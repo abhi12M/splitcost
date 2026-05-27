@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 
@@ -77,6 +77,7 @@ function GroupCardSkeleton() {
 }
 
 export function GroupsListSection({ adminMode = false }: { adminMode?: boolean }) {
+  const t = useTranslations("groups");
   const [groups, setGroups] = useState<HomeGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingGroupId, setDeletingGroupId] = useState<string | null>(null);
@@ -153,17 +154,14 @@ export function GroupsListSection({ adminMode = false }: { adminMode?: boolean }
         <div className="mb-8 flex flex-col gap-4 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0">
             <h2 className="mb-1 text-xl font-bold text-foreground sm:text-2xl">
-              {adminMode ? "All Groups" : "Your Groups"}
+              {adminMode ? t("titleAll") : t("titleYour")}
             </h2>
             <p className="text-pretty text-sm text-muted-foreground sm:text-base">
-              {adminMode
-                ? "Admin view of all expense groups"
-                : "Open a recent expense group and keep tracking shared bills"}
+              {adminMode ? t("subtitleAdmin") : t("subtitle")}
             </p>
             {adminMode ? (
               <p className="mt-2 text-sm text-muted-foreground">
-                Total groups:{" "}
-                <span className="font-semibold text-foreground">{groups.length}</span>
+                {t("totalGroups", { count: groups.length })}
               </p>
             ) : null}
           </div>
@@ -171,7 +169,7 @@ export function GroupsListSection({ adminMode = false }: { adminMode?: boolean }
             <Button asChild variant="default" size="sm" className="h-10 w-full shrink-0 sm:h-9 sm:w-auto">
               <Link href="/create-group">
                 <Plus className="h-4 w-4" />
-                New group
+                {t("newGroup")}
               </Link>
             </Button>
           )}
@@ -207,8 +205,8 @@ export function GroupsListSection({ adminMode = false }: { adminMode?: boolean }
                           editHref={`/group/${group.id}/edit`}
                           onDelete={() => handleDeleteGroup(group.id)}
                           isDeleting={deletingGroupId === group.id}
-                          deleteTitle="Delete group?"
-                          deleteDescription="Are you absolutely sure you want to delete this group? All expenses, balances, and records for ALL members will be permanently removed. This action cannot be undone."
+                          deleteTitle={t("deleteTitle")}
+                          deleteDescription={t("deleteDescription")}
                           stopPropagation
                         />
                       ) : null}
@@ -216,18 +214,21 @@ export function GroupsListSection({ adminMode = false }: { adminMode?: boolean }
                     <CardTitle className="mt-3">{group.name}</CardTitle>
                     {adminMode ? (
                       <div className="space-y-1 text-sm text-muted-foreground">
-                        <p>Created {formatDisplayDateTime(group.createdAt)}</p>
+                        <p>{t("created", { date: formatDisplayDateTime(group.createdAt) })}</p>
                         <p>
-                          Updated {formatDisplayDateTime(group.updatedAt ?? group.createdAt)}
+                          {t("updated", {
+                            date: formatDisplayDateTime(group.updatedAt ?? group.createdAt),
+                          })}
                         </p>
                         <p>
-                          Latest expense activity{" "}
-                          {formatDisplayDateTime(group.latestExpenseActivityAt)}
+                          {t("latestExpenseActivity", {
+                            date: formatDisplayDateTime(group.latestExpenseActivityAt),
+                          })}
                         </p>
                       </div>
                     ) : (
                       <p className="text-sm text-muted-foreground">
-                        Created {formatDisplayDate(group.createdAt)}
+                        {t("created", { date: formatDisplayDate(group.createdAt) })}
                       </p>
                     )}
                   </CardHeader>
@@ -240,7 +241,7 @@ export function GroupsListSection({ adminMode = false }: { adminMode?: boolean }
                         <p className="text-lg font-semibold text-foreground">
                           {formatCurrency(totalExpenses, group.currency)}
                         </p>
-                        <p className="text-xs text-muted-foreground">Total</p>
+                        <p className="text-xs text-muted-foreground">{t("total")}</p>
                       </div>
                     </div>
                   </CardContent>
@@ -260,10 +261,8 @@ export function GroupsListSection({ adminMode = false }: { adminMode?: boolean }
                     <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mb-4">
                       <Plus className="w-7 h-7 text-muted-foreground" />
                     </div>
-                    <p className="font-medium text-foreground mb-1">Create New Group</p>
-                    <p className="text-sm text-muted-foreground">
-                      Start tracking shared expenses
-                    </p>
+                    <p className="font-medium text-foreground mb-1">{t("createCardTitle")}</p>
+                    <p className="text-sm text-muted-foreground">{t("createCardSubtitle")}</p>
                   </CardContent>
                 </Card>
               </Link>

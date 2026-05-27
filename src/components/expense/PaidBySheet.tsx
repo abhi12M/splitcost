@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { ArrowLeft, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "../ui/UserAvatar";
@@ -49,6 +50,9 @@ export default function PaidBySheet({
   onSelectSingle,
   onConfirmMultiple,
 }: PaidBySheetProps) {
+  const t = useTranslations("expense");
+  const tCommon = useTranslations("common");
+  const youLabel = useTranslations("group")("you");
   const [activeTab, setActiveTab] = useState<TabMode>(
     isMultiplePayers ? "multiple" : "single"
   );
@@ -104,16 +108,16 @@ export default function PaidBySheet({
   if (!open) return null;
 
   const tabs: { id: TabMode; label: string }[] = [
-    { id: "single", label: "Single" },
-    { id: "multiple", label: "Multiple" },
+    { id: "single", label: t("singleTab") },
+    { id: "multiple", label: t("multipleTab") },
   ];
-  const paidByInfo = getPaidByInfoContent(activeTab);
+  const paidByInfo = getPaidByInfoContent(activeTab, t);
 
   return createPortal(
     <div className="fixed inset-0 z-[60] bg-background flex flex-col !mt-0 sm:bg-black/30 sm:backdrop-blur-[2px] sm:block">
       <button
         type="button"
-        aria-label="Close paid by dialog"
+        aria-label={t("closePaidByDialog")}
         onClick={onClose}
         className="hidden sm:block absolute inset-0"
       />
@@ -129,7 +133,7 @@ export default function PaidBySheet({
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-1">
-            <span className="font-medium text-sm">Paid by</span>
+            <span className="font-medium text-sm">{t("paidBy")}</span>
             <InfoSheetButton
               title={paidByInfo.title}
               description={paidByInfo.description}
@@ -150,30 +154,36 @@ export default function PaidBySheet({
                     let errMsg: string;
 
                     if (diff > 0) {
-                      errMsg = `The paid amounts don't add up to ${totalFormatted}. You're ${diffFormatted} short.`;
+                      errMsg = t("paidAmountsShort", {
+                        total: totalFormatted,
+                        diff: diffFormatted,
+                      });
                     } else {
-                      errMsg = `The paid amounts don't add up to ${totalFormatted}. You're ${diffFormatted} over.`;
+                      errMsg = t("paidAmountsOver", {
+                        total: totalFormatted,
+                        diff: diffFormatted,
+                      });
                     }
 
                     toast({
-                      title: "Whoops!",
+                      title: tCommon("whoops"),
                       description: errMsg,
                       position: "center",
                       hideClose: true,
                       duration: Infinity,
-                      action: <ToastAction altText="OK">OK</ToastAction>,
+                      action: <ToastAction altText={tCommon("ok")}>{tCommon("ok")}</ToastAction>,
                     });
                     return;
                   }
 
                   if (validPayers.length === 0) {
                     toast({
-                      title: "Whoops!",
-                      description: "Please enter an amount for at least one person.",
+                      title: tCommon("whoops"),
+                      description: t("enterAmountForOne"),
                       position: "center",
                       hideClose: true,
                       duration: Infinity,
-                      action: <ToastAction altText="OK">OK</ToastAction>,
+                      action: <ToastAction altText={tCommon("ok")}>{tCommon("ok")}</ToastAction>,
                     });
                     return;
                   }
@@ -224,7 +234,7 @@ export default function PaidBySheet({
         <div className="flex-1 overflow-y-auto sm:max-h-[24rem]">
           {members.map((m) => {
             const isSelected = !isMultiplePayers && paidByUserId === m.id;
-            const label = memberLabelWithYouSuffix(m.id, m.name, viewerMemberId);
+            const label = memberLabelWithYouSuffix(m.id, m.name, viewerMemberId, youLabel);
             return (
               <button
                 key={m.id}
@@ -265,7 +275,7 @@ export default function PaidBySheet({
             {localPayers.map((p, idx) => {
               const member = members.find((m) => m.id === p.userId);
               if (!member) return null;
-              const label = memberLabelWithYouSuffix(member.id, member.name, viewerMemberId);
+              const label = memberLabelWithYouSuffix(member.id, member.name, viewerMemberId, youLabel);
               return (
                 <div
                   key={p.userId}
@@ -321,8 +331,10 @@ export default function PaidBySheet({
           >
             <div className="text-sm text-center">
               <div className="text-muted-foreground">
-                {formatAmount(payersTotal, currency)} of{" "}
-                {formatAmount(expenseAmount, currency)}
+                {t("paidOf", {
+                  paid: formatAmount(payersTotal, currency),
+                  total: formatAmount(expenseAmount, currency),
+                })}
               </div>
               <div
                 className={cn(
@@ -332,7 +344,7 @@ export default function PaidBySheet({
                 )}
               >
                 {formatAmount(Math.abs(difference), currency)}{" "}
-                {isOver ? "over" : "left"}
+                {isOver ? t("paidOver") : t("paidLeft")}
               </div>
             </div>
           </div>

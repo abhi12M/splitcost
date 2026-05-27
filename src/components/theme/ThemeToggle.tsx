@@ -1,6 +1,7 @@
 "use client";
 
 import { Check, Monitor, Moon, Sun } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
@@ -14,9 +15,9 @@ import {
 import { cn } from "@/lib/utils";
 
 const themes = [
-  { value: "light", label: "Light", icon: Sun },
-  { value: "dark", label: "Dark", icon: Moon },
-  { value: "system", label: "System", icon: Monitor },
+  { value: "light", icon: Sun },
+  { value: "dark", icon: Moon },
+  { value: "system", icon: Monitor },
 ] as const;
 
 type ThemeToggleProps = {
@@ -25,6 +26,7 @@ type ThemeToggleProps = {
 };
 
 export function ThemeToggle({ align = "end", className }: ThemeToggleProps) {
+  const t = useTranslations("theme");
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -40,7 +42,7 @@ export function ThemeToggle({ align = "end", className }: ThemeToggleProps) {
           variant="ghost"
           size="icon-sm"
           className={cn("shrink-0", className)}
-          aria-label="Appearance"
+          aria-label={t("appearance")}
         >
           <Sun
             className={cn(
@@ -57,14 +59,14 @@ export function ThemeToggle({ align = "end", className }: ThemeToggleProps) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align={align} className="w-40">
-        {themes.map(({ value, label, icon: Icon }) => (
+        {themes.map(({ value, icon: Icon }) => (
           <DropdownMenuItem
             key={value}
             onClick={() => setTheme(value)}
             className="gap-2"
           >
             <Icon className="h-4 w-4 text-muted-foreground" />
-            <span className="flex-1">{label}</span>
+            <span className="flex-1">{t(value)}</span>
             {activeTheme === value ? (
               <Check className="h-4 w-4 text-primary" aria-hidden />
             ) : null}
@@ -76,20 +78,21 @@ export function ThemeToggle({ align = "end", className }: ThemeToggleProps) {
 }
 
 export function ThemeMenuItems() {
+  const t = useTranslations("theme");
   const { theme, setTheme } = useTheme();
 
   const activeTheme = theme ?? "system";
 
   return (
     <>
-      {themes.map(({ value, label, icon: Icon }) => (
+      {themes.map(({ value, icon: Icon }) => (
         <DropdownMenuItem
           key={value}
           onClick={() => setTheme(value)}
           className="gap-2"
         >
           <Icon className="h-4 w-4 text-muted-foreground" />
-          <span className="flex-1">{label}</span>
+          <span className="flex-1">{t(value)}</span>
           {activeTheme === value ? (
             <Check className="h-4 w-4 text-primary" aria-hidden />
           ) : null}

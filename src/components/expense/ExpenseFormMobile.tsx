@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
+import { useTranslations } from "next-intl"
 import { ArrowLeft, CalendarIcon, Check, Settings } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -11,12 +12,13 @@ import {
   UserInterface,
 } from "@/lib/storage"
 import { memberNameForViewer } from "@/lib/groupExpenseLabels"
-import { EXPENSE_DESCRIPTION_MAX, ExpenseSchema } from "@/lib/validations/expense.schema"
+import { EXPENSE_DESCRIPTION_MAX } from "@/lib/validations/expense.schema"
+import { createExpenseSchema } from "@/lib/validations/expense.schema.i18n"
 import { CategoryKey, EXPENSE_CATEGORIES, SubcategoryId } from "../icons/CategoryIcons"
 import { formatAmount, formatDateForDB, getCurrencyDifference } from "../ui/formatters"
 import { SingleSelect } from "../ui/single-select"
 import { CURRENCIES } from "@/constants"
-import Link from "next/link"
+import { Link } from "@/i18n/navigation"
 import { Calendar } from "../ui/calendar"
 import SplitScreen from "./SplitScreen"
 import PaidBySheet from "./PaidBySheet"
@@ -52,6 +54,20 @@ export default function ExpenseFormMobile({
   initialAttachment = null,
   onSubmit
 }: Props) {
+  const t = useTranslations("expense");
+  const tCommon = useTranslations("common");
+  const youLabel = useTranslations("group")("you");
+  const ExpenseSchema = useMemo(
+    () =>
+      createExpenseSchema({
+        descriptionRequired: t("validation.descriptionRequired"),
+        descriptionMax: t("validation.descriptionMax", { max: EXPENSE_DESCRIPTION_MAX }),
+        amountRequired: t("validation.amountRequired"),
+        paidByRequired: t("validation.paidByRequired"),
+      }),
+    [t]
+  );
+
   const initialPayers = initialData?.payers || [];
   const hasInitialMultiplePayers = initialPayers.length > 0;
   const initialSinglePaidBy =
@@ -194,7 +210,7 @@ export default function ExpenseFormMobile({
     const hasCustomTotalsError = Boolean(validationErrors.split || validationErrors.payers);
 
     toast({
-      title: hasCustomTotalsError ? "Whoops!" : "Missing required details",
+      title: hasCustomTotalsError ? tCommon("whoops") : tCommon("missingRequired"),
       description: (
         <div className="space-y-1">
           {errorMessages.map((msg, idx) => (
@@ -215,7 +231,7 @@ export default function ExpenseFormMobile({
   const validate = (from?: string) => {
     const result = ExpenseSchema.safeParse({ description, paidByUserId, amount, isMultiplePayers });
     const paidByError =
-      !isMultiplePayers && !paidByUserId?.trim() ? "Select who paid." : "";
+      !isMultiplePayers && !paidByUserId?.trim() ? t("validation.paidByRequired") : "";
 
     // ---------- Zod validation ----------
     if (!result.success) {
@@ -266,10 +282,10 @@ export default function ExpenseFormMobile({
       const expenseTotal = Number(amount || 0);
 
       if (getCurrencyDifference(expenseTotal, totalPaidBy) !== 0) {
-        const payersError = `Paid by total is ${formatAmount(
-          totalPaidBy,
-          currency
-        )} but expense is ${formatAmount(expenseTotal, currency)}. Please adjust paid by amounts to continue.`;
+        const payersError = t("paidByTotalMismatch", {
+          paid: formatAmount(totalPaidBy, currency),
+          total: formatAmount(expenseTotal, currency),
+        });
 
         const newErrors = {
           ...cleared,
@@ -295,10 +311,10 @@ export default function ExpenseFormMobile({
       const expenseTotal = Number(amount || 0);
 
       if (getCurrencyDifference(expenseTotal, totalCustomValue) !== 0) {
-        const splitError = `Split total is ${formatAmount(
-          totalCustomValue,
-          currency
-        )} but expense is ${formatAmount(expenseTotal, currency)}. Please adjust split to continue.`;
+        const splitError = t("splitTotalMismatch", {
+          split: formatAmount(totalCustomValue, currency),
+          total: formatAmount(expenseTotal, currency),
+        });
 
         const newErrors = {
           ...cleared,
@@ -386,7 +402,7 @@ export default function ExpenseFormMobile({
     .filter((m): m is UserInterface => Boolean(m));
   const participantNames = participantMembers.map((m) => m.name);
   const participantOverlayNames = participantMembers.map((m) =>
-    memberNameForViewer(m.id, m.name, viewerMemberId)
+    memberNameForViewer(m.id, m.name, viewerMemberId, youLabel)
   );
 
   return (
@@ -401,7 +417,7 @@ export default function ExpenseFormMobile({
           </Link>
 
           <span className="font-medium">
-            {initialData ? "Edit expense" : "Add expense"}
+            {initialData ? t("editExpense") : t("addExpenseMobile")}
           </span>
 
           <Check className="w-5 h-5 text-primary" onClick={handleSubmit} />
@@ -409,7 +425,7 @@ export default function ExpenseFormMobile({
 
         {/* Avatar row */}
         <div className="flex items-center gap-2 px-4 py-1 border-b">
-          <span className="text-sm text-muted-foreground">With:</span>
+          <span className="text-sm text-muted-foreground">{t("withLabel")}</span>
           <AvatarGroup
             names={participantNames}
             overlayNames={participantOverlayNames}
@@ -457,13 +473,13 @@ export default function ExpenseFormMobile({
                 onSelect={(groupId, itemId) =>
                   handleSubcategorySelect(groupId!, itemId)
                 }
-                inputPlaceholder="Search or select category"
+                inputPlaceholder={t("searchCategory")}
                 fullscreenOnMobile
               />
 
               <Input
                 value={description}
-                placeholder="Description"
+                placeholder={t("description")}
                 maxLength={EXPENSE_DESCRIPTION_MAX}
                 onChange={(e) => setDescription(e.target.value)}
                 className="rounded-none focus-visible:ring-1"
@@ -481,7 +497,7 @@ export default function ExpenseFormMobile({
                 }))}
                 value={{ itemId: currency }}
                 onSelect={(_, itemId) => setCurrency(itemId)}
-                inputPlaceholder="Search or select currency..."
+                inputPlaceholder={t("searchCurrency")}
                 fullscreenOnMobile
                 isDisplayId
                 disabled
@@ -508,7 +524,7 @@ export default function ExpenseFormMobile({
 
 
           <div className="flex justify-center gap-2 items-center">
-            <span className="text-sm text-muted-foreground">Paid by</span>
+            <span className="text-sm text-muted-foreground">{t("paidBy")}</span>
             <button
               type="button"
               onClick={() => setShowPaidBy(true)}
@@ -519,15 +535,15 @@ export default function ExpenseFormMobile({
               )}
             >
               {isMultiplePayers
-                ? `${payers.filter(p => p.amount && p.amount > 0).length} people`
+                ? `${payers.filter(p => p.amount && p.amount > 0).length} ${tCommon("people")}`
                 : paidByUserId
                   ? (() => {
                       const m = members.find((mem: UserInterface) => mem.id === paidByUserId);
-                      if (!m) return "select member";
-                      if (viewerMemberId && m.id === viewerMemberId) return "You";
+                      if (!m) return tCommon("selectMemberShort");
+                      if (viewerMemberId && m.id === viewerMemberId) return youLabel;
                       return m.name;
                     })()
-                  : "select member"}
+                  : tCommon("selectMemberShort")}
             </button>
           </div>
 
@@ -535,7 +551,7 @@ export default function ExpenseFormMobile({
 
             className="flex justify-center gap-2 items-center w-full"
           >
-            <span className="text-sm text-muted-foreground">and split</span>
+            <span className="text-sm text-muted-foreground">{t("andSplit")}</span>
             <span
               aria-invalid={!!errors.split}
               className={cn(
@@ -544,7 +560,7 @@ export default function ExpenseFormMobile({
               )}
               onClick={() => handleOpenSlitScreen()}
             >
-              {splitType == 'equal' ? "equally" : "unequally"}
+              {splitType == 'equal' ? t("equally") : t("unequally")}
             </span>
           </button>
         </div>
