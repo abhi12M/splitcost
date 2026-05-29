@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 
 import { BrandIcon } from "@/components/brand/BrandIcon";
+import { LanguageList } from "@/components/i18n/LanguageList";
 import { APP_NAME } from "@/lib/constants";
 import { Link } from "@/i18n/navigation";
 
@@ -13,7 +14,7 @@ export function Footer() {
   return (
     <footer className="border-t border-border bg-muted/30 pb-[calc(4.25rem+env(safe-area-inset-bottom,0px))] sm:pb-0">
       <div className="container pt-10 pb-8 sm:pt-16 sm:pb-12 md:pt-20">
-        <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-6">
           <div className="col-span-2 sm:col-span-3 lg:col-span-2">
             <Link
               href="/"
@@ -97,6 +98,7 @@ export function Footer() {
               </li>
             </ul>
           </nav>
+          <LanguageList />
         </div>
 
         <div className="mt-8 pt-8 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4">

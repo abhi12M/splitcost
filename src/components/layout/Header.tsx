@@ -99,12 +99,6 @@ export function Header() {
             <BrandIcon className="h-8 w-auto sm:h-9" height={36} />
           </Link>
 
-          {isMobile ? (
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 sm:hidden">
-              <LanguageSwitcher variant="icon" />
-            </div>
-          ) : null}
-
           <nav
             className="hidden shrink-0 items-center gap-0.5 sm:flex sm:gap-1"
             aria-label={t("primaryNav")}

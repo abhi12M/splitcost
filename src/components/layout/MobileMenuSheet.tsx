@@ -16,7 +16,7 @@ import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useEffect, useState, type CSSProperties, type MouseEvent } from "react";
 
-import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
+import { LanguageList } from "@/components/i18n/LanguageList";
 import {
   Sheet,
   SheetContent,
@@ -172,9 +172,7 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
 
           <div className="pt-2">
             <div className="mx-4 border-t border-border" role="presentation" />
-            <div className="flex items-center justify-between px-4 py-3">
-              <LanguageSwitcher variant="default" />
-            </div>
+            <LanguageList variant="menu" onSelect={close} />
             <div className="pt-1">
               <LightModeToggle />
             </div>
