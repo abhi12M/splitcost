@@ -109,10 +109,14 @@ export function formatExpenseGroupHeaderTitle(
   title: string,
   groupBy: ExpenseDashboardGroupBy,
   shouldTitleCase: boolean,
+  resolveCategoryLabel?: (categoryKey: string) => string,
 ): string {
   if (!title) return title;
   if (groupBy === "date" && ISO_DATE_ONLY.test(title.trim())) {
     return formatDisplayDate(title) || title;
+  }
+  if (groupBy === "category" && resolveCategoryLabel) {
+    return resolveCategoryLabel(title) || (shouldTitleCase ? toTitleCase(title) : title);
   }
   return shouldTitleCase ? toTitleCase(title) : title;
 }
@@ -120,11 +124,11 @@ export function formatExpenseGroupHeaderTitle(
 export const YOU_DISPLAY_SUFFIX = " (You)";
 
 /** Short display name for expense summaries: trim, truncate long first names, abbreviate last name. */
-export function formatSummaryNameCore(name: string): string {
+export function formatSummaryNameCore(name: string, unknownLabel = "Unknown"): string {
   const normalized = name.trim().replace(/\s+/g, " ");
 
   if (!normalized) {
-    return "Unknown";
+    return unknownLabel;
   }
 
   const parts = normalized.split(" ");
@@ -152,15 +156,15 @@ export function formatSummaryName(name: string): string {
   return formatSummaryNameCore(name);
 }
 
-export const formatDisplayDateTime = (date?: string | Date | null) => {
+export const formatDisplayDateTime = (date?: string | Date | null, notAvailableLabel = "N/A") => {
   if (!date) {
-    return "N/A";
+    return notAvailableLabel;
   }
 
   const value = parseDateInput(date);
 
   if (Number.isNaN(value.getTime())) {
-    return "N/A";
+    return notAvailableLabel;
   }
 
   return new Intl.DateTimeFormat("en-IN", {

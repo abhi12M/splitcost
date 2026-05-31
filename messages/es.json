@@ -50,6 +50,61 @@
     "expenseDetails": {
       "title": "Detalles del gasto",
       "description": "Consulta detalles, reparto y adjunto de este gasto."
+    },
+    "compare": {
+      "index": {
+        "title": "Comparar SplitCost — Alternativas a Splitwise, Splid y Tricount",
+        "description": "Compara SplitCost con Splitwise, Splid y Tricount. Consulta las diferencias en división de facturas, gastos en grupo y seguimiento de pagos compartidos."
+      },
+      "splitwise": {
+        "title": "SplitCost vs Splitwise: una alternativa gratis más inteligente",
+        "description": "¿Cansado de las funciones de pago de Splitwise? Alternativa a Splitwise para dividir facturas, controlar gastos compartidos, saldar saldos y gestionar el gasto en grupo con facilidad."
+      },
+      "splid": {
+        "title": "¿Cansado de Splid? Prueba esta potente alternativa a Splid",
+        "description": "¿Buscas una alternativa a Splid? SplitCost te ayuda a controlar gastos, dividir facturas y gestionar costes compartidos con una plataforma sencilla y fácil de usar."
+      },
+      "tricount": {
+        "title": "La mejor alternativa a Tricount para viajes y gastos en grupo",
+        "description": "¿Buscas una alternativa a Tricount? SplitCost ayuda a los grupos a dividir gastos de viaje, controlar costes compartidos, gestionar saldos y liquidar facturas con facilidad."
+      }
+    },
+    "useCases": {
+      "index": {
+        "title": "Casos de uso — Divide gastos en viajes, pisos compartidos y más",
+        "description": "Descubre cómo SplitCost ayuda a grupos de viaje, compañeros de piso, parejas, amigos y equipos a dividir facturas, registrar gastos compartidos y saldar cuentas de forma justa — gratis y sin registro."
+      },
+      "travel": {
+        "title": "Divisor de gastos de viaje — Reparte los costes del viaje con amigos",
+        "description": "Divide los gastos de viaje de forma justa en viajes en grupo. Registra hoteles, transporte, comida y actividades en un divisor de gastos de viaje gratuito. Sin registro."
+      },
+      "roommates": {
+        "title": "Control de gastos entre compañeros de piso — Alquiler, facturas y compra",
+        "description": "Gestiona los costes del hogar compartido con un control de gastos gratuito. Divide alquiler, suministros, compra y facturas sin hojas de cálculo ni confusiones."
+      },
+      "couples": {
+        "title": "Control de gastos en pareja — Gestiona el gasto compartido juntos",
+        "description": "Registra el gasto compartido en pareja con un control de gastos sencillo. Organiza costes diarios, suscripciones, cenas y viajes en un solo lugar."
+      },
+      "friends": {
+        "title": "Divide facturas con amigos — Cenas y eventos en grupo",
+        "description": "Reparte cenas, fiestas, conciertos y eventos de forma justa con amigos. Un divisor de facturas gratuito que mantiene cada pago compartido transparente."
+      },
+      "teams": {
+        "title": "Control de gastos de equipo — Reembolsos y pagos compartidos",
+        "description": "Organiza reembolsos de equipo, gastos de club y pagos de comunidad. Registra quién pagó qué y salda costes compartidos con menos trabajo administrativo."
+      }
+    },
+    "softwareApplication": {
+      "features": {
+        "one": "Crear grupos de gastos compartidos",
+        "two": "Editar nombre, moneda y miembros del grupo",
+        "three": "Registrar gastos con un pagador o varios pagadores",
+        "four": "Dividir facturas por igual, por porcentaje o con importes personalizados",
+        "five": "Controlar saldos de viajes, compañeros de piso y eventos en grupo",
+        "six": "Compartir enlaces de grupo sin registro",
+        "seven": "Liquidar saldos con pagos simplificados"
+      }
     }
   },
   "layout": {
@@ -72,6 +127,10 @@
     "howItWorks": "Cómo funciona",
     "features": "Funciones",
     "useCases": "Casos de uso",
+    "compare": "Comparar",
+    "footerCompareApps": "Comparar apps",
+    "footerCompareLink": "{competitor} vs {appName}",
+    "footerUseCasesHub": "Casos de uso",
     "privacy": "Privacidad",
     "terms": "Términos",
     "lightMode": "Modo claro",
@@ -178,6 +237,28 @@
           "title": "Los gastos de viaje se desordenan",
           "description": "Costes del viaje, cenas, transporte y reservas son difíciles de organizar a mano."
         }
+      },
+      "mockups": {
+        "groupChat": "Chat de grupo",
+        "whichPaymentCounts": "¿Qué pago cuenta?",
+        "groupBalance": "Saldo del grupo",
+        "paymentDue": "Pago pendiente",
+        "toLabel": "Para",
+        "amountLabel": "Importe",
+        "statusLabel": "Estado",
+        "unpaid": "Sin pagar",
+        "waitingFollowUp": "Aún esperando respuesta",
+        "tripExpenses": "Gastos del viaje",
+        "total": "Total",
+        "chatNotes": {
+          "dinner": "Cena",
+          "lastTrip": "Último viaje"
+        },
+        "tripItems": {
+          "dinner": "Cena",
+          "taxi": "Taxi",
+          "hotel": "Hotel"
+        }
       }
     },
     "howItWorks": {
@@ -214,6 +295,22 @@
         "freeToStart": "Gratis para empezar",
         "noCreditCard": "Sin tarjeta de crédito",
         "securePrivate": "Seguro y privado"
+      },
+      "mockups": {
+        "groupName": "Viaje a la playa",
+        "memberCount": "5 miembros",
+        "paidBy": "Pagado por {name}",
+        "groupBalance": "Saldo del grupo",
+        "getsBack": "recibe",
+        "owes": "debe",
+        "youAreOwed": "Te deben",
+        "settleWith": "Liquidar con",
+        "expenses": {
+          "dinner": "Cena en cafetería",
+          "taxi": "Taxi al aeropuerto",
+          "hotel": "Reserva de hotel",
+          "groceries": "Compra"
+        }
       }
     },
     "useCases": {
@@ -330,12 +427,22 @@
           "role": "Viaje de fin de semana",
           "initials": "AT"
         }
-      }
+      },
+      "ratingAriaLabel": "5 de 5 estrellas"
     },
     "faq": {
       "badge": "Preguntas frecuentes",
       "title": "Preguntas frecuentes sobre",
       "description": "Todo lo que debes saber sobre el seguimiento de gastos compartidos, la división de facturas, los pagos en grupo y la gestión de gastos con {appName}."
+    },
+    "comparePreview": {
+      "searchPlaceholder": "Buscar",
+      "demoGroupName": "Viaje a Miami",
+      "demoExpenses": {
+        "hotel": "Hotel — South Beach",
+        "dinner": "Cena en grupo",
+        "taxi": "Taxi al aeropuerto"
+      }
     }
   },
   "faq": {
@@ -416,7 +523,19 @@
     "list": "Lista",
     "chart": "Gráfico",
     "export": "Exportar",
-    "yesSettleUp": "Sí, liquidar"
+    "yesSettleUp": "Sí, liquidar",
+    "unknown": "Desconocido",
+    "notAvailable": "N/D",
+    "searchPlaceholder": "Buscar...",
+    "selectPlaceholder": "Seleccionar...",
+    "closeInfoSheet": "Cerrar panel de información",
+    "moreInfo": "Más información",
+    "paginationPrevious": "Ir a la página anterior",
+    "paginationNext": "Ir a la página siguiente",
+    "morePages": "Más páginas",
+    "previousSlide": "Diapositiva anterior",
+    "nextSlide": "Diapositiva siguiente",
+    "breadcrumbMore": "Más"
   },
   "groups": {
     "titleYour": "Tus grupos",
@@ -698,7 +817,10 @@
     "exportCurrency": "Moneda",
     "exportNetMeaning": "Importe neto (+ recupera, - debe)",
     "exportTotalBalance": "Saldo total",
-    "settlementBetween": "Liquidación entre {from} y {to}"
+    "settlementBetween": "Liquidación entre {from} y {to}",
+    "loadingDashboard": "Cargando el panel del grupo",
+    "shareGroupTitle": "{name} · SplitCost",
+    "shareSettlementTitle": "{name} · Resumen de liquidación"
   },
   "editGroup": {
     "getsBack": "Recupera",
@@ -726,7 +848,13 @@
     "addNewMember": "Añadir un nuevo miembro",
     "tapToEdit": "Toca para editar o eliminar",
     "newMemberReady": "Nuevo miembro, listo para guardar",
-    "noBalance": "Sin saldo"
+    "noBalance": "Sin saldo",
+    "groupSnapshotTitle": "Resumen del grupo",
+    "groupSnapshotDescription": "Una vista rápida antes de hacer cambios en los miembros.",
+    "totalUnsettledAmount": "Importe total pendiente",
+    "membersCardDescription": "Selecciona un miembro para cambiarle el nombre o eliminarlo cuando sea seguro.",
+    "memberRemovalProtectedTitle": "La eliminación de miembros está protegida",
+    "memberRemovalProtectedDescription": "Los miembros implicados en algún gasto de este grupo no se pueden eliminar."
   },
   "expense": {
     "addExpense": "Añadir gasto",
@@ -825,6 +953,918 @@
     "addedOn": "Añadido el {date}",
     "updatedOn": "Actualizado el {date}",
     "paidLabel": "Pagó",
-    "owedLabel": "debe"
+    "owedLabel": "debe",
+    "splitCustomShort": "El reparto no suma {total}. Faltan {diff}.",
+    "splitCustomOver": "El reparto no suma {total}. Sobran {diff}.",
+    "splitPercentShort": "El reparto no suma el 100 %. Faltan {diff} %.",
+    "splitPercentOver": "El reparto no suma el 100 %. Sobran {diff} %.",
+    "perPerson": "por persona",
+    "perPersonApprox": "por persona (aprox.)",
+    "attachedImageTitle": "Imagen adjunta",
+    "previewNotAvailable": "Vista previa no disponible para este tipo de archivo.",
+    "amountOfLimit": "{allocated} de {limit}"
+  },
+  "comparePages": {
+    "index": {
+      "badge": "Comparar",
+      "title": "Encuentra la mejor",
+      "titleHighlight": "alternativa",
+      "description": "Descubre cómo se compara {appName} con las apps más populares para dividir gastos. Comparativas honestas de funciones para elegir la herramienta ideal en viajes, pisos compartidos y facturas en grupo.",
+      "breadcrumbHome": "Inicio",
+      "breadcrumbCompare": "Comparar",
+      "jsonLdName": "Comparar {appName} con otras apps de gastos",
+      "jsonLdDescription": "Comparativa de funciones entre {appName}, Splitwise, Splid y Tricount para dividir gastos en grupo.",
+      "cardLinkLabel": "Ver comparación",
+      "cards": {
+        "splitwise": {
+          "title": "{appName} vs Splitwise",
+          "summary": "Compara la división de facturas, los requisitos de registro y las funciones gratuitas frente a la app de gastos más popular."
+        },
+        "splid": {
+          "title": "{appName} vs Splid",
+          "summary": "Descubre cómo un gestor de gastos en grupo web se compara con Splid para facturas y saldos compartidos."
+        },
+        "tricount": {
+          "title": "{appName} vs Tricount",
+          "summary": "Compara las funciones de seguimiento de gastos de viaje y en grupo frente a Tricount para viajes y eventos."
+        }
+      },
+      "cta": {
+        "title": "Prueba {appName} gratis hoy",
+        "description": "Crea un grupo en segundos y descubre por qué muchos equipos cambian a un divisor de gastos más sencillo.",
+        "button": "Crear un grupo gratis"
+      }
+    },
+    "shared": {
+      "breadcrumbHome": "Inicio",
+      "breadcrumbCompare": "Comparar",
+      "breadcrumbLabel": "Ruta de navegación",
+      "comparisonTitle": "{appName} vs {competitor} de un vistazo",
+      "comparisonCaption": "Comparativa de funciones entre {appName} y {competitor}",
+      "whoShouldSwitchTitle": "¿Quién debería considerar {appName}?",
+      "faqTitle": "Preguntas frecuentes",
+      "relatedTitle": "Otras comparativas",
+      "related": {
+        "splitwise": {
+          "title": "{appName} vs Splitwise",
+          "summary": "Compara el divisor de gastos más popular con {appName}."
+        },
+        "splid": {
+          "title": "{appName} vs Splid",
+          "summary": "Descubre cómo se compara {appName} con Splid para facturas en grupo."
+        },
+        "tricount": {
+          "title": "{appName} vs Tricount",
+          "summary": "Compara Tricount y {appName} para gastos de viaje."
+        }
+      },
+      "cta": {
+        "title": "¿Listo para probar {appName}?",
+        "button": "Crear un grupo gratis"
+      },
+      "comparisonYes": "Sí",
+      "comparisonNo": "No"
+    },
+    "comparisonTable": {
+      "featureColumn": "Función",
+      "rows": {
+        "noSignup": {
+          "feature": "Empezar sin registrarse",
+          "splitcost": "yes",
+          "competitor": {
+            "splitwise": "Cuenta obligatoria",
+            "splid": "yes",
+            "tricount": "Cuenta habitual"
+          }
+        },
+        "freeToStart": {
+          "feature": "Gratis para empezar",
+          "splitcost": "yes",
+          "competitor": {
+            "splitwise": "Gratis + Pro de pago",
+            "splid": "Gratis con límites",
+            "tricount": "Gratis con anuncios"
+          }
+        },
+        "webApp": {
+          "feature": "Funciona en el navegador",
+          "splitcost": "yes",
+          "competitor": {
+            "splitwise": "yes",
+            "splid": "Limitado",
+            "tricount": "Prioridad móvil"
+          }
+        },
+        "flexibleSplits": {
+          "feature": "Divisiones iguales, % y personalizadas",
+          "splitcost": "yes",
+          "competitor": {
+            "splitwise": "yes",
+            "splid": "yes",
+            "tricount": "yes"
+          }
+        },
+        "multiplePayers": {
+          "feature": "Varios pagadores por gasto",
+          "splitcost": "yes",
+          "competitor": {
+            "splitwise": "Limitado",
+            "splid": "Limitado",
+            "tricount": "Limitado"
+          }
+        },
+        "multiCurrency": {
+          "feature": "Grupos multidivisa",
+          "splitcost": "yes",
+          "competitor": {
+            "splitwise": "Función Pro",
+            "splid": "yes",
+            "tricount": "yes"
+          }
+        },
+        "receiptAttachments": {
+          "feature": "Adjuntar tickets",
+          "splitcost": "yes",
+          "competitor": {
+            "splitwise": "yes",
+            "splid": "no",
+            "tricount": "Limitado"
+          }
+        },
+        "csvExport": {
+          "feature": "Exportar CSV",
+          "splitcost": "yes",
+          "competitor": {
+            "splitwise": "Función Pro",
+            "splid": "Limitado",
+            "tricount": "Limitado"
+          }
+        },
+        "settlementSuggestions": {
+          "feature": "Sugerencias de liquidación",
+          "splitcost": "yes",
+          "competitor": {
+            "splitwise": "yes",
+            "splid": "yes",
+            "tricount": "yes"
+          }
+        },
+        "shareableGroupLink": {
+          "feature": "Enlace de grupo compartible",
+          "splitcost": "yes",
+          "competitor": {
+            "splitwise": "Invitación necesaria",
+            "splid": "Compartir manual",
+            "tricount": "Invitación al grupo"
+          }
+        },
+        "groupExpenseHistory": {
+          "feature": "Historial de gastos del grupo",
+          "splitcost": "yes",
+          "competitor": {
+            "splitwise": "yes",
+            "splid": "yes",
+            "tricount": "yes"
+          }
+        }
+      }
+    },
+    "splitwise": {
+      "breadcrumbPage": "Alternativa a Splitwise",
+      "jsonLdName": "Comparativa {appName} vs Splitwise",
+      "jsonLdDescription": "Compara {appName} y Splitwise para dividir gastos en grupo, compartir facturas y liquidar saldos.",
+      "badge": "{appName} vs Splitwise",
+      "hero": {
+        "title": "Una alternativa sencilla a Splitwise para gastos compartidos",
+        "subtitle": "¿Buscas una alternativa a Splitwise? {appName} ayuda a los grupos a dividir facturas, controlar gastos compartidos y gestionar saldos con una experiencia web sencilla. Únete con un enlace, crea grupos al instante y mantente organizado sin complicaciones.",
+        "cta": "Prueba {appName} gratis",
+        "trustLine": "Sin instalar app • Únete con enlace • Divisiones flexibles • Exportar informes"
+      },
+      "reasons": {
+        "title": "Por qué los grupos buscan una alternativa a Splitwise",
+        "description": "Splitwise es una app popular para compartir gastos, pero algunos grupos prefieren un acceso más rápido, divisiones flexibles y herramientas que no exijan que cada miembro cree una cuenta.",
+        "one": {
+          "title": "Crea un grupo y comparte un enlace al instante",
+          "description": "{appName} es ideal para viajes, eventos, cenas y gastos entre compañeros de piso cuando la rapidez importa."
+        },
+        "two": {
+          "title": "Funciones esenciales sin plan premium",
+          "description": "Divisiones flexibles, varios pagadores, tickets adjuntos y exportación CSV disponibles sin necesidad de un plan de pago."
+        },
+        "three": {
+          "title": "Sin instalar ninguna app",
+          "description": "Accede a {appName} desde cualquier navegador e invita a miembros con un enlace compartido. Tu grupo puede participar sin descargar una app ni crear varias cuentas."
+        },
+        "four": {
+          "title": "División flexible de gastos",
+          "description": "Divide gastos a partes iguales, por porcentaje o con importes personalizados. {appName} se adapta a distintos escenarios sin cálculos manuales."
+        }
+      },
+      "whoShould": {
+        "title": "¿Quién debería elegir {appName} en lugar de Splitwise?",
+        "intro": "{appName} está pensado para grupos que necesitan una forma rápida y flexible de gestionar gastos compartidos sin configuraciones innecesarias. Es especialmente útil para:",
+        "items": {
+          "travel": "Grupos de viaje que reparten costes de vacaciones",
+          "roommates": "Compañeros de piso que gestionan alquiler, compras y suministros",
+          "friends": "Amigos que comparten cenas, eventos y planes de fin de semana",
+          "couples": "Parejas que controlan gastos compartidos",
+          "shortTerm": "Grupos temporales que quieren empezar sin que todos tengan que crear una cuenta"
+        },
+        "closing": "Tanto si organizas un viaje como si gestionas gastos del día a día, {appName} ayuda a los grupos a mantenerse organizados y liquidar costes con menos esfuerzo.",
+        "mobilePreviewAlt": "Panel móvil de {appName} con gastos y saldos del grupo"
+      },
+      "faq": {
+        "one": {
+          "question": "¿Por qué buscan alternativas a Splitwise?",
+          "answer": "Muchos usuarios buscan alternativas a Splitwise porque quieren una forma más sencilla de gestionar gastos compartidos, evitar suscripciones o acceder a funciones que encajen mejor con su grupo. Al comparar apps, suelen valorar cuál funciona mejor para viajes, compañeros de piso, hogares y gastos cotidianos."
+        },
+        "two": {
+          "question": "¿Es {appName} una buena alternativa a Splitwise?",
+          "answer": "Sí. {appName} es una alternativa práctica a Splitwise para controlar gastos compartidos, dividir facturas y gestionar el gasto en grupo. Ayuda a amigos, compañeros de piso, parejas y grupos de viaje a mantener los gastos organizados y los saldos al día con una experiencia web sencilla."
+        },
+        "three": {
+          "question": "¿Cómo se compara {appName} con Splitwise?",
+          "answer": "Tanto {appName} como Splitwise ayudan a dividir facturas y controlar gastos compartidos. {appName} se centra en ofrecer una plataforma fácil de usar con acceso desde el navegador, divisiones flexibles, acceso compartido al grupo y herramientas pensadas para simplificar la gestión de gastos en el día a día."
+        },
+        "four": {
+          "question": "¿Necesito instalar una app para usar {appName}?",
+          "answer": "No. {appName} funciona en la web, así que puedes crear grupos, añadir gastos y gestionar saldos directamente desde el navegador. Los miembros del grupo pueden participar sin descargar ni instalar ninguna app."
+        },
+        "five": {
+          "question": "¿Puedo unirme a un grupo de {appName} sin crear una cuenta?",
+          "answer": "Sí. {appName} permite unirse a grupos mediante un enlace de invitación compartido, facilitando la participación en el control de gastos y la división de facturas sin un registro largo."
+        },
+        "six": {
+          "question": "¿{appName} es gratis?",
+          "answer": "Sí. {appName} ofrece herramientas gratuitas para controlar gastos compartidos, dividir facturas, gestionar el gasto en grupo y monitorizar saldos. Puedes empezar rápidamente sin pagar por las funciones básicas de gestión de gastos."
+        }
+      },
+      "cta": {
+        "description": "Crea un grupo gratis y descubre cómo {appName} gestiona tu próximo gasto compartido — sin tarjeta de crédito."
+      }
+    },
+    "splid": {
+      "breadcrumbPage": "Alternativa a Splid",
+      "jsonLdName": "Comparativa {appName} vs Splid",
+      "jsonLdDescription": "Compara {appName} y Splid para el seguimiento de gastos compartidos, división de facturas y liquidaciones en grupo.",
+      "badge": "{appName} vs Splid",
+      "comparisonTitle": "{appName} vs Splid: comparativa de funciones",
+      "hero": {
+        "title": "La alternativa sencilla a Splid para gastos compartidos",
+        "subtitle": "¿Buscas una alternativa a Splid? {appName} ayuda a amigos, compañeros de piso, parejas y grupos de viaje a dividir facturas, controlar gastos compartidos y gestionar saldos con una experiencia web sencilla.",
+        "cta": "Prueba {appName} gratis",
+        "trustLine": "Sin instalar app • Únete con enlace • Divisiones flexibles • Exportar informes"
+      },
+      "reasons": {
+        "title": "Por qué {appName} es una alternativa popular a Splid",
+        "description": "Compara Splid y {appName} para ver qué app ofrece más flexibilidad en división de facturas, gastos en grupo, costes de viaje y gasto compartido.",
+        "one": {
+          "title": "Sin instalar ninguna app",
+          "description": "Comparte un enlace de grupo de {appName} e invita a miembros al instante. Los participantes pueden unirse desde cualquier navegador, facilitando el seguimiento aunque no todos usen la misma app."
+        },
+        "two": {
+          "title": "Más formas de dividir gastos",
+          "description": "Divide facturas a partes iguales, por porcentaje, con importes personalizados o con varios pagadores. Ideal para compañeros de piso, viajes en grupo, eventos y gastos del hogar."
+        },
+        "three": {
+          "title": "Exportar informes y guardar tickets",
+          "description": "Adjunta tickets a los gastos y exporta informes CSV cuando necesites justificantes de reembolso, resúmenes de gastos o contabilidad de viajes."
+        },
+        "four": {
+          "title": "Pensado para viajes, amigos y compañeros de piso",
+          "description": "Controla gastos compartidos, liquida saldos y gestiona el gasto en grupo en un solo lugar — ya sea un viaje, el alquiler o gastos del día a día."
+        }
+      },
+      "whoShould": {
+        "title": "¿Para quién es ideal {appName}?",
+        "intro": "Elige {appName} si tu grupo:",
+        "items": {
+          "linkJoin": "Quiere unirse con un enlace compartible en lugar de obligar a todos a instalar una app",
+          "flexibleSplits": "Necesita divisiones flexibles: iguales, por porcentaje o personalizadas",
+          "trackExpenses": "Quiere controlar gastos de viajes, compañeros de piso, eventos o hogares compartidos",
+          "receiptsExport": "Necesita adjuntar tickets y exportar informes de gastos",
+          "webBased": "Prefiere un gestor de gastos web que funcione en cualquier dispositivo"
+        },
+        "mobilePreviewAlt": "Panel móvil de {appName} con gastos y saldos del grupo"
+      },
+      "faq": {
+        "one": {
+          "question": "¿Es {appName} una buena alternativa a Splid?",
+          "answer": "Sí. {appName} es una alternativa fiable a Splid para controlar gastos compartidos, dividir facturas y gestionar el gasto en grupo. Tanto si compartes costes con amigos, compañeros de piso, familia o compañeros de viaje, {appName} mantiene los gastos organizados y los saldos precisos."
+        },
+        "two": {
+          "question": "¿Por qué buscan alternativas a Splid?",
+          "answer": "Los usuarios suelen buscar alternativas a Splid al comparar apps de gastos compartidos y encontrar funciones que encajen mejor con sus necesidades. Muchos quieren una forma sencilla de controlar gastos en grupo, gestionar costes compartidos y mantener los saldos al día sin cálculos manuales."
+        },
+        "three": {
+          "question": "¿Cómo se compara {appName} con Splid?",
+          "answer": "Tanto {appName} como Splid ayudan a dividir gastos y gestionar el gasto compartido. {appName} ofrece una forma sencilla de controlar gastos en grupo, calcular saldos y organizar el gasto en viajes, hogares, eventos y actividades cotidianas."
+        },
+        "four": {
+          "question": "¿Qué funciones ofrece {appName}?",
+          "answer": "{appName} incluye división de facturas, seguimiento de gastos compartidos, gestión de gastos en grupo, cálculo de saldos, control de gastos de viaje, gestión de gastos entre compañeros de piso, reparto de presupuesto del hogar e historial y liquidación de gastos."
+        },
+        "five": {
+          "question": "¿Puedo usar {appName} para viajes en grupo y gastos compartidos?",
+          "answer": "Sí. {appName} está pensado para vacaciones, road trips, escapadas de fin de semana, hogares compartidos, eventos y salidas con amigos. Los miembros pueden añadir gastos y controlar saldos en un solo lugar."
+        },
+        "six": {
+          "question": "¿Cuáles son las mejores alternativas a Splid?",
+          "answer": "Entre las alternativas populares a Splid están {appName}, Splitwise, Tricount, Settle Up y Splid mismo. {appName} es una opción sólida para quienes buscan una app fácil de usar que simplifique la división de facturas, el seguimiento de saldos y la gestión de gastos en grupo."
+        }
+      },
+      "cta": {
+        "description": "Crea un grupo gratis y descubre cómo {appName} gestiona tu próximo gasto compartido — sin tarjeta de crédito."
+      }
+    },
+    "tricount": {
+      "breadcrumbPage": "Alternativa a Tricount",
+      "jsonLdName": "Comparativa {appName} vs Tricount",
+      "jsonLdDescription": "Compara {appName} y Tricount para gastos de viaje, facturas en grupo y seguimiento de pagos compartidos.",
+      "badge": "{appName} vs Tricount",
+      "comparisonTitle": "{appName} vs Tricount: comparativa de funciones",
+      "hero": {
+        "title": "La mejor alternativa a Tricount para viajes y gastos en grupo",
+        "subtitle": "¿Buscas una alternativa a Tricount? {appName} ayuda a los grupos a repartir costes de viaje, controlar saldos y gestionar gastos compartidos con una experiencia web sencilla — gratis para empezar y listo en segundos.",
+        "cta": "Prueba {appName} gratis",
+        "trustLine": "Sin instalar app • Únete con enlace • Divisiones flexibles • Tickets adjuntos y exportación CSV"
+      },
+      "reasons": {
+        "title": "Por qué los viajeros comparan Tricount y {appName}",
+        "description": "Los grupos de viaje necesitan una forma sencilla de controlar gastos, gestionar saldos y liquidar costes sin frenar el viaje.",
+        "one": {
+          "title": "Controla cada gasto compartido del viaje",
+          "description": "Registra hoteles, transporte, comidas, actividades y compras en grupo en un solo lugar, facilitando el control del gasto y los saldos del viaje."
+        },
+        "two": {
+          "title": "Sin barrera de descarga de app",
+          "description": "Envía un enlace de {appName} a tus compañeros de viaje para que todos se unan, añadan gastos y controlen saldos directamente desde el navegador."
+        },
+        "three": {
+          "title": "Tickets y exportaciones incluidos",
+          "description": "Adjunta tickets y exporta informes de gastos cuando necesites justificantes de reembolso, resúmenes del viaje o historial de gastos."
+        }
+      },
+      "whoShould": {
+        "title": "¿Quién debería elegir {appName} en lugar de Tricount?",
+        "intro": "{appName} encaja muy bien en grupos que quieren gestionar gastos compartidos sin que todos tengan que instalar una app. Es especialmente útil para:",
+        "items": {
+          "travel": "Grupos de viaje que controlan gastos de vacaciones",
+          "friends": "Amigos que reparten comidas, actividades y escapadas de fin de semana",
+          "events": "Organizadores de eventos que gestionan costes compartidos",
+          "couples": "Parejas que controlan gastos compartidos",
+          "browserAccess": "Grupos que necesitan acceso web, almacenamiento de tickets e informes exportables"
+        },
+        "closing": "Tanto si planificas unas vacaciones, organizas un evento o gestionas gastos compartidos del día a día, {appName} mantiene el gasto organizado y los saldos claros.",
+        "mobilePreviewAlt": "Panel móvil de {appName} con gastos y saldos del grupo"
+      },
+      "faq": {
+        "one": {
+          "question": "¿Por qué buscan alternativas a Tricount?",
+          "answer": "Muchos usuarios buscan alternativas a Tricount al comparar apps de gastos compartidos y buscar funciones que encajen mejor con su grupo. Suele influir el acceso desde el navegador, un acceso más sencillo al grupo, divisiones más flexibles y herramientas adicionales para gestionar gastos compartidos."
+        },
+        "two": {
+          "question": "¿Es {appName} una buena alternativa a Tricount?",
+          "answer": "Sí. {appName} es una alternativa práctica a Tricount para controlar gastos compartidos, dividir facturas y gestionar el gasto en grupo. Ayuda a grupos de viaje, amigos, parejas y compañeros de piso a mantenerse organizados con una experiencia web sencilla y herramientas flexibles."
+        },
+        "three": {
+          "question": "¿Cómo se compara {appName} con Tricount?",
+          "answer": "Tanto {appName} como Tricount ayudan a gestionar gastos compartidos y dividir facturas. {appName} ofrece acceso web, enlaces de grupo compartibles, tickets adjuntos, exportación de gastos y opciones de división flexibles, facilitando la colaboración y el seguimiento desde cualquier lugar."
+        },
+        "four": {
+          "question": "¿Necesito instalar una app para usar {appName}?",
+          "answer": "No. {appName} funciona directamente en el navegador, permitiendo crear grupos, añadir gastos y gestionar saldos sin descargar ni instalar ninguna app. Así los grupos pueden empezar más rápido."
+        },
+        "five": {
+          "question": "¿Puedo unirme a un grupo de {appName} sin crear una cuenta?",
+          "answer": "Sí. {appName} permite unirse a grupos mediante un enlace de invitación compartido, facilitando la participación en el control de gastos y la división de facturas sin un registro largo."
+        },
+        "six": {
+          "question": "¿{appName} es gratis?",
+          "answer": "Sí. {appName} ofrece herramientas gratuitas para controlar gastos compartidos, dividir facturas, gestionar el gasto en grupo y monitorizar saldos. Puedes empezar rápidamente y organizar gastos sin pagar por las funciones básicas."
+        }
+      },
+      "cta": {
+        "description": "Crea un grupo de viaje en {appName} y mantén cada gasto organizado desde el inicio hasta la liquidación."
+      }
+    }
+  },
+  "useCasePages": {
+    "index": {
+      "badge": "Casos de uso",
+      "title": "Divide gastos para",
+      "titleHighlight": "cada grupo",
+      "description": "Viajes con amigos, piso compartido o reembolsos de equipo: {appName} ofrece a cada grupo una forma sencilla de registrar costes compartidos y saldar cuentas de forma justa.",
+      "breadcrumbHome": "Inicio",
+      "breadcrumbUseCases": "Casos de uso",
+      "jsonLdName": "Casos de uso de {appName}",
+      "jsonLdDescription": "Descubre cómo {appName} ayuda a grupos de viaje, compañeros de piso, parejas, amigos y equipos a dividir gastos y gestionar pagos compartidos.",
+      "cardLinkLabel": "Más información",
+      "cards": {
+        "travel": {
+          "summary": "Registra hoteles, transporte, comidas y actividades del viaje en un único libro de gastos compartido."
+        },
+        "roommates": {
+          "summary": "Divide alquiler, suministros, compra y facturas del hogar sin hojas de cálculo caóticas."
+        },
+        "couples": {
+          "summary": "Mantén el gasto diario, suscripciones y planes compartidos organizados en pareja."
+        },
+        "friends": {
+          "summary": "Reparte cenas, fiestas, conciertos y eventos de forma justa con tu grupo de amigos."
+        },
+        "teams": {
+          "summary": "Gestiona reembolsos, cuotas de club y pagos de comunidad con menos administración."
+        }
+      },
+      "cta": {
+        "title": "¿Listo para dividir tu próximo gasto compartido?",
+        "description": "Crea un grupo gratis en segundos y empieza a registrar facturas compartidas con {appName}. No hace falta cuenta.",
+        "button": "Crea tu primer grupo"
+      }
+    },
+    "shared": {
+      "breadcrumbHome": "Inicio",
+      "breadcrumbUseCases": "Casos de uso",
+      "breadcrumbLabel": "Ruta de navegación",
+      "howItWorksTitle": "Cómo funciona {appName}",
+      "benefitsTitle": "Por qué los grupos eligen {appName}",
+      "faqTitle": "Preguntas frecuentes",
+      "relatedTitle": "Otros casos de uso",
+      "cta": {
+        "title": "Empieza a registrar gastos compartidos hoy",
+        "button": "Crear un grupo gratis"
+      }
+    },
+    "travel": {
+      "jsonLdName": "Divisor de gastos de viaje de {appName}",
+      "jsonLdDescription": "Divide los costes de viaje en grupo con {appName}. Registra hoteles, transporte, comida y actividades en un único control de gastos compartido.",
+      "hero": {
+        "title": "Divide gastos de viaje sin dolores de cabeza",
+        "subtitle": "Registra hoteles, transporte, comidas y actividades en un único libro del viaje. {appName} mantiene cada coste del viaje justo, transparente y fácil de saldar antes de volver a casa.",
+        "cta": "Crear un grupo de viaje"
+      },
+      "painPoints": {
+        "title": "Por qué los viajes en grupo se encarecen — y se complican",
+        "description": "Los viajes dejan buenos recuerdos, pero los costes compartidos generan fricción cuando nadie sabe quién pagó qué.",
+        "one": {
+          "title": "Las hojas de cálculo fallan en ruta",
+          "description": "Viajes multi-ciudad, distintos pagadores y reservas de última hora hacen que el seguimiento manual sea lento y propenso a errores."
+        },
+        "two": {
+          "title": "La confusión de divisas se acumula rápido",
+          "description": "Los viajes internacionales mezclan divisas, efectivo y tarjeta — y cuesta ver un saldo claro para todos."
+        },
+        "three": {
+          "title": "Saldar cuentas estropea el final del viaje",
+          "description": "Gastos olvidados y totales poco claros convierten unas vacaciones divertidas en conversaciones incómodas sobre dinero."
+        }
+      },
+      "steps": {
+        "one": {
+          "title": "Crea un grupo de viaje",
+          "description": "Pon nombre al viaje, elige divisa e invita a tus compañeros con un enlace compartible — sin registro."
+        },
+        "two": {
+          "title": "Registra gastos sobre la marcha",
+          "description": "Añade hoteles, vuelos, trayectos, comidas y actividades desde el móvil. Adjunta recibos para verificar cada coste."
+        },
+        "three": {
+          "title": "Divide de forma justa, a tu manera",
+          "description": "Reparte a partes iguales, por porcentaje o con importes personalizados. {appName} admite varios pagadores en reservas compartidas."
+        },
+        "four": {
+          "title": "Saldad antes de volver",
+          "description": "Ve de un vistazo quién debe a quién y usa sugerencias de liquidación simplificadas para cerrar el viaje en buenos términos."
+        }
+      },
+      "benefits": {
+        "one": {
+          "title": "Pensado para viajes en grupo",
+          "description": "Transporte, alojamiento, comida y actividades en un solo lugar, no en notas y chats dispersos."
+        },
+        "two": {
+          "title": "Listo para varias divisas",
+          "description": "Define la divisa del grupo para que todos vean totales coherentes, aunque los pagos sean en otras monedas."
+        },
+        "three": {
+          "title": "Recibos siempre adjuntos",
+          "description": "Sube confirmaciones de reserva y capturas de pago para que los desacuerdos no dependan de la memoria."
+        },
+        "four": {
+          "title": "Saldos al instante",
+          "description": "Cada gasto actualiza los saldos del grupo automáticamente — sin recalcular tras cada cena o excursión."
+        }
+      },
+      "faq": {
+        "one": {
+          "question": "¿Cómo divido gastos de viaje de forma justa con amigos?",
+          "answer": "Crea un grupo de viaje en {appName}, registra cada coste compartido y elige cómo dividirlo — a partes iguales, por porcentaje o con importes personalizados. Los saldos se actualizan solos para que todos vean quién debe a quién."
+        },
+        "two": {
+          "question": "¿Puedo registrar gastos de viaje en distintas divisas?",
+          "answer": "Sí. Elige la divisa del grupo al crear el viaje. {appName} ayuda a mantener el orden aunque algunos paguen en efectivo, moneda local o tarjeta en el extranjero."
+        },
+        "three": {
+          "question": "¿Todos los viajeros necesitan una cuenta?",
+          "answer": "No. Comparte el enlace del grupo y tus compañeros pueden ver y añadir gastos sin que todos se registren primero."
+        }
+      },
+      "cta": {
+        "description": "Crea un grupo de viaje en segundos y mantén cada gasto organizado desde la salida hasta la liquidación final."
+      }
+    },
+    "roommates": {
+      "jsonLdName": "Control de gastos entre compañeros de piso de {appName}",
+      "jsonLdDescription": "Divide alquiler, suministros, compra y facturas del hogar con {appName}. Un control de gastos gratuito para costes de convivencia compartida.",
+      "hero": {
+        "title": "Divide facturas del piso sin estrés con hojas de cálculo",
+        "subtitle": "Gestiona alquiler, suministros, compra y costes del hogar en un único libro compartido. {appName} deja las finanzas del piso claras para que viváis juntos — no persiguiendo recibos.",
+        "cta": "Crear un grupo de piso"
+      },
+      "painPoints": {
+        "title": "Convivir no debería significar confusión compartida",
+        "description": "Los gastos del piso se repiten cada mes. Sin un sistema, pequeños descuidos se convierten en tensión recurrente.",
+        "one": {
+          "title": "Las facturas recurrentes se olvidan con facilidad",
+          "description": "Alquiler, internet, luz y productos de limpieza se acumulan en el mes — y alguien siempre adelanta más de su parte."
+        },
+        "two": {
+          "title": "La compra rara vez se divide igual",
+          "description": "Compras compartidas, artículos del hogar y gastos puntuales necesitan repartos flexibles, no siempre a partes iguales."
+        },
+        "three": {
+          "title": "Las cuentas de fin de mes consumen tiempo",
+          "description": "Calcular quién debe a quién con mensajes, transferencias y notas adhesivas es tedioso y fácil de equivocarse."
+        }
+      },
+      "steps": {
+        "one": {
+          "title": "Configura tu grupo del hogar",
+          "description": "Añade compañeros de piso y elige la divisa del piso o casa compartida."
+        },
+        "two": {
+          "title": "Registra alquiler, facturas y compra",
+          "description": "Anota suministros recurrentes y compras puntuales del hogar a medida que ocurren durante el mes."
+        },
+        "three": {
+          "title": "Divide según lo que sea justo",
+          "description": "Usa reparto igual para la compra compartida o importes personalizados cuando un compañero paga más de una factura concreta."
+        },
+        "four": {
+          "title": "Saldad los saldos mensuales rápido",
+          "description": "Revisa saldos y sugerencias de liquidación a fin de mes en lugar de reconstruir las cuentas desde cero."
+        }
+      },
+      "benefits": {
+        "one": {
+          "title": "Un solo lugar para costes del hogar",
+          "description": "Alquiler, suministros, compra y compras compartidas en un único control de gastos del piso."
+        },
+        "two": {
+          "title": "Opciones de reparto flexibles",
+          "description": "No toda factura es 50/50. Reparte por porcentaje o importes personalizados cuando cada uno aporta distinto."
+        },
+        "three": {
+          "title": "Historial de pagos claro",
+          "description": "Ve quién pagó cada factura y cómo cambiaron los saldos — útil para confianza y registros."
+        },
+        "four": {
+          "title": "Exporta cuando necesites registros",
+          "description": "Descarga resúmenes de gastos para el contrato, reembolsos o presupuesto personal."
+        }
+      },
+      "faq": {
+        "one": {
+          "question": "¿Qué gastos del piso puedo registrar?",
+          "answer": "Registra alquiler, suministros, compra, productos de limpieza, muebles y cualquier otro coste compartido del hogar en {appName}."
+        },
+        "two": {
+          "question": "¿Los compañeros pueden dividir facturas de forma desigual?",
+          "answer": "Sí. Reparte gastos a partes iguales, por porcentaje o con importes personalizados según cómo compartáis cada factura."
+        },
+        "three": {
+          "question": "¿{appName} es gratis para compañeros de piso?",
+          "answer": "Sí. {appName} es gratis para empezar, sin tarjeta de crédito, para que podáis registrar costes compartidos al momento."
+        }
+      },
+      "cta": {
+        "description": "Configura un grupo de piso y mantén alquiler, facturas y compra organizados todo el mes."
+      }
+    },
+    "couples": {
+      "jsonLdName": "Control de gastos en pareja de {appName}",
+      "jsonLdDescription": "Gestiona el gasto compartido en pareja con {appName}. Registra gastos diarios, suscripciones, cenas y planes de viaje en un solo lugar.",
+      "hero": {
+        "title": "Un control de gastos en pareja sencillo para la vida compartida",
+        "subtitle": "Mantén el gasto diario, suscripciones, cenas y viajes organizados juntos. {appName} ayuda a las parejas a alinearse en dinero sin apps financieras complicadas.",
+        "cta": "Crear un grupo compartido"
+      },
+      "painPoints": {
+        "title": "Hablar de dinero va mejor con claridad",
+        "description": "Las parejas comparten muchos gastos pequeños que se pierden entre nóminas y semanas ajetreadas.",
+        "one": {
+          "title": "Las compras pequeñas se acumulan en silencio",
+          "description": "Cafés, compra, trayectos y suscripciones se mezclan si no los registras en un solo sitio."
+        },
+        "two": {
+          "title": "Hábitos distintos piden flexibilidad",
+          "description": "No todo gasto se reparte igual — algunos son compartidos y otros los cubre sobre todo una persona."
+        },
+        "three": {
+          "title": "Las hojas de cálculo pesan demasiado para dos",
+          "description": "Las apps de presupuesto completo sobran cuando solo quieres ver el gasto compartido con claridad."
+        }
+      },
+      "steps": {
+        "one": {
+          "title": "Crea un grupo para dos",
+          "description": "Configura un grupo privado compartido para vosotros en segundos."
+        },
+        "two": {
+          "title": "Registra costes compartidos al momento",
+          "description": "Añade cenas, suscripciones, reservas de viaje y compras del día desde el móvil."
+        },
+        "three": {
+          "title": "Elige el reparto adecuado cada vez",
+          "description": "Reparte a partes iguales en salidas o usa importes personalizados cuando uno paga más de un gasto concreto."
+        },
+        "four": {
+          "title": "Revisad los saldos juntos",
+          "description": "Consulta quién debe a quién en cualquier momento y saldad sin adivinar ni revisar bancos."
+        }
+      },
+      "benefits": {
+        "one": {
+          "title": "Seguimiento compartido ligero",
+          "description": "Un control de gastos en pareja enfocado, sin la complejidad del software financiero personal completo."
+        },
+        "two": {
+          "title": "Historial compartido transparente",
+          "description": "Ambos veis la misma lista de gastos, repartos y saldos — sin totales ocultos."
+        },
+        "three": {
+          "title": "Sirve para el día a día y viajes",
+          "description": "Un grupo para el gasto cotidiano y otro para vacaciones o compras grandes compartidas."
+        },
+        "four": {
+          "title": "Recibos cuando hace falta prueba",
+          "description": "Adjunta recibos o capturas de pago en compras grandes compartidas o reservas de viaje."
+        }
+      },
+      "faq": {
+        "one": {
+          "question": "¿Las parejas pueden usar {appName} en lugar de una cuenta conjunta?",
+          "answer": "{appName} no sustituye la banca, pero ayuda a registrar gasto compartido y saldos con claridad manteniendo cuentas personales separadas."
+        },
+        "two": {
+          "question": "¿Podemos dividir gastos de forma desigual en pareja?",
+          "answer": "Sí. Elige reparto igual, por porcentaje o personalizado en cada gasto según cómo compartáis costes."
+        },
+        "three": {
+          "question": "¿Hace falta que ambos se registren?",
+          "answer": "No. Comparte el enlace del grupo para que tu pareja vea y añada gastos sin un registro largo."
+        }
+      },
+      "cta": {
+        "description": "Crea un grupo compartido para dos y mantén el gasto diario en pareja organizado con menos fricción."
+      }
+    },
+    "friends": {
+      "jsonLdName": "Divide facturas con amigos con {appName}",
+      "jsonLdDescription": "Reparte cenas, fiestas, conciertos y eventos con amigos usando {appName}. Un divisor de facturas gratuito para gastos sociales.",
+      "hero": {
+        "title": "Divide facturas con amigos — de forma justa y rápida",
+        "subtitle": "De cenas y fiestas a conciertos y planes de fin de semana: {appName} facilita repartir gastos sociales sin mensajes incómodos de cobro.",
+        "cta": "Crear un grupo de amigos"
+      },
+      "painPoints": {
+        "title": "Los planes sociales no deberían acabar en líos de pagos",
+        "description": "Alguien suele pagar por el grupo, pero cobrar la parte de cada uno después es donde todo se complica.",
+        "one": {
+          "title": "Siempre alguien paga primero",
+          "description": "Restaurantes, entradas y reservas en grupo suelen ir a una tarjeta — y entonces empieza el trabajo real."
+        },
+        "two": {
+          "title": "Los chats grupales no son un libro de cuentas",
+          "description": "Capturas de pago y mensajes de «te debo» se pierden rápido y los saldos dejan de ser fiables."
+        },
+        "three": {
+          "title": "La participación desigual pide repartos flexibles",
+          "description": "No todos piden lo mismo, van a todos los eventos ni comparten cada coste por igual."
+        }
+      },
+      "steps": {
+        "one": {
+          "title": "Crea un grupo para tu pandilla",
+          "description": "Abre un grupo para una cena, un fin de semana o gastos recurrentes entre amigos y comparte el enlace."
+        },
+        "two": {
+          "title": "Añade la factura al momento",
+          "description": "Registra la cuenta del restaurante, entradas o material de fiesta mientras los detalles están frescos."
+        },
+        "three": {
+          "title": "Reparte como acordéis",
+          "description": "Divide a partes iguales o asigna importes personalizados cuando algunos no participaron en parte del coste."
+        },
+        "four": {
+          "title": "Envía saldos, no recordatorios",
+          "description": "Todos ven saldos actualizados al instante y dedicáis menos tiempo a perseguir pagos."
+        }
+      },
+      "benefits": {
+        "one": {
+          "title": "Ideal para eventos puntuales",
+          "description": "Un grupo para una sola cena o uno fijo para tu círculo de amigos habitual."
+        },
+        "two": {
+          "title": "Repartos personalizados para la vida real",
+          "description": "Gestiona pedidos desiguales, asistencia parcial y depósitos compartidos sin cálculos manuales."
+        },
+        "three": {
+          "title": "Sin fricción de registro",
+          "description": "Los amigos entran por enlace y añaden gastos rápido — perfecto para planes espontáneos."
+        },
+        "four": {
+          "title": "Sugerencias de liquidación claras",
+          "description": "{appName} simplifica quién debe pagar a quién para saldar con menos transferencias."
+        }
+      },
+      "faq": {
+        "one": {
+          "question": "¿Cómo divido la cuenta de un restaurante con amigos?",
+          "answer": "Crea un grupo, añade el total, indica quién pagó y reparte a partes iguales o con importes personalizados para cada amigo en {appName}."
+        },
+        "two": {
+          "question": "¿Puedo usar {appName} para eventos de una sola vez?",
+          "answer": "Sí. Muchos grupos usan {appName} para una cena, concierto o viaje y lo archivan cuando todos han saldado."
+        },
+        "three": {
+          "question": "¿Y si no todos comieron o bebieron lo mismo?",
+          "answer": "Usa reparto por importes personalizados para que cada uno pague solo su parte en lugar de forzar división igual."
+        }
+      },
+      "cta": {
+        "description": "Crea un grupo de amigos y reparte tu próxima cena, fiesta o evento sin la incómoda persecución de pagos."
+      }
+    },
+    "teams": {
+      "jsonLdName": "Control de gastos de equipo de {appName}",
+      "jsonLdDescription": "Organiza reembolsos de equipo, cuotas de club y pagos de comunidad con {appName}. Registra costes compartidos y salda reembolsos con justicia.",
+      "hero": {
+        "title": "Control de gastos de equipo sin carga administrativa",
+        "subtitle": "De cuotas de club y eventos comunitarios a reembolsos de equipo: {appName} ayuda a organizadores a registrar pagos grupales y saldar costes con menos hojas de cálculo.",
+        "cta": "Crear un grupo de equipo"
+      },
+      "painPoints": {
+        "title": "Los organizadores no deberían ser contables a tiempo parcial",
+        "description": "Equipos, clubes y comunidades recaudan de muchas personas — a menudo con distintos pagadores y necesidades de aprobación.",
+        "one": {
+          "title": "Los reembolsos se acumulan rápido",
+          "description": "Un miembro compra material, otro cubre el local y los voluntarios de finanzas recalculan totales a mano."
+        },
+        "two": {
+          "title": "Falta una única fuente de verdad",
+          "description": "Recibos en el correo, totales en el chat y pagos en el banco dificultan auditar las finanzas del grupo."
+        },
+        "three": {
+          "title": "Liquidar se convierte en cuello de botella",
+          "description": "Sin saldos claros, los tesoreros pasan horas averiguando quién aún debe al grupo."
+        }
+      },
+      "steps": {
+        "one": {
+          "title": "Crea un grupo para tu equipo o club",
+          "description": "Define la divisa del grupo e invita miembros con un enlace compartible."
+        },
+        "two": {
+          "title": "Registra compras y reembolsos",
+          "description": "Anota quién pagó material, viajes, depósitos de local y otros costes compartidos del equipo."
+        },
+        "three": {
+          "title": "Adjunta recibos para transparencia",
+          "description": "Sube facturas y pruebas de pago para que tesoreros y miembros verifiquen gastos con facilidad."
+        },
+        "four": {
+          "title": "Exporta y salda con eficiencia",
+          "description": "Revisa saldos, usa sugerencias de liquidación y exporta resúmenes para registros o reembolso."
+        }
+      },
+      "benefits": {
+        "one": {
+          "title": "Pensado para responsabilidad compartida",
+          "description": "Cada miembro ve el mismo historial de gastos, repartos y saldos."
+        },
+        "two": {
+          "title": "Varios pagadores admitidos",
+          "description": "Gestiona situaciones en las que varias personas cubren partes del mismo gasto del equipo."
+        },
+        "three": {
+          "title": "Exportación CSV para registros",
+          "description": "Descarga informes para tesoreros de club, administradores de equipo o flujos de reembolso."
+        },
+        "four": {
+          "title": "Sirve para clubes y comunidades",
+          "description": "Equipos deportivos, grupos de afición, voluntariado y pequeñas organizaciones usan el mismo flujo sencillo."
+        }
+      },
+      "faq": {
+        "one": {
+          "question": "¿{appName} puede gestionar reembolsos de equipo?",
+          "answer": "Sí. Registra quién adelantó el pago, anota gastos compartidos del equipo y usa resúmenes de saldo para organizar reembolsos en {appName}."
+        },
+        "two": {
+          "question": "¿Podemos exportar informes de gastos del equipo?",
+          "answer": "Sí. Exporta resúmenes de gastos y saldos para contabilidad, aprobaciones o archivo."
+        },
+        "three": {
+          "question": "¿{appName} sirve para clubes y comunidades?",
+          "answer": "Por supuesto. Clubes, equipos deportivos, grupos de voluntariado y comunidades pequeñas gestionan pagos compartidos sin software complejo."
+        }
+      },
+      "cta": {
+        "description": "Crea un grupo de equipo y dedica menos tiempo a reembolsos, recibos y cálculos de saldo."
+      }
+    }
+  },
+  "categories": {
+    "entertainment": {
+      "label": "Entretenimiento",
+      "subcategories": {
+        "games": "Juegos",
+        "movies": "Películas",
+        "music": "Música",
+        "sports": "Deportes",
+        "sightseeing": "Turismo y atracciones"
+      }
+    },
+    "food": {
+      "label": "Comida y bebida",
+      "subcategories": {
+        "dining": "Comer fuera",
+        "groceries": "Compra",
+        "liquor": "Bebidas alcohólicas"
+      }
+    },
+    "home": {
+      "label": "Hogar",
+      "subcategories": {
+        "electronics": "Electrónica",
+        "furniture": "Muebles",
+        "household": "Hogar",
+        "maintenance": "Mantenimiento",
+        "mortgage": "Hipoteca",
+        "rent": "Alquiler",
+        "pets": "Mascotas",
+        "services": "Servicios"
+      }
+    },
+    "life": {
+      "label": "Vida",
+      "subcategories": {
+        "childcare": "Cuidado infantil",
+        "education": "Educación",
+        "insurance": "Seguros",
+        "medical": "Salud",
+        "clothing": "Ropa",
+        "gifts": "Regalos",
+        "taxes": "Impuestos"
+      }
+    },
+    "utilities": {
+      "label": "Suministros",
+      "subcategories": {
+        "electricity": "Electricidad",
+        "gas": "Gas y calefacción",
+        "water": "Agua",
+        "trash": "Basura",
+        "internet": "TV, teléfono e internet"
+      }
+    },
+    "transportation": {
+      "label": "Transporte",
+      "subcategories": {
+        "bicycle": "Bicicleta",
+        "bus": "Autobús y tren",
+        "car": "Coche",
+        "fuel": "Gasolina y combustible",
+        "parking": "Aparcamiento",
+        "plane": "Avión",
+        "taxi": "Taxi",
+        "hotel": "Hotel"
+      }
+    },
+    "settlement": {
+      "label": "Liquidación",
+      "subcategories": {
+        "settle_up": "Liquidar"
+      }
+    },
+    "uncategorized": {
+      "label": "Sin categoría",
+      "subcategories": {
+        "general": "General"
+      }
+    }
   }
 }

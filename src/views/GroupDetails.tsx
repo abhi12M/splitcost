@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
 import { Link } from "@/i18n/navigation";
@@ -62,6 +62,7 @@ import {
 } from "@/lib/queries";
 import { SingleSelect } from "@/components/ui/single-select";
 import { formatExpenseGroupHeaderTitle, toTitleCase } from "@/components/ui/formatters";
+import { resolveCategoryDisplayLabel } from "@/lib/category-labels";
 import { shareOrCopy } from "@/lib/shareContent";
 import { isMobileViewportWidth, useDeviceType } from "@/hooks/useDeviceType";
 import { toast } from "@/hooks/use-toast";
@@ -458,6 +459,11 @@ export default function GroupResponsesPage({
   const t = useTranslations("groupDetails");
   const tGroup = useTranslations("group");
   const tCommon = useTranslations("common");
+  const tCategories = useTranslations("categories");
+  const resolveCategoryLabel = useCallback(
+    (key: string) => resolveCategoryDisplayLabel(tCategories, key, toTitleCase(key.replace(/_/g, " "))),
+    [tCategories]
+  );
   const youLabel = tGroup("you");
   const queryClient = useQueryClient();
   const dashboardQuery = useGroupDashboardQuery(groupId);
@@ -601,7 +607,7 @@ export default function GroupResponsesPage({
 
   const chartData = useMemo(() => {
     return Object.entries(groupedExpenses).map(([key, list]) => {
-      const name = formatExpenseGroupHeaderTitle(key, groupBy, shouldTitleCase);
+      const name = formatExpenseGroupHeaderTitle(key, groupBy, shouldTitleCase, resolveCategoryLabel);
 
       const value = list.reduce((sum, e) => sum + e.amount, 0);
 
@@ -683,12 +689,12 @@ export default function GroupResponsesPage({
     const share: ShareData =
       type === "link"
         ? {
-            title: `${group.name} · SplitCost`,
+            title: t("shareGroupTitle", { name: group.name }),
             text: t("shareJoinText", { name: group.name }),
             url: shareLink,
           }
         : {
-            title: `${group.name} · Settlement summary`,
+            title: t("shareSettlementTitle", { name: group.name }),
             text: settlementText,
           };
 
@@ -1169,7 +1175,7 @@ export default function GroupResponsesPage({
 
                                   <div className="min-w-0 flex-1 text-left">
                                     <div className="truncate font-semibold">
-                                      {formatExpenseGroupHeaderTitle(title, groupBy, shouldTitleCase)}
+                                      {formatExpenseGroupHeaderTitle(title, groupBy, shouldTitleCase, resolveCategoryLabel)}
                                     </div>
                                     <p className="text-xs text-muted-foreground">
                                       {t("expenseCount", { count: list.length })}

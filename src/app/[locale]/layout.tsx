@@ -2,7 +2,7 @@ import "../globals.css";
 
 import type { Metadata, Viewport } from "next";
 import { NextIntlClientProvider } from "next-intl";
-import { getMessages, setRequestLocale } from "next-intl/server";
+import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { hasLocale } from "next-intl";
@@ -117,6 +117,10 @@ export default async function LocaleLayout({
 
   const messages = await getMessages();
   const { htmlLang } = localeDefinitions[locale as AppLocale];
+  const tFeatures = await getTranslations({ locale, namespace: "metadata.softwareApplication.features" });
+  const featureList = ["one", "two", "three", "four", "five", "six", "seven"].map((key) =>
+    tFeatures(key as "one")
+  );
 
   const jsonLd = [
     {
@@ -143,15 +147,7 @@ export default async function LocaleLayout({
       operatingSystem: "Web",
       description: SITE_DESCRIPTION,
       inLanguage: htmlLang,
-      featureList: [
-        "Create shared expense groups",
-        "Edit group name, currency, and members",
-        "Track expenses with one payer or multiple payers",
-        "Split bills equally, by percentage, or with custom amounts",
-        "Track balances for trips, roommates, and group events",
-        "Share group links without sign-up",
-        "Settle balances with simplified payouts",
-      ],
+      featureList,
       offers: {
         "@type": "Offer",
         price: "0",

@@ -15,6 +15,7 @@ import { memberNameForViewer } from "@/lib/groupExpenseLabels"
 import { EXPENSE_DESCRIPTION_MAX } from "@/lib/validations/expense.schema"
 import { createExpenseSchema } from "@/lib/validations/expense.schema.i18n"
 import { CategoryKey, EXPENSE_CATEGORIES, SubcategoryId } from "../icons/CategoryIcons"
+import { buildCategorySelectGroups } from "@/lib/category-labels"
 import { formatAmount, formatDateForDB, getCurrencyDifference } from "../ui/formatters"
 import { SingleSelect } from "../ui/single-select"
 import { CURRENCIES } from "@/constants"
@@ -56,6 +57,8 @@ export default function ExpenseFormMobile({
 }: Props) {
   const t = useTranslations("expense");
   const tCommon = useTranslations("common");
+  const tCategories = useTranslations("categories");
+  const categoryGroups = useMemo(() => buildCategorySelectGroups(tCategories), [tCategories]);
   const youLabel = useTranslations("group")("you");
   const ExpenseSchema = useMemo(
     () =>
@@ -160,7 +163,7 @@ export default function ExpenseFormMobile({
 
       /*
       toast({
-        title: "Missing required details",
+        title: tCommon("missingRequired"),
         description: (
           <div className="space-y-1">
             {errorMessages.map((msg, idx) => (
@@ -174,7 +177,7 @@ export default function ExpenseFormMobile({
         position: "center",
         hideClose: true,
         duration: Infinity,
-        action: <ToastAction altText="OK">OK</ToastAction>,
+        action: <ToastAction altText={tCommon("ok")}>{tCommon("ok")}</ToastAction>,
       });
       */
       return;
@@ -346,7 +349,7 @@ export default function ExpenseFormMobile({
 
       /*
       toast({
-        title: "Missing required details",
+        title: tCommon("missingRequired"),
         description: (
           <div className="space-y-1">
             {errorMessages.map((msg, idx) => (
@@ -357,7 +360,7 @@ export default function ExpenseFormMobile({
         position: "center",
         hideClose: true,
         duration: Infinity,
-        action: <ToastAction altText="OK">OK</ToastAction>,
+        action: <ToastAction altText={tCommon("ok")}>{tCommon("ok")}</ToastAction>,
       });
       */
       return;
@@ -459,16 +462,7 @@ export default function ExpenseFormMobile({
             {/* Row 1 */}
             <div className="grid grid-cols-[auto_1fr] gap-2">
               <SingleSelect
-                groups={Object.entries(EXPENSE_CATEGORIES).map(([key, cat]) => ({
-                  id: key,
-                  label: cat.label,
-                  color: cat.color,
-                  subOptions: cat.subcategories.map((sub) => ({
-                    id: sub.id,
-                    label: sub.label,
-                    icon: sub.icon,
-                  })),
-                }))}
+                groups={categoryGroups}
                 value={{ groupId: category, itemId: subcategory }}
                 onSelect={(groupId, itemId) =>
                   handleSubcategorySelect(groupId!, itemId)

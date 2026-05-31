@@ -94,6 +94,17 @@
         "title": "Best Tricount Alternative for Travel & Group Expenses",
         "description": "Looking for a Tricount Alternative? SplitCost helps groups split travel expenses, track shared costs, manage balances, and settle bills with ease."
       }
+    },
+    "softwareApplication": {
+      "features": {
+        "one": "Create shared expense groups",
+        "two": "Edit group name, currency, and members",
+        "three": "Track expenses with one payer or multiple payers",
+        "four": "Split bills equally, by percentage, or with custom amounts",
+        "five": "Track balances for trips, roommates, and group events",
+        "six": "Share group links without sign-up",
+        "seven": "Settle balances with simplified payouts"
+      }
     }
   },
   "layout": {
@@ -226,6 +237,28 @@
           "title": "Travel Expenses Get Chaotic",
           "description": "Trip costs, dinners, transport, and bookings are hard to organize manually."
         }
+      },
+      "mockups": {
+        "groupChat": "Group chat",
+        "whichPaymentCounts": "Which payment counts?",
+        "groupBalance": "Group balance",
+        "paymentDue": "Payment due",
+        "toLabel": "To",
+        "amountLabel": "Amount",
+        "statusLabel": "Status",
+        "unpaid": "Unpaid",
+        "waitingFollowUp": "Still waiting on a follow-up",
+        "tripExpenses": "Trip expenses",
+        "total": "Total",
+        "chatNotes": {
+          "dinner": "Dinner",
+          "lastTrip": "Last trip"
+        },
+        "tripItems": {
+          "dinner": "Dinner",
+          "taxi": "Taxi",
+          "hotel": "Hotel"
+        }
       }
     },
     "howItWorks": {
@@ -262,6 +295,22 @@
         "freeToStart": "Free to start",
         "noCreditCard": "No credit card required",
         "securePrivate": "Secure & Private"
+      },
+      "mockups": {
+        "groupName": "Beach Trip",
+        "memberCount": "5 members",
+        "paidBy": "Paid by {name}",
+        "groupBalance": "Group Balance",
+        "getsBack": "gets back",
+        "owes": "owes",
+        "youAreOwed": "You are owed",
+        "settleWith": "Settle with",
+        "expenses": {
+          "dinner": "Dinner at Cafe",
+          "taxi": "Taxi to Airport",
+          "hotel": "Hotel Booking",
+          "groceries": "Groceries"
+        }
       }
     },
     "useCases": {
@@ -380,12 +429,22 @@
           "role": "Weekend trip",
           "initials": "AT"
         }
-      }
+      },
+      "ratingAriaLabel": "5 out of 5 stars"
     },
     "faq": {
       "badge": "FAQs",
       "title": "Frequently Asked Questions About",
       "description": "Everything you need to know about shared expense tracking, bill splitting, group payments, and managing expenses with {appName}."
+    },
+    "comparePreview": {
+      "searchPlaceholder": "Search",
+      "demoGroupName": "Miami Trip",
+      "demoExpenses": {
+        "hotel": "Hotel — South Beach",
+        "dinner": "Group dinner",
+        "taxi": "Airport taxi"
+      }
     }
   },
   "faq": {
@@ -466,7 +525,19 @@
     "list": "List",
     "chart": "Chart",
     "export": "Export",
-    "yesSettleUp": "Yes, settle up"
+    "yesSettleUp": "Yes, settle up",
+    "unknown": "Unknown",
+    "notAvailable": "N/A",
+    "searchPlaceholder": "Search...",
+    "selectPlaceholder": "Select...",
+    "closeInfoSheet": "Close info sheet",
+    "moreInfo": "More info",
+    "paginationPrevious": "Go to previous page",
+    "paginationNext": "Go to next page",
+    "morePages": "More pages",
+    "previousSlide": "Previous slide",
+    "nextSlide": "Next slide",
+    "breadcrumbMore": "More"
   },
   "groups": {
     "titleYour": "Your Groups",
@@ -985,7 +1056,9 @@
       "cta": {
         "title": "Ready to try {appName}?",
         "button": "Create a free group"
-      }
+      },
+      "comparisonYes": "Yes",
+      "comparisonNo": "No"
     },
     "comparisonTable": {
       "featureColumn": "Feature",
@@ -1569,7 +1642,10 @@
     "exportCurrency": "Currency",
     "exportNetMeaning": "Net amount (+ gets back, - owes)",
     "exportTotalBalance": "Total balance",
-    "settlementBetween": "Settlement between {from} and {to}"
+    "settlementBetween": "Settlement between {from} and {to}",
+    "loadingDashboard": "Loading group dashboard",
+    "shareGroupTitle": "{name} · SplitCost",
+    "shareSettlementTitle": "{name} · Settlement summary"
   },
   "editGroup": {
     "getsBack": "Gets back",
@@ -1597,7 +1673,13 @@
     "addNewMember": "Add a new member",
     "tapToEdit": "Tap to edit or remove",
     "newMemberReady": "New member, ready to save",
-    "noBalance": "No balance"
+    "noBalance": "No balance",
+    "groupSnapshotTitle": "Group snapshot",
+    "groupSnapshotDescription": "A quick overview before you make any member changes.",
+    "totalUnsettledAmount": "Total unsettled amount",
+    "membersCardDescription": "Select a member to rename them or remove them when it is safe to do so.",
+    "memberRemovalProtectedTitle": "Member removal is protected",
+    "memberRemovalProtectedDescription": "Members involved in any expense in this group cannot be removed."
   },
   "expense": {
     "addExpense": "Add Expense",
@@ -1696,6 +1778,95 @@
     "addedOn": "Added on {date}",
     "updatedOn": "Updated on {date}",
     "paidLabel": "Paid",
-    "owedLabel": "owed"
+    "owedLabel": "owed",
+    "splitCustomShort": "The split doesn't add up to {total}. You're {diff} short.",
+    "splitCustomOver": "The split doesn't add up to {total}. You're {diff} over.",
+    "splitPercentShort": "The split doesn't add up to 100%. You're {diff}% short.",
+    "splitPercentOver": "The split doesn't add up to 100%. You're {diff}% over.",
+    "perPerson": "per person",
+    "perPersonApprox": "per person (approx)",
+    "attachedImageTitle": "Attached image",
+    "previewNotAvailable": "Preview not available for this file type.",
+    "amountOfLimit": "{allocated} of {limit}"
+  },
+  "categories": {
+    "entertainment": {
+      "label": "Entertainment",
+      "subcategories": {
+        "games": "Games",
+        "movies": "Movies",
+        "music": "Music",
+        "sports": "Sports",
+        "sightseeing": "Sightseeing/Attractions"
+      }
+    },
+    "food": {
+      "label": "Food & Drink",
+      "subcategories": {
+        "dining": "Dining Out",
+        "groceries": "Groceries",
+        "liquor": "Liquor"
+      }
+    },
+    "home": {
+      "label": "Home",
+      "subcategories": {
+        "electronics": "Electronics",
+        "furniture": "Furniture",
+        "household": "Household",
+        "maintenance": "Maintenance",
+        "mortgage": "Mortgage",
+        "rent": "Rent",
+        "pets": "Pets",
+        "services": "Services"
+      }
+    },
+    "life": {
+      "label": "Life",
+      "subcategories": {
+        "childcare": "Childcare",
+        "education": "Education",
+        "insurance": "Insurance",
+        "medical": "Medical",
+        "clothing": "Clothing",
+        "gifts": "Gifts",
+        "taxes": "Taxes"
+      }
+    },
+    "utilities": {
+      "label": "Utilities",
+      "subcategories": {
+        "electricity": "Electricity",
+        "gas": "Gas/Heat",
+        "water": "Water",
+        "trash": "Trash",
+        "internet": "TV/Phone/Internet"
+      }
+    },
+    "transportation": {
+      "label": "Transportation",
+      "subcategories": {
+        "bicycle": "Bicycle",
+        "bus": "Bus/Train",
+        "car": "Car",
+        "fuel": "Gas/Fuel",
+        "parking": "Parking",
+        "plane": "Plane",
+        "taxi": "Taxi",
+        "hotel": "Hotel"
+      }
+    },
+    "settlement": {
+      "label": "Settlement",
+      "subcategories": {
+        "settle_up": "Settle up"
+      }
+    },
+    "uncategorized": {
+      "label": "Uncategorized",
+      "subcategories": {
+        "general": "General"
+      }
+    }
   }
 }

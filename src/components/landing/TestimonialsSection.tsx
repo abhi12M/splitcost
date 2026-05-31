@@ -26,12 +26,14 @@ function TestimonialCard({
   role,
   initials,
   accent,
+  ratingAriaLabel,
 }: {
   quote: string;
   name: string;
   role: string;
   initials: string;
   accent: string;
+  ratingAriaLabel: string;
 }) {
   return (
     <article className="flex h-full flex-col rounded-2xl border border-border/80 bg-card p-6 shadow-sm dark:border-border/60">
@@ -45,7 +47,7 @@ function TestimonialCard({
         >
           <MessageSquareQuote className={cn("h-5 w-5", brandStyles.icon)} strokeWidth={2} />
         </span>
-        <div className="flex gap-0.5" aria-label="5 out of 5 stars">
+        <div className="flex gap-0.5" aria-label={ratingAriaLabel}>
           {Array.from({ length: 5 }).map((_, i) => (
             <Star
               key={i}
@@ -108,6 +110,7 @@ export function TestimonialsSection() {
                 role={t(`items.${key}.role`)}
                 initials={t(`items.${key}.initials`)}
                 accent={avatarAccent[key]}
+                ratingAriaLabel={t("ratingAriaLabel")}
               />
             </li>
           ))}

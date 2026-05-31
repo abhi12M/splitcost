@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { EXPENSE_CATEGORIES, type CategoryKey, type SubcategoryId } from "@/components/icons/CategoryIcons";
+import { buildCategorySelectGroups } from "@/lib/category-labels";
 import { fieldErrorStyles, validationStyles } from "@/lib/brand-styles";
 import { cn } from "@/lib/utils";
 import { detectCategoryFromDescription, ExpenseFormInterface, ExpenseParticipantsRequest, ExpenseRequest, type SplitType, UserInterface } from "@/lib/storage";
@@ -54,6 +55,8 @@ export function ExpenseForm({
   submitLabel,
 }: ExpenseFormProps) {
   const t = useTranslations("expense");
+  const tCategories = useTranslations("categories");
+  const categoryGroups = useMemo(() => buildCategorySelectGroups(tCategories), [tCategories]);
   const tCommon = useTranslations("common");
   const youLabel = useTranslations("group")("you");
   const ExpenseSchema = useMemo(
@@ -403,16 +406,7 @@ export function ExpenseForm({
             </label>
 
             <SingleSelect
-              groups={Object.entries(EXPENSE_CATEGORIES).map(([key, cat]) => ({
-                id: key,
-                label: cat.label,
-                color: cat.color,
-                subOptions: cat.subcategories.map((sub) => ({
-                  id: sub.id,
-                  label: sub.label,
-                  icon: sub.icon,
-                })),
-              }))}
+              groups={categoryGroups}
               value={{ groupId: category, itemId: subcategory }}
               onSelect={(groupId, itemId) => handleSubcategorySelect(groupId!, itemId)}
               placeholder={t("chooseCategory")}

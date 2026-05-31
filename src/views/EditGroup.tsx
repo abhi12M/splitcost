@@ -674,12 +674,12 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                   </CardHeader>
                   <CardContent className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="group-name">Group name</Label>
+                      <Label htmlFor="group-name">{t("groupNameLabel")}</Label>
                       <Input
                         id="group-name"
                         value={groupName}
                         onChange={(event) => setGroupName(event.target.value)}
-                        placeholder="e.g., Goa Trip"
+                        placeholder={t("groupNamePlaceholder")}
                       />
                       {errors.groupName ? (
                         <p className="text-xs text-destructive">{errors.groupName}</p>
@@ -687,7 +687,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Default currency</Label>
+                      <Label>{t("defaultCurrencyLabel")}</Label>
                       <div className="flex h-11 items-center rounded-xl border bg-muted/35 px-3 text-sm text-muted-foreground">
                         <span className="font-medium text-foreground">{currency}</span>
                       </div>
@@ -700,27 +700,27 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Wallet className="w-5 h-5 text-primary" />
-                    Group snapshot
+                    {t("groupSnapshotTitle")}
                   </CardTitle>
                   <CardDescription>
-                    A quick overview before you make any member changes.
+                    {t("groupSnapshotDescription")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-3 sm:grid-cols-3">
                   <div className="rounded-2xl border bg-muted/30 p-4">
-                    <p className="text-sm text-muted-foreground">Members</p>
+                    <p className="text-sm text-muted-foreground">{tGroup("members")}</p>
                     <p className="mt-2 text-2xl font-semibold">{memberCards.length}</p>
                   </div>
                   <div className={balanceStyles.positiveCard}>
-                    <p className={balanceStyles.positiveCardLabel}>Gets back</p>
+                    <p className={balanceStyles.positiveCardLabel}>{t("getsBack")}</p>
                     <p className={balanceStyles.positiveCardValue}>{summary.getBackCount}</p>
                   </div>
                   <div className={balanceStyles.negativeCard}>
-                    <p className={balanceStyles.negativeCardLabel}>Owes</p>
+                    <p className={balanceStyles.negativeCardLabel}>{t("owes")}</p>
                     <p className={balanceStyles.negativeCardValue}>{summary.oweCount}</p>
                   </div>
                   <div className={balanceStyles.warningCard}>
-                    <p className={balanceStyles.warningCardLabel}>Total unsettled amount</p>
+                    <p className={balanceStyles.warningCardLabel}>{t("totalUnsettledAmount")}</p>
                     <p className={balanceStyles.warningCardValue}>
                       {formatCurrency(unsettledTotal, currency)}
                     </p>
@@ -734,10 +734,10 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <CircleDollarSign className="w-5 h-5 text-primary" />
-                    Members
+                    {tGroup("members")}
                   </CardTitle>
                   <CardDescription>
-                    Select a member to rename them or remove them when it is safe to do so.
+                    {t("membersCardDescription")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -748,8 +748,8 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                       aria-invalid={Boolean(errors.memberName || errors.memberExists)}
                       placeholder={
                         members.length >= MEMBERS_MAX
-                          ? `Maximum ${MEMBERS_MAX} members reached`
-                          : "Add a new member"
+                          ? tGroup("maximumMembers", { max: MEMBERS_MAX })
+                          : t("addNewMember")
                       }
                       disabled={members.length >= MEMBERS_MAX}
                       onKeyDown={(event) => {
@@ -765,7 +765,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                       onClick={handleAddMember}
                       disabled={members.length >= MEMBERS_MAX || !newMemberName.trim()}
                     >
-                      Add
+                      {tCommon("add")}
                     </Button>
                   </div>
 
@@ -775,9 +775,9 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                         <ShieldCheck className="w-4 h-4" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium">Member removal is protected</p>
+                        <p className="text-sm font-medium">{t("memberRemovalProtectedTitle")}</p>
                         <p className="text-sm text-muted-foreground">
-                          Members involved in any expense in this group cannot be removed.
+                          {t("memberRemovalProtectedDescription")}
                         </p>
                       </div>
                     </div>
@@ -807,12 +807,12 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                               <p className="truncate font-semibold">{member.name}</p>
                               {!member.isExisting ? (
                                 <Badge variant="outline" className="border-dashed bg-card/70">
-                                  New
+                                  {tGroup("newBadge")}
                                 </Badge>
                               ) : null}
                             </div>
                             <p className="mt-1 text-xs text-muted-foreground">
-                              {member.isExisting ? "Tap to edit or remove" : "New member, ready to save"}
+                              {member.isExisting ? t("tapToEdit") : t("newMemberReady")}
                             </p>
                           </div>
                           <div className="flex min-w-0 items-center gap-3 justify-self-end">
@@ -837,7 +837,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                                 )}
                               >
                                 {member.balanceInfo.tone === "neutral"
-                                  ? "No balance"
+                                  ? t("noBalance")
                                   : formatCurrency(member.balanceInfo.value, currency)}
                               </p>
                             </div>

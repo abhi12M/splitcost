@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import { ArrowLeft } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import {
   Dialog,
@@ -33,6 +34,8 @@ export function ExpenseAttachmentViewer({
   onOpenChange,
   actions,
 }: ExpenseAttachmentViewerProps) {
+  const t = useTranslations("expense");
+  const tCommon = useTranslations("common");
   const imageViewerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const clipRef = useRef<HTMLDivElement>(null);
@@ -200,21 +203,21 @@ export function ExpenseAttachmentViewer({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="h-dvh max-w-none gap-0 overflow-hidden rounded-none border-0 bg-background p-0 sm:h-[92dvh] sm:max-w-3xl sm:rounded-lg [&>button:last-child]:hidden">
-        <DialogTitle className="sr-only">Attached image</DialogTitle>
+        <DialogTitle className="sr-only">{t("attachedImageTitle")}</DialogTitle>
         <div className="flex h-full min-h-0 flex-col">
           <div className="flex h-14 shrink-0 items-center justify-between border-b bg-background px-3 sm:px-4">
             <div className="flex min-w-0 items-center gap-2">
               <button
                 type="button"
                 onClick={() => onOpenChange(false)}
-                aria-label="Back"
+                aria-label={tCommon("back")}
                 className={dialogIconButtonClass}
               >
                 <ArrowLeft className="h-5 w-5" />
               </button>
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold sm:text-base">
-                  Attached image
+                  {t("attachedImageTitle")}
                 </p>
               </div>
             </div>
@@ -261,7 +264,7 @@ export function ExpenseAttachmentViewer({
                 </div>
               ) : (
                 <div className="flex h-full items-center justify-center p-6 text-center text-muted-foreground">
-                  <p>Preview not available for this file type.</p>
+                  <p>{t("previewNotAvailable")}</p>
                 </div>
               )}
             </div>

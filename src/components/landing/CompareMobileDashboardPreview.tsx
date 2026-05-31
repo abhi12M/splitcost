@@ -27,7 +27,6 @@ const DEMO_MEMBERS = ["Emily", "James", "Sophie"] as const;
 
 /** Realistic USD demo — mirrors live mobile dashboard layout. */
 const DEMO = {
-  groupName: "Miami Trip",
   currency: "USD",
   totalExpenses: 654,
   youOwe: 82,
@@ -39,23 +38,23 @@ const DEMO = {
       expenses: [
         {
           id: "1",
-          description: "Dinner at Ocean Grill",
+          descriptionKey: "dinner",
           paidBy: "James",
           amount: 148,
           category: "food" as const,
-          subcategory: "restaurant",
+          subcategory: "dining",
         },
         {
           id: "2",
-          description: "Beach shack lunch",
+          descriptionKey: "dinner",
           paidBy: "Emily",
           amount: 86,
           category: "food" as const,
-          subcategory: "restaurant",
+          subcategory: "dining",
         },
         {
           id: "3",
-          description: "Airbnb (2 nights)",
+          descriptionKey: "hotel",
           paidBy: "You",
           amount: 420,
           category: "home" as const,
@@ -79,6 +78,8 @@ export function CompareMobileDashboardPreview({
 }: CompareMobileDashboardPreviewProps) {
   const t = useTranslations("groupDetails");
   const tCommon = useTranslations("common");
+  const tPreview = useTranslations("landing.comparePreview");
+  const demoGroupName = tPreview("demoGroupName");
 
   const chipButtonClass = (active: boolean) =>
     cn(
@@ -111,7 +112,7 @@ export function CompareMobileDashboardPreview({
               <ArrowLeft className="h-5 w-5" aria-hidden />
             </span>
             <h2 className="min-w-0 flex-1 truncate text-sm font-semibold tracking-tight">
-              {DEMO.groupName}
+              {demoGroupName}
             </h2>
             <span className="flex h-8 w-8 shrink-0 items-center justify-center text-muted-foreground">
               <MoreHorizontal className="h-5 w-5" aria-hidden />
@@ -138,7 +139,7 @@ export function CompareMobileDashboardPreview({
             <div className="relative min-w-0 flex-1 overflow-hidden">
               <Search className="pointer-events-none absolute left-2.5 top-1/2 z-10 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
               <div className="h-9 overflow-hidden rounded-xl border border-input bg-background pl-8 pr-2">
-                <span className="block truncate text-xs leading-9 text-muted-foreground">Search</span>
+                <span className="block truncate text-xs leading-9 text-muted-foreground">{tPreview("searchPlaceholder")}</span>
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-0.5 rounded-xl border border-border bg-muted/80 p-0.5">
@@ -201,7 +202,7 @@ export function CompareMobileDashboardPreview({
                     containerClassName="rounded-sm scale-90 origin-top-left"
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs font-medium leading-snug">{expense.description}</p>
+                    <p className="truncate text-xs font-medium leading-snug">{tPreview(`demoExpenses.${expense.descriptionKey}`)}</p>
                     <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
                       {expense.paidBy} {tCommon("paid")}
                     </p>

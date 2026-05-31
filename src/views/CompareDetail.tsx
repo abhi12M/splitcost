@@ -35,12 +35,12 @@ type CompareDetailPageProps = {
   slug: CompareSlug;
 };
 
-function CellValue({ value }: { value: string }) {
+function CellValue({ value, yesLabel, noLabel }: { value: string; yesLabel: string; noLabel: string }) {
   if (value === "yes") {
     return (
       <span className="inline-flex items-center justify-center text-success">
         <Check className="h-4 w-4 shrink-0" aria-hidden />
-        <span className="sr-only">Yes</span>
+        <span className="sr-only">{yesLabel}</span>
       </span>
     );
   }
@@ -49,7 +49,7 @@ function CellValue({ value }: { value: string }) {
     return (
       <span className="inline-flex items-center justify-center text-muted-foreground">
         <X className="h-4 w-4 shrink-0" aria-hidden />
-        <span className="sr-only">No</span>
+        <span className="sr-only">{noLabel}</span>
       </span>
     );
   }
@@ -238,10 +238,10 @@ export default async function CompareDetailPage({ locale, slug }: CompareDetailP
                           {tTable(`rows.${rowKey}.feature`)}
                         </th>
                         <td className="px-4 py-3.5 text-center sm:px-6">
-                          <CellValue value={splitcostValue} />
+                          <CellValue value={splitcostValue} yesLabel={tShared("comparisonYes")} noLabel={tShared("comparisonNo")} />
                         </td>
                         <td className="px-4 py-3.5 text-center sm:px-6">
-                          <CellValue value={competitorValue} />
+                          <CellValue value={competitorValue} yesLabel={tShared("comparisonYes")} noLabel={tShared("comparisonNo")} />
                         </td>
                       </tr>
                     );

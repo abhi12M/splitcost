@@ -106,26 +106,28 @@ function ProblemSceneLayout({
 }
 
 const chatClaims = [
-  { name: "Sarah", note: "Dinner", amount: "$48.00" },
-  { name: "You", note: "Last trip", amount: "$28.00" },
+  { name: "Sarah", noteKey: "dinner", amount: "$48.00" },
+  { name: "You", noteKey: "lastTrip", amount: "$28.00" },
 ] as const;
 
 function WhoPaidLastScene() {
+  const t = useTranslations("landing.problems.mockups");
+
   return (
-    <ProblemSceneLayout accent="brand" panelTitle="Group chat" bottomIcon={MessageSquare}>
+    <ProblemSceneLayout accent="brand" panelTitle={t("groupChat")} bottomIcon={MessageSquare}>
       <ul className="space-y-1.5 text-[10px] font-medium">
-        {chatClaims.map(({ name, note, amount }) => (
+        {chatClaims.map(({ name, noteKey, amount }) => (
           <li key={name} className="flex items-center justify-between gap-2">
             <span className="min-w-0 truncate text-muted-foreground">
               <span className="font-semibold text-foreground">{name}</span>
-              <span className="text-muted-foreground"> · {note}</span>
+              <span className="text-muted-foreground"> · {t(`chatNotes.${noteKey}`)}</span>
             </span>
             <span className={cn("shrink-0 tabular-nums", brandStyles.headingAccent)}>{amount}</span>
           </li>
         ))}
       </ul>
       <p className="mt-2 text-center text-[9px] font-medium text-muted-foreground">
-        Which payment counts?
+        {t("whichPaymentCounts")}
       </p>
     </ProblemSceneLayout>
   );
@@ -139,8 +141,10 @@ const groupBalances = [
 ] as const;
 
 function GroupBalancesScene() {
+  const t = useTranslations("landing.problems.mockups");
+
   return (
-    <ProblemSceneLayout accent="emerald" panelTitle="Group balance" bottomIcon={Users}>
+    <ProblemSceneLayout accent="emerald" panelTitle={t("groupBalance")} bottomIcon={Users}>
       <ul className="space-y-1 text-[10px] font-medium">
         {groupBalances.map(({ name, amount, positive }) => (
           <li key={name} className="flex justify-between gap-2">
@@ -154,51 +158,55 @@ function GroupBalancesScene() {
 }
 
 function PaymentReminderScene() {
+  const t = useTranslations("landing.problems.mockups");
+
   return (
-    <ProblemSceneLayout accent="orange" panelTitle="Payment due" bottomIcon={Clock}>
+    <ProblemSceneLayout accent="orange" panelTitle={t("paymentDue")} bottomIcon={Clock}>
       <ul className="space-y-1.5 text-[10px] font-medium">
         <li className="flex justify-between gap-2">
-          <span className="text-muted-foreground">To</span>
+          <span className="text-muted-foreground">{t("toLabel")}</span>
           <span className="font-semibold text-foreground">James</span>
         </li>
         <li className="flex justify-between gap-2">
-          <span className="text-muted-foreground">Amount</span>
+          <span className="text-muted-foreground">{t("amountLabel")}</span>
           <span className="tabular-nums font-bold text-orange-600">$28.00</span>
         </li>
         <li className="flex justify-between gap-2">
-          <span className="text-muted-foreground">Status</span>
-          <span className="font-semibold text-destructive">Unpaid</span>
+          <span className="text-muted-foreground">{t("statusLabel")}</span>
+          <span className="font-semibold text-destructive">{t("unpaid")}</span>
         </li>
       </ul>
       <p className="mt-2 text-center text-[9px] leading-snug text-muted-foreground">
-        Still waiting on a follow-up
+        {t("waitingFollowUp")}
       </p>
     </ProblemSceneLayout>
   );
 }
 
 const travelReceiptItems = [
-  { label: "Dinner", amount: "$45.00", icon: Utensils },
-  { label: "Taxi", amount: "$58.00", icon: Car },
-  { label: "Hotel", amount: "$78.00", icon: Building2 },
+  { labelKey: "dinner", amount: "$45.00", icon: Utensils },
+  { labelKey: "taxi", amount: "$58.00", icon: Car },
+  { labelKey: "hotel", amount: "$78.00", icon: Building2 },
 ] as const;
 
 function TravelExpensesScene() {
+  const t = useTranslations("landing.problems.mockups");
+
   return (
-    <ProblemSceneLayout accent="brand" panelTitle="Trip expenses" bottomIcon={Plane}>
+    <ProblemSceneLayout accent="brand" panelTitle={t("tripExpenses")} bottomIcon={Plane}>
       <ul className="space-y-1.5 text-[10px] font-medium">
-        {travelReceiptItems.map(({ label, amount, icon: Icon }) => (
-          <li key={label} className="flex items-center justify-between gap-2">
+        {travelReceiptItems.map(({ labelKey, amount, icon: Icon }) => (
+          <li key={labelKey} className="flex items-center justify-between gap-2">
             <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
               <Icon className={cn("h-3 w-3 shrink-0", brandStyles.icon)} strokeWidth={2.25} aria-hidden />
-              <span className="truncate">{label}</span>
+              <span className="truncate">{t(`tripItems.${labelKey}`)}</span>
             </span>
             <span className="shrink-0 tabular-nums text-foreground">{amount}</span>
           </li>
         ))}
       </ul>
       <div className="mt-2 flex items-center justify-between border-t border-border/60 pt-2 text-[10px] font-bold">
-        <span className="text-muted-foreground">Total</span>
+        <span className="text-muted-foreground">{t("total")}</span>
         <span className={cn("tabular-nums", brandStyles.headingAccent)}>$181.00</span>
       </div>
     </ProblemSceneLayout>

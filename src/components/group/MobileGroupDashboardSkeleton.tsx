@@ -1,3 +1,7 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+
 import { Skeleton } from "@/components/ui/skeleton";
 
 function ExpenseRowSkeleton() {
@@ -39,11 +43,13 @@ function ExpenseGroupSkeleton({ rows = 3 }: { rows?: number }) {
 
 /** Loading placeholder matching {@link MobileGroupDashboard} layout. */
 export function MobileGroupDashboardSkeleton() {
+  const t = useTranslations("groupDetails");
+
   return (
     <div
       className="flex min-h-[100dvh] flex-col bg-background"
       aria-busy="true"
-      aria-label="Loading group dashboard"
+      aria-label={t("loadingDashboard")}
     >
       <header className="sticky top-0 z-40 border-b border-border/80 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/90">
         <div className="flex h-14 items-center gap-2 px-3 sm:px-4">

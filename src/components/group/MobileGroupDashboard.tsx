@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
+import { useMemo, useState, useCallback, type Dispatch, type SetStateAction } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
@@ -69,6 +69,7 @@ import { UserAvatar, AvatarGroup } from "@/components/ui/UserAvatar";
 import { formatCurrency } from "@/lib/avatar-utils";
 import type { CategoryKey } from "@/components/icons/CategoryIcons";
 import { formatExpenseGroupHeaderTitle } from "@/components/ui/formatters";
+import { resolveCategoryDisplayLabel } from "@/lib/category-labels";
 import { cn } from "@/lib/utils";
 import { ADMIN_BASE_PATH } from "@/lib/constants";
 import { useBackButtonClose } from "@/hooks/useBackButtonClose";
@@ -185,6 +186,11 @@ export function MobileGroupDashboard({
   const t = useTranslations("groupDetails");
   const tGroup = useTranslations("group");
   const tCommon = useTranslations("common");
+  const tCategories = useTranslations("categories");
+  const resolveCategoryLabel = useCallback(
+    (key: string) => resolveCategoryDisplayLabel(tCategories, key),
+    [tCategories]
+  );
   const youLabel = tGroup("you");
 
   const mobileGroupByOptions = useMemo(
@@ -616,7 +622,7 @@ export function MobileGroupDashboard({
                       )}
                       <div className="min-w-0">
                         <p className="truncate text-sm font-semibold">
-                          {formatExpenseGroupHeaderTitle(title, groupBy, shouldTitleCase)}
+                          {formatExpenseGroupHeaderTitle(title, groupBy, shouldTitleCase, resolveCategoryLabel)}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           {t("expenseCount", { count: list.length })}

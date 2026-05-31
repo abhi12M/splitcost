@@ -66,48 +66,11 @@ const stepAccentStyles: Record<
 
 const GROUP_MEMBERS = ["Sarah", "James", "Emma", "Michael", "Sofia"];
 
-const recentExpenses: {
-  title: string;
-  paidBy: string;
-  amount: string;
-  category: CategoryKey;
-  subcategory: string;
-}[] = [
-  {
-    title: "Dinner at Cafe",
-    paidBy: "Emma",
-    amount: "$48.00",
-    category: "food",
-    subcategory: "dining",
-  },
-  {
-    title: "Taxi to Airport",
-    paidBy: "Michael",
-    amount: "$28.00",
-    category: "transportation",
-    subcategory: "taxi",
-  },
-  {
-    title: "Hotel Booking",
-    paidBy: "James",
-    amount: "$82.00",
-    category: "transportation",
-    subcategory: "hotel",
-  },
-  {
-    title: "Groceries",
-    paidBy: "Sofia",
-    amount: "$14.00",
-    category: "food",
-    subcategory: "groceries",
-  },
-];
-
 const groupBalances = [
-  { name: "James", label: "gets back", amount: "$42.00", positive: true },
-  { name: "Emma", label: "gets back", amount: "$18.00", positive: true },
-  { name: "Michael", label: "owes", amount: "$58.00", positive: false },
-  { name: "Sofia", label: "owes", amount: "$62.00", positive: false },
+  { name: "James", positive: true, amount: "$42.00" },
+  { name: "Emma", positive: true, amount: "$18.00" },
+  { name: "Michael", positive: false, amount: "$58.00" },
+  { name: "Sofia", positive: false, amount: "$62.00" },
 ] as const;
 
 function MockupCard({ children, className }: { children: ReactNode; className?: string }) {
@@ -124,6 +87,8 @@ function MockupCard({ children, className }: { children: ReactNode; className?: 
 }
 
 function CreateGroupMockup() {
+  const t = useTranslations("landing.howItWorks.mockups");
+
   return (
     <MockupCard>
       <div className="flex items-start justify-between gap-2">
@@ -137,8 +102,8 @@ function CreateGroupMockup() {
             🏖️
           </span>
           <div className="min-w-0">
-            <p className="truncate text-xs font-bold text-foreground">Beach Trip</p>
-            <p className="text-[10px] text-muted-foreground">5 members</p>
+            <p className="truncate text-xs font-bold text-foreground">{t("groupName")}</p>
+            <p className="text-[10px] text-muted-foreground">{t("memberCount")}</p>
           </div>
         </div>
         <span className="text-muted-foreground" aria-hidden>
@@ -161,7 +126,23 @@ function CreateGroupMockup() {
   );
 }
 
+const recentExpenseKeys = ["dinner", "taxi", "hotel", "groceries"] as const;
+
 function AddExpensesMockup() {
+  const t = useTranslations("landing.howItWorks.mockups");
+  const recentExpenses: {
+    titleKey: (typeof recentExpenseKeys)[number];
+    paidBy: string;
+    amount: string;
+    category: CategoryKey;
+    subcategory: string;
+  }[] = [
+    { titleKey: "dinner", paidBy: "Emma", amount: "$48.00", category: "food", subcategory: "dining" },
+    { titleKey: "taxi", paidBy: "Michael", amount: "$28.00", category: "transportation", subcategory: "taxi" },
+    { titleKey: "hotel", paidBy: "James", amount: "$82.00", category: "transportation", subcategory: "hotel" },
+    { titleKey: "groceries", paidBy: "Sofia", amount: "$14.00", category: "food", subcategory: "groceries" },
+  ];
+
   return (
     <MockupCard className="space-y-1.5">
       {recentExpenses.map((expense) => {
@@ -171,7 +152,7 @@ function AddExpensesMockup() {
 
         return (
         <div
-          key={expense.title}
+          key={expense.titleKey}
           className="flex items-center justify-between gap-2 border-b border-border/40 pb-1.5 last:border-0 last:pb-0"
         >
           <div className="flex min-w-0 items-center gap-2">
@@ -188,9 +169,9 @@ function AddExpensesMockup() {
             </div>
             <div className="min-w-0">
               <p className="truncate text-[10px] font-semibold text-foreground">
-                {expense.title}
+                {t(`expenses.${expense.titleKey}`)}
               </p>
-              <p className="text-[9px] text-muted-foreground">Paid by {expense.paidBy}</p>
+              <p className="text-[9px] text-muted-foreground">{t("paidBy", { name: expense.paidBy })}</p>
             </div>
           </div>
           <span className="shrink-0 text-[10px] font-bold tabular-nums text-foreground">
@@ -204,9 +185,11 @@ function AddExpensesMockup() {
 }
 
 function TrackBalancesMockup() {
+  const t = useTranslations("landing.howItWorks.mockups");
+
   return (
     <MockupCard>
-      <p className="mb-2 text-[10px] font-bold text-foreground">Group Balance</p>
+      <p className="mb-2 text-[10px] font-bold text-foreground">{t("groupBalance")}</p>
       <ul className="space-y-1.5">
         {groupBalances.map((row) => (
           <li key={row.name} className="flex items-center justify-between gap-2">
@@ -216,7 +199,9 @@ function TrackBalancesMockup() {
                 <span className="block truncate text-[10px] font-semibold text-foreground">
                   {row.name}
                 </span>
-                <span className="block text-[9px] text-muted-foreground">{row.label}</span>
+                <span className="block text-[9px] text-muted-foreground">
+                  {t(row.positive ? "getsBack" : "owes")}
+                </span>
               </div>
             </div>
             <span
@@ -236,11 +221,13 @@ function TrackBalancesMockup() {
 }
 
 function SettleFasterMockup() {
+  const t = useTranslations("landing.howItWorks.mockups");
+
   return (
     <MockupCard className="text-center">
-      <p className="text-[10px] text-muted-foreground">You are owed</p>
+      <p className="text-[10px] text-muted-foreground">{t("youAreOwed")}</p>
       <p className="my-1 text-2xl font-extrabold tabular-nums text-emerald-600">$43.00</p>
-      <p className="mb-2 mt-3 text-[10px] font-medium text-muted-foreground">Settle with</p>
+      <p className="mb-2 mt-3 text-[10px] font-medium text-muted-foreground">{t("settleWith")}</p>
       <div className="flex items-center justify-center gap-1">
         <AvatarGroup
           names={["James", "Emma", "Michael"]}

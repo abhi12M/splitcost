@@ -21,10 +21,17 @@ export interface SplitResult {
     participants: ExpenseParticipantsRequest[];
 }
 
-const SPLIT_HEADER_TITLES: Record<SplitType, string> = {
-    equal: "Split Equally",
-    custom: "Custom Amounts",
-    percentage: "Split by Percentage",
+
+type SplitScreenLabels = {
+    equalTab: string;
+    customTab: string;
+    percentTab: string;
+    selectOne: string;
+    people: string;
+    all: string;
+    adjustSplit: string;
+    perPerson: string;
+    perPersonApprox: string;
 };
 type BaseTabMember = {
     id: string;
@@ -142,8 +149,9 @@ export function buildSplitScreenVM(params: {
     amount: number | null;
     members: UserInterface[];
     participants?: ExpenseParticipantsRequest[] | null;
+    labels: SplitScreenLabels;
 }): SplitScreenVM {
-    const { splitType, amount, members, participants } = params;
+    const { splitType, amount, members, participants, labels } = params;
     const totalAmount = amount || 0;
 
     const participantMap = new Map(
@@ -171,7 +179,7 @@ export function buildSplitScreenVM(params: {
 
     const equalTab: EqualTabVM = {
         id: "equal",
-        label: "Equal",
+        label: labels.equalTab,
         mode: "select",
         input: { type: "checkbox" },
         members: members.map((m) => {
@@ -197,10 +205,10 @@ export function buildSplitScreenVM(params: {
                 count: equalSelectedCount
             },
             message: {
-                error: "You must select at least one person to split with.",
-                distribution: `per person ${remainderCents !== 0 ? '(approx)' : ''}`,
-                totalSelected: "people",
-                toggle: "All",
+                error: labels.selectOne,
+                distribution: remainderCents !== 0 ? labels.perPersonApprox : labels.perPerson,
+                totalSelected: labels.people,
+                toggle: labels.all,
             },
         },
     };
@@ -219,7 +227,7 @@ export function buildSplitScreenVM(params: {
 
     const customTab: CustomTabVM = {
         id: "custom",
-        label: "Custom",
+        label: labels.customTab,
         mode: "input",
         members: customMembers,
         input: {
@@ -261,7 +269,7 @@ export function buildSplitScreenVM(params: {
 
     const percentTab: PercentageTabVM = {
         id: "percentage",
-        label: "Percent",
+        label: labels.percentTab,
         mode: "input",
         members: percentMembers,
         input: {
@@ -286,7 +294,7 @@ export function buildSplitScreenVM(params: {
     return {
         selectedTab: splitType,
         header: {
-            title: "Adjust Split",
+            title: labels.adjustSplit,
         },
         tabs: [equalTab, customTab, percentTab],
     };
@@ -338,12 +346,25 @@ export default function SplitScreen(props: SplitScreenProps) {
         return TAB_ORDER[Math.max(index - 1, 0)];
     }
 
+    const splitLabels: SplitScreenLabels = {
+        equalTab: t("splitEqualTab"),
+        customTab: t("splitCustomTab"),
+        percentTab: t("splitPercentTab"),
+        selectOne: t("selectOneToSplit"),
+        people: tCommon("people"),
+        all: t("all"),
+        adjustSplit: t("adjustSplit"),
+        perPerson: t("perPerson"),
+        perPersonApprox: t("perPersonApprox"),
+    };
+
     const [vm, setVM] = useState<SplitScreenVM>(() =>
         buildSplitScreenVM({
             splitType,
             amount,
             members,
             participants: initialParticipants,
+            labels: splitLabels,
         })
     );
 
@@ -403,8 +424,8 @@ export default function SplitScreen(props: SplitScreenProps) {
                         },
                         message: {
                             ...tab.footer.message,
-                            distribution: `per person ${remainderCents !== 0 ? "(approx)" : ""
-                                }`,
+                            distribution:
+                                remainderCents !== 0 ? splitLabels.perPersonApprox : splitLabels.perPerson,
                         },
                     },
                 }
@@ -546,11 +567,11 @@ export default function SplitScreen(props: SplitScreenProps) {
                 const diffFormatted = formatAmount(Math.abs(diff), currency);
 
                 if (diff > 0) {
-                    errMsg = `The split doesn’t add up to ${totalFormatted}. You’re ${diffFormatted} short.`;
+                    errMsg = t("splitCustomShort", { total: totalFormatted, diff: diffFormatted });
                 }
 
                 if (diff < 0) {
-                    errMsg = `The split doesn’t add up to ${totalFormatted}. You’re ${diffFormatted} over.`;
+                    errMsg = t("splitCustomOver", { total: totalFormatted, diff: diffFormatted });
                 }
 
                 toast({
@@ -569,11 +590,11 @@ export default function SplitScreen(props: SplitScreenProps) {
         if (diff !== 0) {
 
             if (diff > 0) {
-                errMsg = `The split doesn’t add up to 100%. You’re ${Math.abs(diff)}% short.`;
+                errMsg = t("splitPercentShort", { diff: Math.abs(diff) });
             }
 
             if (diff < 0) {
-                errMsg = `The split doesn’t add up to 100%. You’re ${Math.abs(diff)}% over.`;
+                errMsg = t("splitPercentOver", { diff: Math.abs(diff) });
             }
 
             toast({
@@ -816,7 +837,10 @@ export default function SplitScreen(props: SplitScreenProps) {
                     return (
                         <div className="text-sm text-center">
                             <div>
-                                {formatAmount(totalValue, currency)} of {formatAmount(limit, currency)}
+                                {t("amountOfLimit", {
+                                    allocated: formatAmount(totalValue, currency),
+                                    limit: formatAmount(limit, currency),
+                                })}
                             </div>
                             <div
                                 className={cn(
@@ -825,7 +849,8 @@ export default function SplitScreen(props: SplitScreenProps) {
                                     isOver && "text-destructive"
                                 )}
                             >
-                                {formatAmount(Math.abs(difference), currency)} {isOver ? "over" : "left"}
+                                {formatAmount(Math.abs(difference), currency)}{" "}
+                                {isOver ? t("over") : t("left")}
                             </div>
                         </div>
                     )
@@ -839,7 +864,10 @@ export default function SplitScreen(props: SplitScreenProps) {
                     return (
                         <div className="text-sm text-center">
                             <div>
-                                {totalValue}% of {limit}%
+                                {t("amountOfLimit", {
+                                    allocated: `${totalValue}%`,
+                                    limit: `${limit}%`,
+                                })}
                             </div>
                             <div
                                 className={cn(
@@ -848,7 +876,7 @@ export default function SplitScreen(props: SplitScreenProps) {
                                     isOver && "text-destructive"
                                 )}
                             >
-                                {Math.abs(difference)}% {isOver ? "over" : "left"}
+                                {Math.abs(difference)}% {isOver ? t("over") : t("left")}
                             </div>
                         </div>
                     )
