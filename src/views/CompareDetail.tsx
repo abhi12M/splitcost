@@ -55,7 +55,9 @@ function CellValue({ value, yesLabel, noLabel }: { value: string; yesLabel: stri
   }
 
   return (
-    <span className="text-xs leading-snug text-muted-foreground sm:text-sm">{value}</span>
+    <span className="inline-block max-w-full break-words text-xs leading-snug text-muted-foreground sm:text-sm">
+      {value}
+    </span>
   );
 }
 
@@ -147,7 +149,7 @@ export default async function CompareDetailPage({ locale, slug }: CompareDetailP
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <article>
+      <article className="overflow-x-clip">
         <section className={cn(landingSection.default, "pb-10 pt-10 sm:pb-16 sm:pt-16 md:pb-20 md:pt-20")}>
           <div className="container">
             <nav aria-label={tShared("breadcrumbLabel")} className="mb-8">
@@ -202,27 +204,32 @@ export default async function CompareDetailPage({ locale, slug }: CompareDetailP
         </section>
 
         <section className={cn(landingSection.alternate, landingSection.padding)}>
-          <div className="container max-w-4xl">
+          <div className="container min-w-0 max-w-4xl">
             <h2 className="text-center text-2xl font-bold text-foreground sm:text-3xl">
               {t.has("comparisonTitle")
                 ? t("comparisonTitle", translationValues)
                 : tShared("comparisonTitle", translationValues)}
             </h2>
 
-            <div className="mt-8 overflow-x-auto rounded-2xl border border-border/60 bg-card shadow-sm dark:border-border/80">
-              <table className="w-full min-w-[32rem] border-collapse text-left">
+            <div className="mt-8 w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain rounded-2xl border border-border/60 bg-card shadow-sm [-webkit-overflow-scrolling:touch] dark:border-border/80">
+              <table className="w-full min-w-0 table-fixed border-collapse text-left sm:min-w-[32rem] sm:table-auto">
                 <caption className="sr-only">
                   {tShared("comparisonCaption", translationValues)}
                 </caption>
+                <colgroup>
+                  <col className="w-[44%] sm:w-auto" />
+                  <col className="w-[28%] sm:w-auto" />
+                  <col className="w-[28%] sm:w-auto" />
+                </colgroup>
                 <thead>
                   <tr className="border-b border-border/60 bg-muted/40">
-                    <th scope="col" className="px-4 py-3 text-sm font-semibold text-foreground sm:px-6">
+                    <th scope="col" className="px-2.5 py-3 text-xs font-semibold text-foreground sm:px-6 sm:text-sm">
                       {tTable("featureColumn")}
                     </th>
-                    <th scope="col" className="px-4 py-3 text-center text-sm font-semibold text-primary sm:px-6">
+                    <th scope="col" className="px-2.5 py-3 text-center text-xs font-semibold text-primary sm:px-6 sm:text-sm">
                       {APP_NAME}
                     </th>
-                    <th scope="col" className="px-4 py-3 text-center text-sm font-semibold text-foreground sm:px-6">
+                    <th scope="col" className="px-2.5 py-3 text-center text-xs font-semibold text-foreground sm:px-6 sm:text-sm">
                       {competitor}
                     </th>
                   </tr>
@@ -234,13 +241,16 @@ export default async function CompareDetailPage({ locale, slug }: CompareDetailP
 
                     return (
                       <tr key={rowKey} className="border-b border-border/40 last:border-0">
-                        <th scope="row" className="px-4 py-3.5 text-xs font-medium text-foreground sm:px-6 sm:text-sm">
-                          {tTable(`rows.${rowKey}.feature`)}
+                        <th
+                          scope="row"
+                          className="px-2.5 py-3 text-xs font-medium leading-snug text-foreground sm:px-6 sm:py-3.5 sm:text-sm"
+                        >
+                          <span className="break-words">{tTable(`rows.${rowKey}.feature`)}</span>
                         </th>
-                        <td className="px-4 py-3.5 text-center sm:px-6">
+                        <td className="px-2.5 py-3 text-center align-middle sm:px-6 sm:py-3.5">
                           <CellValue value={splitcostValue} yesLabel={tShared("comparisonYes")} noLabel={tShared("comparisonNo")} />
                         </td>
-                        <td className="px-4 py-3.5 text-center sm:px-6">
+                        <td className="px-2.5 py-3 text-center align-middle sm:px-6 sm:py-3.5">
                           <CellValue value={competitorValue} yesLabel={tShared("comparisonYes")} noLabel={tShared("comparisonNo")} />
                         </td>
                       </tr>
