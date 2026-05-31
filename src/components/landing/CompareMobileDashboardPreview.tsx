@@ -1,5 +1,3 @@
-"use client";
-
 import {
   ArrowLeft,
   Calendar,
@@ -16,7 +14,7 @@ import {
   Tag,
   User,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
 
 import { ExpenseListCategoryIcon } from "@/components/expense/ExpenseListCategoryIcon";
 import { AvatarGroup } from "@/components/ui/UserAvatar";
@@ -38,7 +36,7 @@ const DEMO = {
       expenses: [
         {
           id: "1",
-          descriptionKey: "dinner",
+          descriptionKey: "dinnerOceanGrill",
           paidBy: "James",
           amount: 148,
           category: "food" as const,
@@ -46,7 +44,7 @@ const DEMO = {
         },
         {
           id: "2",
-          descriptionKey: "dinner",
+          descriptionKey: "lunchBeach",
           paidBy: "Emily",
           amount: 86,
           category: "food" as const,
@@ -54,7 +52,7 @@ const DEMO = {
         },
         {
           id: "3",
-          descriptionKey: "hotel",
+          descriptionKey: "hotelStay",
           paidBy: "You",
           amount: 420,
           category: "home" as const,
@@ -72,13 +70,13 @@ type CompareMobileDashboardPreviewProps = {
 };
 
 /** Static preview matching the real mobile group dashboard UI. */
-export function CompareMobileDashboardPreview({
+export async function CompareMobileDashboardPreview({
   className,
   "aria-label": ariaLabel,
 }: CompareMobileDashboardPreviewProps) {
-  const t = useTranslations("groupDetails");
-  const tCommon = useTranslations("common");
-  const tPreview = useTranslations("landing.comparePreview");
+  const t = await getTranslations("groupDetails");
+  const tCommon = await getTranslations("common");
+  const tPreview = await getTranslations("landing.comparePreview");
   const demoGroupName = tPreview("demoGroupName");
 
   const chipButtonClass = (active: boolean) =>
