@@ -10,7 +10,7 @@ export function getTranslatedCategoryLabel(
   t: CategoryTranslator,
   categoryKey: CategoryKey
 ): string {
-  return t(`categories.${categoryKey}.label`);
+  return t(`${categoryKey}.label`);
 }
 
 export function getTranslatedSubcategoryLabel(
@@ -18,7 +18,7 @@ export function getTranslatedSubcategoryLabel(
   categoryKey: CategoryKey,
   subcategoryId: SubcategoryId
 ): string {
-  return t(`categories.${categoryKey}.subcategories.${subcategoryId}`);
+  return t(`${categoryKey}.subcategories.${subcategoryId}`);
 }
 
 export function isCategoryKey(key: string): key is CategoryKey {
