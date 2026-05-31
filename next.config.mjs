@@ -66,7 +66,14 @@ const nextConfig = {
       permanent: true,
     }));
 
-    return [...localeRedirects, ...rootRedirects];
+    // Admin portal lives outside [locale]; next-intl may prefix links with /en/ etc.
+    const portalRedirects = locales.map((locale) => ({
+      source: `/${locale}/portal/:path*`,
+      destination: "/portal/:path*",
+      permanent: false,
+    }));
+
+    return [...localeRedirects, ...rootRedirects, ...portalRedirects];
   },
   async headers() {
     return [

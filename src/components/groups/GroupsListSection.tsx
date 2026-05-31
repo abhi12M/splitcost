@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter as useNextRouter } from "next/navigation";
+
 import { Link, useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
@@ -82,6 +84,7 @@ export function GroupsListSection({ adminMode = false }: { adminMode?: boolean }
   const [loading, setLoading] = useState(true);
   const [deletingGroupId, setDeletingGroupId] = useState<string | null>(null);
   const router = useRouter();
+  const nextRouter = useNextRouter();
 
   const fetchGroups = useCallback(async () => {
     setLoading(true);
@@ -186,13 +189,18 @@ export function GroupsListSection({ adminMode = false }: { adminMode?: boolean }
             return (
               <div
                 key={group.id}
-                onClick={() =>
-                  router.push(
-                    adminMode
-                      ? `${ADMIN_BASE_PATH}/group/${group.id}`
-                      : `/group/${group.id}`
-                  )
-                }
+                onClick={() => {
+                  const href = adminMode
+                    ? `${ADMIN_BASE_PATH}/group/${group.id}`
+                    : `/group/${group.id}`;
+
+                  if (adminMode) {
+                    nextRouter.push(href);
+                    return;
+                  }
+
+                  router.push(href);
+                }}
               >
                 <Card hover className="h-full group">
                   <CardHeader>

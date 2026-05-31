@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import NextLink from "next/link";
 import { useMemo, useState, useCallback, type Dispatch, type SetStateAction } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
@@ -275,9 +276,15 @@ export function MobileGroupDashboard({
       <header className="sticky top-0 z-40 border-b border-border/80 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/90">
         <div className="flex h-14 items-center gap-2 px-3 sm:px-4">
           <Button variant="ghost" size="icon-sm" className="shrink-0" asChild>
-            <Link href={homeHref} aria-label={tCommon("back")}>
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
+            {isAdminView ? (
+              <NextLink href={homeHref} aria-label={tCommon("back")}>
+                <ArrowLeft className="h-5 w-5" />
+              </NextLink>
+            ) : (
+              <Link href={homeHref} aria-label={tCommon("back")}>
+                <ArrowLeft className="h-5 w-5" />
+              </Link>
+            )}
           </Button>
           <h1 className="min-w-0 flex-1 truncate text-base font-semibold tracking-tight">
             {group.name}

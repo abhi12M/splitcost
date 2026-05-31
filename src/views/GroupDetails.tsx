@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
+import NextLink from "next/link";
 import { Link } from "@/i18n/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -867,9 +868,15 @@ export default function GroupResponsesPage({
         <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3">
           <div className="flex min-w-0 flex-1 items-start gap-2 sm:items-center sm:gap-3">
             <Button variant="ghost" size="icon-sm" className="mt-0.5 shrink-0 sm:mt-0" asChild>
-              <Link href={isAdminView ? ADMIN_BASE_PATH : "/"} aria-label={tCommon("back")}>
-                <ArrowLeft className="h-5 w-5" />
-              </Link>
+              {isAdminView ? (
+                <NextLink href={ADMIN_BASE_PATH} aria-label={tCommon("back")}>
+                  <ArrowLeft className="h-5 w-5" />
+                </NextLink>
+              ) : (
+                <Link href="/" aria-label={tCommon("back")}>
+                  <ArrowLeft className="h-5 w-5" />
+                </Link>
+              )}
             </Button>
             <div className="min-w-0 flex-1 space-y-2">
               <SmartTooltip
