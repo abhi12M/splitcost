@@ -7,6 +7,7 @@ import {
   FileText,
   Mail,
   MessageCircleQuestion,
+  Scale,
   Shield,
   Star,
   Sun,
@@ -37,8 +38,8 @@ type MobileMenuSheetProps = {
 };
 
 type MenuLink = {
-  href: "/" | "/#how-it-works" | "/#features" | "/#use-cases" | "/#faq" | "/contact" | "/privacy" | "/terms";
-  labelKey: "howItWorks" | "features" | "useCases" | "faq" | "contact" | "privacy" | "terms";
+  href: "/" | "/#how-it-works" | "/#features" | "/use-cases" | "/compare" | "/#faq" | "/contact" | "/privacy" | "/terms";
+  labelKey: "howItWorks" | "features" | "useCases" | "compare" | "faq" | "contact" | "privacy" | "terms";
   icon: LucideIcon;
 };
 
@@ -48,7 +49,8 @@ const MENU_SECTIONS: { titleKey: "product" | "support" | "legal"; links: MenuLin
     links: [
       { href: "/#how-it-works", labelKey: "howItWorks", icon: CircleHelp },
       { href: "/#features", labelKey: "features", icon: Star },
-      { href: "/#use-cases", labelKey: "useCases", icon: Briefcase },
+      { href: "/use-cases", labelKey: "useCases", icon: Briefcase },
+      { href: "/compare", labelKey: "compare", icon: Scale },
     ],
   },
   {

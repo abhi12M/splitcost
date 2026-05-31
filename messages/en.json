@@ -50,6 +50,50 @@
     "expenseDetails": {
       "title": "Expense details",
       "description": "View expense details, split, and attachment for this group."
+    },
+    "useCases": {
+      "index": {
+        "title": "Use Cases — Split Expenses for Travel, Roommates & More",
+        "description": "Discover how SplitCost helps travel groups, roommates, couples, friends, and teams split bills, track shared expenses, and settle up fairly — free and without sign-up."
+      },
+      "travel": {
+        "title": "Travel Expense Splitter — Split Trip Costs with Friends",
+        "description": "Split travel expenses fairly on group trips. Track hotels, transport, food, and activities in one free travel expense splitter. No sign-up required."
+      },
+      "roommates": {
+        "title": "Roommate Expense Tracker — Split Rent, Bills & Groceries",
+        "description": "Manage shared household costs with a free roommate expense tracker. Split rent, utilities, groceries, and bills without spreadsheets or confusion."
+      },
+      "couples": {
+        "title": "Couple Expense Tracker — Manage Shared Spending Together",
+        "description": "Track shared spending as a couple with a simple expense tracker. Organize daily costs, subscriptions, dinners, and travel plans in one place."
+      },
+      "friends": {
+        "title": "Split Bills with Friends — Group Dinner & Event Expense Splitter",
+        "description": "Split group dinners, parties, concerts, and event costs fairly with friends. A free bill splitter that keeps every shared payment transparent."
+      },
+      "teams": {
+        "title": "Team Expense Tracker — Group Reimbursements & Shared Payments",
+        "description": "Organize team reimbursements, club expenses, and community group payments. Track who paid what and settle shared costs with less admin work."
+      }
+    },
+    "compare": {
+      "index": {
+        "title": "Compare SplitCost — Splitwise, Splid & Tricount Alternatives",
+        "description": "Compare SplitCost with Splitwise, Splid, and Tricount. See feature differences for bill splitting, group expenses, and shared payment tracking."
+      },
+      "splitwise": {
+        "title": "SplitCost vs Splitwise: A Smarter Free Alternative",
+        "description": "Tired of Splitwise's paid features? Splitwise alternative to split bills, track shared expenses, settle balances, and manage group spending with ease."
+      },
+      "splid": {
+        "title": "Tired of Splid? Try This Powerful Splid Alternative",
+        "description": "Need a Splid Alternative? SplitCost helps you track expenses, split bills, and manage shared costs with a simple, user-friendly expense-sharing platform."
+      },
+      "tricount": {
+        "title": "Best Tricount Alternative for Travel & Group Expenses",
+        "description": "Looking for a Tricount Alternative? SplitCost helps groups split travel expenses, track shared costs, manage balances, and settle bills with ease."
+      }
     }
   },
   "layout": {
@@ -72,6 +116,10 @@
     "howItWorks": "How it works",
     "features": "Features",
     "useCases": "Use cases",
+    "compare": "Compare",
+    "footerCompareApps": "Compare Apps",
+    "footerCompareLink": "{competitor} vs {appName}",
+    "footerUseCasesHub": "Use Cases",
     "privacy": "Privacy",
     "terms": "Terms",
     "lightMode": "Light mode",
@@ -223,6 +271,8 @@
       "titleMiddle": "Shared Expense",
       "titleHighlight2": "Situation",
       "description": "From travel expenses and roommate bills to events and everyday group payments, SplitCost makes shared expense management simple and organized.",
+      "learnMore": "Learn more",
+      "viewAll": "View all use cases",
       "items": {
         "travel": {
           "title": "Travel Groups",
@@ -395,6 +445,827 @@
     "title": "Create a Group",
     "description": "Start tracking shared expenses with flexible splits, multiple payer support, and a shareable group link.",
     "submitLabel": "Create Group"
+  },
+  "useCasePages": {
+    "index": {
+      "badge": "Use Cases",
+      "title": "Split Expenses for",
+      "titleHighlight": "Every Group",
+      "description": "Whether you travel with friends, share an apartment, or manage team reimbursements, {appName} gives every group a simple way to track shared costs and settle up fairly.",
+      "breadcrumbHome": "Home",
+      "breadcrumbUseCases": "Use cases",
+      "jsonLdName": "{appName} use cases",
+      "jsonLdDescription": "Explore how {appName} helps travel groups, roommates, couples, friends, and teams split expenses and manage shared payments.",
+      "cardLinkLabel": "Learn more",
+      "cards": {
+        "travel": {
+          "summary": "Track hotels, transport, meals, and trip activities in one shared travel expense ledger."
+        },
+        "roommates": {
+          "summary": "Split rent, utilities, groceries, and household bills without messy spreadsheets."
+        },
+        "couples": {
+          "summary": "Keep daily spending, subscriptions, and shared plans organized as a couple."
+        },
+        "friends": {
+          "summary": "Split dinners, parties, concerts, and event costs fairly with your friend group."
+        },
+        "teams": {
+          "summary": "Manage reimbursements, club fees, and community group payments with less admin."
+        }
+      },
+      "cta": {
+        "title": "Ready to split your next shared expense?",
+        "description": "Create a free group in seconds and start tracking shared bills with {appName}. No account required.",
+        "button": "Create your first group"
+      }
+    },
+    "shared": {
+      "breadcrumbHome": "Home",
+      "breadcrumbUseCases": "Use cases",
+      "breadcrumbLabel": "Breadcrumb",
+      "howItWorksTitle": "How {appName} works",
+      "benefitsTitle": "Why groups choose {appName}",
+      "faqTitle": "Frequently asked questions",
+      "relatedTitle": "Other use cases",
+      "cta": {
+        "title": "Start tracking shared expenses today",
+        "button": "Create a free group"
+      }
+    },
+    "travel": {
+      "jsonLdName": "Travel expense splitter by {appName}",
+      "jsonLdDescription": "Split travel costs on group trips with {appName}. Track hotels, transport, food, and activities in one shared expense tracker.",
+      "hero": {
+        "title": "Split Travel Expenses Without the Headache",
+        "subtitle": "Track hotels, transport, meals, and activities in one shared trip ledger. {appName} keeps every travel cost fair, transparent, and easy to settle before you head home.",
+        "cta": "Start a trip group"
+      },
+      "painPoints": {
+        "title": "Why group trips get expensive — and awkward",
+        "description": "Travel brings great memories, but shared costs can create friction when nobody knows who paid for what.",
+        "one": {
+          "title": "Spreadsheets fall apart on the road",
+          "description": "Multi-city trips, different payers, and last-minute bookings make manual tracking slow and error-prone."
+        },
+        "two": {
+          "title": "Currency confusion adds up fast",
+          "description": "International trips mix currencies, cash, and card payments — making it hard to see a clear balance for everyone."
+        },
+        "three": {
+          "title": "Settling up ruins the end of a great trip",
+          "description": "Forgotten expenses and unclear totals turn a fun vacation into awkward money conversations."
+        }
+      },
+      "steps": {
+        "one": {
+          "title": "Create a trip group",
+          "description": "Name your trip, pick a currency, and invite travel companions with a shareable group link — no sign-up required."
+        },
+        "two": {
+          "title": "Log expenses as you go",
+          "description": "Add hotels, flights, rides, meals, and activities from your phone. Attach receipts so every cost is easy to verify."
+        },
+        "three": {
+          "title": "Split fairly, your way",
+          "description": "Split equally, by percentage, or with custom amounts. {appName} supports multiple payers for shared bookings."
+        },
+        "four": {
+          "title": "Settle before you fly home",
+          "description": "See who owes what at a glance and use simplified settlement suggestions to close the trip on good terms."
+        }
+      },
+      "benefits": {
+        "one": {
+          "title": "Built for group travel",
+          "description": "Track transport, accommodation, food, and activities in one place instead of scattered notes and chats."
+        },
+        "two": {
+          "title": "Multi-currency ready",
+          "description": "Set a group currency for your trip so everyone sees consistent totals, even when payments happen in different currencies."
+        },
+        "three": {
+          "title": "Receipts stay attached",
+          "description": "Upload booking confirmations and payment screenshots so disputes do not come down to memory."
+        },
+        "four": {
+          "title": "Instant balance updates",
+          "description": "Every expense updates group balances automatically — no manual recalculation after each dinner or day trip."
+        }
+      },
+      "faq": {
+        "one": {
+          "question": "How do I split travel expenses fairly with friends?",
+          "answer": "Create a trip group in {appName}, log each shared cost, and choose how to split it — equally, by percentage, or with custom amounts. Balances update automatically so everyone can see who owes what."
+        },
+        "two": {
+          "question": "Can I track travel expenses in different currencies?",
+          "answer": "Yes. Set a group currency when you create your trip. {appName} helps your travel group stay organized even when people pay in cash, local currency, or cards abroad."
+        },
+        "three": {
+          "question": "Do all travelers need an account?",
+          "answer": "No. Share your group link and companions can view and add expenses without everyone creating an account first."
+        }
+      },
+      "cta": {
+        "description": "Create a trip group in seconds and keep every travel expense organized from departure to final settlement."
+      }
+    },
+    "roommates": {
+      "jsonLdName": "Roommate expense tracker by {appName}",
+      "jsonLdDescription": "Split rent, utilities, groceries, and household bills with {appName}. A free roommate expense tracker for shared living costs.",
+      "hero": {
+        "title": "Split Roommate Bills Without the Spreadsheet Stress",
+        "subtitle": "Manage rent, utilities, groceries, and household costs in one shared ledger. {appName} keeps roommate finances clear so you can focus on living together — not chasing receipts.",
+        "cta": "Create a roommate group"
+      },
+      "painPoints": {
+        "title": "Shared living should not mean shared confusion",
+        "description": "Roommate expenses repeat every month. Without a system, small oversights turn into recurring tension.",
+        "one": {
+          "title": "Recurring bills are easy to forget",
+          "description": "Rent, internet, electricity, and cleaning supplies add up across the month — and someone always ends up fronting more than their share."
+        },
+        "two": {
+          "title": "Groceries rarely split evenly",
+          "description": "Shared shopping trips, household items, and one-off purchases need flexible splits, not a single equal divide every time."
+        },
+        "three": {
+          "title": "End-of-month math wastes time",
+          "description": "Calculating who owes what from messages, bank transfers, and sticky notes is tedious and easy to get wrong."
+        }
+      },
+      "steps": {
+        "one": {
+          "title": "Set up your household group",
+          "description": "Add roommates and choose the currency for your shared apartment or house."
+        },
+        "two": {
+          "title": "Track rent, bills, and groceries",
+          "description": "Log recurring utilities and one-off household purchases as they happen throughout the month."
+        },
+        "three": {
+          "title": "Split based on what is fair",
+          "description": "Use equal splits for shared groceries or custom amounts when one roommate pays more for a specific bill."
+        },
+        "four": {
+          "title": "Settle monthly balances quickly",
+          "description": "Review balances and settlement suggestions at month-end instead of rebuilding the math from scratch."
+        }
+      },
+      "benefits": {
+        "one": {
+          "title": "One place for household costs",
+          "description": "Rent, utilities, groceries, and shared purchases live in a single roommate expense tracker."
+        },
+        "two": {
+          "title": "Flexible split options",
+          "description": "Not every bill is 50/50. Split by percentage or custom amounts when roommates share costs differently."
+        },
+        "three": {
+          "title": "Clear payment history",
+          "description": "See who paid for each bill and how balances changed over time — useful for trust and record-keeping."
+        },
+        "four": {
+          "title": "Export when you need records",
+          "description": "Download expense summaries for lease discussions, reimbursements, or personal budgeting."
+        }
+      },
+      "faq": {
+        "one": {
+          "question": "What roommate expenses can I track?",
+          "answer": "Track rent, utilities, groceries, cleaning supplies, furniture, and any other shared household cost in {appName}."
+        },
+        "two": {
+          "question": "Can roommates split bills unequally?",
+          "answer": "Yes. Split expenses equally, by percentage, or with custom amounts depending on how your household shares each bill."
+        },
+        "three": {
+          "question": "Is {appName} free for roommates?",
+          "answer": "Yes. {appName} is free to start with no credit card required, making it easy for roommates to begin tracking shared costs immediately."
+        }
+      },
+      "cta": {
+        "description": "Set up a roommate group and keep rent, bills, and groceries organized all month long."
+      }
+    },
+    "couples": {
+      "jsonLdName": "Couple expense tracker by {appName}",
+      "jsonLdDescription": "Manage shared spending as a couple with {appName}. Track daily expenses, subscriptions, dinners, and travel plans in one place.",
+      "hero": {
+        "title": "A Simple Couple Expense Tracker for Shared Life",
+        "subtitle": "Keep daily spending, subscriptions, dinners, and travel plans organized together. {appName} helps couples stay aligned on money without complicated finance apps.",
+        "cta": "Create a shared group"
+      },
+      "painPoints": {
+        "title": "Money talks go better with clarity",
+        "description": "Couples share many small costs that are easy to lose track of between pay cycles and busy weeks.",
+        "one": {
+          "title": "Small purchases add up quietly",
+          "description": "Coffee runs, groceries, rides, and subscriptions blend together unless you capture them in one place."
+        },
+        "two": {
+          "title": "Different spending habits need flexibility",
+          "description": "Couples rarely split every expense the same way — some costs are shared, others are mostly one partner's."
+        },
+        "three": {
+          "title": "Spreadsheets feel too heavy for two people",
+          "description": "Full budgeting tools can be overkill when you just want a clear view of shared spending."
+        }
+      },
+      "steps": {
+        "one": {
+          "title": "Create a group for two",
+          "description": "Set up a private shared group for you and your partner in seconds."
+        },
+        "two": {
+          "title": "Log shared costs as they happen",
+          "description": "Add dinners, subscriptions, travel bookings, and everyday purchases from your phone."
+        },
+        "three": {
+          "title": "Choose the right split each time",
+          "description": "Split equally for date nights or use custom amounts when one partner covers more of a specific expense."
+        },
+        "four": {
+          "title": "Review balances together",
+          "description": "Check who owes what at any time and settle up without guessing or scrolling through bank apps."
+        }
+      },
+      "benefits": {
+        "one": {
+          "title": "Lightweight shared tracking",
+          "description": "A focused couple expense tracker without the complexity of full personal finance software."
+        },
+        "two": {
+          "title": "Transparent shared history",
+          "description": "Both partners see the same expense list, splits, and balances — no hidden totals."
+        },
+        "three": {
+          "title": "Works for daily life and trips",
+          "description": "Use one group for everyday spending and another for vacations or big shared purchases."
+        },
+        "four": {
+          "title": "Receipts when you need proof",
+          "description": "Attach receipts or payment screenshots for larger shared purchases or travel bookings."
+        }
+      },
+      "faq": {
+        "one": {
+          "question": "Can couples use {appName} instead of a joint bank account?",
+          "answer": "{appName} does not replace banking, but it helps couples track shared spending and balances clearly while keeping personal accounts separate."
+        },
+        "two": {
+          "question": "Can we split expenses unequally as a couple?",
+          "answer": "Yes. Choose equal, percentage, or custom splits for each expense depending on how you share costs."
+        },
+        "three": {
+          "question": "Do both partners need to sign up?",
+          "answer": "No. Share your group link so your partner can view and add expenses without a lengthy sign-up process."
+        }
+      },
+      "cta": {
+        "description": "Create a shared group for two and keep everyday couple expenses organized with less friction."
+      }
+    },
+    "friends": {
+      "jsonLdName": "Split bills with friends by {appName}",
+      "jsonLdDescription": "Split group dinners, parties, concerts, and event costs with friends using {appName}. A free bill splitter for social expenses.",
+      "hero": {
+        "title": "Split Bills with Friends — Fairly and Fast",
+        "subtitle": "From group dinners and parties to concerts and weekend plans, {appName} makes it easy to split social expenses without awkward follow-up messages.",
+        "cta": "Start a friend group"
+      },
+      "painPoints": {
+        "title": "Social plans should not end in payment drama",
+        "description": "One person often pays upfront for the group, but collecting everyone's share later is where things get messy.",
+        "one": {
+          "title": "Someone always pays first",
+          "description": "Restaurants, tickets, and group bookings usually land on one card — then the real work begins."
+        },
+        "two": {
+          "title": "Group chats are a bad ledger",
+          "description": "Payment screenshots and IOU messages get buried quickly, making balances hard to trust."
+        },
+        "three": {
+          "title": "Uneven participation needs flexible splits",
+          "description": "Not everyone orders the same, attends every event, or shares every cost equally."
+        }
+      },
+      "steps": {
+        "one": {
+          "title": "Create a group for your crew",
+          "description": "Spin up a group for a dinner, weekend, or ongoing friend expenses and share the link."
+        },
+        "two": {
+          "title": "Add the bill right away",
+          "description": "Log the restaurant check, tickets, or party supplies while the details are still fresh."
+        },
+        "three": {
+          "title": "Split how the group agrees",
+          "description": "Divide equally or assign custom amounts when some friends did not participate in part of the cost."
+        },
+        "four": {
+          "title": "Send balances, not reminders",
+          "description": "Everyone sees updated balances instantly, so you spend less time chasing payments."
+        }
+      },
+      "benefits": {
+        "one": {
+          "title": "Perfect for one-off events",
+          "description": "Create a group for a single dinner or keep one for your regular friend circle."
+        },
+        "two": {
+          "title": "Custom splits for real life",
+          "description": "Handle uneven orders, partial attendance, and shared deposits without manual math."
+        },
+        "three": {
+          "title": "No sign-up friction",
+          "description": "Friends can join via link and start adding expenses quickly — ideal for spontaneous plans."
+        },
+        "four": {
+          "title": "Clear settlement suggestions",
+          "description": "{appName} simplifies who should pay whom so the group settles with fewer transfers."
+        }
+      },
+      "faq": {
+        "one": {
+          "question": "How do I split a restaurant bill with friends?",
+          "answer": "Create a group, add the total bill, choose who paid, and split equally or with custom amounts for each friend in {appName}."
+        },
+        "two": {
+          "question": "Can I use {appName} for one-time events?",
+          "answer": "Yes. Many groups use {appName} for a single dinner, concert, or trip and archive it once everyone has settled."
+        },
+        "three": {
+          "question": "What if not everyone ate or drank the same?",
+          "answer": "Use custom amount splits so each friend pays only for their share instead of forcing an equal divide."
+        }
+      },
+      "cta": {
+        "description": "Create a friend group and split your next dinner, party, or event without the awkward payment chase."
+      }
+    },
+    "teams": {
+      "jsonLdName": "Team expense tracker by {appName}",
+      "jsonLdDescription": "Organize team reimbursements, club fees, and community group payments with {appName}. Track shared costs and settle reimbursements fairly.",
+      "hero": {
+        "title": "Team Expense Tracking Without the Admin Overhead",
+        "subtitle": "From club fees and community events to team reimbursements, {appName} helps organizers track group payments and settle shared costs with less spreadsheet work.",
+        "cta": "Create a team group"
+      },
+      "painPoints": {
+        "title": "Organizers should not be part-time accountants",
+        "description": "Teams, clubs, and communities collect money from many people — often with different payers and approval needs.",
+        "one": {
+          "title": "Reimbursements pile up quickly",
+          "description": "One member buys supplies, another covers venue costs, and finance volunteers rebuild totals manually."
+        },
+        "two": {
+          "title": "Shared costs lack a single source of truth",
+          "description": "Receipts in email, totals in chat, and payments in bank apps make group finances hard to audit."
+        },
+        "three": {
+          "title": "Settlement becomes a bottleneck",
+          "description": "Without clear balances, treasurers spend hours figuring out who still owes the group."
+        }
+      },
+      "steps": {
+        "one": {
+          "title": "Create a group for your team or club",
+          "description": "Set the group currency and invite members with a shareable link."
+        },
+        "two": {
+          "title": "Log purchases and reimbursements",
+          "description": "Record who paid for supplies, travel, venue deposits, and other shared team costs."
+        },
+        "three": {
+          "title": "Attach receipts for transparency",
+          "description": "Upload invoices and payment proof so treasurers and members can verify expenses easily."
+        },
+        "four": {
+          "title": "Export and settle efficiently",
+          "description": "Review balances, use settlement suggestions, and export summaries for records or reimbursement."
+        }
+      },
+      "benefits": {
+        "one": {
+          "title": "Built for shared accountability",
+          "description": "Every member sees the same expense history, splits, and balances."
+        },
+        "two": {
+          "title": "Multiple payers supported",
+          "description": "Handle situations where several people cover parts of the same team expense."
+        },
+        "three": {
+          "title": "CSV export for records",
+          "description": "Download expense reports for club treasurers, team admins, or reimbursement workflows."
+        },
+        "four": {
+          "title": "Works for clubs and communities",
+          "description": "Sports teams, hobby groups, volunteer circles, and small organizations can all use the same simple workflow."
+        }
+      },
+      "faq": {
+        "one": {
+          "question": "Can {appName} handle team reimbursements?",
+          "answer": "Yes. Track who paid upfront, log shared team expenses, and use balance summaries to organize reimbursements in {appName}."
+        },
+        "two": {
+          "question": "Can we export team expense reports?",
+          "answer": "Yes. Export expense and balance summaries for accounting, approvals, or record-keeping."
+        },
+        "three": {
+          "question": "Is {appName} suitable for clubs and communities?",
+          "answer": "Absolutely. Clubs, sports teams, volunteer groups, and small communities use {appName} to manage shared payments without complex software."
+        }
+      },
+      "cta": {
+        "description": "Create a team group and spend less time on reimbursements, receipts, and balance calculations."
+      }
+    }
+  },
+  "comparePages": {
+    "index": {
+      "badge": "Compare",
+      "title": "Find the Best",
+      "titleHighlight": "Alternative",
+      "description": "See how {appName} compares to popular expense splitting apps. Honest feature comparisons to help you choose the right tool for travel, roommates, and group bills.",
+      "breadcrumbHome": "Home",
+      "breadcrumbCompare": "Compare",
+      "jsonLdName": "Compare {appName} with other expense apps",
+      "jsonLdDescription": "Feature comparisons between {appName}, Splitwise, Splid, and Tricount for group expense splitting.",
+      "cardLinkLabel": "View comparison",
+      "cards": {
+        "splitwise": {
+          "title": "{appName} vs Splitwise",
+          "summary": "Compare bill splitting, sign-up requirements, and free features against the most popular expense app."
+        },
+        "splid": {
+          "title": "{appName} vs Splid",
+          "summary": "See how a web-first group expense tracker compares to Splid for shared bills and balances."
+        },
+        "tricount": {
+          "title": "{appName} vs Tricount",
+          "summary": "Compare travel and group expense tracking features against Tricount for trips and events."
+        }
+      },
+      "cta": {
+        "title": "Try {appName} free today",
+        "description": "Create a group in seconds and see why teams switch to a simpler expense splitter.",
+        "button": "Create a free group"
+      }
+    },
+    "shared": {
+      "breadcrumbHome": "Home",
+      "breadcrumbCompare": "Compare",
+      "breadcrumbLabel": "Breadcrumb",
+      "comparisonTitle": "{appName} vs {competitor} at a glance",
+      "comparisonCaption": "Feature comparison between {appName} and {competitor}",
+      "whoShouldSwitchTitle": "Who should consider {appName}?",
+      "faqTitle": "Frequently asked questions",
+      "relatedTitle": "Other comparisons",
+      "related": {
+        "splitwise": {
+          "title": "{appName} vs Splitwise",
+          "summary": "Compare the most popular expense splitter with {appName}."
+        },
+        "splid": {
+          "title": "{appName} vs Splid",
+          "summary": "See how {appName} compares to Splid for group bills."
+        },
+        "tricount": {
+          "title": "{appName} vs Tricount",
+          "summary": "Compare Tricount and {appName} for travel expenses."
+        }
+      },
+      "cta": {
+        "title": "Ready to try {appName}?",
+        "button": "Create a free group"
+      }
+    },
+    "comparisonTable": {
+      "featureColumn": "Feature",
+      "rows": {
+        "noSignup": {
+          "feature": "Start without sign-up",
+          "splitcost": "yes",
+          "competitor": {
+            "splitwise": "Account required",
+            "splid": "yes",
+            "tricount": "Account typical"
+          }
+        },
+        "freeToStart": {
+          "feature": "Free to start",
+          "splitcost": "yes",
+          "competitor": {
+            "splitwise": "Free + paid Pro",
+            "splid": "Free with limits",
+            "tricount": "Free with ads"
+          }
+        },
+        "webApp": {
+          "feature": "Works in the browser",
+          "splitcost": "yes",
+          "competitor": {
+            "splitwise": "yes",
+            "splid": "Limited",
+            "tricount": "Mobile-first"
+          }
+        },
+        "flexibleSplits": {
+          "feature": "Equal, %, and custom splits",
+          "splitcost": "yes",
+          "competitor": {
+            "splitwise": "yes",
+            "splid": "yes",
+            "tricount": "yes"
+          }
+        },
+        "multiplePayers": {
+          "feature": "Multiple payers per expense",
+          "splitcost": "yes",
+          "competitor": {
+            "splitwise": "Limited",
+            "splid": "Limited",
+            "tricount": "Limited"
+          }
+        },
+        "multiCurrency": {
+          "feature": "Multi-currency groups",
+          "splitcost": "yes",
+          "competitor": {
+            "splitwise": "Pro feature",
+            "splid": "yes",
+            "tricount": "yes"
+          }
+        },
+        "receiptAttachments": {
+          "feature": "Receipt attachments",
+          "splitcost": "yes",
+          "competitor": {
+            "splitwise": "yes",
+            "splid": "no",
+            "tricount": "Limited"
+          }
+        },
+        "csvExport": {
+          "feature": "CSV export",
+          "splitcost": "yes",
+          "competitor": {
+            "splitwise": "Pro feature",
+            "splid": "Limited",
+            "tricount": "Limited"
+          }
+        },
+        "settlementSuggestions": {
+          "feature": "Settlement suggestions",
+          "splitcost": "yes",
+          "competitor": {
+            "splitwise": "yes",
+            "splid": "yes",
+            "tricount": "yes"
+          }
+        },
+        "shareableGroupLink": {
+          "feature": "Shareable group link",
+          "splitcost": "yes",
+          "competitor": {
+            "splitwise": "Invite required",
+            "splid": "Manual sharing",
+            "tricount": "Group invite"
+          }
+        },
+        "groupExpenseHistory": {
+          "feature": "Group expense history",
+          "splitcost": "yes",
+          "competitor": {
+            "splitwise": "yes",
+            "splid": "yes",
+            "tricount": "yes"
+          }
+        }
+      }
+    },
+    "splitwise": {
+      "breadcrumbPage": "Splitwise alternative",
+      "jsonLdName": "{appName} vs Splitwise comparison",
+      "jsonLdDescription": "Compare {appName} and Splitwise for group expense splitting, bill sharing, and settlements.",
+      "badge": "{appName} vs Splitwise",
+      "hero": {
+        "title": "A Simple Splitwise Alternative for Shared Expenses",
+        "subtitle": "Looking for a Splitwise alternative? {appName} helps groups split bills, track shared expenses, and manage balances through a simple web-based experience. Join via link, create groups instantly, and stay organized without extra complexity.",
+        "cta": "Try {appName} Free",
+        "trustLine": "No app installation required • Join via link • Flexible splits • Export reports"
+      },
+      "reasons": {
+        "title": "Why groups look for a Splitwise alternative",
+        "description": "Splitwise is a popular expense-sharing app, but some groups prefer faster onboarding, flexible expense splitting, and tools that don't require every member to create an account.",
+        "one": {
+          "title": "Create a group and share a link instantly",
+          "description": "{appName} is ideal for trips, events, dinners, and roommate expenses where quick setup matters."
+        },
+        "two": {
+          "title": "Core features without a premium plan",
+          "description": "Flexible splits, multiple payers, receipt attachments, and CSV exports are available without requiring a premium plan."
+        },
+        "three": {
+          "title": "No app installation required",
+          "description": "Access {appName} from any browser and invite members with a shared link. Your group can participate without downloading an app or creating multiple accounts."
+        },
+        "four": {
+          "title": "Flexible expense splitting",
+          "description": "Split expenses equally, by percentage, or with custom amounts. {appName} supports different spending scenarios without manual calculations."
+        }
+      },
+      "whoShould": {
+        "title": "Who Should Choose {appName} Over Splitwise?",
+        "intro": "{appName} is designed for groups that need a quick and flexible way to manage shared expenses without unnecessary setup. It's especially useful for:",
+        "items": {
+          "travel": "Travel groups splitting vacation costs",
+          "roommates": "Roommates managing rent, groceries, and utilities",
+          "friends": "Friends sharing dinners, events, and weekend activities",
+          "couples": "Couples tracking shared spending",
+          "shortTerm": "Short-term groups that want to start without requiring everyone to create an account"
+        },
+        "closing": "Whether you're organizing a trip or managing everyday expenses, {appName} helps groups stay organized and settle costs with less effort.",
+        "mobilePreviewAlt": "{appName} mobile group dashboard showing expenses and balances"
+      },
+      "faq": {
+        "one": {
+          "question": "Why are people looking for Splitwise alternatives?",
+          "answer": "Many users look for Splitwise alternatives because they want a simpler way to manage shared expenses, avoid subscription costs, or access features that better fit their group's needs. As expense-sharing habits vary, users often compare different apps before choosing the one that works best for trips, roommates, households, and everyday spending."
+        },
+        "two": {
+          "question": "Is {appName} a good Splitwise alternative?",
+          "answer": "Yes. {appName} is a practical Splitwise alternative for tracking shared expenses, splitting bills, and managing group spending. It helps friends, roommates, couples, and travel groups keep expenses organized and balances up to date through a simple web-based experience."
+        },
+        "three": {
+          "question": "How does {appName} compare to Splitwise?",
+          "answer": "Both {appName} and Splitwise help users split bills and track shared expenses. {appName} focuses on providing an easy-to-use platform with browser access, flexible expense splitting, shareable group access, and tools designed to simplify group expense management for everyday use."
+        },
+        "four": {
+          "question": "Do I need to install an app to use {appName}?",
+          "answer": "No. {appName} is web-based, allowing users to create groups, add expenses, and manage balances directly from a browser. This makes it easy for group members to participate without downloading or installing an app."
+        },
+        "five": {
+          "question": "Can I join a {appName} group without creating an account?",
+          "answer": "Yes. {appName} allows users to join groups through a shared invitation link, making it easy to participate in expense tracking and bill splitting without a lengthy signup process."
+        },
+        "six": {
+          "question": "Is {appName} free to use?",
+          "answer": "Yes. {appName} offers free expense-sharing tools that help users track shared expenses, split bills, manage group spending, and monitor balances. Users can get started quickly without paying for basic expense management features."
+        }
+      },
+      "cta": {
+        "description": "Create a free group and see how {appName} handles your next shared expense — no credit card required."
+      }
+    },
+    "splid": {
+      "breadcrumbPage": "Splid alternative",
+      "jsonLdName": "{appName} vs Splid comparison",
+      "jsonLdDescription": "Compare {appName} and Splid for shared expense tracking, bill splitting, and group settlements.",
+      "badge": "{appName} vs Splid",
+      "comparisonTitle": "{appName} vs Splid: Feature Comparison",
+      "hero": {
+        "title": "The Simple Splid Alternative for Shared Expenses",
+        "subtitle": "Looking for a Splid alternative? {appName} helps friends, roommates, couples, and travel groups split bills, track shared expenses, and manage balances with a simple web-based experience.",
+        "cta": "Try {appName} Free",
+        "trustLine": "No app installation required • Join via link • Flexible splits • Export reports"
+      },
+      "reasons": {
+        "title": "Why {appName} Is a Popular Splid Alternative",
+        "description": "Compare Splid and {appName} to see which app offers more flexibility for bill splitting, group expenses, travel costs, and shared spending.",
+        "one": {
+          "title": "No App Installation Required",
+          "description": "Share a {appName} group link and invite members instantly. Participants can join from any browser, making it easy to track expenses even when everyone doesn't use the same app."
+        },
+        "two": {
+          "title": "More Ways to Split Expenses",
+          "description": "Split bills equally, by percentage, custom amounts, or with multiple payers. Perfect for roommates, group trips, events, and shared household expenses."
+        },
+        "three": {
+          "title": "Export Reports & Store Receipts",
+          "description": "Attach receipts to expenses and export CSV reports whenever you need reimbursement records, expense summaries, or trip accounting."
+        },
+        "four": {
+          "title": "Built for Travel, Friends, and Roommates",
+          "description": "Track shared expenses, settle balances, and manage group spending in one place—whether you're planning a trip, sharing rent, or splitting everyday costs."
+        }
+      },
+      "whoShould": {
+        "title": "Who Is {appName} Best For?",
+        "intro": "Choose {appName} if your group:",
+        "items": {
+          "linkJoin": "Wants to join via a shareable link instead of requiring everyone to install an app",
+          "flexibleSplits": "Needs flexible bill splitting with equal, percentage, or custom splits",
+          "trackExpenses": "Wants to track expenses for trips, roommates, events, or shared households",
+          "receiptsExport": "Needs receipt attachments and exportable expense reports",
+          "webBased": "Prefers a web-based expense tracker that works across devices"
+        },
+        "mobilePreviewAlt": "{appName} mobile group dashboard showing expenses and balances"
+      },
+      "faq": {
+        "one": {
+          "question": "Is {appName} a good Splid alternative?",
+          "answer": "Yes. {appName} is a reliable Splid alternative for tracking shared expenses, splitting bills, and managing group spending. Whether you're sharing costs with friends, roommates, family members, or travel companions, {appName} helps keep expenses organized and balances accurate."
+        },
+        "two": {
+          "question": "Why are users looking for Splid alternatives?",
+          "answer": "Users often look for Splid alternatives when comparing expense-sharing apps and searching for features that better fit their needs. Many want a simple way to track group expenses, manage shared costs, and stay on top of balances without manual calculations."
+        },
+        "three": {
+          "question": "How does {appName} compare to Splid?",
+          "answer": "Both {appName} and Splid are designed to help users split expenses and manage shared spending. {appName} provides an easy way to track group expenses, calculate balances, and organize spending across trips, households, events, and everyday activities."
+        },
+        "four": {
+          "question": "What features does {appName} offer?",
+          "answer": "{appName} includes a range of expense-sharing features, including bill splitting, shared expense tracking, group expense management, balance calculations, trip and travel expense tracking, roommate expense management, household budget sharing, and expense history and settlement tracking."
+        },
+        "five": {
+          "question": "Can I use {appName} for group trips and shared expenses?",
+          "answer": "Yes. {appName} is built for group spending scenarios such as vacations, road trips, weekend getaways, shared households, events, and outings with friends. Group members can add expenses and track balances in one place."
+        },
+        "six": {
+          "question": "What are the best Splid alternatives?",
+          "answer": "Popular Splid alternatives include {appName}, Splitwise, Tricount, Settle Up, and Splid itself. {appName} is a strong choice for users looking for an easy-to-use expense-sharing app that simplifies bill splitting, balance tracking, and group expense management."
+        }
+      },
+      "cta": {
+        "description": "Create a free group and see how {appName} handles your next shared expense — no credit card required."
+      }
+    },
+    "tricount": {
+      "breadcrumbPage": "Tricount alternative",
+      "jsonLdName": "{appName} vs Tricount comparison",
+      "jsonLdDescription": "Compare {appName} and Tricount for travel expenses, group bills, and shared payment tracking.",
+      "badge": "{appName} vs Tricount",
+      "comparisonTitle": "{appName} vs Tricount: Feature Comparison",
+      "hero": {
+        "title": "Best Tricount Alternative for Travel & Group Expenses",
+        "subtitle": "Looking for a Tricount alternative? {appName} helps groups split travel costs, track balances, and manage shared expenses through a simple web-based experience—free to start and ready in seconds.",
+        "cta": "Try {appName} Free",
+        "trustLine": "No app installation required • Join via link • Flexible splits • Receipt attachments & CSV exports"
+      },
+      "reasons": {
+        "title": "Why travelers compare Tricount and {appName}",
+        "description": "Trip groups need a simple way to track expenses, manage balances, and settle costs without slowing down the trip.",
+        "one": {
+          "title": "Track every shared travel expense",
+          "description": "Track hotels, transport, meals, activities, and group purchases in one place, making it easier to manage trip spending and balances."
+        },
+        "two": {
+          "title": "No app download barrier",
+          "description": "Send a {appName} link to travel companions so everyone can join, add expenses, and track balances directly from their browser."
+        },
+        "three": {
+          "title": "Receipts and exports included",
+          "description": "Attach receipts and export expense reports whenever you need reimbursement records, trip summaries, or spending history."
+        }
+      },
+      "whoShould": {
+        "title": "Who Should Choose {appName} Over Tricount?",
+        "intro": "{appName} is a great fit for groups that want a simple way to manage shared expenses without requiring everyone to install an app. It's especially useful for:",
+        "items": {
+          "travel": "Travel groups tracking vacation expenses",
+          "friends": "Friends splitting meals, activities, and weekend trips",
+          "events": "Event organizers managing shared costs",
+          "couples": "Couples tracking shared spending",
+          "browserAccess": "Groups that need browser access, receipt storage, and exportable expense records"
+        },
+        "closing": "Whether you're planning a holiday, organizing an event, or managing everyday shared expenses, {appName} helps keep spending organized and balances clear.",
+        "mobilePreviewAlt": "{appName} mobile group dashboard showing expenses and balances"
+      },
+      "faq": {
+        "one": {
+          "question": "Why are people looking for Tricount alternatives?",
+          "answer": "Many users look for Tricount alternatives when comparing expense-sharing apps and searching for features that better fit their group's needs. Common reasons include wanting browser access, easier group onboarding, more flexible expense splitting, and additional tools for managing shared expenses."
+        },
+        "two": {
+          "question": "Is {appName} a good Tricount alternative?",
+          "answer": "Yes. {appName} is a practical Tricount alternative for tracking shared expenses, splitting bills, and managing group spending. It helps travel groups, friends, couples, and roommates stay organized with a simple web-based experience and flexible expense management tools."
+        },
+        "three": {
+          "question": "How does {appName} compare to Tricount?",
+          "answer": "Both {appName} and Tricount help users manage shared expenses and split bills. {appName} offers browser access, shareable group links, receipt attachments, expense exports, and flexible splitting options, making it easy for groups to collaborate and track expenses from anywhere."
+        },
+        "four": {
+          "question": "Do I need to install an app to use {appName}?",
+          "answer": "No. {appName} works directly in your browser, allowing users to create groups, add expenses, and manage balances without downloading or installing an app. This makes it easier for groups to get started quickly."
+        },
+        "five": {
+          "question": "Can I join a {appName} group without creating an account?",
+          "answer": "Yes. {appName} allows users to join groups through a shared invitation link, making it simple to participate in expense tracking and bill splitting without a lengthy signup process."
+        },
+        "six": {
+          "question": "Is {appName} free to use?",
+          "answer": "Yes. {appName} provides free tools for tracking shared expenses, splitting bills, managing group spending, and monitoring balances. Users can get started quickly and organize expenses without paying for basic expense-sharing features."
+        }
+      },
+      "cta": {
+        "description": "Create a trip group in {appName} and keep every travel expense organized from start to settlement."
+      }
+    }
   },
   "contact": {
     "jsonLdName": "Contact {appName}",

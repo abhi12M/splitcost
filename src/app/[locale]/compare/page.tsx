@@ -1,0 +1,31 @@
+import type { Metadata } from "next";
+import { getTranslations, setRequestLocale } from "next-intl/server";
+
+import { resolveLocaleParam } from "@/i18n/params";
+import type { AppLocale } from "@/i18n/routing";
+import { buildLocalizedMetadata } from "@/lib/seo-i18n";
+import { COMPARE_INDEX_PATH } from "@/lib/compare";
+import CompareIndexPage from "@/views/CompareIndex";
+
+type PageProps = {
+  params: { locale: AppLocale } | Promise<{ locale: AppLocale }>;
+};
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const locale = await resolveLocaleParam(params);
+  const t = await getTranslations({ locale, namespace: "metadata.compare.index" });
+
+  return buildLocalizedMetadata({
+    locale,
+    title: t("title"),
+    description: t("description"),
+    path: COMPARE_INDEX_PATH,
+    absoluteTitle: true,
+  });
+}
+
+export default async function Page({ params }: PageProps) {
+  const locale = await resolveLocaleParam(params);
+  setRequestLocale(locale);
+  return <CompareIndexPage locale={locale} />;
+}

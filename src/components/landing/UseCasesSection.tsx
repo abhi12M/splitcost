@@ -17,6 +17,7 @@ import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { brandStyles, brandUseCaseAccent, landingSection } from "@/lib/brand-styles";
 import { cn } from "@/lib/utils";
+import { getUseCasePath } from "@/lib/use-cases";
 
 type UseCaseAccent = "brand" | "emerald" | "rose" | "cyan";
 
@@ -104,63 +105,74 @@ function UseCaseCard({
   description,
   imageAlt,
   tags,
+  learnMoreLabel,
 }: {
   config: UseCaseConfig;
   title: string;
   description: string;
   imageAlt: string;
   tags: string[];
+  learnMoreLabel: string;
 }) {
   const styles = accentStyles[config.accent];
   const Icon = config.icon;
 
   return (
-    <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm dark:border-border/80">
-      <div className="relative px-3 pt-3">
-        <div
-          className={cn(
-            "relative flex h-36 items-end justify-center overflow-hidden rounded-xl bg-gradient-to-b sm:h-40",
-            styles.sceneBg
-          )}
-        >
-          <Image
-            src={config.image}
-            alt={imageAlt}
-            width={280}
-            height={180}
-            className="h-[88%] w-auto max-w-full object-contain object-bottom"
-          />
+    <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm transition-shadow hover:shadow-md dark:border-border/80">
+      <Link
+        href={getUseCasePath(config.key)}
+        className="group flex flex-1 flex-col focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-2xl"
+      >
+        <div className="relative px-3 pt-3">
+          <div
+            className={cn(
+              "relative flex h-36 items-end justify-center overflow-hidden rounded-xl bg-gradient-to-b sm:h-40",
+              styles.sceneBg
+            )}
+          >
+            <Image
+              src={config.image}
+              alt={imageAlt}
+              width={280}
+              height={180}
+              className="h-[88%] w-auto max-w-full object-contain object-bottom"
+            />
+          </div>
+          <span
+            className={cn(
+              "absolute bottom-0 left-1/2 z-10 flex h-11 w-11 -translate-x-1/2 translate-y-1/2 items-center justify-center rounded-full text-white shadow-md ring-4 ring-card",
+              styles.iconBg
+            )}
+          >
+            <Icon className="h-5 w-5" strokeWidth={2.25} aria-hidden />
+          </span>
         </div>
-        <span
-          className={cn(
-            "absolute bottom-0 left-1/2 z-10 flex h-11 w-11 -translate-x-1/2 translate-y-1/2 items-center justify-center rounded-full text-white shadow-md ring-4 ring-card",
-            styles.iconBg
-          )}
-        >
-          <Icon className="h-5 w-5" strokeWidth={2.25} aria-hidden />
-        </span>
-      </div>
 
-      <div className="flex flex-1 flex-col px-4 pb-5 pt-9">
-        <h3 className="mb-2 text-center text-base font-bold text-foreground">{title}</h3>
-        <p className="mb-4 flex-1 text-center text-xs leading-relaxed text-muted-foreground sm:text-[13px]">
-          {description}
-        </p>
-        <div className="flex flex-wrap justify-center gap-1.5">
-          {tags.map((tag) => (
-            <span
-              key={tag}
-              className={cn(
-                "rounded-full px-2 py-0.5 text-[10px] font-semibold sm:text-[11px]",
-                styles.tagBg,
-                styles.tagText
-              )}
-            >
-              {tag}
-            </span>
-          ))}
+        <div className="flex flex-1 flex-col px-4 pb-5 pt-9">
+          <h3 className="mb-2 text-center text-base font-bold text-foreground">{title}</h3>
+          <p className="mb-4 flex-1 text-center text-xs leading-relaxed text-muted-foreground sm:text-[13px]">
+            {description}
+          </p>
+          <div className="mb-4 flex flex-wrap justify-center gap-1.5">
+            {tags.map((tag) => (
+              <span
+                key={tag}
+                className={cn(
+                  "rounded-full px-2 py-0.5 text-[10px] font-semibold sm:text-[11px]",
+                  styles.tagBg,
+                  styles.tagText
+                )}
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+          <span className="inline-flex items-center justify-center gap-1 text-xs font-semibold text-primary group-hover:underline">
+            {learnMoreLabel}
+            <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+          </span>
         </div>
-      </div>
+      </Link>
     </article>
   );
 }
@@ -246,11 +258,21 @@ export function UseCasesSection() {
               title={t(`items.${config.key}.title`)}
               description={t(`items.${config.key}.description`)}
               imageAlt={t(`items.${config.key}.imageAlt`)}
+              learnMoreLabel={t("learnMore")}
               tags={config.tagKeys.map((tagKey) =>
                 t(`items.${config.key}.tags.${tagKey}`)
               )}
             />
           ))}
+        </div>
+
+        <div className="mt-6 text-center">
+          <Button asChild variant="outline" className="rounded-xl">
+            <Link href="/use-cases">
+              {t("viewAll")}
+              <ArrowRight className="ml-1 h-4 w-4" aria-hidden />
+            </Link>
+          </Button>
         </div>
 
         <UseCasesCta />

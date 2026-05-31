@@ -9,6 +9,8 @@ import {
   getCanonicalUrl,
   getSiteUrl,
 } from "@/lib/seo";
+import { getAllIndexableComparePaths } from "@/lib/compare";
+import { getAllIndexableUseCasePaths } from "@/lib/use-cases";
 
 function normalizePath(path: string): string {
   if (!path) return "/";
@@ -67,6 +69,8 @@ type BuildLocalizedMetadataArgs = {
   /** Path without locale prefix */
   path: string;
   noIndex?: boolean;
+  /** Skip the layout `%s | SplitCost` title template */
+  absoluteTitle?: boolean;
 };
 
 export function buildPrivateRouteMetadata(
@@ -90,6 +94,7 @@ export function buildLocalizedMetadata({
   description,
   path,
   noIndex = false,
+  absoluteTitle = false,
 }: BuildLocalizedMetadataArgs): Metadata {
   const normalized = normalizePath(path);
   const canonicalUrl = getLocalizedCanonicalUrl(locale, normalized);
@@ -99,7 +104,7 @@ export function buildLocalizedMetadata({
   );
 
   return {
-    title,
+    title: absoluteTitle ? { absolute: title } : title,
     description,
     alternates: {
       canonical: canonicalUrl,
@@ -151,7 +156,37 @@ export const INDEXABLE_PATHS = [
   "/create-group",
   "/privacy",
   "/terms",
+  ...getAllIndexableUseCasePaths(),
+  ...getAllIndexableComparePaths(),
 ] as const;
+
+function getPathPriority(path: string): {
+  changeFrequency: "daily" | "weekly" | "monthly" | "yearly";
+  priority: number;
+} {
+  if (path === "/") {
+    return { changeFrequency: "daily", priority: 1 };
+  }
+  if (path === "/create-group") {
+    return { changeFrequency: "weekly", priority: 0.8 };
+  }
+  if (path === "/use-cases") {
+    return { changeFrequency: "weekly", priority: 0.85 };
+  }
+  if (path.startsWith("/use-cases/")) {
+    return { changeFrequency: "weekly", priority: 0.75 };
+  }
+  if (path === "/compare") {
+    return { changeFrequency: "weekly", priority: 0.85 };
+  }
+  if (path.startsWith("/compare/")) {
+    return { changeFrequency: "weekly", priority: 0.8 };
+  }
+  if (path === "/contact") {
+    return { changeFrequency: "monthly", priority: 0.7 };
+  }
+  return { changeFrequency: "yearly", priority: 0.4 };
+}
 
 export function buildLocaleSitemapEntries(): {
   url: string;
@@ -160,22 +195,12 @@ export function buildLocaleSitemapEntries(): {
   priority: number;
 }[] {
   const now = new Date();
-  const priorities: Record<
-    (typeof INDEXABLE_PATHS)[number],
-    { changeFrequency: "daily" | "weekly" | "monthly" | "yearly"; priority: number }
-  > = {
-    "/": { changeFrequency: "daily", priority: 1 },
-    "/contact": { changeFrequency: "monthly", priority: 0.7 },
-    "/create-group": { changeFrequency: "weekly", priority: 0.8 },
-    "/privacy": { changeFrequency: "yearly", priority: 0.4 },
-    "/terms": { changeFrequency: "yearly", priority: 0.4 },
-  };
 
   return locales.flatMap((locale) =>
     INDEXABLE_PATHS.map((path) => ({
       url: getLocalizedCanonicalUrl(locale, path),
       lastModified: now,
-      ...priorities[path],
+      ...getPathPriority(path),
     }))
   );
 }
