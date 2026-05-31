@@ -1,5 +1,7 @@
+import { localeDefinitions } from "@/i18n/config";
+import type { AppLocale } from "@/i18n/routing";
 import { APP_NAME } from "@/lib/constants";
-import { getCanonicalUrl } from "@/lib/seo";
+import { getLocalizedCanonicalUrl } from "@/lib/seo-i18n";
 
 export const FAQ_KEYS = [
   "whatIs",
@@ -35,15 +37,16 @@ export function getFaqItems(t: FaqTranslator): FaqItem[] {
   }));
 }
 
-export function buildFaqPageJsonLd(items: FaqItem[], locale = "en") {
-  const pageUrl = getCanonicalUrl("/");
+export function buildFaqPageJsonLd(items: FaqItem[], locale: AppLocale) {
+  const pageUrl = getLocalizedCanonicalUrl(locale, "/");
+  const { htmlLang } = localeDefinitions[locale];
 
   return {
     "@context": "https://schema.org",
     "@type": "FAQPage",
     "@id": `${pageUrl}#faq`,
     url: pageUrl,
-    inLanguage: locale,
+    inLanguage: htmlLang,
     mainEntity: items.map((faq) => ({
       "@type": "Question",
       name: faq.question,

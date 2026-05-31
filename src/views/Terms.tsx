@@ -1,21 +1,28 @@
 import { getTranslations } from "next-intl/server";
 
 import { Layout } from "@/components/layout/Layout";
+import type { AppLocale } from "@/i18n/routing";
 import { APP_NAME } from "@/lib/constants";
-import { getCanonicalUrl } from "@/lib/seo";
+import { getLocalizedCanonicalUrl } from "@/lib/seo-i18n";
 
-export default async function TermsPage() {
+type TermsPageProps = {
+  locale: AppLocale;
+};
+
+export default async function TermsPage({ locale }: TermsPageProps) {
   const t = await getTranslations("terms");
+  const pageUrl = getLocalizedCanonicalUrl(locale, "/terms");
+  const homeUrl = getLocalizedCanonicalUrl(locale, "/");
 
   const termsJsonLd = {
     "@context": "https://schema.org",
     "@type": "WebPage",
     name: t("jsonLdName", { appName: APP_NAME }),
-    url: getCanonicalUrl("/terms"),
+    url: pageUrl,
     isPartOf: {
       "@type": "WebSite",
       name: APP_NAME,
-      url: getCanonicalUrl("/"),
+      url: homeUrl,
     },
     breadcrumb: {
       "@type": "BreadcrumbList",
@@ -24,13 +31,13 @@ export default async function TermsPage() {
           "@type": "ListItem",
           position: 1,
           name: t("breadcrumbHome"),
-          item: getCanonicalUrl("/"),
+          item: homeUrl,
         },
         {
           "@type": "ListItem",
           position: 2,
           name: t("breadcrumbTerms"),
-          item: getCanonicalUrl("/terms"),
+          item: pageUrl,
         },
       ],
     },

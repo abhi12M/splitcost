@@ -3,7 +3,8 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { resolveLocaleParam } from "@/i18n/params";
 import type { AppLocale } from "@/i18n/routing";
-import { buildLocalizedMetadata } from "@/lib/seo-i18n";
+import { APP_NAME } from "@/lib/constants";
+import { buildLocalizedMetadata, getLocalizedCanonicalUrl } from "@/lib/seo-i18n";
 import AddGroupPage from "@/views/AddGroup";
 
 type PageProps = {
@@ -25,5 +26,30 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function Page({ params }: PageProps) {
   const locale = await resolveLocaleParam(params);
   setRequestLocale(locale);
-  return <AddGroupPage />;
+  const t = await getTranslations({ locale, namespace: "metadata.createGroup" });
+  const pageUrl = getLocalizedCanonicalUrl(locale, "/create-group");
+  const homeUrl = getLocalizedCanonicalUrl(locale, "/");
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: t("title"),
+    description: t("description"),
+    url: pageUrl,
+    isPartOf: {
+      "@type": "WebSite",
+      name: APP_NAME,
+      url: homeUrl,
+    },
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <AddGroupPage />
+    </>
+  );
 }

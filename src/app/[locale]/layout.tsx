@@ -24,7 +24,7 @@ import {
   SITE_TITLE,
   getSiteUrl,
 } from "@/lib/seo";
-import { getSiteRootAlternates } from "@/lib/seo-i18n";
+import { getSiteRootAlternates, getLocalizedCanonicalUrl } from "@/lib/seo-i18n";
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -140,6 +140,12 @@ export default async function LocaleLayout({
       name: SITE_NAME,
       url: siteUrl,
       logo: `${siteUrl}/android-chrome-512x512.png`,
+      contactPoint: {
+        "@type": "ContactPoint",
+        contactType: "customer support",
+        email: "contact@splitcost.in",
+        url: getLocalizedCanonicalUrl(locale as AppLocale, "/contact"),
+      },
     },
     {
       "@context": "https://schema.org",

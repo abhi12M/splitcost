@@ -3,7 +3,8 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { resolveLocaleParam } from "@/i18n/params";
 import type { AppLocale } from "@/i18n/routing";
-import { buildLocalizedMetadata } from "@/lib/seo-i18n";
+import { APP_NAME } from "@/lib/constants";
+import { buildLocalizedMetadata, getLocalizedCanonicalUrl } from "@/lib/seo-i18n";
 import ContactPage from "@/views/Contact";
 
 type PageProps = {
@@ -25,5 +26,24 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function Page({ params }: PageProps) {
   const locale = await resolveLocaleParam(params);
   setRequestLocale(locale);
-  return <ContactPage />;
+  const t = await getTranslations({ locale, namespace: "contact" });
+  const pageUrl = getLocalizedCanonicalUrl(locale, "/contact");
+
+  const contactJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ContactPage",
+    name: t("jsonLdName", { appName: APP_NAME }),
+    url: pageUrl,
+    description: t("jsonLdDescription", { appName: APP_NAME }),
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(contactJsonLd) }}
+      />
+      <ContactPage />
+    </>
+  );
 }

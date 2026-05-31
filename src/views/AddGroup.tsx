@@ -6,7 +6,7 @@ import { useState } from "react";
 import { ArrowLeft, Users } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardDescription } from "@/components/ui/card";
 import { GroupForm } from "@/components/group/GroupForm";
 import { GroupFormMobile } from "@/components/group/GroupFormMobile";
 import { Spinner } from "@/components/ui/Spinner";
@@ -59,7 +59,9 @@ export default function CreateGroupPage() {
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
                   <Users className="text-primary" />
                 </div>
-                <CardTitle>{t("createGroupTitle")}</CardTitle>
+                <h1 className="text-lg font-semibold tracking-tight text-foreground truncate">
+                  {t("createGroupTitle")}
+                </h1>
                 <CardDescription>{t("createGroupDescription")}</CardDescription>
               </CardHeader>
               <CardContent>

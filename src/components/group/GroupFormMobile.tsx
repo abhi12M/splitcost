@@ -180,7 +180,7 @@ export function GroupFormMobile({
             <Link href={backHref}>
               <ArrowLeft className="h-5 w-5" />
             </Link>
-            <span className="font-medium">{t("createGroup")}</span>
+            <h1 className="font-medium">{t("createGroup")}</h1>
             <button type="button" onClick={handleSubmit} aria-label={t("createGroup")}>
               <Check className="h-5 w-5 text-primary" />
             </button>

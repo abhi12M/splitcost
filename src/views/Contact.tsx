@@ -11,7 +11,6 @@ import { useToast } from "@/hooks/use-toast";
 import { brandStyles } from "@/lib/brand-styles";
 import { APP_NAME } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import { getCanonicalUrl } from "@/lib/seo";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -82,22 +81,9 @@ export default function ContactPage() {
     setIsSubmitting(false);
   };
 
-  const contactJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "ContactPage",
-    name: t("jsonLdName", { appName: APP_NAME }),
-    url: getCanonicalUrl("/contact"),
-    description: t("jsonLdDescription", { appName: APP_NAME }),
-  };
-
   return (
     <Layout>
       <div className="container py-12 md:py-[3rem]">
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(contactJsonLd) }}
-        />
-
         <div className="relative overflow-hidden rounded-[2rem] border border-border/70 bg-card/80 p-6 shadow-card md:p-10">
           <div className="pointer-events-none absolute inset-x-0 top-0 hidden h-32 bg-gradient-to-r from-primary/10 via-secondary/10 to-primary/5 sm:block dark:hidden" />
 
