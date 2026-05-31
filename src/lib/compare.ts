@@ -16,13 +16,28 @@ export const COMPARE_LIST: CompareMeta[] = [
 
 export const COMPARE_INDEX_PATH = "/compare";
 
+export const SPLITWISE_ALTERNATIVE_PATH = "/splitwise-alternative";
+export const SPLID_ALTERNATIVE_PATH = "/splid-alternative";
+export const TRICOUNT_ALTERNATIVE_PATH = "/tricount-alternative";
+
+const COMPARE_PATH_OVERRIDES: Record<CompareSlug, string> = {
+  splitwise: SPLITWISE_ALTERNATIVE_PATH,
+  splid: SPLID_ALTERNATIVE_PATH,
+  tricount: TRICOUNT_ALTERNATIVE_PATH,
+};
+
 export function isCompareSlug(slug: string): slug is CompareSlug {
   return (COMPARE_SLUGS as readonly string[]).includes(slug);
 }
 
 export function getComparePath(slug: CompareSlug): string {
-  return `${COMPARE_INDEX_PATH}/${slug}`;
+  return COMPARE_PATH_OVERRIDES[slug];
 }
+
+/** Slugs served under `/compare/[slug]` (excludes pages with custom paths). */
+export const COMPARE_ROUTE_SLUGS = COMPARE_SLUGS.filter(
+  (slug) => !(slug in COMPARE_PATH_OVERRIDES)
+) as CompareSlug[];
 
 export function getCompareMeta(slug: CompareSlug): CompareMeta {
   return COMPARE_LIST.find((item) => item.slug === slug)!;

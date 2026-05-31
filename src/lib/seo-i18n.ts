@@ -182,6 +182,13 @@ function getPathPriority(path: string): {
   if (path.startsWith("/compare/")) {
     return { changeFrequency: "weekly", priority: 0.8 };
   }
+  if (
+    path === "/splitwise-alternative" ||
+    path === "/splid-alternative" ||
+    path === "/tricount-alternative"
+  ) {
+    return { changeFrequency: "weekly", priority: 0.8 };
+  }
   if (path === "/contact") {
     return { changeFrequency: "monthly", priority: 0.7 };
   }

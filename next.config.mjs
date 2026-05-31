@@ -44,6 +44,30 @@ const nextConfig = {
       "next-intl",
     ],
   },
+  async redirects() {
+    const locales = ["en", "es", "pt", "hi"];
+    const compareRedirects = [
+      { slug: "splitwise", path: "splitwise-alternative" },
+      { slug: "splid", path: "splid-alternative" },
+      { slug: "tricount", path: "tricount-alternative" },
+    ];
+
+    const localeRedirects = locales.flatMap((locale) =>
+      compareRedirects.map(({ slug, path }) => ({
+        source: `/${locale}/compare/${slug}`,
+        destination: `/${locale}/${path}`,
+        permanent: true,
+      }))
+    );
+
+    const rootRedirects = compareRedirects.map(({ slug, path }) => ({
+      source: `/compare/${slug}`,
+      destination: `/en/${path}`,
+      permanent: true,
+    }));
+
+    return [...localeRedirects, ...rootRedirects];
+  },
   async headers() {
     return [
       {

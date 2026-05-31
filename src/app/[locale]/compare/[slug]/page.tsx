@@ -6,7 +6,7 @@ import { resolveLocaleParam } from "@/i18n/params";
 import { locales, type AppLocale } from "@/i18n/routing";
 import { buildLocalizedMetadata } from "@/lib/seo-i18n";
 import {
-  COMPARE_SLUGS,
+  COMPARE_ROUTE_SLUGS,
   getComparePath,
   isCompareSlug,
   type CompareSlug,
@@ -25,7 +25,7 @@ async function resolveParams(params: PageProps["params"]) {
 
 export function generateStaticParams() {
   return locales.flatMap((locale) =>
-    COMPARE_SLUGS.map((slug) => ({ locale, slug }))
+    COMPARE_ROUTE_SLUGS.map((slug) => ({ locale, slug }))
   );
 }
 
