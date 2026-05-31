@@ -8,9 +8,12 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import { hasLocale } from "next-intl";
 import { Suspense, type ReactNode } from "react";
 
-import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import { GoogleAnalyticsPageTracker } from "@/components/analytics/GoogleAnalyticsPageTracker";
 import AppProviders from "@/components/providers/AppProviders";
+import {
+  GA_MEASUREMENT_ID,
+  isGoogleAnalyticsEnabled,
+} from "@/lib/google-analytics";
 import { localeDefinitions } from "@/i18n/config";
 import { resolveLocaleParam } from "@/i18n/params";
 import { routing, type AppLocale } from "@/i18n/routing";
@@ -158,12 +161,35 @@ export default async function LocaleLayout({
 
   return (
     <html lang={htmlLang} suppressHydrationWarning>
+      <head>
+        {isGoogleAnalyticsEnabled() ? (
+          <>
+            {/* Google tag (gtag.js) */}
+            <script
+              async
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+            />
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', '${GA_MEASUREMENT_ID}');
+`,
+              }}
+            />
+          </>
+        ) : null}
+      </head>
       <body className={plusJakarta.className}>
         <NextIntlClientProvider messages={messages}>
-          <GoogleAnalytics />
-          <Suspense fallback={null}>
-            <GoogleAnalyticsPageTracker />
-          </Suspense>
+          {isGoogleAnalyticsEnabled() ? (
+            <Suspense fallback={null}>
+              <GoogleAnalyticsPageTracker />
+            </Suspense>
+          ) : null}
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

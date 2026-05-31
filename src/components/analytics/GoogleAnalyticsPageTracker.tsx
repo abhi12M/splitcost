@@ -3,10 +3,12 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef } from "react";
 
-import { GA_MEASUREMENT_ID } from "@/components/analytics/GoogleAnalytics";
 import { usePathname } from "@/i18n/navigation";
 import { ADMIN_PARENT_PATH } from "@/lib/constants";
-import { stripLocalePrefix } from "@/lib/seo-i18n";
+import {
+  GA_MEASUREMENT_ID,
+  isGoogleAnalyticsEnabled,
+} from "@/lib/google-analytics";
 
 declare global {
   interface Window {
@@ -14,8 +16,6 @@ declare global {
     gtag?: (...args: unknown[]) => void;
   }
 }
-
-const isEnabled = /^G-[A-Z0-9]+$/i.test(GA_MEASUREMENT_ID);
 
 function shouldSkipAnalytics(pathname: string): boolean {
   return (
@@ -32,7 +32,7 @@ export function GoogleAnalyticsPageTracker() {
 
   useEffect(() => {
     if (
-      !isEnabled ||
+      !isGoogleAnalyticsEnabled() ||
       !pathname ||
       shouldSkipAnalytics(pathname)
     ) {
