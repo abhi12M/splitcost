@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 
 import { BrandIcon } from "@/components/brand/BrandIcon";
-import { LanguageList } from "@/components/i18n/LanguageList";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { Link } from "@/i18n/navigation";
 import { COMPARE_LIST, getComparePath } from "@/lib/compare";
 import { APP_NAME } from "@/lib/constants";
@@ -146,14 +146,13 @@ export function Footer() {
             </ul>
           </nav>
 
-          <LanguageList className="col-span-2 sm:col-span-1" />
         </div>
 
         <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-border pt-8 sm:flex-row">
           <p className="text-sm text-muted-foreground">
             {t("footerRights", { year, appName: APP_NAME })}
           </p>
-          <p className="text-xs text-muted-foreground">{t("footerMotto")}</p>
+          <LanguageSwitcher variant="footer" />
         </div>
       </div>
     </footer>

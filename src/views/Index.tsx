@@ -8,6 +8,7 @@ import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import { UseCasesSection } from "@/components/landing/UseCasesSection";
 import { FaqSection } from "@/components/landing/FaqSection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
+import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
 
 export default function HomePage({ adminMode = false }: { adminMode?: boolean }) {
   if (adminMode) {
@@ -25,6 +26,7 @@ export default function HomePage({ adminMode = false }: { adminMode?: boolean })
       <HowItWorksSection />
       <FeaturesSection />
       <UseCasesSection />
+      <TestimonialsSection />
       <FaqSection />
     </Layout>
   );

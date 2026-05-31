@@ -288,6 +288,50 @@
         "phoneImageAlt": "App móvel SplitCost em um celular"
       }
     },
+    "testimonials": {
+      "badge": "Depoimentos",
+      "title": "Confiado por",
+      "titleHighlight": "grupos reais",
+      "description": "Veja como amigos, colegas de quarto, casais e grupos de viagem usam o SplitCost para dividir contas de forma justa e acertar sem o estresse das planilhas.",
+      "items": {
+        "one": {
+          "quote": "Nossa viagem de duas semanas pela Europa teve dezenas de custos compartilhados. Todos podiam registrar despesas no celular e ver os saldos na hora — sem brigas com planilha.",
+          "name": "Emma L.",
+          "role": "Organizadora de viagem",
+          "initials": "EL"
+        },
+        "two": {
+          "quote": "Aluguel, contas e mercado ficaram num só lugar. Paramos com as mensagens sem fim do tipo «você pagou a luz?» entre colegas de quarto.",
+          "name": "James e Priya",
+          "role": "Colegas de quarto",
+          "initials": "JP"
+        },
+        "three": {
+          "quote": "Depois dos jantares em grupo a gente ficava cobrando as pessoas por semanas. Agora adicionamos a conta, dividimos e a maior parte acerta na mesma noite.",
+          "name": "Marco R.",
+          "role": "Grupo de amigos",
+          "initials": "MR"
+        },
+        "four": {
+          "quote": "Acompanhamos gastos compartilhados sem unir contas bancárias. É simples o bastante para o dia a dia e claro o bastante para conferências mensais.",
+          "name": "Lisa e Tom",
+          "role": "Casal",
+          "initials": "LT"
+        },
+        "five": {
+          "quote": "A tesoureira do clube finalmente saiu do Excel. Os membros veem a qualquer momento quem deve o quê e os reembolsos ficaram muito mais fáceis de organizar.",
+          "name": "Denise K.",
+          "role": "Tesoureira do clube",
+          "initials": "DK"
+        },
+        "six": {
+          "quote": "Sem fricção de cadastro, a galera do fim de semana inteira começou a usar no primeiro dia. Compartilha o link, adiciona despesas, pronto.",
+          "name": "Alex T.",
+          "role": "Viagem de fim de semana",
+          "initials": "AT"
+        }
+      }
+    },
     "faq": {
       "badge": "Perguntas frequentes",
       "title": "Perguntas frequentes sobre",

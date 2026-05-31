@@ -1,6 +1,6 @@
 "use client";
 
-import { Languages } from "lucide-react";
+import { ChevronDown, Languages } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useTransition } from "react";
 
@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 type LanguageSwitcherProps = {
   className?: string;
   /** Compact icon-only trigger for mobile header areas */
-  variant?: "default" | "icon";
+  variant?: "default" | "icon" | "footer";
 };
 
 export function LanguageSwitcher({
@@ -48,6 +48,8 @@ export function LanguageSwitcher({
     });
   };
 
+  const isFooter = variant === "footer";
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -57,18 +59,28 @@ export function LanguageSwitcher({
           size={variant === "icon" ? "icon" : "sm"}
           className={cn(
             "gap-1.5 text-muted-foreground hover:text-foreground",
+            isFooter && "h-auto px-0 py-0 text-xs font-normal hover:bg-transparent",
             isPending && "opacity-70",
             className
           )}
           aria-label={t("select")}
           title={current ? t("current", { language: current.nativeLabel }) : t("label")}
         >
-          <Languages className="h-4 w-4 shrink-0" aria-hidden />
-          {variant === "default" ? (
-            <span className="hidden text-xs font-medium sm:inline">
-              {current?.nativeLabel ?? t("label")}
-            </span>
-          ) : null}
+          {isFooter ? (
+            <>
+              <span>{current?.nativeLabel ?? t("label")}</span>
+              <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-60" aria-hidden />
+            </>
+          ) : (
+            <>
+              <Languages className="h-4 w-4 shrink-0" aria-hidden />
+              {variant === "default" ? (
+                <span className="hidden text-xs font-medium sm:inline">
+                  {current?.nativeLabel ?? t("label")}
+                </span>
+              ) : null}
+            </>
+          )}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[10.5rem]">

@@ -288,6 +288,50 @@
         "phoneImageAlt": "App móvil SplitCost en un teléfono"
       }
     },
+    "testimonials": {
+      "badge": "Testimonios",
+      "title": "Con la confianza de",
+      "titleHighlight": "grupos reales",
+      "description": "Descubre cómo amigos, compañeros de piso, parejas y grupos de viaje usan SplitCost para dividir facturas de forma justa y liquidar sin el estrés de las hojas de cálculo.",
+      "items": {
+        "one": {
+          "quote": "Nuestro viaje de dos semanas por Europa tuvo docenas de gastos compartidos. Todos podían registrar gastos desde el móvil y ver los saldos al instante, sin discusiones con hojas de cálculo.",
+          "name": "Emma L.",
+          "role": "Organizadora de viaje",
+          "initials": "EL"
+        },
+        "two": {
+          "quote": "Alquiler, suministros y la compra están en un solo lugar. Dejamos de enviarnos mensajes del tipo «¿pagaste la luz?» entre compañeros de piso.",
+          "name": "James y Priya",
+          "role": "Compañeros de piso",
+          "initials": "JP"
+        },
+        "three": {
+          "quote": "Después de las cenas en grupo solíamos perseguir a la gente durante semanas. Ahora añadimos la cuenta, la dividimos y la mayoría liquida la misma noche.",
+          "name": "Marco R.",
+          "role": "Grupo de amigos",
+          "initials": "MR"
+        },
+        "four": {
+          "quote": "Llevamos el gasto compartido sin fusionar cuentas bancarias. Es lo bastante simple para el día a día y lo bastante claro para las revisiones mensuales.",
+          "name": "Lisa y Tom",
+          "role": "Pareja",
+          "initials": "LT"
+        },
+        "five": {
+          "quote": "La tesorera del club por fin dejó Excel. Los miembros ven en cualquier momento quién debe qué y las devoluciones son mucho más fáciles de organizar.",
+          "name": "Denise K.",
+          "role": "Tesorera de club",
+          "initials": "DK"
+        },
+        "six": {
+          "quote": "Sin fricción de registro, todo el grupo del fin de semana lo usó desde el primer día. Compartes el enlace, añades gastos y listo.",
+          "name": "Alex T.",
+          "role": "Viaje de fin de semana",
+          "initials": "AT"
+        }
+      }
+    },
     "faq": {
       "badge": "Preguntas frecuentes",
       "title": "Preguntas frecuentes sobre",

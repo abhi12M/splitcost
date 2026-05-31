@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { BrandIcon } from "@/components/brand/BrandIcon";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
+import { HeaderDesktopNav } from "@/components/layout/HeaderDesktopNav";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { useDeviceType } from "@/hooks/useDeviceType";
@@ -99,40 +100,39 @@ export function Header() {
             <BrandIcon className="h-8 w-auto sm:h-9" height={36} />
           </Link>
 
-          <nav
-            className="hidden shrink-0 items-center gap-0.5 sm:flex sm:gap-1"
-            aria-label={t("primaryNav")}
-          >
-            <Button
-              asChild
-              size="sm"
-              variant="default"
-              className="relative h-8 gap-1.5 px-3 text-xs sm:h-9 sm:text-sm"
+          <div className="hidden min-w-0 items-center gap-1 sm:flex">
+            <nav
+              className="hidden min-w-0 flex-1 items-center justify-end gap-0.5 lg:flex lg:gap-1"
+              aria-label={t("primaryNav")}
             >
-              <Link href="/groups">
-                <Users className="h-4 w-4" />
-                {t("myGroups")}
-                <MyGroupsCountBadge
-                  count={groupsCount}
-                  label={t("groupsCount", { count: groupsCount })}
-                />
-              </Link>
-            </Button>
-            <LanguageSwitcher />
-            <ThemeToggle />
-            <Link
-              href="/#faq"
-              className="px-2.5 py-2 sm:px-3 text-xs sm:text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              <HeaderDesktopNav />
+            </nav>
+
+            <div
+              className={cn(
+                "flex shrink-0 items-center gap-0.5 sm:gap-1",
+                "lg:ml-1 lg:border-l lg:border-border lg:pl-2"
+              )}
             >
-              {t("faq")}
-            </Link>
-            <Link
-              href="/contact"
-              className="px-2.5 py-2 sm:px-3 text-xs sm:text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            >
-              {t("contact")}
-            </Link>
-          </nav>
+              <Button
+                asChild
+                size="sm"
+                variant="default"
+                className="relative h-8 gap-1.5 px-3 text-xs sm:h-9 sm:text-sm"
+              >
+                <Link href="/groups">
+                  <Users className="h-4 w-4" />
+                  {t("myGroups")}
+                  <MyGroupsCountBadge
+                    count={groupsCount}
+                    label={t("groupsCount", { count: groupsCount })}
+                  />
+                </Link>
+              </Button>
+              <LanguageSwitcher />
+              <ThemeToggle />
+            </div>
+          </div>
         </div>
       </header>
     </div>

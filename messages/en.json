@@ -338,6 +338,50 @@
         "phoneImageAlt": "SplitCost mobile app on a phone"
       }
     },
+    "testimonials": {
+      "badge": "Testimonials",
+      "title": "Trusted by",
+      "titleHighlight": "Real Groups",
+      "description": "See how friends, roommates, couples, and travel groups use SplitCost to split bills fairly and settle up without the spreadsheet stress.",
+      "items": {
+        "one": {
+          "quote": "Our two-week Europe trip had dozens of shared costs. Everyone could log expenses from their phone and see balances update instantly — no spreadsheet arguments.",
+          "name": "Emma L.",
+          "role": "Travel group organizer",
+          "initials": "EL"
+        },
+        "two": {
+          "quote": "Rent, utilities, and groceries are all in one place now. We stopped the endless 'did you pay the electric bill?' messages between roommates.",
+          "name": "James & Priya",
+          "role": "Roommates",
+          "initials": "JP"
+        },
+        "three": {
+          "quote": "After group dinners we used to chase people for weeks. Now we add the bill, split it fairly, and most of the group settles the same night.",
+          "name": "Marco R.",
+          "role": "Friend group",
+          "initials": "MR"
+        },
+        "four": {
+          "quote": "We track shared spending without merging bank accounts. It's simple enough for everyday purchases and clear enough for monthly check-ins.",
+          "name": "Lisa & Tom",
+          "role": "Couple",
+          "initials": "LT"
+        },
+        "five": {
+          "quote": "Our club treasurer finally stopped living in Excel. Members can see who owes what anytime, and reimbursements are much easier to organize.",
+          "name": "Denise K.",
+          "role": "Community club treasurer",
+          "initials": "DK"
+        },
+        "six": {
+          "quote": "No sign-up friction meant the whole weekend crew started using it on day one. Share the link, add expenses, done.",
+          "name": "Alex T.",
+          "role": "Weekend trip",
+          "initials": "AT"
+        }
+      }
+    },
     "faq": {
       "badge": "FAQs",
       "title": "Frequently Asked Questions About",
