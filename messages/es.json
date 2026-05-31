@@ -439,9 +439,9 @@
       "searchPlaceholder": "Buscar",
       "demoGroupName": "Viaje a Miami",
       "demoExpenses": {
-        "dinnerOceanGrill": "Cena en Ocean Grill",
-        "lunchBeach": "Almuerzo en la playa",
-        "hotelStay": "Hotel — South Beach"
+        "hotel": "Hotel — South Beach",
+        "dinner": "Cena en grupo",
+        "taxi": "Taxi al aeropuerto"
       }
     }
   },

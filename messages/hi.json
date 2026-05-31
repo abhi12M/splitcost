@@ -439,9 +439,9 @@
       "searchPlaceholder": "खोजें",
       "demoGroupName": "मियामी यात्रा",
       "demoExpenses": {
-        "dinnerOceanGrill": "Ocean Grill में रात का खाना",
-        "lunchBeach": "बीच शैक लंच",
-        "hotelStay": "होटल — साउथ बीच"
+        "hotel": "होटल — साउथ बीच",
+        "dinner": "समूह रात्रिभोज",
+        "taxi": "एयरपोर्ट टैक्सी"
       }
     }
   },

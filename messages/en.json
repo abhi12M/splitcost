@@ -441,9 +441,9 @@
       "searchPlaceholder": "Search",
       "demoGroupName": "Miami Trip",
       "demoExpenses": {
-        "dinnerOceanGrill": "Dinner at Ocean Grill",
-        "lunchBeach": "Beach shack lunch",
-        "hotelStay": "Hotel — South Beach"
+        "hotel": "Hotel — South Beach",
+        "dinner": "Group dinner",
+        "taxi": "Airport taxi"
       }
     }
   },
