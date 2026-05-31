@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useKeyboardLayout } from "@/hooks/useKeyboardOffset";
+import { MD_BREAKPOINT_PX } from "@/hooks/useDeviceType";
 
 interface MobileGroupFormLayoutProps {
   header: ReactNode;
@@ -42,18 +43,41 @@ export function MobileGroupFormLayout({
     };
   }, []);
 
+  // Only lock document scroll on mobile viewports. These forms are still mounted
+  // (but CSS-hidden) on desktop via `hidden md:block` / `block md:hidden` splits,
+  // so we must not set overflow:hidden on the body at tablet/desktop widths.
   useEffect(() => {
+    const mq = window.matchMedia(`(min-width: ${MD_BREAKPOINT_PX}px)`);
     const html = document.documentElement;
     const body = document.body;
-    const prevHtmlOverflow = html.style.overflow;
-    const prevBodyOverflow = body.style.overflow;
+    const saved = { html: "", body: "", locked: false };
 
-    html.style.overflow = "hidden";
-    body.style.overflow = "hidden";
+    const lock = () => {
+      if (saved.locked) return;
+      saved.html = html.style.overflow;
+      saved.body = body.style.overflow;
+      html.style.overflow = "hidden";
+      body.style.overflow = "hidden";
+      saved.locked = true;
+    };
 
+    const unlock = () => {
+      if (!saved.locked) return;
+      html.style.overflow = saved.html;
+      body.style.overflow = saved.body;
+      saved.locked = false;
+    };
+
+    const sync = () => {
+      if (mq.matches) unlock();
+      else lock();
+    };
+
+    sync();
+    mq.addEventListener("change", sync);
     return () => {
-      html.style.overflow = prevHtmlOverflow;
-      body.style.overflow = prevBodyOverflow;
+      mq.removeEventListener("change", sync);
+      unlock();
     };
   }, []);
 

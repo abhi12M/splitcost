@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { GroupForm } from "@/components/group/GroupForm";
 import { GroupFormMobile } from "@/components/group/GroupFormMobile";
 import { Spinner } from "@/components/ui/Spinner";
+import { useMdUp } from "@/hooks/useDeviceType";
 import { createGroup } from "@/lib/storage";
 import { getEncryptedItem, migrateLocalStorageKey, setEncryptedItem } from "@/lib/localStorage";
 import { LOCAL_CURRENCY_KEY, LOCAL_GROUPS_KEY } from "@/lib/constants";
@@ -22,6 +23,7 @@ export default function CreateGroupPage() {
   const t = useTranslations("group");
   const tCommon = useTranslations("common");
   const router = useRouter();
+  const isMdUp = useMdUp();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const defaultCurrency = getEncryptedItem(LOCAL_CURRENCY_KEY, "INR");
 
@@ -46,7 +48,7 @@ export default function CreateGroupPage() {
 
   return (
     <>
-      <div className="hidden md:block">
+      {isMdUp ? (
         <Layout>
           <div className="container max-w-xl py-8">
             <Button variant="ghost" onClick={() => router.back()} className="mb-6">
@@ -71,15 +73,13 @@ export default function CreateGroupPage() {
             </Card>
           </div>
         </Layout>
-      </div>
-
-      <div className="block md:hidden">
+      ) : (
         <GroupFormMobile
           backHref="/"
           initialCurrency={defaultCurrency}
           onSubmit={handleCreate}
         />
-      </div>
+      )}
 
       <Spinner show={isSubmitting} message={tCommon("creating")} />
     </>

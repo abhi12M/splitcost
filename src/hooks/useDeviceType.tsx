@@ -70,7 +70,8 @@ export function isMobileViewportWidth(width = typeof window !== "undefined" ? wi
 }
 
 /** Tailwind `md` breakpoint — matches `hidden md:block` layout switches. */
-const MD_BREAKPOINT = 768;
+export const MD_BREAKPOINT_PX = 768;
+const MD_BREAKPOINT = MD_BREAKPOINT_PX;
 
 export function useMdUp(): boolean {
   return useSyncExternalStore(

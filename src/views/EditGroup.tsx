@@ -639,29 +639,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
 
   return (
     <>
-      <div className="block md:hidden">
-        <EditGroupMobile
-          groupId={groupId}
-          groupName={groupName}
-          onGroupNameChange={setGroupName}
-          currency={currency}
-          memberCards={memberCards}
-          newMemberName={newMemberName}
-          onNewMemberNameChange={setNewMemberName}
-          onAddMember={handleAddMember}
-          errors={errors}
-          summary={summary}
-          onOpenMember={openMemberSheet}
-          onSaveGroup={handleSaveGroup}
-          onDeleteGroup={handleDeleteGroup}
-          isSubmitting={isSubmitting}
-          isDeleting={isDeleting}
-        />
-        <Spinner show={isSubmitting} message={tCommon("saving")} />
-        <Spinner show={isDeleting} message={tCommon("deleting")} />
-      </div>
-
-      <div className="hidden md:block">
+      {isMdUp ? (
       <Layout>
         <div className="container max-w-4xl py-6 md:py-8">
           <div className="mb-6 flex items-center justify-between gap-3">
@@ -875,7 +853,28 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
           </div>
         </div>
       </Layout>
-      </div>
+      ) : (
+        <EditGroupMobile
+          groupId={groupId}
+          groupName={groupName}
+          onGroupNameChange={setGroupName}
+          currency={currency}
+          memberCards={memberCards}
+          newMemberName={newMemberName}
+          onNewMemberNameChange={setNewMemberName}
+          onAddMember={handleAddMember}
+          errors={errors}
+          summary={summary}
+          onOpenMember={openMemberSheet}
+          onSaveGroup={handleSaveGroup}
+          onDeleteGroup={handleDeleteGroup}
+          isSubmitting={isSubmitting}
+          isDeleting={isDeleting}
+        />
+      )}
+
+      <Spinner show={isSubmitting} message={tCommon("saving")} />
+      <Spinner show={isDeleting} message={tCommon("deleting")} />
 
       <EditGroupMemberSheet
         open={isMemberSheetOpen}
