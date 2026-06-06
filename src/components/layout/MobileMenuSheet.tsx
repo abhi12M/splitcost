@@ -2,6 +2,7 @@
 
 import {
   Briefcase,
+  BookOpen,
   ChevronRight,
   CircleHelp,
   FileText,
@@ -38,8 +39,8 @@ type MobileMenuSheetProps = {
 };
 
 type MenuLink = {
-  href: "/" | "/#how-it-works" | "/#features" | "/use-cases" | "/compare" | "/#faq" | "/contact" | "/privacy" | "/terms";
-  labelKey: "howItWorks" | "features" | "useCases" | "compare" | "faq" | "contact" | "privacy" | "terms";
+  href: "/" | "/#how-it-works" | "/#features" | "/use-cases" | "/compare" | "/resources" | "/#faq" | "/contact" | "/privacy" | "/terms";
+  labelKey: "howItWorks" | "features" | "useCases" | "compare" | "resources" | "faq" | "contact" | "privacy" | "terms";
   icon: LucideIcon;
 };
 
@@ -58,6 +59,7 @@ const MENU_SECTIONS: { titleKey: "product" | "support" | "legal"; links: MenuLin
     links: [
       { href: "/#faq", labelKey: "faq", icon: MessageCircleQuestion },
       { href: "/contact", labelKey: "contact", icon: Mail },
+      { href: "/resources", labelKey: "resources", icon: BookOpen },
     ],
   },
   {

@@ -95,6 +95,12 @@
         "description": "Organize reembolsos da equipe, despesas de clube e pagamentos de comunidade. Veja quem pagou o quê e acerte custos compartilhados com menos trabalho administrativo."
       }
     },
+    "resources": {
+      "index": {
+        "title": "Recursos sobre despesas compartilhadas — Guias para colegas de quarto e divisão de contas",
+        "description": "Guias selecionadas sobre dividir contas, acompanhar despesas compartilhadas e gerir custos entre colegas de quarto de forma justa. Artigos sobre divisão igual vs proporcional, aluguel e utilidades."
+      }
+    },
     "softwareApplication": {
       "features": {
         "one": "Criar grupos de despesas compartilhadas",
@@ -115,6 +121,7 @@
     "groupsCount": "{count, plural, =1 {1 grupo} other {# grupos}}",
     "faq": "Perguntas frequentes",
     "contact": "Contato",
+    "resources": "Recursos",
     "menu": "Menu",
     "closeMenu": "Fechar menu",
     "openMenu": "Abrir menu",
@@ -1391,6 +1398,9 @@
       "benefitsTitle": "Por que grupos escolhem o {appName}",
       "faqTitle": "Perguntas frequentes",
       "relatedTitle": "Outros casos de uso",
+      "furtherReadingTitle": "Leitura adicional sobre despesas compartilhadas",
+      "furtherReadingDescription": "Explore guias selecionadas sobre dividir aluguel, utilidades e contas da casa de forma justa — e coloque em prática com um grupo de despesas gratuito.",
+      "furtherReadingLinkLabel": "Ver recursos sobre despesas",
       "cta": {
         "title": "Comece a acompanhar despesas compartilhadas hoje",
         "button": "Criar um grupo grátis"
@@ -1784,6 +1794,77 @@
       },
       "cta": {
         "description": "Crie um grupo de equipe e gaste menos tempo com reembolsos, recibos e cálculos de saldo."
+      }
+    }
+  },
+  "resourcePages": {
+    "index": {
+      "badge": "Recursos",
+      "title": "Guias para",
+      "titleHighlight": "despesas compartilhadas",
+      "description": "Artigos selecionados sobre dividir contas, acompanhar custos compartilhados e gerir finanças entre colegas de quarto de forma justa.",
+      "intro": "Estes guias cobrem o essencial — desde definir expectativas com colegas de quarto até escolher divisões iguais ou proporcionais. Quando estiver pronto para registrar despesas na prática, o {appName} oferece um livro compartilhado gratuito para o seu grupo.",
+      "breadcrumbHome": "Início",
+      "breadcrumbResources": "Recursos",
+      "jsonLdName": "Recursos sobre despesas compartilhadas selecionados pelo {appName}",
+      "jsonLdDescription": "Guias selecionadas sobre dividir contas, acompanhar despesas compartilhadas e gerir custos domésticos e entre colegas de quarto de forma justa.",
+      "externalLinkLabel": "(abre em uma nova aba)",
+      "categories": {
+        "gettingStarted": {
+          "title": "Primeiros passos com despesas compartilhadas",
+          "description": "Guias fundamentais sobre definir expectativas, comunicar sobre dinheiro e manter um registro claro de quem deve o quê."
+        },
+        "splittingMethods": {
+          "title": "Métodos justos de divisão",
+          "description": "Quando dividir igualmente, quando usar cotas proporcionais e como lidar com custos pontuais sem conflitos."
+        },
+        "householdBills": {
+          "title": "Aluguel, utilidades e contas da casa",
+          "description": "Conselhos práticos para custos recorrentes entre colegas — aluguel, luz, internet, compras e outras despesas compartilhadas."
+        }
+      },
+      "items": {
+        "uniteCuSharingExpenses": {
+          "title": "Shared Expenses Guide: How to Manage Costs with Others",
+          "summary": "Visão prática sobre compartilhar despesas com colegas de quarto — comunicação, acompanhamento e como evitar disputas comuns na convivência."
+        },
+        "cudenverSplittingCosts": {
+          "title": "Shared Expense Tracking Guide: Keeping Track of Who Owes What",
+          "summary": "Explica por que um sistema compartilhado importa e como se manter organizado para que pequenas compras não virem confusão no fim do mês."
+        },
+        "junehomesFairSplitting": {
+          "title": "Fair Expense Splitting Guide: Equal vs Proportional Cost Sharing",
+          "summary": "Compara divisão igual e proporcional com exemplos de aluguel, utilidades e custos do dia a dia — útil quando cada colega contribui de forma diferente."
+        },
+        "sofiCostSharing": {
+          "title": "Cost Sharing Best Practices for Shared Living Expenses",
+          "summary": "Boas práticas para dividir custos domésticos, definir regras desde cedo e manter as finanças compartilhadas transparentes."
+        },
+        "truistRoommateCosts": {
+          "title": "Complete Roommate Expense Guide: Rent, Utilities & Shared Bills",
+          "summary": "Passo a passo completo de contas recorrentes — aluguel, utilidades, assinaturas e compras — com dicas para divisão justa."
+        },
+        "experianBillSplitting": {
+          "title": "Bill Splitting Guide: Fair Ways to Divide Household Expenses",
+          "summary": "Estratégias justas para dividir contas entre colegas, incluindo uso desigual e confiança em pagamentos compartilhados."
+        }
+      },
+      "internalLinks": {
+        "title": "Coloque em prática com o {appName}",
+        "description": "Ler sobre divisões justas é um ótimo começo. Quando quiser registrar despesas reais, estas páginas ajudam você a começar.",
+        "roommates": {
+          "title": "Controle de despesas entre colegas de quarto",
+          "description": "Veja como o {appName} ajuda a dividir aluguel, utilidades e compras sem planilhas."
+        },
+        "compare": {
+          "title": "{appName} vs Splitwise",
+          "description": "Compare recursos se estiver avaliando apps de divisão de despesas para sua casa."
+        }
+      },
+      "cta": {
+        "title": "Pronto para acompanhar despesas compartilhadas?",
+        "description": "Crie um grupo gratuito de colegas de quarto ou da casa com o {appName} e comece a dividir contas em segundos.",
+        "button": "Criar um grupo grátis"
       }
     }
   },

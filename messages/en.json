@@ -95,6 +95,12 @@
         "description": "Looking for a Tricount Alternative? SplitCost helps groups split travel expenses, track shared costs, manage balances, and settle bills with ease."
       }
     },
+    "resources": {
+      "index": {
+        "title": "Shared Expense Resources — Roommate & Bill Splitting Guides",
+        "description": "Curated guides on splitting bills, tracking shared expenses, and managing roommate costs fairly. Expert articles on equal vs proportional splitting, rent, and utilities."
+      }
+    },
     "softwareApplication": {
       "features": {
         "one": "Create shared expense groups",
@@ -115,6 +121,7 @@
     "groupsCount": "{count, plural, =1 {1 group} other {# groups}}",
     "faq": "FAQ",
     "contact": "Contact",
+    "resources": "Resources",
     "menu": "Menu",
     "closeMenu": "Close menu",
     "openMenu": "Open menu",
@@ -603,6 +610,9 @@
       "benefitsTitle": "Why groups choose {appName}",
       "faqTitle": "Frequently asked questions",
       "relatedTitle": "Other use cases",
+      "furtherReadingTitle": "Further reading on shared expenses",
+      "furtherReadingDescription": "Explore curated guides on splitting rent, utilities, and household bills fairly — then put what you learn into practice with a free roommate expense group.",
+      "furtherReadingLinkLabel": "Browse expense resources",
       "cta": {
         "title": "Start tracking shared expenses today",
         "button": "Create a free group"
@@ -1381,6 +1391,77 @@
       },
       "cta": {
         "description": "Create a trip group in {appName} and keep every travel expense organized from start to settlement."
+      }
+    }
+  },
+  "resourcePages": {
+    "index": {
+      "badge": "Resources",
+      "title": "Guides for",
+      "titleHighlight": "Shared Expenses",
+      "description": "Hand-picked articles on splitting bills, tracking shared costs, and managing roommate finances fairly.",
+      "intro": "These guides cover the fundamentals — from setting expectations with roommates to choosing equal vs proportional splits. When you're ready to track expenses in practice, {appName} gives your group a free shared ledger.",
+      "breadcrumbHome": "Home",
+      "breadcrumbResources": "Resources",
+      "jsonLdName": "Shared expense resources curated by {appName}",
+      "jsonLdDescription": "Curated guides on splitting bills, tracking shared expenses, and managing roommate and household costs fairly.",
+      "externalLinkLabel": "(opens in a new tab)",
+      "categories": {
+        "gettingStarted": {
+          "title": "Getting started with shared expenses",
+          "description": "Foundational guides on setting expectations, communicating about money, and keeping a clear record of who owes what."
+        },
+        "splittingMethods": {
+          "title": "Fair splitting methods",
+          "description": "When to split equally, when to use proportional shares, and how to handle irregular or one-off costs without conflict."
+        },
+        "householdBills": {
+          "title": "Rent, utilities & household bills",
+          "description": "Practical advice for recurring roommate costs — rent, electricity, internet, groceries, and other shared household expenses."
+        }
+      },
+      "items": {
+        "uniteCuSharingExpenses": {
+          "title": "Shared Expenses Guide: How to Manage Costs with Others",
+          "summary": "A practical overview of sharing expenses with roommates — covering communication, tracking, and avoiding common money disputes in shared living."
+        },
+        "cudenverSplittingCosts": {
+          "title": "Shared Expense Tracking Guide: Keeping Track of Who Owes What",
+          "summary": "Explains why a shared expense system matters and how to stay organized so small purchases don't turn into end-of-month confusion."
+        },
+        "junehomesFairSplitting": {
+          "title": "Fair Expense Splitting Guide: Equal vs Proportional Cost Sharing",
+          "summary": "Compares equal and proportional splitting with examples for rent, utilities, and everyday shared costs — useful when roommates contribute differently."
+        },
+        "sofiCostSharing": {
+          "title": "Cost Sharing Best Practices for Shared Living Expenses",
+          "summary": "Best practices for dividing household costs, setting ground rules early, and keeping shared finances transparent between roommates."
+        },
+        "truistRoommateCosts": {
+          "title": "Complete Roommate Expense Guide: Rent, Utilities & Shared Bills",
+          "summary": "A comprehensive walkthrough of recurring roommate bills — rent, utilities, subscriptions, and groceries — with tips for fair division."
+        },
+        "experianBillSplitting": {
+          "title": "Bill Splitting Guide: Fair Ways to Divide Household Expenses",
+          "summary": "Covers fair bill-splitting strategies for roommates, including how to handle uneven usage and build trust around shared payments."
+        }
+      },
+      "internalLinks": {
+        "title": "Put it into practice with {appName}",
+        "description": "Reading about fair splits is a great start. When you're ready to track real expenses, these pages help you get going.",
+        "roommates": {
+          "title": "Roommate expense tracker",
+          "description": "See how {appName} helps roommates split rent, utilities, and groceries without spreadsheets."
+        },
+        "compare": {
+          "title": "{appName} vs Splitwise",
+          "description": "Compare features if you're evaluating expense-splitting apps for your household."
+        }
+      },
+      "cta": {
+        "title": "Ready to track shared expenses?",
+        "description": "Create a free roommate or household group with {appName} and start splitting bills in seconds.",
+        "button": "Create a free group"
       }
     }
   },

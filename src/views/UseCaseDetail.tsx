@@ -1,5 +1,6 @@
 import {
   ArrowRight,
+  BookOpen,
   CheckCircle2,
   ChevronRight,
   Heart,
@@ -19,6 +20,7 @@ import type { AppLocale } from "@/i18n/routing";
 import { brandStyles, brandUseCaseAccent, landingSection } from "@/lib/brand-styles";
 import { APP_NAME } from "@/lib/constants";
 import { getLocalizedCanonicalUrl } from "@/lib/seo-i18n";
+import { RESOURCES_INDEX_PATH } from "@/lib/resources";
 import {
   USE_CASE_INDEX_PATH,
   USE_CASE_LIST,
@@ -349,6 +351,32 @@ export default async function UseCaseDetailPage({ locale, slug }: UseCaseDetailP
             </div>
           </div>
         </section>
+
+        {slug === "roommates" ? (
+          <section className={cn(landingSection.default, landingSection.padding)}>
+            <div className="container max-w-3xl">
+              <div className="rounded-2xl border border-border/60 bg-muted/30 p-6 dark:border-border/80 sm:p-8">
+                <div className="flex items-start gap-3">
+                  <BookOpen className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden />
+                  <div>
+                    <h2 className="text-lg font-bold text-foreground sm:text-xl">
+                      {tShared("furtherReadingTitle")}
+                    </h2>
+                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
+                      {tShared("furtherReadingDescription")}
+                    </p>
+                    <Button asChild variant="outline" className="mt-4 rounded-xl">
+                      <Link href={RESOURCES_INDEX_PATH}>
+                        {tShared("furtherReadingLinkLabel")}
+                        <ArrowRight className="ml-1 h-4 w-4" aria-hidden />
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        ) : null}
 
         <section className={cn(landingSection.default, "pb-16 pt-4 sm:pb-20 md:pb-24")}>
           <div className="container">

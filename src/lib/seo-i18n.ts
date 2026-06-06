@@ -10,6 +10,7 @@ import {
   getSiteUrl,
 } from "@/lib/seo";
 import { getAllIndexableComparePaths } from "@/lib/compare";
+import { getAllIndexableResourcePaths } from "@/lib/resources";
 import { getAllIndexableUseCasePaths } from "@/lib/use-cases";
 
 function normalizePath(path: string): string {
@@ -158,6 +159,7 @@ export const INDEXABLE_PATHS = [
   "/terms",
   ...getAllIndexableUseCasePaths(),
   ...getAllIndexableComparePaths(),
+  ...getAllIndexableResourcePaths(),
 ] as const;
 
 function getPathPriority(path: string): {
@@ -191,6 +193,9 @@ function getPathPriority(path: string): {
   }
   if (path === "/contact") {
     return { changeFrequency: "monthly", priority: 0.7 };
+  }
+  if (path === "/resources") {
+    return { changeFrequency: "monthly", priority: 0.65 };
   }
   return { changeFrequency: "yearly", priority: 0.4 };
 }

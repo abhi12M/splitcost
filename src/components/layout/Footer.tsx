@@ -127,6 +127,11 @@ export function Footer() {
                   {t("contact")}
                 </Link>
               </li>
+              <li>
+                <Link href="/resources" className={footerLinkClass}>
+                  {t("resources")}
+                </Link>
+              </li>
             </ul>
           </nav>
 

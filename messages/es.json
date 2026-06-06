@@ -95,6 +95,12 @@
         "description": "Organiza reembolsos de equipo, gastos de club y pagos de comunidad. Registra quién pagó qué y salda costes compartidos con menos trabajo administrativo."
       }
     },
+    "resources": {
+      "index": {
+        "title": "Recursos sobre gastos compartidos — Guías para compañeros de piso y división de facturas",
+        "description": "Guías seleccionadas sobre dividir facturas, registrar gastos compartidos y gestionar costes entre compañeros de piso de forma justa. Artículos sobre reparto igualitario vs proporcional, alquiler y suministros."
+      }
+    },
     "softwareApplication": {
       "features": {
         "one": "Crear grupos de gastos compartidos",
@@ -115,6 +121,7 @@
     "groupsCount": "{count, plural, =1 {1 grupo} other {# grupos}}",
     "faq": "Preguntas frecuentes",
     "contact": "Contacto",
+    "resources": "Recursos",
     "menu": "Menú",
     "closeMenu": "Cerrar menú",
     "openMenu": "Abrir menú",
@@ -1391,6 +1398,9 @@
       "benefitsTitle": "Por qué los grupos eligen {appName}",
       "faqTitle": "Preguntas frecuentes",
       "relatedTitle": "Otros casos de uso",
+      "furtherReadingTitle": "Más lectura sobre gastos compartidos",
+      "furtherReadingDescription": "Explora guías seleccionadas sobre dividir alquiler, suministros y facturas del hogar de forma justa — y pon en práctica lo aprendido con un grupo de gastos gratuito.",
+      "furtherReadingLinkLabel": "Ver recursos sobre gastos",
       "cta": {
         "title": "Empieza a registrar gastos compartidos hoy",
         "button": "Crear un grupo gratis"
@@ -1784,6 +1794,77 @@
       },
       "cta": {
         "description": "Crea un grupo de equipo y dedica menos tiempo a reembolsos, recibos y cálculos de saldo."
+      }
+    }
+  },
+  "resourcePages": {
+    "index": {
+      "badge": "Recursos",
+      "title": "Guías para",
+      "titleHighlight": "gastos compartidos",
+      "description": "Artículos seleccionados sobre dividir facturas, registrar costes compartidos y gestionar las finanzas entre compañeros de piso de forma justa.",
+      "intro": "Estas guías cubren lo esencial: desde fijar expectativas con compañeros de piso hasta elegir repartos iguales o proporcionales. Cuando quieras registrar gastos de verdad, {appName} ofrece a tu grupo un libro compartido gratuito.",
+      "breadcrumbHome": "Inicio",
+      "breadcrumbResources": "Recursos",
+      "jsonLdName": "Recursos sobre gastos compartidos seleccionados por {appName}",
+      "jsonLdDescription": "Guías seleccionadas sobre dividir facturas, registrar gastos compartidos y gestionar costes del hogar y entre compañeros de piso de forma justa.",
+      "externalLinkLabel": "(se abre en una pestaña nueva)",
+      "categories": {
+        "gettingStarted": {
+          "title": "Primeros pasos con gastos compartidos",
+          "description": "Guías básicas sobre fijar expectativas, hablar de dinero y llevar un registro claro de quién debe qué."
+        },
+        "splittingMethods": {
+          "title": "Métodos de reparto justo",
+          "description": "Cuándo repartir por igual, cuándo usar cuotas proporcionales y cómo gestionar gastos puntuales sin conflictos."
+        },
+        "householdBills": {
+          "title": "Alquiler, suministros y facturas del hogar",
+          "description": "Consejos prácticos para costes recurrentes entre compañeros: alquiler, luz, internet, compra y otros gastos compartidos."
+        }
+      },
+      "items": {
+        "uniteCuSharingExpenses": {
+          "title": "Shared Expenses Guide: How to Manage Costs with Others",
+          "summary": "Visión práctica de compartir gastos con compañeros de piso: comunicación, seguimiento y cómo evitar disputas habituales en la convivencia."
+        },
+        "cudenverSplittingCosts": {
+          "title": "Shared Expense Tracking Guide: Keeping Track of Who Owes What",
+          "summary": "Explica por qué importa un sistema compartido y cómo mantener el orden para que pequeñas compras no generen confusión a fin de mes."
+        },
+        "junehomesFairSplitting": {
+          "title": "Fair Expense Splitting Guide: Equal vs Proportional Cost Sharing",
+          "summary": "Compara reparto igualitario y proporcional con ejemplos de alquiler, suministros y costes cotidianos — útil cuando cada compañero aporta distinto."
+        },
+        "sofiCostSharing": {
+          "title": "Cost Sharing Best Practices for Shared Living Expenses",
+          "summary": "Buenas prácticas para dividir gastos del hogar, establecer reglas desde el principio y mantener las finanzas compartidas transparentes."
+        },
+        "truistRoommateCosts": {
+          "title": "Complete Roommate Expense Guide: Rent, Utilities & Shared Bills",
+          "summary": "Recorrido completo por facturas recurrentes: alquiler, suministros, suscripciones y compra, con consejos para repartirlas de forma justa."
+        },
+        "experianBillSplitting": {
+          "title": "Bill Splitting Guide: Fair Ways to Divide Household Expenses",
+          "summary": "Estrategias justas para dividir facturas entre compañeros, incluido el uso desigual y la confianza en pagos compartidos."
+        }
+      },
+      "internalLinks": {
+        "title": "Ponlo en práctica con {appName}",
+        "description": "Leer sobre repartos justos es un buen comienzo. Cuando quieras registrar gastos reales, estas páginas te ayudan a empezar.",
+        "roommates": {
+          "title": "Control de gastos entre compañeros de piso",
+          "description": "Descubre cómo {appName} ayuda a repartir alquiler, suministros y compra sin hojas de cálculo."
+        },
+        "compare": {
+          "title": "{appName} vs Splitwise",
+          "description": "Compara funciones si estás evaluando apps de división de gastos para tu hogar."
+        }
+      },
+      "cta": {
+        "title": "¿Listo para registrar gastos compartidos?",
+        "description": "Crea un grupo gratuito de compañeros de piso u hogar con {appName} y empieza a dividir facturas en segundos.",
+        "button": "Crear un grupo gratis"
       }
     }
   },
