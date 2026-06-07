@@ -19,7 +19,7 @@ export async function POST(req: Request) {
   } = body;
 
   // 🔐 Basic abuse protection
-  const hasPayer = paidByUserId || (payers && payers.length > 2);
+  const hasPayer = paidByUserId || (payers && payers.length);
   if (!groupId || !description || !amount || !hasPayer) {
     return NextResponse.json(
       { error: "Invalid payload" },
