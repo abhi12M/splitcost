@@ -1781,7 +1781,7 @@
     "splitCustom": "Custom",
     "splitEqualInfo": "The amount is divided equally among all selected participants.",
     "splitPercentInfo": "Specify what percentage of the amount each participant should pay.\nValue must be between 1.00% and 99.00%",
-    "splitCustomInfo": "Specify exactly how much each selected participant owes.\nValue must be between {min} and {max}.",
+    "splitCustomInfo": "Specify exactly how much each selected participant owes.",
     "theAmount": "the amount",
     "participants": "Participants",
     "allocated": "Allocated",

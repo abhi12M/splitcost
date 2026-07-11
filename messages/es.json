@@ -882,7 +882,7 @@
     "splitCustom": "Personalizado",
     "splitEqualInfo": "El importe se divide por igual entre todos los participantes seleccionados.",
     "splitPercentInfo": "Indica qué porcentaje del importe debe pagar cada participante.\nEl valor debe estar entre 1,00 % y 99,00 %",
-    "splitCustomInfo": "Indica exactamente cuánto debe cada participante seleccionado.\nEl valor debe estar entre {min} y {max}.",
+    "splitCustomInfo": "Indica exactamente cuánto debe cada participante seleccionado.",
     "theAmount": "el importe",
     "participants": "Participantes",
     "allocated": "Asignado",
