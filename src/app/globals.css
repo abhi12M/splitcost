@@ -180,3 +180,43 @@
     text-wrap: balance;
   }
 }
+
+@layer components {
+  .blog-editor-content table,
+  .blog-article-content table {
+    @apply my-6 w-full table-fixed border-collapse overflow-hidden rounded-lg border border-border;
+  }
+
+  .blog-editor-content th,
+  .blog-editor-content td,
+  .blog-article-content th,
+  .blog-article-content td {
+    @apply min-w-24 border border-border px-3 py-2 align-top;
+  }
+
+  .blog-editor-content th,
+  .blog-article-content th {
+    @apply bg-muted font-semibold text-foreground;
+  }
+
+  .blog-editor-content td,
+  .blog-article-content td {
+    @apply bg-background;
+  }
+
+  .blog-editor-content .selectedCell::after {
+    @apply pointer-events-none absolute inset-0 bg-primary/10 content-[''];
+  }
+
+  .blog-editor-content .selectedCell {
+    @apply relative;
+  }
+
+  .blog-editor-content .column-resize-handle {
+    @apply pointer-events-none absolute bottom-0 right-[-2px] top-0 w-1 bg-primary;
+  }
+
+  .blog-editor-content p.is-editor-empty:first-child::before {
+    @apply pointer-events-none float-left h-0 text-muted-foreground content-[attr(data-placeholder)];
+  }
+}

@@ -41,6 +41,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      blogs: {
+        Row: {
+          author: string
+          category: string
+          content: string
+          cover_image: string | null
+          created_at: string
+          excerpt: string
+          id: string
+          published_at: string | null
+          reading_time: number
+          slug: string
+          status: Database["public"]["Enums"]["blog_status"]
+          title: string
+          updated_at: string
+          views: number
+        }
+        Insert: {
+          author?: string
+          category: string
+          content?: string
+          cover_image?: string | null
+          created_at?: string
+          excerpt: string
+          id?: string
+          published_at?: string | null
+          reading_time?: number
+          slug: string
+          status?: Database["public"]["Enums"]["blog_status"]
+          title: string
+          updated_at?: string
+          views?: number
+        }
+        Update: {
+          author?: string
+          category?: string
+          content?: string
+          cover_image?: string | null
+          created_at?: string
+          excerpt?: string
+          id?: string
+          published_at?: string | null
+          reading_time?: number
+          slug?: string
+          status?: Database["public"]["Enums"]["blog_status"]
+          title?: string
+          updated_at?: string
+          views?: number
+        }
+        Relationships: []
+      }
       expense_payers: {
         Row: {
           amount: number
@@ -389,6 +440,7 @@ export type Database = {
     }
     Enums: {
       auth_provider: "email" | "google" | "apple"
+      blog_status: "draft" | "published"
       split_type: "equal" | "percentage" | "custom"
     }
     CompositeTypes: {
@@ -521,6 +573,7 @@ export const Constants = {
   public: {
     Enums: {
       auth_provider: ["email", "google", "apple"],
+      blog_status: ["draft", "published"],
       split_type: ["equal", "percentage", "custom"],
     },
   },
