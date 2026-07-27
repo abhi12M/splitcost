@@ -52,6 +52,8 @@ export type Database = {
           id: string
           published_at: string | null
           reading_time: number
+          no_index: boolean
+          schema_json: Json | null
           slug: string
           status: Database["public"]["Enums"]["blog_status"]
           title: string
@@ -68,6 +70,8 @@ export type Database = {
           id?: string
           published_at?: string | null
           reading_time?: number
+          no_index?: boolean
+          schema_json?: Json | null
           slug: string
           status?: Database["public"]["Enums"]["blog_status"]
           title: string
@@ -84,6 +88,8 @@ export type Database = {
           id?: string
           published_at?: string | null
           reading_time?: number
+          no_index?: boolean
+          schema_json?: Json | null
           slug?: string
           status?: Database["public"]["Enums"]["blog_status"]
           title?: string

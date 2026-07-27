@@ -9,12 +9,12 @@ import { Layout } from "@/components/layout/Layout";
 import { resolveLocaleParam } from "@/i18n/params";
 import type { AppLocale } from "@/i18n/routing";
 import { getBlogBySlug, getRelatedBlogs, incrementBlogViews } from "@/lib/blog/queries";
+import { buildBlogStructuredData } from "@/lib/blog/schema";
 import { formatBlogDate } from "@/lib/blog/utils";
 import {
   DEFAULT_OG_IMAGE,
   SITE_NAME,
   getCanonicalUrl,
-  getSiteUrl,
 } from "@/lib/seo";
 
 type PageProps = {
@@ -35,6 +35,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: { absolute: `${blog.title} | ${SITE_NAME}` },
     description: blog.excerpt,
     alternates: { canonical: canonicalUrl },
+    robots: blog.no_index
+      ? {
+          index: false,
+          follow: true,
+          googleBot: {
+            index: false,
+            follow: true,
+          },
+        }
+      : undefined,
     openGraph: {
       title: blog.title,
       description: blog.excerpt,
@@ -66,29 +76,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
   const relatedBlogs = await getRelatedBlogs(blog);
   void incrementBlogViews(blog.id, blog.views);
 
-  const canonicalUrl = getCanonicalUrl(`/en/blog/${blog.slug}`);
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "BlogPosting",
-    headline: blog.title,
-    description: blog.excerpt,
-    image: blog.cover_image ? [blog.cover_image] : [`${getSiteUrl()}${DEFAULT_OG_IMAGE}`],
-    datePublished: blog.published_at,
-    dateModified: blog.updated_at,
-    author: {
-      "@type": "Person",
-      name: blog.author,
-    },
-    publisher: {
-      "@type": "Organization",
-      name: SITE_NAME,
-      logo: {
-        "@type": "ImageObject",
-        url: `${getSiteUrl()}/android-chrome-512x512.png`,
-      },
-    },
-    mainEntityOfPage: canonicalUrl,
-  };
+  const jsonLd = blog.schema_json ?? buildBlogStructuredData(blog);
 
   return (
     <Layout>

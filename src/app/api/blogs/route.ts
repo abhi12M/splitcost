@@ -16,6 +16,8 @@ function normalizePayload(body: BlogInput): BlogInput {
     excerpt: body.excerpt?.trim(),
     author: body.author?.trim() || "SplitCost Team",
     reading_time: body.reading_time ?? estimateReadingTime(body.content ?? ""),
+    no_index: body.no_index ?? false,
+    schema_json: body.schema_json ?? null,
   };
 }
 

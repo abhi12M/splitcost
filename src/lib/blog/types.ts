@@ -1,3 +1,5 @@
+import type { Json } from "@/integrations/supabase/types";
+
 export type BlogStatus = "draft" | "published";
 
 export type Blog = {
@@ -12,6 +14,8 @@ export type Blog = {
   status: BlogStatus;
   published_at: string | null;
   reading_time: number;
+  no_index: boolean;
+  schema_json: Json | null;
   views: number;
   created_at: string;
   updated_at: string;
@@ -28,6 +32,8 @@ export type BlogInput = {
   status: BlogStatus;
   published_at?: string | null;
   reading_time?: number;
+  no_index?: boolean;
+  schema_json?: Json | null;
 };
 
 export type BlogSort = "latest" | "popular";

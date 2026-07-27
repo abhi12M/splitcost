@@ -1,12 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import { BLOG_CATEGORIES } from "@/lib/blog/categories";
+import { buildBlogStructuredData, formatStructuredData } from "@/lib/blog/schema";
+import { buildBlogTableOfContents } from "@/lib/blog/toc";
 import type { Blog, BlogInput, BlogStatus } from "@/lib/blog/types";
 import { estimateReadingTime, slugify } from "@/lib/blog/utils";
 import { ADMIN_BASE_PATH } from "@/lib/constants";
+import { BlogTableOfContents } from "@/components/blog/BlogTableOfContents";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { BlogEditor } from "./BlogEditor";
 
@@ -31,10 +35,35 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
   const [category, setCategory] = useState(blog?.category ?? BLOG_CATEGORIES[0].name);
   const [author, setAuthor] = useState(blog?.author ?? "SplitCost Team");
   const [status, setStatus] = useState<BlogStatus>(blog?.status ?? "draft");
+  const [noIndex, setNoIndex] = useState(blog?.no_index ?? false);
+  const [schemaEdited, setSchemaEdited] = useState(Boolean(blog?.schema_json));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   const readingTime = useMemo(() => estimateReadingTime(content), [content]);
+  const generatedSchema = useMemo(
+    () =>
+      buildBlogStructuredData({
+        title: title.trim() || "Blog title",
+        slug: slugify(slug || title || "blog-title"),
+        excerpt: excerpt.trim(),
+        content,
+        cover_image: coverImage || null,
+        author: author.trim() || "SplitCost Team",
+        published_at: blog?.published_at ?? null,
+        updated_at: blog?.updated_at ?? null,
+        reading_time: readingTime,
+      }),
+    [author, blog?.published_at, blog?.updated_at, content, coverImage, excerpt, readingTime, slug, title]
+  );
+  const [schemaJson, setSchemaJson] = useState(() =>
+    formatStructuredData(blog?.schema_json ?? generatedSchema)
+  );
+  const generatedToc = useMemo(() => buildBlogTableOfContents(content), [content]);
+
+  useEffect(() => {
+    if (!schemaEdited) setSchemaJson(formatStructuredData(generatedSchema));
+  }, [generatedSchema, schemaEdited]);
 
   const handleTitleChange = (value: string) => {
     setTitle(value);
@@ -55,6 +84,17 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
     setSaving(true);
     setError("");
 
+    let parsedSchema: BlogInput["schema_json"] = null;
+    if (schemaJson.trim()) {
+      try {
+        parsedSchema = JSON.parse(schemaJson);
+      } catch {
+        setSaving(false);
+        setError("Structured schema must be valid JSON.");
+        return;
+      }
+    }
+
     const payload: BlogInput = {
       title: title.trim(),
       slug: slugify(slug || title),
@@ -66,6 +106,8 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
       status,
       published_at: blog?.published_at ?? null,
       reading_time: readingTime,
+      no_index: noIndex,
+      schema_json: parsedSchema,
     };
 
     const response = await fetch(blog ? `/api/blogs/${blog.id}` : "/api/blogs", {
@@ -156,9 +198,54 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
               }} />
             </div>
             <p className="text-sm text-muted-foreground">{readingTime} min read</p>
+            <div className="flex items-center justify-between gap-3 rounded-lg border p-3">
+              <div className="space-y-1">
+                <Label htmlFor="no-index">Noindex, follow</Label>
+                <p className="text-xs text-muted-foreground">Ask search engines not to index this post.</p>
+              </div>
+              <Switch id="no-index" checked={noIndex} onCheckedChange={setNoIndex} />
+            </div>
             {error ? <p className="text-sm text-destructive">{error}</p> : null}
             <Button className="w-full" type="submit" disabled={saving}>
               {saving ? "Saving..." : "Save blog"}
+            </Button>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Table of contents</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-lg border bg-card p-4">
+              <BlogTableOfContents headings={generatedToc} />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Structured schema</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Textarea
+              value={schemaJson}
+              onChange={(event) => {
+                setSchemaEdited(true);
+                setSchemaJson(event.target.value);
+              }}
+              rows={18}
+              spellCheck={false}
+              className="font-mono text-xs"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                setSchemaEdited(false);
+                setSchemaJson(formatStructuredData(generatedSchema));
+              }}
+            >
+              Regenerate schema
             </Button>
           </CardContent>
         </Card>

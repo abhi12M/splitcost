@@ -2,7 +2,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import type { Blog, BlogInput, BlogListResult, BlogSort } from "./types";
 
 const BLOG_SELECT =
-  "id,title,slug,excerpt,content,cover_image,category,author,status,published_at,reading_time,views,created_at,updated_at";
+  "id,title,slug,excerpt,content,cover_image,category,author,status,published_at,reading_time,no_index,schema_json,views,created_at,updated_at";
 
 type ListBlogsArgs = {
   page?: number;
