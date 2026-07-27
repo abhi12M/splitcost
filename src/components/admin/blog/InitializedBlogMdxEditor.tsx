@@ -87,7 +87,7 @@ export function InitializedBlogMdxEditor({
       markdownShortcutPlugin(),
       toolbarPlugin({
         toolbarClassName:
-          "flex flex-wrap gap-1 rounded-t-lg border bg-muted/40 p-2",
+          "flex max-w-full flex-wrap gap-1 overflow-x-hidden rounded-t-lg border bg-muted/40 p-2",
         toolbarContents: () => <KitchenSinkToolbar />,
       }),
     ],
@@ -114,8 +114,8 @@ export function InitializedBlogMdxEditor({
       }}
       plugins={plugins}
       placeholder="Write the article..."
-      className="overflow-hidden rounded-lg border bg-background"
-      contentEditableClassName="blog-editor-content prose prose-slate dark:prose-invert min-h-[360px] max-w-none p-4 focus:outline-none"
+      className="max-w-full overflow-hidden rounded-lg border bg-background [&_[role=toolbar]]:max-w-full [&_[role=toolbar]]:flex-wrap"
+      contentEditableClassName="blog-editor-content prose prose-slate dark:prose-invert min-h-[20rem] max-w-none p-4 sm:p-6 focus:outline-none"
     />
   );
 }

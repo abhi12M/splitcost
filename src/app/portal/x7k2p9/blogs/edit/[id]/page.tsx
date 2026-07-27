@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { AdminGate } from "@/components/admin/AdminGate";
-import { AdminShell } from "@/components/admin/AdminShell";
 import { BlogForm } from "@/components/admin/blog/BlogForm";
 import { getBlogById } from "@/lib/blog/queries";
 import { ADMIN_BASE_PATH } from "@/lib/constants";
@@ -27,9 +26,7 @@ export default async function EditBlogPage({ params }: PageProps) {
 
   return (
     <AdminGate>
-      <AdminShell>
-        <BlogForm blog={blog} />
-      </AdminShell>
+      <BlogForm blog={blog} />
     </AdminGate>
   );
 }
