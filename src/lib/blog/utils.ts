@@ -8,7 +8,18 @@ export function slugify(value: string) {
 }
 
 export function stripHtml(value: string) {
-  return value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  return value
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/^\s*[-*+]\s+/gm, "")
+    .replace(/^\s*\d+\.\s+/gm, "")
+    .replace(/[*_~>#|]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 export function estimateReadingTime(content: string) {

@@ -1,0 +1,121 @@
+"use client";
+
+import {
+  AdmonitionDirectiveDescriptor,
+  KitchenSinkToolbar,
+  MDXEditor,
+  type MDXEditorMethods,
+  codeBlockPlugin,
+  codeMirrorPlugin,
+  diffSourcePlugin,
+  directivesPlugin,
+  frontmatterPlugin,
+  headingsPlugin,
+  imagePlugin,
+  jsxPlugin,
+  linkDialogPlugin,
+  linkPlugin,
+  listsPlugin,
+  markdownShortcutPlugin,
+  quotePlugin,
+  tablePlugin,
+  thematicBreakPlugin,
+  toolbarPlugin,
+} from "@mdxeditor/editor";
+import "@mdxeditor/editor/style.css";
+import { useEffect, useMemo, useRef } from "react";
+
+type InitializedBlogMdxEditorProps = {
+  value: string;
+  onChange: (value: string) => void;
+};
+
+async function uploadBlogImage(image: File) {
+  const form = new FormData();
+  form.append("file", image);
+
+  const response = await fetch("/api/blog-images", {
+    method: "POST",
+    body: form,
+  });
+
+  if (!response.ok) {
+    throw new Error("Unable to upload image");
+  }
+
+  const data = (await response.json()) as { url: string };
+  return data.url;
+}
+
+export function InitializedBlogMdxEditor({
+  value,
+  onChange,
+}: InitializedBlogMdxEditorProps) {
+  const editorRef = useRef<MDXEditorMethods>(null);
+  const latestValueRef = useRef(value);
+
+  const plugins = useMemo(
+    () => [
+      headingsPlugin({ allowedHeadingLevels: [1, 2, 3, 4, 5, 6] }),
+      listsPlugin(),
+      quotePlugin(),
+      thematicBreakPlugin(),
+      linkPlugin(),
+      linkDialogPlugin(),
+      imagePlugin({ imageUploadHandler: uploadBlogImage }),
+      tablePlugin(),
+      codeBlockPlugin({ defaultCodeBlockLanguage: "js" }),
+      codeMirrorPlugin({
+        codeBlockLanguages: {
+          js: "JavaScript",
+          jsx: "JavaScript (React)",
+          ts: "TypeScript",
+          tsx: "TypeScript (React)",
+          css: "CSS",
+          html: "HTML",
+          json: "JSON",
+          md: "Markdown",
+          bash: "Bash",
+        },
+      }),
+      directivesPlugin({
+        directiveDescriptors: [AdmonitionDirectiveDescriptor],
+      }),
+      frontmatterPlugin(),
+      jsxPlugin({ jsxComponentDescriptors: [], allowFragment: true }),
+      diffSourcePlugin({ viewMode: "rich-text" }),
+      markdownShortcutPlugin(),
+      toolbarPlugin({
+        toolbarClassName:
+          "flex flex-wrap gap-1 rounded-t-lg border bg-muted/40 p-2",
+        toolbarContents: () => <KitchenSinkToolbar />,
+      }),
+    ],
+    []
+  );
+
+  useEffect(() => {
+    latestValueRef.current = value;
+    if (editorRef.current && value !== editorRef.current.getMarkdown()) {
+      editorRef.current.setMarkdown(value || "");
+    }
+  }, [value]);
+
+  return (
+    <MDXEditor
+      ref={editorRef}
+      markdown={value || ""}
+      onChange={(markdown, initialMarkdownNormalize) => {
+        latestValueRef.current = markdown;
+        if (!initialMarkdownNormalize) onChange(markdown);
+      }}
+      onError={({ error }) => {
+        console.error("MDX editor parse error:", error);
+      }}
+      plugins={plugins}
+      placeholder="Write the article..."
+      className="overflow-hidden rounded-lg border bg-background"
+      contentEditableClassName="blog-editor-content prose prose-slate dark:prose-invert min-h-[360px] max-w-none p-4 focus:outline-none"
+    />
+  );
+}

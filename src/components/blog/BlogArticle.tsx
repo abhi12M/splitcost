@@ -1,5 +1,7 @@
-import Link from "next/link";
 import { Facebook, Linkedin, Mail, Twitter } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
+import remarkGfm from "remark-gfm";
 
 import { Button } from "@/components/ui/button";
 import { getCanonicalUrl } from "@/lib/seo";
@@ -7,24 +9,32 @@ import type { Blog } from "@/lib/blog/types";
 import { stripHtml } from "@/lib/blog/utils";
 
 function getHeadings(content: string) {
-  const matches = [...content.matchAll(/<h([2-3])[^>]*>(.*?)<\/h\1>/gi)];
-  return matches.map((match, index) => {
-    const text = stripHtml(match[2]);
-    return {
-      id: `section-${index + 1}`,
-      text,
-      level: Number(match[1]),
-    };
-  });
-}
-
-function withHeadingIds(content: string) {
+  const headings: Array<{ id: string; text: string; level: number }> = [];
   let index = 0;
-  return content.replace(/<h([2-3])([^>]*)>(.*?)<\/h\1>/gi, (match, level, attrs, text) => {
+
+  content.replace(/<h([1-3])([^>]*)>(.*?)<\/h\1>/gi, (_match, level, attrs, text) => {
     index += 1;
-    if (attrs.includes("id=")) return match;
-    return `<h${level}${attrs} id="section-${index}">${text}</h${level}>`;
+    const existingId = String(attrs).match(/\sid=["']([^"']+)["']/i)?.[1];
+    headings.push({
+      id: existingId ?? `section-${index}`,
+      text: stripHtml(text),
+      level: Number(level),
+    });
+    return "";
   });
+
+  if (headings.length) return headings;
+
+  for (const match of content.matchAll(/^(#{1,3})\s+(.+)$/gm)) {
+    index += 1;
+    headings.push({
+      id: `section-${index}`,
+      text: stripHtml(match[2]),
+      level: match[1].length,
+    });
+  }
+
+  return headings;
 }
 
 export function BlogArticle({ blog }: { blog: Blog }) {
@@ -32,6 +42,7 @@ export function BlogArticle({ blog }: { blog: Blog }) {
   const headings = getHeadings(blog.content);
   const shareText = encodeURIComponent(blog.title);
   const shareUrl = encodeURIComponent(url);
+  let renderedHeadingIndex = 0;
 
   return (
     <div className="grid gap-8 lg:grid-cols-[220px_1fr]">
@@ -77,10 +88,52 @@ export function BlogArticle({ blog }: { blog: Blog }) {
           </div>
         </div>
       </aside>
-      <article
-        className="blog-article-content prose prose-slate max-w-none dark:prose-invert prose-headings:scroll-mt-28 prose-a:text-primary prose-img:rounded-lg"
-        dangerouslySetInnerHTML={{ __html: withHeadingIds(blog.content) }}
-      />
+      <article className="blog-article-content prose prose-slate max-w-none dark:prose-invert prose-headings:scroll-mt-28 prose-a:text-primary prose-img:rounded-lg">
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeRaw]}
+          components={{
+            h2({ children, id, ...props }) {
+              renderedHeadingIndex += 1;
+              return (
+                <h2 id={id ?? `section-${renderedHeadingIndex}`} {...props}>
+                  {children}
+                </h2>
+              );
+            },
+            h3({ children, id, ...props }) {
+              renderedHeadingIndex += 1;
+              return (
+                <h3 id={id ?? `section-${renderedHeadingIndex}`} {...props}>
+                  {children}
+                </h3>
+              );
+            },
+            h1({ children, id, ...props }) {
+              renderedHeadingIndex += 1;
+              return (
+                <h1 id={id ?? `section-${renderedHeadingIndex}`} {...props}>
+                  {children}
+                </h1>
+              );
+            },
+            a({ children, href, ...props }) {
+              const isExternal = href?.startsWith("http");
+              return isExternal ? (
+                <a href={href} target="_blank" rel="noreferrer" {...props}>
+                  {children}
+                </a>
+              ) : (
+                <a href={href} {...props}>
+                  {children}
+                </a>
+              );
+            },
+          }}
+        >
+          {blog.content}
+        </ReactMarkdown>
+      </article>
     </div>
   );
 }
