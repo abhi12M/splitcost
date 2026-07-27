@@ -148,6 +148,7 @@ export function HeaderDesktopNav() {
         <HeaderNavLink href="/#faq">{t("faq")}</HeaderNavLink>
         <HeaderNavLink href="/contact">{t("contact")}</HeaderNavLink>
         <HeaderNavLink href="/resources">{t("resources")}</HeaderNavLink>
+        <HeaderNavLink href="/blog">{t("blog")}</HeaderNavLink>
       </HeaderNavDropdown>
 
       <HeaderNavDropdown label={t("legal")}>

@@ -1,15 +1,13 @@
 import type { Metadata } from "next";
-import dynamic from "next/dynamic";
 
+import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { AdminGate } from "@/components/admin/AdminGate";
 import { ADMIN_BASE_PATH } from "@/lib/constants";
 import { buildMetadata } from "@/lib/seo";
 
-const HomePage = dynamic(() => import("@/views/Index"));
-
 export const metadata: Metadata = buildMetadata({
-  title: "Admin",
-  description: "Administrative dashboard for SplitCost groups.",
+  title: "Admin Dashboard",
+  description: "Administrative dashboard for SplitCost groups and blogs.",
   path: ADMIN_BASE_PATH,
   noIndex: true,
 });
@@ -17,7 +15,7 @@ export const metadata: Metadata = buildMetadata({
 export default function Page() {
   return (
     <AdminGate>
-      <HomePage adminMode />
+      <AdminDashboard />
     </AdminGate>
   );
 }

@@ -39,8 +39,8 @@ type MobileMenuSheetProps = {
 };
 
 type MenuLink = {
-  href: "/" | "/#how-it-works" | "/#features" | "/use-cases" | "/compare" | "/resources" | "/#faq" | "/contact" | "/privacy" | "/terms";
-  labelKey: "howItWorks" | "features" | "useCases" | "compare" | "resources" | "faq" | "contact" | "privacy" | "terms";
+  href: "/" | "/#how-it-works" | "/#features" | "/use-cases" | "/compare" | "/resources" | "/blog" | "/#faq" | "/contact" | "/privacy" | "/terms";
+  labelKey: "howItWorks" | "features" | "useCases" | "compare" | "resources" | "blog" | "faq" | "contact" | "privacy" | "terms";
   icon: LucideIcon;
 };
 
@@ -60,6 +60,7 @@ const MENU_SECTIONS: { titleKey: "product" | "support" | "legal"; links: MenuLin
       { href: "/#faq", labelKey: "faq", icon: MessageCircleQuestion },
       { href: "/contact", labelKey: "contact", icon: Mail },
       { href: "/resources", labelKey: "resources", icon: BookOpen },
+      { href: "/blog", labelKey: "blog", icon: FileText },
     ],
   },
   {

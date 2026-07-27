@@ -41,6 +41,72 @@ export type Database = {
   }
   public: {
     Tables: {
+      blogs: {
+        Row: {
+          id: string
+          title: string
+          slug: string
+          excerpt: string
+          content: string
+          cover_image: string | null
+          cover_image_alt: string | null
+          category: string
+          author: string
+          author_avatar: string | null
+          status: Database["public"]["Enums"]["blog_status"]
+          nofollow: boolean
+          structured_data: Json | null
+          faqs: Json | null
+          published_at: string | null
+          reading_time: number
+          views: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          slug: string
+          excerpt?: string
+          content?: string
+          cover_image?: string | null
+          cover_image_alt?: string | null
+          category: string
+          author?: string
+          author_avatar?: string | null
+          status?: Database["public"]["Enums"]["blog_status"]
+          nofollow?: boolean
+          structured_data?: Json | null
+          faqs?: Json | null
+          published_at?: string | null
+          reading_time?: number
+          views?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          slug?: string
+          excerpt?: string
+          content?: string
+          cover_image?: string | null
+          cover_image_alt?: string | null
+          category?: string
+          author?: string
+          author_avatar?: string | null
+          status?: Database["public"]["Enums"]["blog_status"]
+          nofollow?: boolean
+          structured_data?: Json | null
+          faqs?: Json | null
+          published_at?: string | null
+          reading_time?: number
+          views?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       expense_payers: {
         Row: {
           amount: number
@@ -389,6 +455,7 @@ export type Database = {
     }
     Enums: {
       auth_provider: "email" | "google" | "apple"
+      blog_status: "draft" | "published"
       split_type: "equal" | "percentage" | "custom"
     }
     CompositeTypes: {
@@ -521,6 +588,7 @@ export const Constants = {
   public: {
     Enums: {
       auth_provider: ["email", "google", "apple"],
+      blog_status: ["draft", "published"],
       split_type: ["equal", "percentage", "custom"],
     },
   },

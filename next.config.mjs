@@ -7,6 +7,20 @@ const nextConfig = {
   reactStrictMode: true,
   compress: true,
   poweredByHeader: false,
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "*.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
+      {
+        protocol: "https",
+        hostname: "**.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
+    ],
+  },
   // Tree-shake the heaviest libraries and only ship the icons / functions that
   // are actually imported. Especially impactful for lucide-react and
   // @radix-ui/* which barrel-export huge numbers of components.

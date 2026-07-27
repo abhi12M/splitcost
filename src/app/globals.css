@@ -7,6 +7,20 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
+.blog-prose img {
+  height: auto;
+  max-width: 100%;
+}
+
+.blog-prose h2,
+.blog-prose h3 {
+  scroll-margin-top: 7rem;
+}
+
 @layer base {
   :root {
     /* SplitCost brand: navy #0B132B, electric blue #2563FF, cool gray #F1F5F9 */
