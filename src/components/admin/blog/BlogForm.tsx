@@ -350,7 +350,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
           </aside>
 
           <main className="flex min-h-0 min-w-0 flex-1 flex-col bg-background lg:overflow-hidden">
-            <div className="p-4 sm:p-6 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:overscroll-contain">
+            <div className="flex min-h-0 flex-1 flex-col p-4 sm:p-6 lg:overscroll-contain">
               {error ? <p className="mb-4 text-sm text-destructive">{error}</p> : null}
               <BlogEditor
                 value={content}
