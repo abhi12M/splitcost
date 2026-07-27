@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { Check, Copy } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import { BLOG_CATEGORIES } from "@/lib/blog/categories";
@@ -25,10 +26,23 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { BlogEditor } from "./BlogEditor";
 
+const TITLE_MAX = 60;
+const EXCERPT_MAX = 160;
+
+function CharacterCounter({ value, max }: { value: string; max: number }) {
+  const overLimit = value.length > max;
+  return (
+    <p className={`text-right text-xs ${overLimit ? "text-destructive" : "text-muted-foreground"}`}>
+      {value.length}/{max}
+    </p>
+  );
+}
+
 export function BlogForm({ blog }: { blog?: Blog | null }) {
   const router = useRouter();
   const [title, setTitle] = useState(blog?.title ?? "");
   const [slug, setSlug] = useState(blog?.slug ?? "");
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(Boolean(blog?.slug));
   const [excerpt, setExcerpt] = useState(blog?.excerpt ?? "");
   const [content, setContent] = useState(blog?.content ?? "");
   const [coverImage, setCoverImage] = useState(blog?.cover_image ?? "");
@@ -37,6 +51,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
   const [status, setStatus] = useState<BlogStatus>(blog?.status ?? "draft");
   const [noIndex, setNoIndex] = useState(blog?.no_index ?? false);
   const [schemaEdited, setSchemaEdited] = useState(Boolean(blog?.schema_json));
+  const [schemaCopied, setSchemaCopied] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -67,7 +82,17 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
 
   const handleTitleChange = (value: string) => {
     setTitle(value);
-    if (!blog && !slug) setSlug(slugify(value));
+    if (!slugManuallyEdited) setSlug(slugify(value));
+  };
+
+  const copySchemaJson = async () => {
+    try {
+      await navigator.clipboard.writeText(schemaJson);
+      setSchemaCopied(true);
+      window.setTimeout(() => setSchemaCopied(false), 2000);
+    } catch {
+      setSchemaCopied(false);
+    }
   };
 
   const uploadCover = async (file: File) => {
@@ -137,14 +162,31 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
           <div className="space-y-2">
             <Label htmlFor="title">Title</Label>
             <Input id="title" value={title} onChange={(event) => handleTitleChange(event.target.value)} required />
+            <CharacterCounter value={title} max={TITLE_MAX} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="slug">Slug</Label>
-            <Input id="slug" value={slug} onChange={(event) => setSlug(event.target.value)} required />
+            <Input
+              id="slug"
+              value={slug}
+              onChange={(event) => {
+                setSlugManuallyEdited(true);
+                setSlug(event.target.value);
+              }}
+              required
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="excerpt">SEO description and excerpt</Label>
-            <Textarea id="excerpt" value={excerpt} onChange={(event) => setExcerpt(event.target.value)} rows={3} required />
+            <Textarea
+              id="excerpt"
+              value={excerpt}
+              onChange={(event) => setExcerpt(event.target.value)}
+              rows={3}
+              className="min-h-[5rem] h-[5rem] sm:min-h-[5rem] sm:h-[5rem]"
+              required
+            />
+            <CharacterCounter value={excerpt} max={EXCERPT_MAX} />
           </div>
           <div className="space-y-2">
             <Label>Content</Label>
@@ -222,8 +264,17 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle>Structured schema</CardTitle>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Copy structured schema"
+              onClick={() => void copySchemaJson()}
+            >
+              {schemaCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            </Button>
           </CardHeader>
           <CardContent className="space-y-3">
             <Textarea
