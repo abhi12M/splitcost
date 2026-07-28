@@ -105,7 +105,11 @@ export default async function BlogDetailPage({ params }: PageProps) {
           <div className="container">
             <div className="relative mx-auto aspect-[16/8] max-w-5xl overflow-hidden rounded-lg bg-muted">
               {blog.cover_image ? (
-                <img src={blog.cover_image} alt={blog.title} className="h-full w-full object-cover" />
+                <img
+                  src={blog.cover_image}
+                  alt={blog.cover_alt || blog.title}
+                  className="h-full w-full object-cover"
+                />
               ) : (
                 <div className="flex h-full items-center justify-center bg-primary-muted text-primary">
                   SplitCost Blog

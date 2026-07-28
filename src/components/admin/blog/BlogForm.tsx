@@ -4,11 +4,13 @@ import { formatDistanceToNow } from "date-fns";
 import {
   Check,
   ChevronDown,
+  Code2,
   Copy,
   HelpCircle,
+  ImageUp,
   ListTree,
   Trash2,
-  Upload,
+  X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -77,19 +79,45 @@ function formatCount(value: number) {
 type SettingsSectionProps = {
   title: string;
   defaultOpen?: boolean;
+  help?: string;
   children: React.ReactNode;
 };
 
-function SettingsSection({ title, defaultOpen = true, children }: SettingsSectionProps) {
+function SettingsSection({ title, defaultOpen = true, help, children }: SettingsSectionProps) {
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <Collapsible open={open} onOpenChange={setOpen} className="border-b">
-      <CollapsibleTrigger className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-semibold hover:bg-muted/50">
-        {title}
-        <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", open && "rotate-180")} />
+    <Collapsible
+      open={open}
+      onOpenChange={setOpen}
+      className="overflow-hidden rounded-xl border bg-background shadow-sm"
+    >
+      <CollapsibleTrigger className="flex w-full items-center justify-between px-4 py-3.5 text-left text-sm font-semibold transition-colors hover:bg-muted/40">
+        <span className="flex items-center gap-2">
+          {title}
+          {help ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span
+                  role="img"
+                  aria-label={`${title} help`}
+                  onClick={(event) => event.stopPropagation()}
+                  className="text-muted-foreground"
+                >
+                  <HelpCircle className="h-3.5 w-3.5" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="left" className="max-w-xs">
+                {help}
+              </TooltipContent>
+            </Tooltip>
+          ) : null}
+        </span>
+        <ChevronDown
+          className={cn("h-4 w-4 text-muted-foreground transition-transform", open && "rotate-180")}
+        />
       </CollapsibleTrigger>
-      <CollapsibleContent className="space-y-4 px-4 pb-4">{children}</CollapsibleContent>
+      <CollapsibleContent className="space-y-4 border-t px-4 py-4">{children}</CollapsibleContent>
     </Collapsible>
   );
 }
@@ -98,14 +126,19 @@ function FieldLabel({
   htmlFor,
   label,
   tooltip,
+  required,
 }: {
   htmlFor?: string;
   label: string;
   tooltip?: string;
+  required?: boolean;
 }) {
   return (
     <div className="flex items-center gap-1.5">
-      <Label htmlFor={htmlFor}>{label}</Label>
+      <Label htmlFor={htmlFor}>
+        {label}
+        {required ? <span className="ml-0.5 text-destructive">*</span> : null}
+      </Label>
       {tooltip ? (
         <Tooltip>
           <TooltipTrigger asChild>
@@ -131,11 +164,10 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
   const [excerpt, setExcerpt] = useState(blog?.excerpt ?? "");
   const [content, setContent] = useState(blog?.content ?? "");
   const [coverImage, setCoverImage] = useState(blog?.cover_image ?? "");
-  const [coverAlt, setCoverAlt] = useState(blog?.title ?? "");
+  const [coverAlt, setCoverAlt] = useState(blog?.cover_alt ?? blog?.title ?? "");
   const [coverDimensions, setCoverDimensions] = useState<string | null>(null);
   const [category, setCategory] = useState(blog?.category ?? BLOG_CATEGORIES[0].name);
   const [author, setAuthor] = useState(blog?.author ?? "SplitCost Team");
-  const [status, setStatus] = useState<BlogStatus>(blog?.status ?? "draft");
   const [noIndex, setNoIndex] = useState(blog?.no_index ?? false);
   const [showToc, setShowToc] = useState(true);
   const [activeTocId, setActiveTocId] = useState<string>();
@@ -146,6 +178,8 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
   const [isDirty, setIsDirty] = useState(false);
   const [schemaEdited, setSchemaEdited] = useState(Boolean(blog?.schema_json));
   const [schemaCopied, setSchemaCopied] = useState(false);
+  const [schemaEditorOpen, setSchemaEditorOpen] = useState(false);
+  const [slugCopied, setSlugCopied] = useState(false);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const editorContainerRef = useRef<HTMLDivElement>(null);
 
@@ -222,6 +256,17 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
     }
   };
 
+  const copyPostUrl = async () => {
+    const postSlug = slugify(slug || title || "enter-blog-slug");
+    try {
+      await navigator.clipboard.writeText(`https://splitcost.app/blog/${postSlug}`);
+      setSlugCopied(true);
+      window.setTimeout(() => setSlugCopied(false), 2000);
+    } catch {
+      setSlugCopied(false);
+    }
+  };
+
   const buildPayload = useCallback(
     (nextStatus: BlogStatus): BlogInput => ({
       title: title.trim() || "Untitled blog post",
@@ -229,6 +274,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
       excerpt: excerpt.trim() || getExcerpt(content, title) || "Draft blog post.",
       content,
       cover_image: coverImage || null,
+      cover_alt: coverAlt.trim() || null,
       category,
       author: author.trim() || "SplitCost Team",
       status: nextStatus,
@@ -249,6 +295,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
       blog?.published_at,
       category,
       content,
+      coverAlt,
       coverImage,
       excerpt,
       generatedSchema,
@@ -291,7 +338,6 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
 
         const saved = (await response.json()) as Blog;
         setBlogId(saved.id);
-        setStatus(saved.status);
         setLastSavedAt(new Date(saved.updated_at));
         setIsDirty(false);
         setSaveStatus("saved");
@@ -324,7 +370,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
-  }, [blogId, content, coverImage, excerpt, isDirty, noIndex, saveBlog, saving, schemaJson, slug, title]);
+  }, [blogId, content, coverAlt, coverImage, excerpt, isDirty, noIndex, saveBlog, saving, schemaJson, slug, title]);
 
   const handlePreview = () => {
     const previewSlug = slugify(slug || title);
@@ -424,186 +470,162 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
             </div>
           </main>
 
-          <aside className="min-h-0 w-full min-w-0 shrink-0 border-l bg-background lg:flex lg:w-80 lg:flex-col lg:overflow-hidden">
-            <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:overscroll-contain">
-              <SettingsSection title="General">
-                <div className="space-y-3">
-                  <Label>Cover image</Label>
-                  {coverImage ? (
-                    <div className="overflow-hidden rounded-lg border bg-muted/20">
-                      <div className="relative aspect-[3/2] bg-muted">
-                        <img
-                          src={coverImage}
-                          alt={coverAlt || title || "Cover image"}
-                          className="h-full w-full object-cover"
-                          onLoad={(event) => {
-                            const image = event.currentTarget;
-                            setCoverDimensions(`${image.naturalWidth} x ${image.naturalHeight}px`);
-                          }}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between gap-2 px-3 py-2 text-xs">
-                        <div className="min-w-0">
-                          <p className="truncate font-medium text-foreground">{getFilenameFromUrl(coverImage)}</p>
-                          {coverDimensions ? <p className="text-muted-foreground">{coverDimensions}</p> : null}
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="shrink-0"
-                          onClick={() => {
-                            setCoverImage("");
-                            setCoverDimensions(null);
-                            markDirty();
-                          }}
-                          aria-label="Remove cover image"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+          <aside className="min-h-0 w-full min-w-0 shrink-0 border-l bg-muted/30 lg:flex lg:w-96 lg:flex-col lg:overflow-hidden">
+            <div className="space-y-3 p-3 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:overscroll-contain">
+              <SettingsSection
+                title="Cover Image"
+                help="Upload a cover image or paste a direct image URL. Use descriptive alt text for accessibility."
+              >
+                {coverImage ? (
+                  <div className="overflow-hidden rounded-lg border bg-muted/20">
+                    <div className="relative aspect-[3/2] bg-muted">
+                      <img
+                        src={coverImage}
+                        alt={coverAlt || title || "Cover image"}
+                        className="h-full w-full object-cover"
+                        onLoad={(event) => {
+                          const image = event.currentTarget;
+                          setCoverDimensions(`${image.naturalWidth} × ${image.naturalHeight}px`);
+                        }}
+                      />
                     </div>
-                  ) : null}
-
-                  <div className="flex flex-col gap-2">
-                    <Button type="button" variant="outline" className="justify-start" asChild>
-                      <label className="cursor-pointer">
-                        <Upload className="h-4 w-4" />
-                        Upload file
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="sr-only"
-                          onChange={(event) => {
-                            const file = event.target.files?.[0];
-                            if (file) void uploadCover(file);
-                          }}
-                        />
-                      </label>
-                    </Button>
-                    <Input
-                      value={coverImage}
-                      onChange={(event) => {
-                        setCoverImage(event.target.value);
-                        markDirty();
-                      }}
-                      placeholder="Enter image URL..."
-                    />
+                    <div className="flex items-center justify-between gap-2 px-3 py-2 text-xs">
+                      <div className="min-w-0">
+                        <p className="truncate font-medium text-foreground">{getFilenameFromUrl(coverImage)}</p>
+                        {coverDimensions ? <p className="text-muted-foreground">{coverDimensions}</p> : null}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 shrink-0"
+                        onClick={() => {
+                          setCoverImage("");
+                          setCoverDimensions(null);
+                          markDirty();
+                        }}
+                        aria-label="Remove cover image"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="cover-alt">Alt text</Label>
-                    <Textarea
-                      id="cover-alt"
-                      value={coverAlt}
-                      onChange={(event) => {
-                        setCoverAlt(event.target.value);
-                        markDirty();
-                      }}
-                      rows={2}
-                      placeholder="Describe the cover image"
-                      className="min-h-[8rem] h-[8rem] sm:min-h-[8rem] sm:h-[8rem]"
-                    />
-                  </div>
-                </div>
-              </SettingsSection>
-
-              <SettingsSection title="SEO">
-                <div className="space-y-2">
-                  <FieldLabel htmlFor="slug" label="Slug" tooltip="The URL path for this post." />
-                  <Input
-                    id="slug"
-                    value={slug}
-                    onChange={(event) => {
-                      setSlugManuallyEdited(true);
-                      setSlug(event.target.value);
-                      markDirty();
+                ) : (
+                  <label
+                    className="flex min-h-28 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed bg-muted/10 px-4 py-5 text-center transition-colors hover:border-primary/50 hover:bg-muted/30"
+                    onDragOver={(event) => event.preventDefault()}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      const file = event.dataTransfer.files?.[0];
+                      if (file?.type.startsWith("image/")) void uploadCover(file);
                     }}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <FieldLabel
-                    htmlFor="seo-title"
-                    label="Title"
-                    tooltip="Shown in search results and browser tabs. Keep it under 60 characters."
-                  />
-                  <Input
-                    id="seo-title"
-                    value={title}
-                    onChange={(event) => handleTitleChange(event.target.value)}
-                    required
-                  />
-                  <CharacterCounter value={title} max={TITLE_MAX} />
-                </div>
-
-                <div className="space-y-2">
-                  <FieldLabel
-                    htmlFor="seo-description"
-                    label="Description"
-                    tooltip="Meta description for search engines and social previews."
-                  />
-                  <Textarea
-                    id="seo-description"
-                    value={excerpt}
-                    onChange={(event) => {
-                      setExcerpt(event.target.value);
-                      markDirty();
-                    }}
-                    rows={4}
-                    required
-                    className="min-h-[8rem] h-[8rem] sm:min-h-[8rem] sm:h-[8rem]"
-                  />
-                  <CharacterCounter value={excerpt} max={DESCRIPTION_MAX} />
-                </div>
-              </SettingsSection>
-
-              <SettingsSection title="Structured schema" defaultOpen={false}>
-                <div className="flex items-start justify-between gap-3">
-                  <p className="text-xs text-muted-foreground">
-                    JSON-LD is generated automatically from the article and SEO fields.
-                  </p>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="shrink-0"
-                    aria-label="Copy structured schema"
-                    onClick={() => void copySchemaJson()}
                   >
-                    {schemaCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                  </Button>
+                    <ImageUp className="mb-2 h-6 w-6 text-foreground" />
+                    <span className="text-sm font-medium">Upload Image</span>
+                    <span className="mt-1 text-xs text-muted-foreground">or paste image URL</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="sr-only"
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        if (file) void uploadCover(file);
+                      }}
+                    />
+                  </label>
+                )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="cover-url">Image URL</Label>
+                  <Input
+                    id="cover-url"
+                    value={coverImage}
+                    onChange={(event) => {
+                      setCoverImage(event.target.value);
+                      markDirty();
+                    }}
+                    placeholder="https://example.com/image.jpg"
+                  />
                 </div>
-                <Textarea
-                  value={schemaJson}
-                  onChange={(event) => {
-                    setSchemaEdited(true);
-                    setSchemaJson(event.target.value);
-                    markDirty();
-                  }}
-                  rows={18}
-                  spellCheck={false}
-                  aria-label="Structured schema JSON"
-                  className="min-h-80 resize-y font-mono text-xs"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => {
-                    setSchemaEdited(false);
-                    setSchemaJson(formatStructuredData(generatedSchema));
-                    markDirty();
-                  }}
-                >
-                  Regenerate schema
-                </Button>
+
+                <div className="space-y-2">
+                  <Label htmlFor="cover-alt">Alt Text</Label>
+                  <Input
+                    id="cover-alt"
+                    value={coverAlt}
+                    onChange={(event) => {
+                      setCoverAlt(event.target.value);
+                      markDirty();
+                    }}
+                    placeholder="Describe your image for accessibility"
+                  />
+                </div>
               </SettingsSection>
 
-              <SettingsSection title="More settings" defaultOpen={false}>
-                <div className="space-y-2">
-                  <Label>Category</Label>
+              <SettingsSection title="Post Details">
+                <div className="grid grid-cols-[5rem_minmax(0,1fr)] items-start gap-x-3 gap-y-3">
+                  <FieldLabel htmlFor="post-title" label="Title" required />
+                  <div className="space-y-1">
+                    <Input
+                      id="post-title"
+                      value={title}
+                      onChange={(event) => handleTitleChange(event.target.value)}
+                      placeholder="Enter blog title"
+                      required
+                    />
+                    <CharacterCounter value={title} max={TITLE_MAX} />
+                  </div>
+
+                  <FieldLabel htmlFor="slug" label="Slug" required tooltip="The URL path for this post." />
+                  <div className="space-y-1">
+                    <Input
+                      id="slug"
+                      value={slug}
+                      onChange={(event) => {
+                        setSlugManuallyEdited(true);
+                        setSlug(event.target.value);
+                        markDirty();
+                      }}
+                      placeholder="enter-blog-slug"
+                      required
+                    />
+                    <div className="flex min-w-0 items-center gap-1 text-[11px] text-muted-foreground">
+                      <span className="min-w-0 truncate">
+                        https://splitcost.app/blog/{slugify(slug || title || "enter-blog-slug")}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => void copyPostUrl()}
+                        className="shrink-0 rounded p-0.5 hover:bg-muted hover:text-foreground"
+                        aria-label="Copy post URL"
+                      >
+                        {slugCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <FieldLabel
+                    htmlFor="post-description"
+                    label="Description"
+                    required
+                  />
+                  <div className="space-y-1">
+                    <Textarea
+                      id="post-description"
+                      value={excerpt}
+                      onChange={(event) => {
+                        setExcerpt(event.target.value);
+                        markDirty();
+                      }}
+                      rows={3}
+                      placeholder="Write a short description for your blog..."
+                      required
+                      className="min-h-20 resize-none"
+                    />
+                    <CharacterCounter value={excerpt} max={DESCRIPTION_MAX} />
+                  </div>
+
+                  <FieldLabel label="Category" required />
                   <Select
                     value={category}
                     onValueChange={(value) => {
@@ -611,8 +633,8 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
                       markDirty();
                     }}
                   >
-                    <SelectTrigger>
-                      <SelectValue />
+                    <SelectTrigger aria-label="Category">
+                      <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
                       {BLOG_CATEGORIES.map((item) => (
@@ -622,9 +644,8 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="author">Author</Label>
+
+                  <FieldLabel htmlFor="author" label="Author" required />
                   <Input
                     id="author"
                     value={author}
@@ -632,24 +653,101 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
                       setAuthor(event.target.value);
                       markDirty();
                     }}
+                    placeholder="Select author"
                   />
                 </div>
-                <div className="flex items-center justify-between gap-3 rounded-lg border p-3">
-                  <div className="space-y-1">
-                    <Label htmlFor="no-index">Noindex, follow</Label>
-                    <p className="text-xs text-muted-foreground">Ask search engines not to index this post.</p>
-                  </div>
-                  <Switch
-                    id="no-index"
-                    checked={noIndex}
-                    onCheckedChange={(value) => {
-                      setNoIndex(value);
-                      markDirty();
-                    }}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">Current status: {status}</p>
               </SettingsSection>
+
+              <section className="overflow-hidden rounded-xl border bg-background shadow-sm">
+                <div className="flex items-center justify-between gap-3 px-4 py-3">
+                  <div className="flex items-center gap-2 text-sm font-semibold">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-md bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50">
+                      <Code2 className="h-3.5 w-3.5" />
+                    </span>
+                    Schema – JSON-LD Preview
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-2.5 text-xs"
+                    onClick={() => setSchemaEditorOpen((open) => !open)}
+                  >
+                    {schemaEditorOpen ? "Close" : "Edit JSON"}
+                    {schemaEditorOpen ? <X className="h-3.5 w-3.5" /> : null}
+                  </Button>
+                </div>
+                <div className="px-4 pb-4">
+                  {schemaEditorOpen ? (
+                    <div className="space-y-3">
+                      <Textarea
+                        value={schemaJson}
+                        onChange={(event) => {
+                          setSchemaEdited(true);
+                          setSchemaJson(event.target.value);
+                          markDirty();
+                        }}
+                        rows={14}
+                        spellCheck={false}
+                        aria-label="Structured schema JSON"
+                        className="min-h-64 resize-y bg-slate-950 font-mono text-xs text-slate-100"
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => {
+                            setSchemaEdited(false);
+                            setSchemaJson(formatStructuredData(generatedSchema));
+                            markDirty();
+                          }}
+                        >
+                          Regenerate
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          aria-label="Copy structured schema"
+                          onClick={() => void copySchemaJson()}
+                        >
+                          {schemaCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <pre className="max-h-36 overflow-hidden whitespace-pre-wrap rounded-lg bg-slate-950 p-4 font-mono text-[11px] leading-5 text-slate-200">
+                      {schemaJson}
+                    </pre>
+                  )}
+                </div>
+              </section>
+
+              <section className="flex items-center justify-between gap-3 rounded-xl border bg-background px-4 py-3 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="no-index">Noindex this post</Label>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button type="button" className="text-muted-foreground" aria-label="Noindex help">
+                        <HelpCircle className="h-3.5 w-3.5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left" className="max-w-xs">
+                      Ask search engines not to show this post in search results.
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <Switch
+                  id="no-index"
+                  checked={noIndex}
+                  onCheckedChange={(value) => {
+                    setNoIndex(value);
+                    markDirty();
+                  }}
+                />
+              </section>
             </div>
           </aside>
         </div>

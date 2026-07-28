@@ -13,7 +13,7 @@ export function BlogCard({ blog }: { blog: Blog }) {
           {blog.cover_image ? (
             <img
               src={blog.cover_image}
-              alt={blog.title}
+              alt={blog.cover_alt || blog.title}
               className="h-full w-full object-cover"
               loading="lazy"
             />

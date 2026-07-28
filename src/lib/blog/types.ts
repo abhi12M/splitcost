@@ -9,6 +9,7 @@ export type Blog = {
   excerpt: string;
   content: string;
   cover_image: string | null;
+  cover_alt: string | null;
   category: string;
   author: string;
   status: BlogStatus;
@@ -27,6 +28,7 @@ export type BlogInput = {
   excerpt: string;
   content: string;
   cover_image?: string | null;
+  cover_alt?: string | null;
   category: string;
   author: string;
   status: BlogStatus;
