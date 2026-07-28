@@ -9,6 +9,8 @@ import {
 import {
   buildAttachmentPayload,
   getExpenseAttachmentPath,
+  reconcileExpenseAttachmentReference,
+  resolveExpenseAttachmentPayload,
   setExpenseAttachmentPath,
 } from "@/lib/supabase/attachments";
 import { buildExpenseAttachmentPath } from "@/lib/supabase/storagePaths";
@@ -37,12 +39,9 @@ export async function GET(
 
   try {
     const path = await getExpenseAttachmentPath(expenseId);
+    const resolution = await resolveExpenseAttachmentPayload(expenseId, path);
 
-    if (!path) {
-      return NextResponse.json(null);
-    }
-
-    return NextResponse.json(await buildAttachmentPayload(path));
+    return NextResponse.json(resolution.attachment);
   } catch (error) {
     console.error("loadExpenseAttachment error:", error);
     return NextResponse.json(
@@ -150,12 +149,19 @@ export async function DELETE(
     const existingPath = await getExpenseAttachmentPath(expenseId);
 
     if (existingPath) {
-      const { error } = await supabaseAdmin.storage
-        .from(EXPENSE_ATTACHMENT_BUCKET)
-        .remove([existingPath]);
+      const reference = await reconcileExpenseAttachmentReference(
+        expenseId,
+        existingPath
+      );
 
-      if (error) {
-        throw error;
+      if (reference.status === "available" || reference.status === "error") {
+        const { error } = await supabaseAdmin.storage
+          .from(EXPENSE_ATTACHMENT_BUCKET)
+          .remove([existingPath]);
+
+        if (error) {
+          throw error;
+        }
       }
     }
 

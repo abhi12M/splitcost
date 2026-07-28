@@ -7,7 +7,7 @@ import {
 import { NextResponse } from "next/server";
 import {
   getStoragePathFromValue,
-  tryBuildAttachmentPayload,
+  resolveExpenseAttachmentPayload,
 } from "@/lib/supabase/attachments";
 
 type ParticipantPayload = {
@@ -32,6 +32,28 @@ type ExpenseParticipantRow = {
   user_id: string;
   share_amount: number | null;
   share_percent: number | null;
+};
+
+type ExpenseDetailsRow = {
+  id: string;
+  description: string;
+  amount: number | string;
+  currency: string;
+  paid_by_user_id: string | null;
+  split_type: string;
+  category: CategoryKey;
+  subcategory: SubcategoryId;
+  date: string;
+  created_at: string;
+  updated_at: string | null;
+  attachment_data_url: string | null;
+  expense_participants: ExpenseParticipantRow[];
+  groups: {
+    id: string;
+    name: string;
+    currency: string;
+    group_members: GroupMemberRow[];
+  };
 };
 
 export async function PUT(
@@ -273,16 +295,15 @@ export async function GET(
     return NextResponse.json(null, { status: 404 });
   }
 
-  const expenseRow = data as any;
-  const attachmentPath = getStoragePathFromValue(
-    expenseRow.attachment_data_url as string | null
-  );
+  const expenseRow = data as unknown as ExpenseDetailsRow;
+  const attachmentValue = expenseRow.attachment_data_url as string | null;
+  const attachmentPath = getStoragePathFromValue(attachmentValue);
 
   // Fan out the payers query and the (optional) attachment payload in parallel
   // so the GET responds in a single round-trip with everything the view / edit
   // pages need. Previously the client had to make a separate request to
   // /api/expenses/:id/attachment after this one returned.
-  const [payersResult, attachment] = await Promise.all([
+  const [payersResult, attachmentResolution] = await Promise.all([
     supabaseAdmin
       .from("expense_payers")
       .select(`
@@ -294,17 +315,19 @@ export async function GET(
         )
       `)
       .eq("expense_id", expenseId),
-    tryBuildAttachmentPayload(attachmentPath),
+    resolveExpenseAttachmentPayload(expenseId, attachmentPath),
   ]);
+  const attachmentDataUrl =
+    attachmentResolution.status === "missing" ? null : expenseRow.attachment_data_url;
 
   const payersData = payersResult.data;
 
   return NextResponse.json({
     group: {
-      id: data.groups.id,
-      name: data.groups.name,
-      currency: data.groups.currency,
-      members: data.groups.group_members.map((gm: GroupMemberRow) => ({
+      id: expenseRow.groups.id,
+      name: expenseRow.groups.name,
+      currency: expenseRow.groups.currency,
+      members: expenseRow.groups.group_members.map((gm) => ({
         id: gm.users.id,
         name: gm.users.name,
       })),
@@ -325,8 +348,8 @@ export async function GET(
       date: expenseRow.date,
       createdAt: expenseRow.created_at,
       updatedAt: expenseRow.updated_at,
-      attachmentDataUrl: expenseRow.attachment_data_url,
-      attachment,
+      attachmentDataUrl,
+      attachment: attachmentResolution.attachment,
       participants: expenseRow.expense_participants.map((p: ExpenseParticipantRow) => ({
         userId: p.user_id,
         amount: p.share_amount,

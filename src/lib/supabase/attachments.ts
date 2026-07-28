@@ -21,6 +21,19 @@ export type AttachmentPayload = {
   updatedAt: string;
 };
 
+export class MissingExpenseAttachmentError extends Error {
+  constructor(public readonly path: string) {
+    super(`Expense attachment is missing from storage: ${path}`);
+    this.name = "MissingExpenseAttachmentError";
+  }
+}
+
+export function isMissingExpenseAttachmentError(
+  error: unknown
+): error is MissingExpenseAttachmentError {
+  return error instanceof MissingExpenseAttachmentError;
+}
+
 export function inferMimeType(fileName: string) {
   const extension = fileName.split(".").pop()?.toLowerCase();
 
@@ -125,19 +138,70 @@ async function getStoredFile(path: string) {
   ) || null;
 }
 
-// Parallelize the metadata list and signed-URL generation. They are independent
-// calls, and previously they ran sequentially (~100 ms wasted per request).
+async function clearMissingExpenseAttachmentPath(
+  expenseId: string,
+  path: string
+) {
+  try {
+    await setExpenseAttachmentPath(expenseId, null);
+  } catch (error) {
+    console.error("clearMissingExpenseAttachmentPath error:", {
+      expenseId,
+      path,
+      error,
+    });
+  }
+}
+
+export type ExpenseAttachmentReferenceStatus =
+  | { status: "none"; path: null }
+  | { status: "available"; path: string }
+  | { status: "missing"; path: string }
+  | { status: "error"; path: string; error: unknown };
+
+export async function reconcileExpenseAttachmentReference(
+  expenseId: string,
+  value: string | null | undefined
+): Promise<ExpenseAttachmentReferenceStatus> {
+  const path = getStoragePathFromValue(value);
+
+  if (!path) {
+    return { status: "none", path: null };
+  }
+
+  try {
+    const file = await getStoredFile(path);
+
+    if (!file) {
+      await clearMissingExpenseAttachmentPath(expenseId, path);
+      return { status: "missing", path };
+    }
+
+    return { status: "available", path };
+  } catch (error) {
+    console.error("reconcileExpenseAttachmentReference error:", {
+      expenseId,
+      path,
+      error,
+    });
+    return { status: "error", path, error };
+  }
+}
+
 export async function buildAttachmentPayload(
   path: string
 ): Promise<AttachmentPayload> {
   const fileName = getFileNameFromPath(path);
 
-  const [file, signed] = await Promise.all([
-    getStoredFile(path),
-    supabaseAdmin.storage
-      .from(EXPENSE_ATTACHMENT_BUCKET)
-      .createSignedUrl(path, 60 * 60),
-  ]);
+  const file = await getStoredFile(path);
+
+  if (!file) {
+    throw new MissingExpenseAttachmentError(path);
+  }
+
+  const signed = await supabaseAdmin.storage
+    .from(EXPENSE_ATTACHMENT_BUCKET)
+    .createSignedUrl(path, 60 * 60);
 
   if (signed.error) {
     throw signed.error;
@@ -165,5 +229,50 @@ export async function tryBuildAttachmentPayload(
   } catch (error) {
     console.error("tryBuildAttachmentPayload error:", error);
     return null;
+  }
+}
+
+export type ExpenseAttachmentPayloadResolution = {
+  status: ExpenseAttachmentReferenceStatus["status"];
+  path: string | null;
+  attachment: AttachmentPayload | null;
+};
+
+export async function resolveExpenseAttachmentPayload(
+  expenseId: string,
+  value: string | null | undefined
+): Promise<ExpenseAttachmentPayloadResolution> {
+  const reference = await reconcileExpenseAttachmentReference(expenseId, value);
+
+  if (reference.status !== "available") {
+    return {
+      status: reference.status,
+      path: reference.path,
+      attachment: null,
+    };
+  }
+
+  try {
+    return {
+      status: "available",
+      path: reference.path,
+      attachment: await buildAttachmentPayload(reference.path),
+    };
+  } catch (error) {
+    if (isMissingExpenseAttachmentError(error)) {
+      await clearMissingExpenseAttachmentPath(expenseId, error.path);
+      return {
+        status: "missing",
+        path: error.path,
+        attachment: null,
+      };
+    }
+
+    console.error("resolveExpenseAttachmentPayload error:", error);
+    return {
+      status: "error",
+      path: reference.path,
+      attachment: null,
+    };
   }
 }
