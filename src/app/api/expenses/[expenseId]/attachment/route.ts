@@ -6,9 +6,8 @@ import {
 } from "@/lib/expenseAttachments";
 import {
   buildAttachmentPayload,
-  getAttachmentPath,
+  buildExpenseAttachmentPath,
   getExpenseAttachmentPath,
-  sanitizeAttachmentFileName,
   setExpenseAttachmentPath,
 } from "@/lib/supabase/attachments";
 
@@ -90,8 +89,7 @@ export async function POST(
         .remove([existingPath]);
     }
 
-    const fileName = `${Date.now()}-${sanitizeAttachmentFileName(file.name)}`;
-    const path = getAttachmentPath(expenseId, fileName);
+    const path = buildExpenseAttachmentPath(expenseId, file.name);
     const fileBuffer = Buffer.from(await file.arrayBuffer());
 
     const { error } = await supabaseAdmin.storage

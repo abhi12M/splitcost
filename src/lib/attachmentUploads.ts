@@ -36,12 +36,9 @@ export type AttachmentUploadStatus = "uploading" | "error";
 
 export type AttachmentUploadState = {
   status: AttachmentUploadStatus;
-  // The user's intended next attachment value. `null` means delete.
+  // The user's intended next attachment value. For new uploads this carries
+  // the module-owned blob URL; `null` means delete.
   intent: ExpenseAttachment | null;
-  // Local preview to render in the placeholder while the request is in
-  // flight. For new uploads this is the same object as `intent` (it carries
-  // the `blob:` URL backed by the picked File). For deletes this is `null`.
-  preview: ExpenseAttachment | null;
   error?: string;
 };
 
@@ -130,7 +127,6 @@ export function startAttachmentUpload(
   states.set(expenseId, {
     status: "uploading",
     intent: preview,
-    preview,
   });
   emit();
 
@@ -151,7 +147,6 @@ export function startAttachmentUpload(
       states.set(expenseId, {
         status: "error",
         intent: preview,
-        preview,
         error:
           error instanceof Error ? error.message : "Failed to save attachment",
       });
@@ -166,7 +161,7 @@ export function startAttachmentUpload(
 export function dismissAttachmentUpload(expenseId: string) {
   const state = states.get(expenseId);
   if (!state) return;
-  revokeAttachmentObjectUrl(state.preview);
+  revokeAttachmentObjectUrl(state.intent);
   states.delete(expenseId);
   emit();
 }

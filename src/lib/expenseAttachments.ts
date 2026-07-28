@@ -111,24 +111,6 @@ export async function saveExpenseAttachment(
   return mapAttachmentResponse(payload);
 }
 
-export async function loadExpenseAttachment(
-  expenseId: string,
-  attachmentDataUrl?: string | null
-): Promise<ExpenseAttachment | null> {
-  if (!attachmentDataUrl) return null;
-
-  const res = await fetch(`/api/expenses/${expenseId}/attachment`, {
-    cache: "no-store",
-  });
-
-  if (!res.ok) {
-    return null;
-  }
-
-  const payload = await res.json();
-  return mapAttachmentResponse(payload);
-}
-
 export async function deleteExpenseAttachment(expenseId: string) {
   const res = await fetch(`/api/expenses/${expenseId}/attachment`, {
     method: "DELETE",

@@ -2,6 +2,7 @@ import "server-only";
 
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { EXPENSE_ATTACHMENT_BUCKET } from "@/lib/expenseAttachments";
+import { buildStoragePath } from "@/lib/supabase/storagePaths";
 
 type StoredAttachmentFile = {
   name: string;
@@ -34,33 +35,18 @@ export function inferMimeType(fileName: string) {
   return "image/jpeg";
 }
 
-export function sanitizeAttachmentFileName(fileName: string) {
-  const dotIndex = fileName.lastIndexOf(".");
-  const baseName = dotIndex > 0 ? fileName.slice(0, dotIndex) : fileName;
-  const extension = dotIndex > 0 ? fileName.slice(dotIndex).toLowerCase() : "";
-
-  return `${baseName
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 60) || "attachment"}${extension}`;
-}
-
-export function getAttachmentFolder(timestamp = new Date()) {
-  const year = timestamp.getFullYear();
-  const monthNumber = String(timestamp.getMonth() + 1).padStart(2, "0");
-  const monthName = timestamp.toLocaleString("en-US", { month: "long" });
-
-  return `Expenses/${year}/${monthNumber}_${monthName}`;
-}
-
-export function getAttachmentPath(
+export function buildExpenseAttachmentPath(
   expenseId: string,
   fileName: string,
   timestamp = new Date()
 ) {
-  return `${getAttachmentFolder(timestamp)}/${expenseId}-${fileName}`;
+  return buildStoragePath({
+    rootFolder: "Expenses",
+    entityPrefix: "EXP",
+    entityId: expenseId,
+    fileName,
+    timestamp,
+  });
 }
 
 export function getStoragePathFromValue(value: string | null | undefined) {
