@@ -9,7 +9,11 @@ type RouteContext = {
 };
 
 function getErrorMessage(error: unknown, fallback: string) {
-  return error instanceof Error ? error.message : fallback;
+  if (error instanceof Error) return error.message;
+  if (typeof error === "object" && error && "message" in error && typeof error.message === "string") {
+    return error.message;
+  }
+  return fallback;
 }
 
 function normalizePayload(body: BlogInput): BlogInput {
@@ -39,6 +43,7 @@ export async function PUT(req: Request, { params }: RouteContext) {
     const blog = await updateBlog(params.id, payload);
     return NextResponse.json(blog);
   } catch (error: unknown) {
+    console.error("updateBlog error:", error);
     return NextResponse.json(
       { error: getErrorMessage(error, "Failed to update blog") },
       { status: 400 }

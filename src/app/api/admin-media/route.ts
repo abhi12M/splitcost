@@ -110,14 +110,16 @@ async function listAdminUploads(): Promise<AdminMediaItem[]> {
       const { data } = supabaseAdmin.storage
         .from(MEDIA_BUCKET)
         .getPublicUrl(file.name);
+      const updatedAt = file.updated_at ?? file.created_at ?? null;
+      const version = updatedAt ? new Date(updatedAt).getTime() : null;
 
       return {
         path: file.name,
         name: file.name.split("/").pop() ?? file.name,
-        url: data.publicUrl,
+        url: version ? `${data.publicUrl}?v=${version}` : data.publicUrl,
         size: file.metadata?.size ?? 0,
         mimeType: file.metadata?.mimetype ?? "image/*",
-        updatedAt: file.updated_at ?? file.created_at ?? null,
+        updatedAt,
         source: "admin" as const,
       };
     });
@@ -256,15 +258,19 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const { path } = (await req.json().catch(() => ({}))) as { path?: string };
+  const { path, paths } = (await req.json().catch(() => ({}))) as {
+    path?: string;
+    paths?: string[];
+  };
+  const mediaPaths = paths?.filter(Boolean) ?? (path ? [path] : []);
 
-  if (!path) {
-    return NextResponse.json({ error: "Media path is required" }, { status: 400 });
+  if (!mediaPaths.length) {
+    return NextResponse.json({ error: "At least one media path is required" }, { status: 400 });
   }
 
   const { error } = await supabaseAdmin.storage
     .from(MEDIA_BUCKET)
-    .remove([path]);
+    .remove(mediaPaths);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });

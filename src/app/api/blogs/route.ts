@@ -5,7 +5,11 @@ import { estimateReadingTime, slugify } from "@/lib/blog/utils";
 import type { BlogInput } from "@/lib/blog/types";
 
 function getErrorMessage(error: unknown) {
-  return error instanceof Error ? error.message : "Failed to create blog";
+  if (error instanceof Error) return error.message;
+  if (typeof error === "object" && error && "message" in error && typeof error.message === "string") {
+    return error.message;
+  }
+  return "Failed to create blog";
 }
 
 function normalizePayload(body: BlogInput): BlogInput {
@@ -35,6 +39,7 @@ export async function POST(req: Request) {
     const blog = await createBlog(payload);
     return NextResponse.json(blog);
   } catch (error: unknown) {
+    console.error("createBlog error:", error);
     return NextResponse.json(
       { error: getErrorMessage(error) },
       { status: 400 }

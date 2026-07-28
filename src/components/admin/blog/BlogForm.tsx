@@ -8,7 +8,9 @@ import {
   Copy,
   HelpCircle,
   ImageUp,
+  Images,
   ListTree,
+  Loader2,
   Trash2,
   X,
 } from "lucide-react";
@@ -46,6 +48,7 @@ import { buildBlogTableOfContents } from "@/lib/blog/toc";
 import type { Blog, BlogInput, BlogStatus } from "@/lib/blog/types";
 import { estimateReadingTime, getExcerpt, slugify } from "@/lib/blog/utils";
 import { ADMIN_BASE_PATH } from "@/lib/constants";
+import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { BlogEditor } from "./BlogEditor";
 import { BlogEditorShell } from "./BlogEditorShell";
@@ -174,12 +177,12 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(blog ? new Date(blog.updated_at) : null);
-  const [error, setError] = useState("");
   const [isDirty, setIsDirty] = useState(false);
   const [schemaEdited, setSchemaEdited] = useState(Boolean(blog?.schema_json));
   const [schemaCopied, setSchemaCopied] = useState(false);
   const [schemaEditorOpen, setSchemaEditorOpen] = useState(false);
   const [slugCopied, setSlugCopied] = useState(false);
+  const [uploadingImageKind, setUploadingImageKind] = useState<"cover" | "inline" | null>(null);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const editorContainerRef = useRef<HTMLDivElement>(null);
 
@@ -228,6 +231,15 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
     setIsDirty(true);
     setSaveStatus("idle");
   }, []);
+
+  useEffect(() => {
+    const generatedSlug = slugify(title);
+    if (slug.trim() || !generatedSlug) return;
+
+    setSlugManuallyEdited(false);
+    setSlug(generatedSlug);
+    markDirty();
+  }, [markDirty, slug, title]);
 
   const handleTitleChange = (value: string) => {
     setTitle(value);
@@ -302,14 +314,17 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
     async (nextStatus: BlogStatus, options?: { silent?: boolean }) => {
       if (!options?.silent) setSaving(true);
       setSaveStatus("saving");
-      setError("");
 
       let payload: BlogInput;
       try {
         payload = buildPayload(nextStatus);
       } catch {
         setSaveStatus("error");
-        setError("Structured schema must be valid JSON.");
+        toast({
+          variant: "destructive",
+          title: "Unable to save blog",
+          description: "Structured schema must be valid JSON.",
+        });
         if (!options?.silent) setSaving(false);
         return null;
       }
@@ -332,14 +347,20 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
         setIsDirty(false);
         setSaveStatus("saved");
 
-        if (!blogId) {
+        if (nextStatus === "published") {
+          router.replace(`/en/blog/${encodeURIComponent(saved.slug)}`);
+        } else if (!blogId) {
           router.replace(`${ADMIN_BASE_PATH}/blogs/edit/${saved.id}`);
         }
 
         return saved;
       } catch (saveError) {
         setSaveStatus("error");
-        setError(saveError instanceof Error ? saveError.message : "Unable to save blog");
+        toast({
+          variant: "destructive",
+          title: "Unable to save blog",
+          description: saveError instanceof Error ? saveError.message : "Unable to save blog",
+        });
         return null;
       } finally {
         if (!options?.silent) setSaving(false);
@@ -350,30 +371,36 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
 
   const uploadBlogImage = useCallback(
     async (file: File, kind: "cover" | "inline") => {
-      const targetBlogId =
-        blogId || (await saveBlog("draft", { silent: true }))?.id;
+      setUploadingImageKind(kind);
 
-      if (!targetBlogId) {
-        throw new Error("Save the blog before uploading images");
+      try {
+        const targetBlogId =
+          blogId || (await saveBlog("draft", { silent: true }))?.id;
+
+        if (!targetBlogId) {
+          throw new Error("Save the blog before uploading images");
+        }
+
+        const form = new FormData();
+        form.append("file", file);
+        form.append("blogId", targetBlogId);
+        form.append("kind", kind);
+
+        const response = await fetch("/api/blog-images", {
+          method: "POST",
+          body: form,
+        });
+
+        if (!response.ok) {
+          const data = await response.json().catch(() => null);
+          throw new Error(data?.error ?? "Unable to upload image");
+        }
+
+        const data = (await response.json()) as { url: string };
+        return data.url;
+      } finally {
+        setUploadingImageKind(null);
       }
-
-      const form = new FormData();
-      form.append("file", file);
-      form.append("blogId", targetBlogId);
-      form.append("kind", kind);
-
-      const response = await fetch("/api/blog-images", {
-        method: "POST",
-        body: form,
-      });
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => null);
-        throw new Error(data?.error ?? "Unable to upload image");
-      }
-
-      const data = (await response.json()) as { url: string };
-      return data.url;
     },
     [blogId, saveBlog]
   );
@@ -385,11 +412,11 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
         setCoverImage(url);
         markDirty();
       } catch (uploadError) {
-        setError(
-          uploadError instanceof Error
-            ? uploadError.message
-            : "Unable to upload cover image"
-        );
+        toast({
+          variant: "destructive",
+          title: "Unable to upload cover image",
+          description: uploadError instanceof Error ? uploadError.message : "Unable to upload cover image",
+        });
       }
     },
     [markDirty, uploadBlogImage]
@@ -404,9 +431,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
     if (!isDirty || saving) return undefined;
 
     autosaveTimerRef.current = setTimeout(() => {
-      if (blogId) {
-        void saveBlog("draft", { silent: true });
-      }
+      void saveBlog("draft", { silent: true });
     }, AUTOSAVE_DELAY_MS);
 
     return () => {
@@ -501,7 +526,12 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
               ref={editorContainerRef}
               className="flex min-h-0 flex-1 flex-col p-4 sm:p-6 lg:overscroll-contain"
             >
-              {error ? <p className="mb-4 text-sm text-destructive">{error}</p> : null}
+              {uploadingImageKind === "inline" ? (
+                <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground" role="status">
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  Uploading image...
+                </div>
+              ) : null}
               <BlogEditor
                 value={content}
                 onImageUpload={uploadInlineImage}
@@ -519,6 +549,12 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
                 title="Cover Image"
                 help="Upload a cover image or paste a direct image URL. Use descriptive alt text for accessibility."
               >
+                <Button asChild type="button" variant="outline" size="sm" className="w-full">
+                  <a href={`${ADMIN_BASE_PATH}/media`} target="_blank" rel="noreferrer">
+                    <Images className="h-4 w-4" />
+                    Media library
+                  </a>
+                </Button>
                 {coverImage ? (
                   <div className="overflow-hidden rounded-lg border bg-muted/20">
                     <div className="relative aspect-[3/2] bg-muted">
@@ -555,22 +591,36 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
                   </div>
                 ) : (
                   <label
-                    className="flex min-h-28 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed bg-muted/10 px-4 py-5 text-center transition-colors hover:border-primary/50 hover:bg-muted/30"
+                    className={cn(
+                      "flex min-h-28 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed bg-muted/10 px-4 py-5 text-center transition-colors hover:border-primary/50 hover:bg-muted/30",
+                      uploadingImageKind === "cover" && "cursor-wait opacity-70"
+                    )}
+                    aria-busy={uploadingImageKind === "cover"}
                     onDragOver={(event) => event.preventDefault()}
                     onDrop={(event) => {
                       event.preventDefault();
+                      if (uploadingImageKind === "cover") return;
                       const file = event.dataTransfer.files?.[0];
                       if (file?.type.startsWith("image/")) void uploadCover(file);
                     }}
                   >
-                    <ImageUp className="mb-2 h-6 w-6 text-foreground" />
-                    <span className="text-sm font-medium">Upload Image</span>
-                    <span className="mt-1 text-xs text-muted-foreground">or paste image URL</span>
+                    {uploadingImageKind === "cover" ? (
+                      <Loader2 className="mb-2 h-6 w-6 animate-spin text-primary" />
+                    ) : (
+                      <ImageUp className="mb-2 h-6 w-6 text-foreground" />
+                    )}
+                    <span className="text-sm font-medium">
+                      {uploadingImageKind === "cover" ? "Uploading image..." : "Upload Image"}
+                    </span>
+                    <span className="mt-1 text-xs text-muted-foreground">
+                      {uploadingImageKind === "cover" ? "Please wait" : "or paste image URL"}
+                    </span>
                     <input
                       type="file"
                       accept="image/*"
                       className="sr-only"
                       onChange={(event) => {
+                        if (uploadingImageKind === "cover") return;
                         const file = event.target.files?.[0];
                         if (file) void uploadCover(file);
                       }}

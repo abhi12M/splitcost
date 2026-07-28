@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Check, Copy, ExternalLink, FileImage, ImageIcon, LayoutGrid, List, Loader2, Receipt, Trash2, UploadCloud } from "lucide-react";
+import { Check, CheckSquare, Copy, ExternalLink, FileImage, ImageIcon, LayoutGrid, List, Loader2, Receipt, Square, Trash2, UploadCloud } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -104,7 +104,8 @@ export function MediaAdmin() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [deletingPath, setDeletingPath] = useState("");
-  const [deleteTarget, setDeleteTarget] = useState<MediaItem | null>(null);
+  const [deleteTargets, setDeleteTargets] = useState<MediaItem[]>([]);
+  const [selectedPaths, setSelectedPaths] = useState<Set<string>>(() => new Set());
   const [copiedPath, setCopiedPath] = useState("");
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState("");
@@ -200,6 +201,11 @@ export function MediaAdmin() {
 
   const getMediaKey = (item: MediaItem) => `${item.source}:${item.path}`;
 
+  const selectedAdminMedia = useMemo(
+    () => media.filter((item) => item.source === "admin" && selectedPaths.has(item.path)),
+    [media, selectedPaths]
+  );
+
   const matchesSourceLabel = (item: MediaItem) =>
     sourceFilters.find((filter) => filter.value === item.source)?.label ?? item.source;
 
@@ -287,17 +293,29 @@ export function MediaAdmin() {
     }
   };
 
-  const deleteMedia = async (item: MediaItem) => {
+  const toggleSelected = (item: MediaItem) => {
     if (item.source !== "admin") return;
 
-    setDeletingPath(getMediaKey(item));
+    setSelectedPaths((current) => {
+      const next = new Set(current);
+      if (next.has(item.path)) next.delete(item.path);
+      else next.add(item.path);
+      return next;
+    });
+  };
+
+  const deleteMedia = async (items: MediaItem[]) => {
+    const paths = items.filter((item) => item.source === "admin").map((item) => item.path);
+    if (!paths.length) return;
+
+    setDeletingPath(paths.length === 1 ? `admin:${paths[0]}` : "bulk");
     setError("");
 
     try {
       const response = await fetch("/api/admin-media", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ path: item.path }),
+        body: JSON.stringify({ paths }),
       });
 
       if (!response.ok) {
@@ -306,13 +324,18 @@ export function MediaAdmin() {
       }
 
       setMedia((current) =>
-        current.filter((mediaItem) => getMediaKey(mediaItem) !== getMediaKey(item))
+        current.filter((mediaItem) => !paths.includes(mediaItem.path))
       );
+      setSelectedPaths((current) => {
+        const next = new Set(current);
+        paths.forEach((path) => next.delete(path));
+        return next;
+      });
     } catch (deleteError) {
       setError(deleteError instanceof Error ? deleteError.message : "Unable to delete media");
     } finally {
       setDeletingPath("");
-      setDeleteTarget(null);
+      setDeleteTargets([]);
     }
   };
 
@@ -446,6 +469,21 @@ export function MediaAdmin() {
         ))}
       </div>
 
+      {selectedAdminMedia.length ? (
+        <div className="flex flex-wrap items-center gap-2 border-y py-3">
+          <span className="text-sm text-muted-foreground">
+            {selectedAdminMedia.length} selected
+          </span>
+          <Button type="button" variant="destructive" size="sm" onClick={() => setDeleteTargets(selectedAdminMedia)}>
+            <Trash2 className="h-4 w-4" />
+            Delete selected
+          </Button>
+          <Button type="button" variant="ghost" size="sm" onClick={() => setSelectedPaths(new Set())}>
+            Clear selection
+          </Button>
+        </div>
+      ) : null}
+
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
       {loading ? (
@@ -471,11 +509,26 @@ export function MediaAdmin() {
                       )}
                       {matchesSourceLabel(item)}
                     </span>
-                    {item.expense ? (
-                      <span className="truncate text-xs text-muted-foreground">
-                        {formatExpenseAmount(item)}
-                      </span>
-                    ) : null}
+                    <div className="flex items-center gap-1">
+                      {item.expense ? (
+                        <span className="truncate text-xs text-muted-foreground">
+                          {formatExpenseAmount(item)}
+                        </span>
+                      ) : null}
+                      {item.source === "admin" ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => toggleSelected(item)}
+                          aria-label={`${selectedPaths.has(item.path) ? "Deselect" : "Select"} ${item.name}`}
+                          aria-pressed={selectedPaths.has(item.path)}
+                        >
+                          {selectedPaths.has(item.path) ? <CheckSquare className="h-4 w-4 text-primary" /> : <Square className="h-4 w-4" />}
+                        </Button>
+                      ) : null}
+                    </div>
                   </div>
                   <p className="truncate text-sm font-medium text-foreground">
                     {item.expense?.description || item.name}
@@ -514,8 +567,8 @@ export function MediaAdmin() {
                       type="button"
                       variant="outline"
                       size="icon"
-                      onClick={() => setDeleteTarget(item)}
-                      disabled={deletingPath === getMediaKey(item)}
+                      onClick={() => setDeleteTargets([item])}
+                      disabled={Boolean(deletingPath)}
                       aria-label={`Delete ${item.name}`}
                     >
                       {deletingPath === getMediaKey(item) ? (
@@ -572,10 +625,22 @@ export function MediaAdmin() {
                 {item.source === "admin" ? (
                   <Button
                     type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => toggleSelected(item)}
+                    aria-label={`${selectedPaths.has(item.path) ? "Deselect" : "Select"} ${item.name}`}
+                    aria-pressed={selectedPaths.has(item.path)}
+                  >
+                    {selectedPaths.has(item.path) ? <CheckSquare className="h-4 w-4 text-primary" /> : <Square className="h-4 w-4" />}
+                  </Button>
+                ) : null}
+                {item.source === "admin" ? (
+                  <Button
+                    type="button"
                     variant="outline"
                     size="icon"
-                    onClick={() => setDeleteTarget(item)}
-                    disabled={deletingPath === getMediaKey(item)}
+                    onClick={() => setDeleteTargets([item])}
+                    disabled={Boolean(deletingPath)}
                     aria-label={`Delete ${item.name}`}
                   >
                     {deletingPath === getMediaKey(item) ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
@@ -596,16 +661,18 @@ export function MediaAdmin() {
       )}
 
       <AlertDialog
-        open={Boolean(deleteTarget)}
+        open={Boolean(deleteTargets.length)}
         onOpenChange={(open) => {
-          if (!open && !deletingPath) setDeleteTarget(null);
+          if (!open && !deletingPath) setDeleteTargets([]);
         }}
       >
         <AlertDialogContent className="max-w-[290px] rounded-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-lg">Delete media?</AlertDialogTitle>
+            <AlertDialogTitle className="text-lg">
+              Delete {deleteTargets.length > 1 ? "selected media" : "media"}?
+            </AlertDialogTitle>
             <AlertDialogDescription className="text-xs">
-              This permanently deletes {deleteTarget?.name ?? "this media file"} from the media library.
+              This permanently deletes {deleteTargets.length > 1 ? `${deleteTargets.length} media files` : deleteTargets[0]?.name ?? "this media file"} from the media library.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-4 flex-row gap-2">
@@ -617,7 +684,7 @@ export function MediaAdmin() {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                if (deleteTarget) void deleteMedia(deleteTarget);
+                void deleteMedia(deleteTargets);
               }}
               disabled={Boolean(deletingPath)}
               className="flex-1 rounded-xl bg-destructive text-white hover:bg-destructive/90"

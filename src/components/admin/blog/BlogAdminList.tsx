@@ -2,15 +2,26 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Edit, Plus, Trash2 } from "lucide-react";
+import { Edit, Loader2, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import type { BlogAdminListItem } from "@/lib/blog/types";
 import { formatBlogDate } from "@/lib/blog/utils";
 import { ADMIN_BASE_PATH } from "@/lib/constants";
+import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -22,14 +33,32 @@ import {
 
 export function BlogAdminList({ blogs }: { blogs: BlogAdminListItem[] }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<BlogAdminListItem | null>(null);
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Delete this blog post?")) return;
     setDeletingId(id);
-    await fetch(`/api/blogs/${id}`, { method: "DELETE" });
-    setDeletingId(null);
-    router.refresh();
+    try {
+      const response = await fetch(`/api/blogs/${id}`, { method: "DELETE" });
+
+      if (!response.ok) {
+        const result = (await response.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(result?.error ?? "Failed to delete blog post");
+      }
+
+      toast({ title: "Blog post deleted" });
+      router.refresh();
+    } catch (error) {
+      toast({
+        title: "Unable to delete blog post",
+        description: error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingId(null);
+      setDeleteTarget(null);
+    }
   };
 
   return (
@@ -83,7 +112,7 @@ export function BlogAdminList({ blogs }: { blogs: BlogAdminListItem[] }) {
                         variant="outline"
                         aria-label="Delete blog"
                         disabled={deletingId === blog.id}
-                        onClick={() => void handleDelete(blog.id)}
+                        onClick={() => setDeleteTarget(blog)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -102,6 +131,40 @@ export function BlogAdminList({ blogs }: { blogs: BlogAdminListItem[] }) {
           </div>
         )}
       </CardContent>
+
+      <AlertDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => {
+          if (!open && !deletingId) setDeleteTarget(null);
+        }}
+      >
+        <AlertDialogContent className="max-w-[290px] rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-lg">Delete blog post?</AlertDialogTitle>
+            <AlertDialogDescription className="text-xs">
+              This permanently deletes {deleteTarget?.title ?? "this blog post"}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-4 flex-row gap-2">
+            <AlertDialogCancel
+              disabled={Boolean(deletingId)}
+              className="mt-0 flex-1 rounded-xl border-none bg-muted hover:bg-muted/80"
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteTarget) void handleDelete(deleteTarget.id);
+              }}
+              disabled={Boolean(deletingId)}
+              className="flex-1 rounded-xl bg-destructive text-white hover:bg-destructive/90"
+            >
+              {deletingId ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              {deletingId ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
