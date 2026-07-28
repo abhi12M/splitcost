@@ -23,8 +23,8 @@ export default async function PortalLayout({ children }: PortalLayoutProps) {
   const messages = await getMessages();
 
   return (
-    <html lang="en" className="h-full overflow-hidden" suppressHydrationWarning>
-      <body className={`${plusJakarta.className} h-full overflow-hidden`}>
+    <html lang="en" className="h-full" suppressHydrationWarning>
+      <body className={`${plusJakarta.className} min-h-full`}>
         <NextIntlClientProvider locale={defaultLocale} messages={messages}>
           <AppProviders>{children}</AppProviders>
         </NextIntlClientProvider>

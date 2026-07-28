@@ -31,3 +31,9 @@ export function buildBlogImagePath(
 
   return `${folder}/BLOG-${blogId}/${fileName}`;
 }
+
+export function buildAdminMediaPath(timestamp = new Date()) {
+  const folder = getStorageDateFolder("media", timestamp);
+
+  return `${folder}/MEDIA-${createStorageToken()}.webp`;
+}
