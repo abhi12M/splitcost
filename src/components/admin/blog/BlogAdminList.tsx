@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Edit, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 
-import type { Blog } from "@/lib/blog/types";
+import type { BlogAdminListItem } from "@/lib/blog/types";
 import { formatBlogDate } from "@/lib/blog/utils";
 import { ADMIN_BASE_PATH } from "@/lib/constants";
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-export function BlogAdminList({ blogs }: { blogs: Blog[] }) {
+export function BlogAdminList({ blogs }: { blogs: BlogAdminListItem[] }) {
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 

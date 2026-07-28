@@ -1,5 +1,11 @@
 import { supabaseAdmin } from "@/lib/supabase/server";
-import type { Blog, BlogInput, BlogListResult, BlogSort } from "./types";
+import type {
+  Blog,
+  BlogAdminListItem,
+  BlogInput,
+  BlogListResult,
+  BlogSort,
+} from "./types";
 
 const BLOG_SELECT =
   "id,title,slug,excerpt,content,cover_image,category,author,status,published_at,reading_time,no_index,schema_json,views,created_at,updated_at";
@@ -82,6 +88,19 @@ export async function listAllBlogs(): Promise<Blog[]> {
     return [];
   }
   return (data ?? []) as Blog[];
+}
+
+export async function listBlogsForAdmin(): Promise<BlogAdminListItem[]> {
+  const { data, error } = await supabaseAdmin
+    .from("blogs")
+    .select("id,title,slug,status,category,created_at")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("listBlogsForAdmin error:", error);
+    return [];
+  }
+  return (data ?? []) as BlogAdminListItem[];
 }
 
 export async function getBlogBySlug(slug: string): Promise<Blog | null> {

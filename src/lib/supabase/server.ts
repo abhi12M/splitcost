@@ -13,5 +13,12 @@ const supabaseKey =
 
 export const supabaseAdmin = createClient<Database>(
   supabaseUrl,
-  supabaseKey
+  supabaseKey,
+  {
+    global: {
+      // Database responses must not enter Next.js' fetch cache. Besides serving
+      // stale admin data, large blog bodies exceed the cache's 2 MB item limit.
+      fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }),
+    },
+  }
 );

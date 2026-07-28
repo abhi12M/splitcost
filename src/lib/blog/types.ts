@@ -36,6 +36,11 @@ export type BlogInput = {
   schema_json?: Json | null;
 };
 
+export type BlogAdminListItem = Pick<
+  Blog,
+  "id" | "title" | "slug" | "status" | "category" | "created_at"
+>;
+
 export type BlogSort = "latest" | "popular";
 
 export type BlogListResult = {

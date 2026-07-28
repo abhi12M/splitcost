@@ -139,7 +139,6 @@ export function InitializedBlogMdxEditor({
   onChange,
 }: InitializedBlogMdxEditorProps) {
   const editorRef = useRef<MDXEditorMethods>(null);
-  const latestValueRef = useRef(value);
 
   const plugins = useMemo(
     () => [
@@ -170,7 +169,7 @@ export function InitializedBlogMdxEditor({
       }),
       frontmatterPlugin(),
       jsxPlugin({ jsxComponentDescriptors: [], allowFragment: true }),
-      diffSourcePlugin({ viewMode: "source" }),
+      diffSourcePlugin({ viewMode: "rich-text" }),
       markdownShortcutPlugin(),
       toolbarPlugin({
         toolbarClassName:
@@ -182,7 +181,6 @@ export function InitializedBlogMdxEditor({
   );
 
   useEffect(() => {
-    latestValueRef.current = value;
     if (editorRef.current && value !== editorRef.current.getMarkdown()) {
       editorRef.current.setMarkdown(value || "");
     }
@@ -193,7 +191,6 @@ export function InitializedBlogMdxEditor({
       ref={editorRef}
       markdown={value || ""}
       onChange={(markdown, initialMarkdownNormalize) => {
-        latestValueRef.current = markdown;
         if (!initialMarkdownNormalize) onChange(markdown);
       }}
       onError={({ error }) => {
@@ -201,7 +198,7 @@ export function InitializedBlogMdxEditor({
       }}
       plugins={plugins}
       placeholder="Write the article..."
-      className="flex min-h-0 flex-1 max-w-full flex-col overflow-hidden rounded-lg border bg-background [&_.cm-editor]:h-full [&_.cm-scroller]:min-h-0 [&_.mdxeditor-diff-source-wrapper]:flex [&_.mdxeditor-diff-source-wrapper]:min-h-0 [&_.mdxeditor-diff-source-wrapper]:flex-1 [&_.mdxeditor-rich-text-editor]:min-h-0 [&_.mdxeditor-rich-text-editor]:flex-1 [&_.mdxeditor-source-editor]:min-h-0 [&_.mdxeditor-source-editor]:flex-1 [&_.mdxeditor-source-editor]:overflow-hidden [&_[role=toolbar]]:max-w-full [&_[role=toolbar]]:flex-wrap"
+      className="blog-mdx-editor flex min-h-0 flex-1 max-w-full flex-col overflow-hidden rounded-lg border bg-background [&_.cm-editor]:h-full [&_.cm-editor]:min-h-0 [&_.cm-scroller]:min-h-0 [&_.cm-scroller]:overflow-auto [&_.mdxeditor-diff-source-wrapper]:flex [&_.mdxeditor-diff-source-wrapper]:min-h-0 [&_.mdxeditor-diff-source-wrapper]:flex-1 [&_.mdxeditor-diff-source-wrapper]:overflow-hidden [&_.mdxeditor-rich-text-editor]:min-h-0 [&_.mdxeditor-rich-text-editor]:flex-1 [&_.mdxeditor-rich-text-editor]:overflow-y-auto [&_.mdxeditor-source-editor]:min-h-0 [&_.mdxeditor-source-editor]:flex-1 [&_.mdxeditor-source-editor]:overflow-hidden [&_[role=toolbar]]:max-w-full [&_[role=toolbar]]:flex-wrap"
       contentEditableClassName="blog-editor-content prose prose-slate dark:prose-invert min-h-full max-w-none flex-1 overflow-y-auto p-4 sm:p-6 focus:outline-none"
     />
   );

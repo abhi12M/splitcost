@@ -2,7 +2,9 @@
 
 import { formatDistanceToNow } from "date-fns";
 import {
+  Check,
   ChevronDown,
+  Copy,
   HelpCircle,
   ListTree,
   Trash2,
@@ -136,17 +138,28 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
   const [status, setStatus] = useState<BlogStatus>(blog?.status ?? "draft");
   const [noIndex, setNoIndex] = useState(blog?.no_index ?? false);
   const [showToc, setShowToc] = useState(true);
+  const [activeTocId, setActiveTocId] = useState<string>();
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(blog ? new Date(blog.updated_at) : null);
   const [error, setError] = useState("");
   const [isDirty, setIsDirty] = useState(false);
+  const [schemaEdited, setSchemaEdited] = useState(Boolean(blog?.schema_json));
+  const [schemaCopied, setSchemaCopied] = useState(false);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const editorContainerRef = useRef<HTMLDivElement>(null);
 
   const readingTime = useMemo(() => estimateReadingTime(content), [content]);
   const contentStats = useMemo(() => getBlogContentStats(content), [content]);
   const generatedToc = useMemo(() => buildBlogTableOfContents(content), [content]);
-  const activeTocId = generatedToc[0]?.id;
+
+  useEffect(() => {
+    setActiveTocId((current) =>
+      current && generatedToc.some((heading) => heading.id === current)
+        ? current
+        : generatedToc[0]?.id
+    );
+  }, [generatedToc]);
 
   const generatedSchema = useMemo(
     () =>
@@ -163,6 +176,15 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
       }),
     [author, blog?.published_at, blog?.updated_at, content, coverImage, excerpt, readingTime, slug, title]
   );
+  const [schemaJson, setSchemaJson] = useState(() =>
+    formatStructuredData(blog?.schema_json)
+  );
+
+  useEffect(() => {
+    if (!schemaEdited) {
+      setSchemaJson(formatStructuredData(generatedSchema));
+    }
+  }, [generatedSchema, schemaEdited]);
 
   const savedLabel = lastSavedAt
     ? `Saved ${formatDistanceToNow(lastSavedAt, { addSuffix: true })}`
@@ -190,6 +212,16 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
     markDirty();
   };
 
+  const copySchemaJson = async () => {
+    try {
+      await navigator.clipboard.writeText(schemaJson);
+      setSchemaCopied(true);
+      window.setTimeout(() => setSchemaCopied(false), 2000);
+    } catch {
+      setSchemaCopied(false);
+    }
+  };
+
   const buildPayload = useCallback(
     (nextStatus: BlogStatus): BlogInput => ({
       title: title.trim() || "Untitled blog post",
@@ -206,7 +238,11 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
           : blog?.published_at ?? null,
       reading_time: readingTime,
       no_index: noIndex,
-      schema_json: JSON.parse(formatStructuredData(generatedSchema)),
+      schema_json: schemaEdited
+        ? schemaJson.trim()
+          ? JSON.parse(schemaJson)
+          : null
+        : generatedSchema,
     }),
     [
       author,
@@ -218,6 +254,8 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
       generatedSchema,
       noIndex,
       readingTime,
+      schemaEdited,
+      schemaJson,
       slug,
       title,
     ]
@@ -229,7 +267,15 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
       setSaveStatus("saving");
       setError("");
 
-      const payload = buildPayload(nextStatus);
+      let payload: BlogInput;
+      try {
+        payload = buildPayload(nextStatus);
+      } catch {
+        setSaveStatus("error");
+        setError("Structured schema must be valid JSON.");
+        if (!options?.silent) setSaving(false);
+        return null;
+      }
 
       try {
         const response = await fetch(blogId ? `/api/blogs/${blogId}` : "/api/blogs", {
@@ -278,7 +324,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
-  }, [blogId, content, coverImage, excerpt, isDirty, noIndex, saveBlog, saving, slug, title]);
+  }, [blogId, content, coverImage, excerpt, isDirty, noIndex, saveBlog, saving, schemaJson, slug, title]);
 
   const handlePreview = () => {
     const previewSlug = slugify(slug || title);
@@ -334,6 +380,19 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
                 variant="sidebar"
                 activeId={activeTocId}
                 onClose={() => setShowToc(false)}
+                onHeadingClick={(heading, index) => {
+                  const editorHeadings =
+                    editorContainerRef.current?.querySelectorAll<HTMLElement>(
+                      ".blog-editor-content h1, .blog-editor-content h2, .blog-editor-content h3, .blog-editor-content h4, .blog-editor-content h5, .blog-editor-content h6"
+                    );
+                  const target = editorHeadings?.[index];
+                  if (!target) return;
+
+                  target.id = heading.id;
+                  target.scrollIntoView({ behavior: "smooth", block: "start" });
+                  setActiveTocId(heading.id);
+                  window.history.replaceState(null, "", `#${heading.id}`);
+                }}
               />
             ) : (
               <div className="flex h-full w-full flex-col items-center border-b py-3">
@@ -350,7 +409,10 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
           </aside>
 
           <main className="flex min-h-0 min-w-0 flex-1 flex-col bg-background lg:overflow-hidden">
-            <div className="flex min-h-0 flex-1 flex-col p-4 sm:p-6 lg:overscroll-contain">
+            <div
+              ref={editorContainerRef}
+              className="flex min-h-0 flex-1 flex-col p-4 sm:p-6 lg:overscroll-contain"
+            >
               {error ? <p className="mb-4 text-sm text-destructive">{error}</p> : null}
               <BlogEditor
                 value={content}
@@ -495,6 +557,48 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
                   />
                   <CharacterCounter value={excerpt} max={DESCRIPTION_MAX} />
                 </div>
+              </SettingsSection>
+
+              <SettingsSection title="Structured schema" defaultOpen={false}>
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-xs text-muted-foreground">
+                    JSON-LD is generated automatically from the article and SEO fields.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="shrink-0"
+                    aria-label="Copy structured schema"
+                    onClick={() => void copySchemaJson()}
+                  >
+                    {schemaCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+                <Textarea
+                  value={schemaJson}
+                  onChange={(event) => {
+                    setSchemaEdited(true);
+                    setSchemaJson(event.target.value);
+                    markDirty();
+                  }}
+                  rows={18}
+                  spellCheck={false}
+                  aria-label="Structured schema JSON"
+                  className="min-h-80 resize-y font-mono text-xs"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    setSchemaEdited(false);
+                    setSchemaJson(formatStructuredData(generatedSchema));
+                    markDirty();
+                  }}
+                >
+                  Regenerate schema
+                </Button>
               </SettingsSection>
 
               <SettingsSection title="More settings" defaultOpen={false}>
