@@ -2,7 +2,6 @@ import "server-only";
 
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { EXPENSE_ATTACHMENT_BUCKET } from "@/lib/expenseAttachments";
-import { buildStoragePath } from "@/lib/supabase/storagePaths";
 
 type StoredAttachmentFile = {
   name: string;
@@ -33,20 +32,6 @@ export function inferMimeType(fileName: string) {
   if (extension === "avif") return "image/avif";
 
   return "image/jpeg";
-}
-
-export function buildExpenseAttachmentPath(
-  expenseId: string,
-  fileName: string,
-  timestamp = new Date()
-) {
-  return buildStoragePath({
-    rootFolder: "Expenses",
-    entityPrefix: "EXP",
-    entityId: expenseId,
-    fileName,
-    timestamp,
-  });
 }
 
 export function getStoragePathFromValue(value: string | null | undefined) {
@@ -86,7 +71,8 @@ export function getFileNameFromPath(path: string) {
 }
 
 export async function getExpenseAttachmentPath(expenseId: string) {
-  const { data, error } = await (supabaseAdmin.from("expenses") as any)
+  const { data, error } = await supabaseAdmin
+    .from("expenses")
     .select("attachment_data_url")
     .eq("id", expenseId)
     .single();
@@ -95,14 +81,15 @@ export async function getExpenseAttachmentPath(expenseId: string) {
     throw error;
   }
 
-  return getStoragePathFromValue(data?.attachment_data_url as string | null);
+  return getStoragePathFromValue(data?.attachment_data_url);
 }
 
 export async function setExpenseAttachmentPath(
   expenseId: string,
   attachmentPath: string | null
 ) {
-  const { error } = await (supabaseAdmin.from("expenses") as any)
+  const { error } = await supabaseAdmin
+    .from("expenses")
     .update({
       attachment_data_url: attachmentPath,
       updated_at: new Date().toISOString(),

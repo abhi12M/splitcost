@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 type BlogEditorProps = {
   value: string;
   onChange: (value: string) => void;
+  onImageUpload: (image: File) => Promise<string>;
 };
 
 const InitializedBlogMdxEditor = dynamic(

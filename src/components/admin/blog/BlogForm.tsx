@@ -236,16 +236,6 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
     markDirty();
   };
 
-  const uploadCover = async (file: File) => {
-    const form = new FormData();
-    form.append("file", file);
-    const response = await fetch("/api/blog-images", { method: "POST", body: form });
-    if (!response.ok) return;
-    const data = (await response.json()) as { url: string };
-    setCoverImage(data.url);
-    markDirty();
-  };
-
   const copySchemaJson = async () => {
     try {
       await navigator.clipboard.writeText(schemaJson);
@@ -358,6 +348,58 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
     [blogId, buildPayload, router]
   );
 
+  const uploadBlogImage = useCallback(
+    async (file: File, kind: "cover" | "inline") => {
+      const targetBlogId =
+        blogId || (await saveBlog("draft", { silent: true }))?.id;
+
+      if (!targetBlogId) {
+        throw new Error("Save the blog before uploading images");
+      }
+
+      const form = new FormData();
+      form.append("file", file);
+      form.append("blogId", targetBlogId);
+      form.append("kind", kind);
+
+      const response = await fetch("/api/blog-images", {
+        method: "POST",
+        body: form,
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error ?? "Unable to upload image");
+      }
+
+      const data = (await response.json()) as { url: string };
+      return data.url;
+    },
+    [blogId, saveBlog]
+  );
+
+  const uploadCover = useCallback(
+    async (file: File) => {
+      try {
+        const url = await uploadBlogImage(file, "cover");
+        setCoverImage(url);
+        markDirty();
+      } catch (uploadError) {
+        setError(
+          uploadError instanceof Error
+            ? uploadError.message
+            : "Unable to upload cover image"
+        );
+      }
+    },
+    [markDirty, uploadBlogImage]
+  );
+
+  const uploadInlineImage = useCallback(
+    (file: File) => uploadBlogImage(file, "inline"),
+    [uploadBlogImage]
+  );
+
   useEffect(() => {
     if (!isDirty || saving) return undefined;
 
@@ -462,6 +504,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
               {error ? <p className="mb-4 text-sm text-destructive">{error}</p> : null}
               <BlogEditor
                 value={content}
+                onImageUpload={uploadInlineImage}
                 onChange={(value) => {
                   setContent(value);
                   markDirty();

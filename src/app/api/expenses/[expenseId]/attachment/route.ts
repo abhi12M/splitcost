@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import sharp from "sharp";
+
 import { supabaseAdmin } from "@/lib/supabase/server";
 import {
   EXPENSE_ATTACHMENT_BUCKET,
@@ -6,10 +8,10 @@ import {
 } from "@/lib/expenseAttachments";
 import {
   buildAttachmentPayload,
-  buildExpenseAttachmentPath,
   getExpenseAttachmentPath,
   setExpenseAttachmentPath,
 } from "@/lib/supabase/attachments";
+import { buildExpenseAttachmentPath } from "@/lib/supabase/storagePaths";
 
 function validateServerAttachment(file: File) {
   if (!file.type.startsWith("image/")) {
@@ -83,20 +85,18 @@ export async function POST(
     }
 
     const existingPath = await getExpenseAttachmentPath(expenseId);
-    if (existingPath) {
-      await supabaseAdmin.storage
-        .from(EXPENSE_ATTACHMENT_BUCKET)
-        .remove([existingPath]);
-    }
-
-    const path = buildExpenseAttachmentPath(expenseId, file.name);
-    const fileBuffer = Buffer.from(await file.arrayBuffer());
+    const path = buildExpenseAttachmentPath(expenseId);
+    const fileBuffer = await sharp(Buffer.from(await file.arrayBuffer()))
+      .rotate()
+      .flatten({ background: "#ffffff" })
+      .jpeg({ quality: 85, mozjpeg: true })
+      .toBuffer();
 
     const { error } = await supabaseAdmin.storage
       .from(EXPENSE_ATTACHMENT_BUCKET)
       .upload(path, fileBuffer, {
         upsert: false,
-        contentType: file.type,
+        contentType: "image/jpeg",
         cacheControl: "3600",
       });
 
@@ -104,7 +104,24 @@ export async function POST(
       throw error;
     }
 
-    await setExpenseAttachmentPath(expenseId, path);
+    try {
+      await setExpenseAttachmentPath(expenseId, path);
+    } catch (error) {
+      await supabaseAdmin.storage
+        .from(EXPENSE_ATTACHMENT_BUCKET)
+        .remove([path]);
+      throw error;
+    }
+
+    if (existingPath) {
+      const { error: removeError } = await supabaseAdmin.storage
+        .from(EXPENSE_ATTACHMENT_BUCKET)
+        .remove([existingPath]);
+
+      if (removeError) {
+        console.error("removePreviousExpenseAttachment error:", removeError);
+      }
+    }
 
     return NextResponse.json(await buildAttachmentPayload(path));
   } catch (error) {

@@ -45,6 +45,7 @@ import { useEffect, useMemo, useRef } from "react";
 type InitializedBlogMdxEditorProps = {
   value: string;
   onChange: (value: string) => void;
+  onImageUpload: (image: File) => Promise<string>;
 };
 
 function whenInAdmonition(editorInFocus: EditorInFocus | null) {
@@ -117,26 +118,10 @@ function BlogEditorToolbar() {
   );
 }
 
-async function uploadBlogImage(image: File) {
-  const form = new FormData();
-  form.append("file", image);
-
-  const response = await fetch("/api/blog-images", {
-    method: "POST",
-    body: form,
-  });
-
-  if (!response.ok) {
-    throw new Error("Unable to upload image");
-  }
-
-  const data = (await response.json()) as { url: string };
-  return data.url;
-}
-
 export function InitializedBlogMdxEditor({
   value,
   onChange,
+  onImageUpload,
 }: InitializedBlogMdxEditorProps) {
   const editorRef = useRef<MDXEditorMethods>(null);
 
@@ -148,7 +133,7 @@ export function InitializedBlogMdxEditor({
       thematicBreakPlugin(),
       linkPlugin(),
       linkDialogPlugin(),
-      imagePlugin({ imageUploadHandler: uploadBlogImage }),
+      imagePlugin({ imageUploadHandler: onImageUpload }),
       tablePlugin(),
       codeBlockPlugin({ defaultCodeBlockLanguage: "js" }),
       codeMirrorPlugin({
@@ -177,7 +162,7 @@ export function InitializedBlogMdxEditor({
         toolbarContents: () => <BlogEditorToolbar />,
       }),
     ],
-    []
+    [onImageUpload]
   );
 
   useEffect(() => {
