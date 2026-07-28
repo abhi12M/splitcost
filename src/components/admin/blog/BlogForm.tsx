@@ -709,16 +709,29 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
                     </span>
                     Schema – JSON-LD Preview
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-8 px-2.5 text-xs"
-                    onClick={() => setSchemaEditorOpen((open) => !open)}
-                  >
-                    {schemaEditorOpen ? "Close" : "Edit JSON"}
-                    {schemaEditorOpen ? <X className="h-3.5 w-3.5" /> : null}
-                  </Button>
+                  <div className="flex items-center gap-1.5">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      aria-label="Copy structured schema"
+                      title="Copy schema"
+                      onClick={() => void copySchemaJson()}
+                    >
+                      {schemaCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 px-2.5 text-xs"
+                      onClick={() => setSchemaEditorOpen((open) => !open)}
+                    >
+                      {schemaEditorOpen ? "Close" : "Edit JSON"}
+                      {schemaEditorOpen ? <X className="h-3.5 w-3.5" /> : null}
+                    </Button>
+                  </div>
                 </div>
                 <div className="px-4 pb-4">
                   {schemaEditorOpen ? (
@@ -748,15 +761,6 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
                           }}
                         >
                           Regenerate
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          aria-label="Copy structured schema"
-                          onClick={() => void copySchemaJson()}
-                        >
-                          {schemaCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                         </Button>
                       </div>
                     </div>
