@@ -20,6 +20,8 @@ export type Blog = {
   views: number;
   created_at: string;
   updated_at: string;
+  /** Admin-only indicator that the published row has an unpublished revision. */
+  has_draft_changes?: boolean;
 };
 
 export type BlogInput = {
@@ -41,7 +43,9 @@ export type BlogInput = {
 export type BlogAdminListItem = Pick<
   Blog,
   "id" | "title" | "slug" | "status" | "category" | "created_at"
->;
+> & {
+  has_draft_changes?: boolean;
+};
 
 export type BlogSort = "latest" | "popular";
 

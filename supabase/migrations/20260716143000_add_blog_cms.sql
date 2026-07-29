@@ -8,7 +8,7 @@ CREATE TABLE public.blogs (
   content text DEFAULT '',
   cover_image text,
   category text NOT NULL,
-  author text NOT NULL DEFAULT 'SplitCost Team',
+  author text DEFAULT 'SplitCost Team',
   status public.blog_status NOT NULL DEFAULT 'draft',
   published_at timestamp with time zone,
   reading_time integer NOT NULL DEFAULT 1,

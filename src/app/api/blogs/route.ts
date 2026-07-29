@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 
 import { createBlog, listAllBlogs } from "@/lib/blog/queries";
 import { estimateReadingTime, slugify } from "@/lib/blog/utils";
@@ -41,6 +42,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing required blog fields" }, { status: 400 });
     }
     const blog = await createBlog(payload);
+    revalidatePath("/portal/x7k2p9/blogs");
     return NextResponse.json(blog);
   } catch (error: unknown) {
     console.error("createBlog error:", error);

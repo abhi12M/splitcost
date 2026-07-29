@@ -188,6 +188,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
   const [schemaCopied, setSchemaCopied] = useState(false);
   const [schemaEditorOpen, setSchemaEditorOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [hasDraftChanges, setHasDraftChanges] = useState(Boolean(blog?.has_draft_changes));
   const [slugCopied, setSlugCopied] = useState(false);
   const [uploadingImageKind, setUploadingImageKind] = useState<"cover" | "inline" | null>(null);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -380,6 +381,9 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
         setLastSavedAt(new Date(saved.updated_at));
         setIsDirty(false);
         setSaveStatus("saved");
+        if (nextStatus === "draft" && blog?.status === "published") {
+          setHasDraftChanges(true);
+        }
 
         if (nextStatus === "published") {
           router.replace(`/en/blog/${encodeURIComponent(saved.slug)}`);
@@ -400,7 +404,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
         if (!options?.silent) setSaving(false);
       }
     },
-    [blogId, buildPayload, router]
+    [blog?.status, blogId, buildPayload, router]
   );
 
   const uploadBlogImage = useCallback(
@@ -507,6 +511,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
         saveStatus={saveStatus}
         savedLabel={savedLabel}
         blogStatus={blog?.status ?? "draft"}
+        hasDraftChanges={hasDraftChanges}
         onPreview={slug || title ? handlePreview : undefined}
         onSaveDraft={() => void saveBlog("draft")}
         onPublish={() => void saveBlog("published")}

@@ -91,16 +91,28 @@ export async function listAllBlogs(): Promise<Blog[]> {
 }
 
 export async function listBlogsForAdmin(): Promise<BlogAdminListItem[]> {
-  const { data, error } = await supabaseAdmin
-    .from("blogs")
-    .select("id,title,slug,status,category,created_at")
-    .order("created_at", { ascending: false });
+  const [blogsResult, draftsResult] = await Promise.all([
+    supabaseAdmin
+      .from("blogs")
+      .select("id,title,slug,status,category,created_at")
+      .order("created_at", { ascending: false }),
+    supabaseAdmin.from("blog_drafts").select("blog_id"),
+  ]);
 
-  if (error) {
-    console.error("listBlogsForAdmin error:", error);
+  if (blogsResult.error) {
+    console.error("listBlogsForAdmin error:", blogsResult.error);
     return [];
   }
-  return (data ?? []) as BlogAdminListItem[];
+
+  if (draftsResult.error) {
+    console.error("listBlogsForAdmin drafts error:", draftsResult.error);
+  }
+
+  const draftBlogIds = new Set((draftsResult.data ?? []).map((draft) => draft.blog_id));
+  return (blogsResult.data ?? []).map((blog) => ({
+    ...blog,
+    has_draft_changes: blog.status === "published" && draftBlogIds.has(blog.id),
+  })) as BlogAdminListItem[];
 }
 
 export async function getBlogBySlug(slug: string): Promise<Blog | null> {
@@ -146,7 +158,9 @@ export async function getBlogById(id: string): Promise<Blog | null> {
     return blog as Blog;
   }
 
-  return draft ? ({ ...blog, ...draft } as Blog) : (blog as Blog);
+  return draft
+    ? ({ ...blog, ...draft, has_draft_changes: true } as Blog)
+    : (blog as Blog);
 }
 
 export async function createBlog(input: BlogInput): Promise<Blog> {

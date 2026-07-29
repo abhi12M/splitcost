@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 
 import { deleteBlog, getBlogById, updateBlog } from "@/lib/blog/queries";
 import { estimateReadingTime, slugify } from "@/lib/blog/utils";
@@ -48,6 +49,7 @@ export async function PUT(req: Request, { params }: RouteContext) {
       return NextResponse.json({ error: "Missing required blog fields" }, { status: 400 });
     }
     const blog = await updateBlog(params.id, payload);
+    revalidatePath("/portal/x7k2p9/blogs");
     return NextResponse.json(blog);
   } catch (error: unknown) {
     console.error("updateBlog error:", error);
@@ -61,6 +63,7 @@ export async function PUT(req: Request, { params }: RouteContext) {
 export async function DELETE(_req: Request, { params }: RouteContext) {
   try {
     await deleteBlog(params.id);
+    revalidatePath("/portal/x7k2p9/blogs");
     return NextResponse.json({ ok: true });
   } catch (error: unknown) {
     return NextResponse.json(

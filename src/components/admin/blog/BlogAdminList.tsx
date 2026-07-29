@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Edit, Loader2, Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { type MouseEvent, useEffect, useState } from "react";
 
 import type { BlogAdminListItem } from "@/lib/blog/types";
 import { formatBlogDate } from "@/lib/blog/utils";
@@ -31,11 +31,44 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+function BlogStatusBadges({ blog }: { blog: BlogAdminListItem }) {
+  if (blog.status === "published" && blog.has_draft_changes) {
+    return (
+      <div className="flex flex-wrap gap-1.5">
+        <Badge>Published</Badge>
+        <Badge variant="secondary">Draft changes</Badge>
+      </div>
+    );
+  }
+
+  return (
+    <Badge variant={blog.status === "published" ? "default" : "secondary"}>
+      {blog.status === "published" ? "Published" : "Draft"}
+    </Badge>
+  );
+}
+
 export function BlogAdminList({ blogs }: { blogs: BlogAdminListItem[] }) {
   const router = useRouter();
   const { toast } = useToast();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<BlogAdminListItem | null>(null);
+
+  useEffect(() => {
+    // Browser Back can restore this route from Next.js' client cache after a
+    // publish redirects to the public article. Refresh its server data whenever
+    // the list becomes active again.
+    const refreshList = () => router.refresh();
+    refreshList();
+    window.addEventListener("pageshow", refreshList);
+    return () => window.removeEventListener("pageshow", refreshList);
+  }, [router]);
+
+  const handleEdit = (event: MouseEvent<HTMLAnchorElement>, id: string) => {
+    event.preventDefault();
+    // Avoid opening a prefetched editor payload that predates the last autosave.
+    router.push(`${ADMIN_BASE_PATH}/blogs/edit/${id}?updated=${Date.now()}`);
+  };
 
   const handleDelete = async (id: string) => {
     setDeletingId(id);
@@ -93,17 +126,17 @@ export function BlogAdminList({ blogs }: { blogs: BlogAdminListItem[] }) {
                       <p className="truncate text-xs text-muted-foreground">/{blog.slug}</p>
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <Badge variant={blog.status === "published" ? "default" : "secondary"}>
-                      {blog.status}
-                    </Badge>
-                  </TableCell>
+                  <TableCell><BlogStatusBadges blog={blog} /></TableCell>
                   <TableCell>{blog.category}</TableCell>
                   <TableCell>{formatBlogDate(blog.created_at)}</TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-2">
                       <Button asChild size="icon" variant="outline" aria-label="Edit blog">
-                        <Link href={`${ADMIN_BASE_PATH}/blogs/edit/${blog.id}`}>
+                        <Link
+                          href={`${ADMIN_BASE_PATH}/blogs/edit/${blog.id}`}
+                          prefetch={false}
+                          onClick={(event) => handleEdit(event, blog.id)}
+                        >
                           <Edit className="h-4 w-4" />
                         </Link>
                       </Button>
