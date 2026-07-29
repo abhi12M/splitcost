@@ -205,7 +205,7 @@
     }
 
     .blog-outline nav {
-      max-height: calc(100vh - 12rem);
+      max-height: calc(100vh - 11rem);
       overflow-y: auto;
       padding-right: 0.5rem;
     }
