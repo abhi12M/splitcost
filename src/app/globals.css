@@ -182,6 +182,56 @@
 }
 
 @layer components {
+  .blog-detail-page {
+    --tw-prose-body: hsl(var(--foreground));
+    --tw-prose-headings: hsl(var(--primary));
+    --tw-prose-links: hsl(var(--primary));
+  }
+
+  .blog-detail-page .font-serif {
+    font-family: Georgia, "Times New Roman", serif;
+  }
+
+  .blog-outline nav {
+    @apply space-y-1.5 text-xs text-muted-foreground;
+  }
+
+  @media (min-width: 1024px) {
+    .blog-outline {
+      position: sticky;
+      top: 8rem;
+      align-self: start;
+      height: fit-content;
+    }
+
+    .blog-outline nav {
+      max-height: calc(100vh - 12rem);
+      overflow-y: auto;
+      padding-right: 0.5rem;
+    }
+  }
+
+  .blog-outline nav a {
+    @apply py-1 leading-5 transition-colors hover:text-primary;
+  }
+
+  .blog-detail-content h1,
+  .blog-detail-content h2,
+  .blog-detail-content h3,
+  .blog-detail-content h4,
+  .blog-detail-content h5,
+  .blog-detail-content h6 {
+    font-family: Georgia, "Times New Roman", serif;
+    color: hsl(var(--primary));
+  }
+
+  .blog-detail-content h1 { @apply mt-0 text-3xl; }
+  .blog-detail-content h2 { @apply mt-10 text-[1.55rem]; }
+  .blog-detail-content h3 { @apply mt-8 text-xl; }
+  .blog-detail-content p { @apply text-sm leading-6 text-foreground sm:text-[15px] sm:leading-7; }
+  .blog-detail-content a { color: hsl(var(--primary)); }
+  .blog-detail-content blockquote { border-color: hsl(var(--primary)); color: hsl(var(--muted-foreground)); }
+  .blog-detail-content img { @apply my-7 rounded-xl; }
   .blog-editor-content {
     color: hsl(var(--foreground));
     --tw-prose-body: hsl(var(--foreground));

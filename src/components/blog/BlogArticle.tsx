@@ -1,12 +1,10 @@
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
-import { Facebook, Linkedin, Mail, Twitter } from "lucide-react";
+import { ChevronDown, Lightbulb, List, Quote } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 
 import { BlogTableOfContents } from "@/components/blog/BlogTableOfContents";
-import { Button } from "@/components/ui/button";
-import { getCanonicalUrl } from "@/lib/seo";
 import { buildBlogTableOfContents } from "@/lib/blog/toc";
 import type { Blog } from "@/lib/blog/types";
 
@@ -16,10 +14,7 @@ type HeadingProps = {
 };
 
 export function BlogArticle({ blog }: { blog: Blog }) {
-  const url = getCanonicalUrl(`/en/blog/${blog.slug}`);
   const headings = buildBlogTableOfContents(blog.content);
-  const shareText = encodeURIComponent(blog.title);
-  const shareUrl = encodeURIComponent(url);
   let renderedHeadingIndex = 0;
 
   const renderHeading = (
@@ -36,35 +31,25 @@ export function BlogArticle({ blog }: { blog: Blog }) {
   };
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[220px_1fr]">
-      <aside className="lg:sticky lg:top-28 lg:self-start">
-        <div className="space-y-4 rounded-lg border bg-card p-4">
-          <BlogTableOfContents headings={headings} />
-          <div className="flex gap-2 pt-2">
-            <Button asChild size="icon" variant="outline" aria-label="Share on X">
-              <a href={`https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}`} target="_blank" rel="noreferrer">
-                <Twitter className="h-4 w-4" />
-              </a>
-            </Button>
-            <Button asChild size="icon" variant="outline" aria-label="Share on Facebook">
-              <a href={`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`} target="_blank" rel="noreferrer">
-                <Facebook className="h-4 w-4" />
-              </a>
-            </Button>
-            <Button asChild size="icon" variant="outline" aria-label="Share on LinkedIn">
-              <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}`} target="_blank" rel="noreferrer">
-                <Linkedin className="h-4 w-4" />
-              </a>
-            </Button>
-            <Button asChild size="icon" variant="outline" aria-label="Share by email">
-              <a href={`mailto:?subject=${shareText}&body=${shareUrl}`}>
-                <Mail className="h-4 w-4" />
-              </a>
-            </Button>
-          </div>
+    <div className="grid gap-10 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-14">
+      <aside className="blog-outline lg:top-[6rem] lg:self-start lg:pr-1">
+        <div className="hidden border-r border-border pr-6 lg:block">
+          <p className="mb-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">On this page</p>
+          <div className="h-px w-10 bg-primary" />
+          <div className="mt-3"><BlogTableOfContents headings={headings} /></div>
         </div>
+        <details className="rounded-lg border border-border bg-card lg:hidden">
+          <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-sm font-semibold text-foreground">
+            <span className="flex items-center gap-2"><List className="h-4 w-4 text-primary" /> On this page</span><ChevronDown className="h-4 w-4" />
+          </summary>
+          <div className="border-t border-border px-4 py-3"><BlogTableOfContents headings={headings} /></div>
+        </details>
       </aside>
-      <article className="blog-article-content prose prose-slate max-w-none dark:prose-invert prose-headings:scroll-mt-28 prose-a:text-primary prose-img:rounded-lg">
+      <article className="blog-article-content blog-detail-content max-w-[650px]">
+        <div className="mb-8 flex gap-4 rounded-xl border border-primary/15 bg-primary/5 p-4 sm:p-5">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"><Lightbulb className="h-4 w-4" /></span>
+          <div><p className="m-0 text-[10px] font-bold uppercase tracking-wide text-primary">Helpful insight</p><p className="mb-0 mt-1 text-sm leading-6 text-muted-foreground">Use this guide as a practical checklist, then tailor the details to your own situation.</p></div>
+        </div>
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[rehypeRaw]}
@@ -91,6 +76,9 @@ export function BlogArticle({ blog }: { blog: Blog }) {
         >
           {blog.content}
         </ReactMarkdown>
+        <div className="mt-9 flex gap-4 rounded-xl bg-primary/5 px-5 py-4 text-sm italic text-foreground">
+          <Quote className="h-5 w-5 shrink-0 text-primary" /> A little preparation today creates more confidence for every decision ahead.
+        </div>
       </article>
     </div>
   );

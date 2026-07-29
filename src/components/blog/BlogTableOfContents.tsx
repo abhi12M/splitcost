@@ -118,7 +118,6 @@ export function BlogTableOfContents({
 
   return (
     <>
-      <p className="text-sm font-semibold">Table of contents</p>
       {headings.length ? (
         <nav className="space-y-2 text-sm text-muted-foreground">
           {headings.map((heading) => (

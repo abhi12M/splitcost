@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
+import { CalendarDays, ChevronRight, Clock3 } from "lucide-react";
 
 import { BlogArticle } from "@/components/blog/BlogArticle";
 import { BlogCard } from "@/components/blog/BlogCard";
-import { Badge } from "@/components/ui/badge";
 import { Layout } from "@/components/layout/Layout";
+import { Link } from "@/i18n/navigation";
 import { resolveLocaleParam } from "@/i18n/params";
 import type { AppLocale } from "@/i18n/routing";
 import { getBlogBySlug, getRelatedBlogs, incrementBlogViews } from "@/lib/blog/queries";
 import { buildBlogStructuredData } from "@/lib/blog/schema";
+import { getBlogCategoryByName } from "@/lib/blog/categories";
 import { formatBlogDate } from "@/lib/blog/utils";
 import {
   DEFAULT_OG_IMAGE,
@@ -77,6 +79,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
   void incrementBlogViews(blog.id, blog.views);
 
   const jsonLd = blog.schema_json ?? buildBlogStructuredData(blog);
+  const category = getBlogCategoryByName(blog.category);
 
   return (
     <Layout>
@@ -84,42 +87,51 @@ export default async function BlogDetailPage({ params }: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <article>
-        <section className="py-8 md:py-12">
-          <div className="container max-w-4xl">
-            <div className="space-y-5">
-              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                <Badge>{blog.category}</Badge>
-                <span>{formatBlogDate(blog.published_at)}</span>
-                <span>{blog.reading_time} min read</span>
-                <span>By {blog.author}</span>
-              </div>
-              <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-5xl">
+      <article className="blog-detail-page bg-background text-foreground">
+        <section className="blog-hero relative border-b border-border bg-muted/40">
+          <div className="container relative min-h-[515px] py-6 md:py-10 lg:py-7">
+            <div className="blog-hero-image absolute inset-y-0 right-0 hidden w-[54%] overflow-hidden lg:block">
+              {blog.cover_image ? (
+                <img src={blog.cover_image} alt={blog.cover_alt || blog.title} className="h-full w-full object-cover" />
+              ) : (
+                <div className="h-full w-full bg-[radial-gradient(circle_at_75%_30%,hsl(var(--primary)/.2),transparent_32%),linear-gradient(135deg,hsl(var(--muted)),hsl(var(--background)))]" />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-r from-muted via-muted/25 to-transparent" />
+            </div>
+            <div className="relative z-10 flex min-h-[467px] max-w-[650px] flex-col justify-center rounded-2xl bg-white px-6 py-8 shadow-[0_18px_50px_rgba(45,37,25,0.08)] sm:px-10 lg:px-12">
+              <nav aria-label="Breadcrumb" className="mb-7 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                <Link href="/" className="transition-colors hover:text-primary hover:underline">Home</Link>
+                <ChevronRight className="h-3.5 w-3.5" />
+                <Link href="/blog" className="transition-colors hover:text-primary hover:underline">Blog</Link>
+                <ChevronRight className="h-3.5 w-3.5" />
+                {category ? (
+                  <Link href={`/blog/category/${category.slug}`} className="truncate transition-colors hover:text-primary hover:underline">
+                    {blog.category}
+                  </Link>
+                ) : (
+                  <span className="truncate" aria-current="page">{blog.category}</span>
+                )}
+              </nav>
+              <span className="mb-5 w-fit rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-primary">
+                {blog.category}
+              </span>
+              <h1 className="font-serif text-[2.35rem] leading-[1.08] tracking-[-0.035em] text-foreground sm:text-5xl lg:text-[3.45rem]">
                 {blog.title}
               </h1>
-              <p className="text-lg leading-8 text-muted-foreground">{blog.excerpt}</p>
+              <p className="mt-5 max-w-[535px] text-sm leading-6 text-muted-foreground sm:text-[15px] sm:leading-6">{blog.excerpt}</p>
+              <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5"><CalendarDays className="h-3.5 w-3.5" /> Updated {formatBlogDate(blog.published_at)}</span>
+                <span className="hidden h-1 w-1 rounded-full bg-muted-foreground/60 sm:block" />
+                <span className="flex items-center gap-1.5"><Clock3 className="h-3.5 w-3.5" /> {blog.reading_time} min read</span>
+              </div>
+            </div>
+            <div className="relative z-10 mt-5 aspect-[16/9] overflow-hidden rounded-xl bg-muted lg:hidden">
+              {blog.cover_image ? <img src={blog.cover_image} alt={blog.cover_alt || blog.title} className="h-full w-full object-cover" /> : null}
             </div>
           </div>
         </section>
-        <section className="pb-10">
-          <div className="container">
-            <div className="relative mx-auto aspect-[16/8] max-w-5xl overflow-hidden rounded-lg bg-muted">
-              {blog.cover_image ? (
-                <img
-                  src={blog.cover_image}
-                  alt={blog.cover_alt || blog.title}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center bg-primary-muted text-primary">
-                  SplitCost Blog
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
-        <section className="pb-12">
-          <div className="container max-w-6xl">
+        <section className="pb-16 pt-8 md:pt-12">
+          <div className="container max-w-[1120px]">
             <BlogArticle blog={blog} />
           </div>
         </section>
