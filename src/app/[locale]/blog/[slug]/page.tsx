@@ -132,7 +132,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
           </div>
         </section>
         <section className="pb-16 pt-8 md:pt-12">
-          <div className="container max-w-[1120px]">
+          <div className="container max-w-[1180px]">
             <BlogArticle blog={blog} />
           </div>
         </section>

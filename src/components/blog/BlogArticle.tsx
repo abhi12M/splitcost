@@ -31,7 +31,7 @@ export function BlogArticle({ blog }: { blog: Blog }) {
   };
 
   return (
-    <div className="grid gap-10 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-14">
+    <div className="grid gap-10 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-14">
       <aside className="blog-outline lg:top-[6rem] lg:self-start lg:pr-1">
         <div className="hidden border-r border-border pr-6 lg:block">
           <p className="mb-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">On this page</p>
@@ -45,7 +45,7 @@ export function BlogArticle({ blog }: { blog: Blog }) {
           <div className="border-t border-border px-4 py-3"><BlogTableOfContents headings={headings} /></div>
         </details>
       </aside>
-      <article className="blog-article-content blog-detail-content max-w-[650px]">
+      <article className="blog-article-content blog-detail-content max-w-[800px]">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[rehypeRaw]}
