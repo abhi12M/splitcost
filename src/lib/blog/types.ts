@@ -23,14 +23,14 @@ export type Blog = {
 };
 
 export type BlogInput = {
-  title: string;
-  slug: string;
-  excerpt: string;
+  title: string | null;
+  slug: string | null;
+  excerpt: string | null;
   content: string;
   cover_image?: string | null;
   cover_alt?: string | null;
-  category: string;
-  author: string;
+  category: string | null;
+  author: string | null;
   status: BlogStatus;
   published_at?: string | null;
   reading_time?: number;

@@ -15,9 +15,10 @@ function getErrorMessage(error: unknown) {
 function normalizePayload(body: BlogInput): BlogInput {
   return {
     ...body,
-    title: body.title?.trim(),
-    slug: slugify(body.slug || body.title),
-    excerpt: body.excerpt?.trim(),
+    title: body.title?.trim() || null,
+    slug: slugify(body.slug || body.title || "") || null,
+    excerpt: body.excerpt?.trim() || null,
+    category: body.category?.trim() || null,
     author: body.author?.trim() || "SplitCost Team",
     reading_time: body.reading_time ?? estimateReadingTime(body.content ?? ""),
     no_index: body.no_index ?? false,
@@ -33,7 +34,10 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const payload = normalizePayload(await req.json());
-    if (!payload.title || !payload.slug || !payload.excerpt || !payload.category) {
+    if (
+      payload.status === "published" &&
+      (!payload.title || !payload.slug || !payload.excerpt || !payload.category)
+    ) {
       return NextResponse.json({ error: "Missing required blog fields" }, { status: 400 });
     }
     const blog = await createBlog(payload);

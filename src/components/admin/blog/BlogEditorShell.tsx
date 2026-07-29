@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, Check, Eye } from "lucide-react";
 import { ReactNode } from "react";
 
 import { BrandIcon } from "@/components/brand/BrandIcon";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import type { BlogStatus } from "@/lib/blog/types";
 import { ADMIN_BASE_PATH } from "@/lib/constants";
 
 type BlogEditorShellProps = {
@@ -13,6 +16,7 @@ type BlogEditorShellProps = {
   footer: ReactNode;
   saveStatus: "idle" | "saving" | "saved" | "error";
   savedLabel?: string;
+  blogStatus: BlogStatus;
   onPreview?: () => void;
   onSaveDraft: () => void;
   onPublish: () => void;
@@ -24,11 +28,14 @@ export function BlogEditorShell({
   footer,
   saveStatus,
   savedLabel,
+  blogStatus,
   onPreview,
   onSaveDraft,
   onPublish,
   saving,
 }: BlogEditorShellProps) {
+  const router = useRouter();
+
   return (
     <div className="fixed inset-0 z-0 flex flex-col overflow-hidden bg-muted/30">
       <header className="z-30 shrink-0 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
@@ -39,11 +46,28 @@ export function BlogEditorShell({
             </Link>
             <Link
               href={`${ADMIN_BASE_PATH}/blogs`}
+              prefetch={false}
+              onClick={(event) => {
+                event.preventDefault();
+                // A new URL avoids Next.js' client-side route cache after an
+                // autosave creates the post while this editor is open.
+                router.push(`${ADMIN_BASE_PATH}/blogs?updated=${Date.now()}`);
+              }}
               className="inline-flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
               <ArrowLeft className="h-4 w-4 shrink-0" />
               <span className="truncate">Back to blogs</span>
             </Link>
+            <Badge
+              variant="outline"
+              className={
+                blogStatus === "published"
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-300"
+                  : "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-300"
+              }
+            >
+              {blogStatus === "published" ? "Published" : "Draft"}
+            </Badge>
           </div>
 
           <div className="hidden shrink-0 items-center gap-2 text-sm text-muted-foreground sm:flex">

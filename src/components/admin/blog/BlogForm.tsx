@@ -52,6 +52,7 @@ import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { BlogEditor } from "./BlogEditor";
 import { BlogEditorShell } from "./BlogEditorShell";
+import { BlogPreviewDialog } from "./BlogPreviewDialog";
 
 const TITLE_MAX = 60;
 const DESCRIPTION_MAX = 160;
@@ -169,18 +170,24 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
   const [coverImage, setCoverImage] = useState(blog?.cover_image ?? "");
   const [coverAlt, setCoverAlt] = useState(blog?.cover_alt ?? blog?.title ?? "");
   const [coverDimensions, setCoverDimensions] = useState<string | null>(null);
-  const [category, setCategory] = useState(blog?.category ?? BLOG_CATEGORIES[0].name);
+  const [category, setCategory] = useState(blog?.category ?? "");
   const [author, setAuthor] = useState(blog?.author ?? "SplitCost Team");
   const [noIndex, setNoIndex] = useState(blog?.no_index ?? false);
   const [showToc, setShowToc] = useState(true);
   const [activeTocId, setActiveTocId] = useState<string>();
   const [saving, setSaving] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  // A newly created draft redirects to its edit URL after the first autosave.
+  // That page load already has persisted data, so keep the saved indicators
+  // visible instead of briefly resetting them to "Ready".
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">(
+    blog ? "saved" : "idle"
+  );
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(blog ? new Date(blog.updated_at) : null);
   const [isDirty, setIsDirty] = useState(false);
   const [schemaEdited, setSchemaEdited] = useState(Boolean(blog?.schema_json));
   const [schemaCopied, setSchemaCopied] = useState(false);
   const [schemaEditorOpen, setSchemaEditorOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [slugCopied, setSlugCopied] = useState(false);
   const [uploadingImageKind, setUploadingImageKind] = useState<"cover" | "inline" | null>(null);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -201,9 +208,9 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
   const generatedSchema = useMemo(
     () =>
       buildBlogStructuredData({
-        title: title.trim() || "Blog title",
-        slug: slugify(slug || title || "blog-title"),
-        excerpt: excerpt.trim() || getExcerpt(content, title),
+        title: title.trim(),
+        slug: slugify(slug || title),
+        excerpt: excerpt.trim(),
         content,
         cover_image: coverImage || null,
         author: author.trim() || "SplitCost Team",
@@ -215,6 +222,29 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
   );
   const [schemaJson, setSchemaJson] = useState(() =>
     formatStructuredData(blog?.schema_json)
+  );
+
+  const previewBlog = useMemo<Blog>(
+    () => ({
+      id: blogId || "",
+      title: title.trim(),
+      slug: slugify(slug || title),
+      excerpt: excerpt.trim(),
+      content,
+      cover_image: coverImage || null,
+      cover_alt: coverAlt.trim() || null,
+      category,
+      author: author.trim() || "SplitCost Team",
+      status: blog?.status ?? "draft",
+      published_at: blog?.published_at ?? null,
+      reading_time: readingTime,
+      no_index: noIndex,
+      schema_json: null,
+      views: blog?.views ?? 0,
+      created_at: blog?.created_at ?? new Date().toISOString(),
+      updated_at: blog?.updated_at ?? new Date().toISOString(),
+    }),
+    [author, blog?.created_at, blog?.published_at, blog?.status, blog?.updated_at, blog?.views, blogId, category, content, coverAlt, coverImage, excerpt, noIndex, readingTime, slug, title]
   );
 
   useEffect(() => {
@@ -259,7 +289,8 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
   };
 
   const copyPostUrl = async () => {
-    const postSlug = slugify(slug || title || "enter-blog-slug");
+    const postSlug = slugify(slug || title);
+    if (!postSlug) return;
     try {
       await navigator.clipboard.writeText(`https://splitcost.app/blog/${postSlug}`);
       setSlugCopied(true);
@@ -271,13 +302,13 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
 
   const buildPayload = useCallback(
     (nextStatus: BlogStatus): BlogInput => ({
-      title: title.trim() || "Untitled blog post",
-      slug: slugify(slug || title || "untitled-blog-post"),
-      excerpt: excerpt.trim() || getExcerpt(content, title) || "Draft blog post.",
+      title: title.trim() || null,
+      slug: slugify(slug || title) || null,
+      excerpt: excerpt.trim() || null,
       content,
       cover_image: coverImage || null,
       cover_alt: coverAlt.trim() || null,
-      category,
+      category: category || null,
       author: author.trim() || "SplitCost Team",
       status: nextStatus,
       published_at:
@@ -338,6 +369,9 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
 
         if (!response.ok) {
           const data = await response.json().catch(() => null);
+          if (data?.error === "Missing required blog fields") {
+            throw new Error("Add a title, slug, description, and category before publishing.");
+          }
           throw new Error(data?.error ?? "Unable to save blog");
         }
 
@@ -358,7 +392,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
         setSaveStatus("error");
         toast({
           variant: "destructive",
-          title: "Unable to save blog",
+          title: nextStatus === "published" ? "Unable to publish blog" : "Unable to save draft",
           description: saveError instanceof Error ? saveError.message : "Unable to save blog",
         });
         return null;
@@ -439,11 +473,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
     };
   }, [blogId, content, coverAlt, coverImage, excerpt, isDirty, noIndex, saveBlog, saving, schemaJson, slug, title]);
 
-  const handlePreview = () => {
-    const previewSlug = slugify(slug || title);
-    if (!previewSlug) return;
-    window.open(`/en/blog/${previewSlug}`, "_blank", "noopener,noreferrer");
-  };
+  const handlePreview = () => setPreviewOpen(true);
 
   const footer = (
     <div className="flex min-w-0 flex-col gap-2 px-4 py-2 text-xs text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-4 sm:gap-y-2 sm:px-6">
@@ -471,10 +501,12 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
 
   return (
     <TooltipProvider>
+      <BlogPreviewDialog blog={previewBlog} open={previewOpen} onOpenChange={setPreviewOpen} />
       <BlogEditorShell
         footer={footer}
         saveStatus={saveStatus}
         savedLabel={savedLabel}
+        blogStatus={blog?.status ?? "draft"}
         onPreview={slug || title ? handlePreview : undefined}
         onSaveDraft={() => void saveBlog("draft")}
         onPublish={() => void saveBlog("published")}
@@ -684,7 +716,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
                     />
                     <div className="flex min-w-0 items-center gap-1 text-[11px] text-muted-foreground">
                       <span className="min-w-0 truncate">
-                        https://splitcost.app/blog/{slugify(slug || title || "enter-blog-slug")}
+                        https://splitcost.app/blog/{slugify(slug || title)}
                       </span>
                       <button
                         type="button"

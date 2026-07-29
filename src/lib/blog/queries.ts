@@ -119,7 +119,7 @@ export async function getBlogBySlug(slug: string): Promise<Blog | null> {
 }
 
 export async function getBlogById(id: string): Promise<Blog | null> {
-  const { data, error } = await supabaseAdmin
+  const { data: blog, error } = await supabaseAdmin
     .from("blogs")
     .select(BLOG_SELECT)
     .eq("id", id)
@@ -129,7 +129,24 @@ export async function getBlogById(id: string): Promise<Blog | null> {
     console.error("getBlogById error:", error);
     return null;
   }
-  return (data as Blog | null) ?? null;
+  if (!blog) return null;
+
+  // Admin editing should resume an unpublished revision, while public readers
+  // continue to query only the canonical `blogs` table.
+  if (blog.status !== "published") return blog as Blog;
+
+  const { data: draft, error: draftError } = await supabaseAdmin
+    .from("blog_drafts")
+    .select("title,slug,excerpt,content,cover_image,cover_alt,category,author,published_at,reading_time,no_index,schema_json,updated_at")
+    .eq("blog_id", id)
+    .maybeSingle();
+
+  if (draftError) {
+    console.error("getBlogById draft error:", draftError);
+    return blog as Blog;
+  }
+
+  return draft ? ({ ...blog, ...draft } as Blog) : (blog as Blog);
 }
 
 export async function createBlog(input: BlogInput): Promise<Blog> {
@@ -151,11 +168,39 @@ export async function createBlog(input: BlogInput): Promise<Blog> {
 }
 
 export async function updateBlog(id: string, input: BlogInput): Promise<Blog> {
+  const { data: existing, error: existingError } = await supabaseAdmin
+    .from("blogs")
+    .select(BLOG_SELECT)
+    .eq("id", id)
+    .single();
+
+  if (existingError) throw existingError;
+
+  // Saving a published post as a draft must never update its public row.
+  if (existing.status === "published" && input.status === "draft") {
+    const { status: _status, ...draftInput } = input;
+    const { data: draft, error: draftError } = await supabaseAdmin
+      .from("blog_drafts")
+      .upsert(
+        {
+          blog_id: id,
+          ...draftInput,
+          published_at: existing.published_at,
+        },
+        { onConflict: "blog_id" }
+      )
+      .select("title,slug,excerpt,content,cover_image,cover_alt,category,author,published_at,reading_time,no_index,schema_json,updated_at")
+      .single();
+
+    if (draftError) throw draftError;
+    return { ...existing, ...draft } as Blog;
+  }
+
   const payload = {
     ...input,
     published_at:
       input.status === "published"
-        ? input.published_at ?? new Date().toISOString()
+        ? existing.published_at ?? input.published_at ?? new Date().toISOString()
         : input.published_at ?? null,
   };
   const { data, error } = await supabaseAdmin
@@ -166,6 +211,16 @@ export async function updateBlog(id: string, input: BlogInput): Promise<Blog> {
     .single();
 
   if (error) throw error;
+
+  // A publish applies the revision to the canonical post, then clears it.
+  if (existing.status === "published") {
+    const { error: draftError } = await supabaseAdmin
+      .from("blog_drafts")
+      .delete()
+      .eq("blog_id", id);
+    if (draftError) throw draftError;
+  }
+
   return data as Blog;
 }
 

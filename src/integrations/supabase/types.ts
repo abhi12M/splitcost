@@ -41,61 +41,126 @@ export type Database = {
   }
   public: {
     Tables: {
-      blogs: {
+      blog_drafts: {
         Row: {
-          author: string
-          category: string
+          author: string | null
+          blog_id: string
+          category: string | null
           content: string
           cover_alt: string | null
           cover_image: string | null
           created_at: string
-          excerpt: string
+          excerpt: string | null
+          id: string
+          no_index: boolean
+          published_at: string | null
+          reading_time: number
+          schema_json: Json | null
+          slug: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          author?: string | null
+          blog_id: string
+          category?: string | null
+          content?: string
+          cover_alt?: string | null
+          cover_image?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          no_index?: boolean
+          published_at?: string | null
+          reading_time?: number
+          schema_json?: Json | null
+          slug?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          author?: string | null
+          blog_id?: string
+          category?: string | null
+          content?: string
+          cover_alt?: string | null
+          cover_image?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          no_index?: boolean
+          published_at?: string | null
+          reading_time?: number
+          schema_json?: Json | null
+          slug?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_drafts_blog_id_fkey"
+            columns: ["blog_id"]
+            isOneToOne: true
+            referencedRelation: "blogs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blogs: {
+        Row: {
+          author: string | null
+          category: string | null
+          content: string
+          cover_alt: string | null
+          cover_image: string | null
+          created_at: string
+          excerpt: string | null
           id: string
           published_at: string | null
           reading_time: number
           no_index: boolean
           schema_json: Json | null
-          slug: string
+          slug: string | null
           status: Database["public"]["Enums"]["blog_status"]
-          title: string
+          title: string | null
           updated_at: string
           views: number
         }
         Insert: {
-          author?: string
-          category: string
+          author?: string | null
+          category?: string | null
           content?: string
           cover_alt?: string | null
           cover_image?: string | null
           created_at?: string
-          excerpt: string
+          excerpt?: string | null
           id?: string
           published_at?: string | null
           reading_time?: number
           no_index?: boolean
           schema_json?: Json | null
-          slug: string
+          slug?: string | null
           status?: Database["public"]["Enums"]["blog_status"]
-          title: string
+          title?: string | null
           updated_at?: string
           views?: number
         }
         Update: {
-          author?: string
-          category?: string
+          author?: string | null
+          category?: string | null
           content?: string
           cover_alt?: string | null
           cover_image?: string | null
           created_at?: string
-          excerpt?: string
+          excerpt?: string | null
           id?: string
           published_at?: string | null
           reading_time?: number
           no_index?: boolean
           schema_json?: Json | null
-          slug?: string
+          slug?: string | null
           status?: Database["public"]["Enums"]["blog_status"]
-          title?: string
+          title?: string | null
           updated_at?: string
           views?: number
         }
