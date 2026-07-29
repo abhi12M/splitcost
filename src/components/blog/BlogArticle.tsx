@@ -1,5 +1,5 @@
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
-import { ChevronDown, Lightbulb, List, Quote } from "lucide-react";
+import { ChevronDown, List } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
@@ -46,10 +46,6 @@ export function BlogArticle({ blog }: { blog: Blog }) {
         </details>
       </aside>
       <article className="blog-article-content blog-detail-content max-w-[650px]">
-        <div className="mb-8 flex gap-4 rounded-xl border border-primary/15 bg-primary/5 p-4 sm:p-5">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"><Lightbulb className="h-4 w-4" /></span>
-          <div><p className="m-0 text-[10px] font-bold uppercase tracking-wide text-primary">Helpful insight</p><p className="mb-0 mt-1 text-sm leading-6 text-muted-foreground">Use this guide as a practical checklist, then tailor the details to your own situation.</p></div>
-        </div>
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[rehypeRaw]}
@@ -76,9 +72,6 @@ export function BlogArticle({ blog }: { blog: Blog }) {
         >
           {blog.content}
         </ReactMarkdown>
-        <div className="mt-9 flex gap-4 rounded-xl bg-primary/5 px-5 py-4 text-sm italic text-foreground">
-          <Quote className="h-5 w-5 shrink-0 text-primary" /> A little preparation today creates more confidence for every decision ahead.
-        </div>
       </article>
     </div>
   );

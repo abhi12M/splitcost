@@ -4,6 +4,7 @@ import { setRequestLocale } from "next-intl/server";
 import { CalendarDays, ChevronRight, Clock3 } from "lucide-react";
 
 import { BlogArticle } from "@/components/blog/BlogArticle";
+import { BlogReadingProgress } from "@/components/blog/BlogReadingProgress";
 import { BlogCard } from "@/components/blog/BlogCard";
 import { Layout } from "@/components/layout/Layout";
 import { Link } from "@/i18n/navigation";
@@ -83,20 +84,20 @@ export default async function BlogDetailPage({ params }: PageProps) {
 
   return (
     <Layout>
+      <BlogReadingProgress />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <article className="blog-detail-page bg-background text-foreground">
+      <article data-blog-article className="blog-detail-page bg-background text-foreground">
         <section className="blog-hero relative border-b border-border bg-muted/40">
           <div className="container relative min-h-[515px] py-6 md:py-10 lg:py-7">
-            <div className="blog-hero-image absolute inset-y-0 right-0 hidden w-[54%] overflow-hidden lg:block">
+            <div className="blog-hero-image absolute inset-0 hidden overflow-hidden lg:block">
               {blog.cover_image ? (
                 <img src={blog.cover_image} alt={blog.cover_alt || blog.title} className="h-full w-full object-cover" />
               ) : (
                 <div className="h-full w-full bg-[radial-gradient(circle_at_75%_30%,hsl(var(--primary)/.2),transparent_32%),linear-gradient(135deg,hsl(var(--muted)),hsl(var(--background)))]" />
               )}
-              <div className="absolute inset-0 bg-gradient-to-r from-muted via-muted/25 to-transparent" />
             </div>
             <div className="relative z-10 flex min-h-[467px] max-w-[650px] flex-col justify-center rounded-2xl bg-white px-6 py-8 shadow-[0_18px_50px_rgba(45,37,25,0.08)] sm:px-10 lg:px-12">
               <nav aria-label="Breadcrumb" className="mb-7 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
