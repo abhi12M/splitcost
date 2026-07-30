@@ -1,4 +1,7 @@
-import { ListTree } from "lucide-react";
+"use client";
+
+import { useState } from "react";
+import { ChevronDown, ListTree } from "lucide-react";
 
 import type { BlogTocItem } from "@/lib/blog/toc";
 import { cn } from "@/lib/utils";
@@ -45,6 +48,33 @@ export function BlogTableOfContents({
   onClose,
   onHeadingClick,
 }: BlogTableOfContentsProps) {
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
+
+  const outline = headings.map((heading, index) => {
+    let parentId: string | undefined;
+    for (let previous = index - 1; previous >= 0; previous -= 1) {
+      if (headings[previous].level > 1 && headings[previous].level < heading.level) {
+        parentId = headings[previous].id;
+        break;
+      }
+    }
+
+    return {
+      ...heading,
+      parentId,
+      hasChildren: heading.level > 1 && headings[index + 1]?.level > heading.level,
+    };
+  });
+
+  const toggleExpanded = (id: string) => {
+    setExpandedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   if (variant === "sidebar") {
     return (
       <div className="flex h-full min-h-0 w-full flex-col">
@@ -120,15 +150,36 @@ export function BlogTableOfContents({
     <>
       {headings.length ? (
         <nav className="space-y-2 text-sm text-muted-foreground">
-          {headings.map((heading) => (
-            <a
-              key={heading.id}
-              href={`#${heading.id}`}
-              className={getTocItemClassName(heading.level, variant, false)}
-            >
-              {heading.text}
-            </a>
-          ))}
+          {outline.map((heading) => {
+            const isVisible = !heading.parentId || expandedIds.has(heading.parentId);
+            const isExpanded = expandedIds.has(heading.id);
+
+            return (
+              <div key={heading.id} className={isVisible ? "" : "hidden"}>
+                <div className="flex items-start gap-1">
+                  {heading.hasChildren ? (
+                    <button
+                      type="button"
+                      onClick={() => toggleExpanded(heading.id)}
+                      aria-expanded={isExpanded}
+                      aria-label={`${isExpanded ? "Collapse" : "Expand"} ${heading.text}`}
+                      className="mt-2 shrink-0 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
+                    >
+                      <ChevronDown className={`h-3.5 w-3.5 transition-transform ${isExpanded ? "rotate-0" : "-rotate-90"}`} />
+                    </button>
+                  ) : (
+                    <span className="w-5 shrink-0" />
+                  )}
+                  <a
+                    href={`#${heading.id}`}
+                    className={`${getTocItemClassName(heading.level, variant, false)} flex-1`}
+                  >
+                    {heading.text}
+                  </a>
+                </div>
+              </div>
+            );
+          })}
         </nav>
       ) : (
         <p className="text-sm text-muted-foreground">Article overview</p>
