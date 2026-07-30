@@ -11,6 +11,8 @@ import {
   Images,
   ListTree,
   Loader2,
+  PanelRightClose,
+  PanelRightOpen,
   Trash2,
   X,
 } from "lucide-react";
@@ -174,6 +176,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
   const [author, setAuthor] = useState(blog?.author ?? "SplitCost Team");
   const [noIndex, setNoIndex] = useState(blog?.no_index ?? false);
   const [showToc, setShowToc] = useState(true);
+  const [showSettings, setShowSettings] = useState(true);
   const [activeTocId, setActiveTocId] = useState<string>();
   const [saving, setSaving] = useState(false);
   // A newly created draft redirects to its edit URL after the first autosave.
@@ -580,8 +583,29 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
             </div>
           </main>
 
-          <aside className="min-h-0 w-full min-w-0 shrink-0 border-l bg-muted/30 lg:flex lg:w-96 lg:flex-col lg:overflow-hidden">
-            <div className="space-y-3 p-3 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:overscroll-contain">
+          <aside
+            className={cn(
+              "min-h-0 w-full min-w-0 shrink-0 border-l bg-muted/30 transition-[width] duration-300 ease-out lg:flex lg:flex-col lg:overflow-hidden",
+              showSettings ? "lg:w-96" : "lg:w-12"
+            )}
+          >
+            {showSettings ? (
+              <>
+                <div className="hidden min-h-12 shrink-0 items-center border-b bg-background px-3 lg:flex">
+                  <button
+                    type="button"
+                    onClick={() => setShowSettings(false)}
+                    className="flex min-w-0 items-center gap-2 rounded-md px-1.5 py-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    aria-label="Collapse post settings"
+                    title="Collapse post settings"
+                  >
+                    <PanelRightClose className="h-4 w-4 shrink-0" />
+                    <span className="truncate text-sm font-semibold text-foreground">
+                      Post settings
+                    </span>
+                  </button>
+                </div>
+                <div className="space-y-3 p-3 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:overscroll-contain">
               <SettingsSection
                 title="Cover Image"
                 help="Upload a cover image or paste a direct image URL. Use descriptive alt text for accessibility."
@@ -882,7 +906,21 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
                   }}
                 />
               </section>
-            </div>
+                </div>
+              </>
+            ) : (
+              <div className="hidden h-full w-full flex-col items-center bg-background py-3 lg:flex">
+                <button
+                  type="button"
+                  onClick={() => setShowSettings(true)}
+                  className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  aria-label="Show post settings"
+                  title="Show post settings"
+                >
+                  <PanelRightOpen className="h-4 w-4" />
+                </button>
+              </div>
+            )}
           </aside>
         </div>
       </BlogEditorShell>

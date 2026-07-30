@@ -251,17 +251,37 @@ export async function incrementBlogViews(id: string, views: number) {
 }
 
 export async function getRelatedBlogs(blog: Blog, limit = 3): Promise<Blog[]> {
-  const { data, error } = await supabaseAdmin
-    .from("blogs")
-    .select(BLOG_SELECT)
-    .eq("status", "published")
-    .eq("category", blog.category)
-    .neq("id", blog.id)
-    .order("published_at", { ascending: false })
-    .limit(limit);
+  const [categoryResult, latestResult] = await Promise.all([
+    supabaseAdmin
+      .from("blogs")
+      .select(BLOG_SELECT)
+      .eq("status", "published")
+      .eq("category", blog.category)
+      .neq("id", blog.id)
+      .order("published_at", { ascending: false })
+      .limit(limit),
+    supabaseAdmin
+      .from("blogs")
+      .select(BLOG_SELECT)
+      .eq("status", "published")
+      .neq("id", blog.id)
+      .order("published_at", { ascending: false })
+      .limit(limit + 1),
+  ]);
 
-  if (error) return [];
-  return (data ?? []) as Blog[];
+  if (categoryResult.error) {
+    console.error("getRelatedBlogs category error:", categoryResult.error);
+  }
+  if (latestResult.error) {
+    console.error("getRelatedBlogs latest error:", latestResult.error);
+  }
+
+  const related = [
+    ...((categoryResult.data ?? []) as Blog[]),
+    ...((latestResult.data ?? []) as Blog[]),
+  ];
+
+  return Array.from(new Map(related.map((item) => [item.id, item])).values()).slice(0, limit);
 }
 
 export async function getPublishedBlogPaths() {

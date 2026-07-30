@@ -257,7 +257,11 @@
   }
 
   .blog-outline nav a {
-    @apply py-1 leading-5 transition-colors hover:text-primary;
+    @apply leading-5;
+  }
+
+  .blog-detail-content [id] {
+    scroll-margin-top: 8.5rem;
   }
 
   .blog-detail-content h1,

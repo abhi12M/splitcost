@@ -4,8 +4,9 @@ import { setRequestLocale } from "next-intl/server";
 import { CalendarDays, ChevronRight, Clock3 } from "lucide-react";
 
 import { BlogArticle } from "@/components/blog/BlogArticle";
+import { BlogCta } from "@/components/blog/BlogCta";
 import { BlogReadingProgress } from "@/components/blog/BlogReadingProgress";
-import { BlogCard } from "@/components/blog/BlogCard";
+import { RelatedBlogs } from "@/components/blog/RelatedBlogs";
 import { Layout } from "@/components/layout/Layout";
 import { Link } from "@/i18n/navigation";
 import { resolveLocaleParam } from "@/i18n/params";
@@ -76,7 +77,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
   const blog = await getBlogBySlug(resolved.slug);
   if (!blog) notFound();
 
-  const relatedBlogs = await getRelatedBlogs(blog);
+  const relatedBlogs = await getRelatedBlogs(blog, 4);
   void incrementBlogViews(blog.id, blog.views);
 
   const jsonLd = blog.schema_json ?? buildBlogStructuredData(blog);
@@ -131,24 +132,14 @@ export default async function BlogDetailPage({ params }: PageProps) {
             </div>
           </div>
         </section>
-        <section className="pb-16 pt-8 md:pt-12">
+        <section className="pb-8 pt-8 md:pb-10 md:pt-12">
           <div className="container max-w-[1180px]">
             <BlogArticle blog={blog} />
           </div>
         </section>
       </article>
-      {relatedBlogs.length ? (
-        <section className="border-t bg-muted/30 py-10">
-          <div className="container space-y-6">
-            <h2 className="text-2xl font-bold">Related blogs</h2>
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {relatedBlogs.map((item) => (
-                <BlogCard key={item.id} blog={item} />
-              ))}
-            </div>
-          </div>
-        </section>
-      ) : null}
+      <BlogCta />
+      <RelatedBlogs blogs={relatedBlogs} />
     </Layout>
   );
 }

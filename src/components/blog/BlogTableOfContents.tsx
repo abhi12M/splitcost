@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, ListTree } from "lucide-react";
 
 import type { BlogTocItem } from "@/lib/blog/toc";
@@ -18,7 +18,7 @@ function getTocItemClassName(level: number, variant: "default" | "sidebar", acti
   const base =
     variant === "sidebar"
       ? "relative flex min-w-0 items-start rounded-md py-1.5 pr-2 text-[13px] leading-5 transition-colors"
-      : "block hover:text-foreground";
+      : "relative block rounded-r-md border-l-2 py-1.5 pr-2 transition-all duration-300 ease-out";
 
   const activeClass =
     variant === "sidebar" && active
@@ -28,12 +28,16 @@ function getTocItemClassName(level: number, variant: "default" | "sidebar", acti
         : "";
 
   if (variant === "default") {
-    if (level <= 1) return cn(base, "font-medium hover:text-foreground");
-    if (level === 2) return cn(base, "pl-3");
-    if (level === 3) return cn(base, "pl-6 text-xs");
-    if (level === 4) return cn(base, "pl-8 text-xs");
-    if (level === 5) return cn(base, "pl-10 text-xs");
-    return cn(base, "pl-12 text-xs");
+    const stateClass = active
+      ? "border-primary bg-primary/10 font-semibold text-primary shadow-[inset_10px_0_18px_-18px_hsl(var(--primary))]"
+      : "border-transparent text-muted-foreground hover:border-primary/30 hover:bg-muted/60 hover:text-foreground";
+
+    if (level <= 1) return cn(base, "pl-3 font-medium", stateClass);
+    if (level === 2) return cn(base, "pl-3", stateClass);
+    if (level === 3) return cn(base, "pl-6 text-xs", stateClass);
+    if (level === 4) return cn(base, "pl-8 text-xs", stateClass);
+    if (level === 5) return cn(base, "pl-10 text-xs", stateClass);
+    return cn(base, "pl-12 text-xs", stateClass);
   }
 
   if (level <= 1) return cn(base, "pl-2", activeClass);
@@ -49,22 +53,106 @@ export function BlogTableOfContents({
   onHeadingClick,
 }: BlogTableOfContentsProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
+  const [observedActiveId, setObservedActiveId] = useState<string>();
+  const navRef = useRef<HTMLElement>(null);
+  const effectiveActiveId = activeId ?? observedActiveId;
 
-  const outline = headings.map((heading, index) => {
-    let parentId: string | undefined;
-    for (let previous = index - 1; previous >= 0; previous -= 1) {
-      if (headings[previous].level > 1 && headings[previous].level < heading.level) {
-        parentId = headings[previous].id;
-        break;
-      }
+  const outline = useMemo(
+    () =>
+      headings.map((heading, index) => {
+        let parentId: string | undefined;
+        for (let previous = index - 1; previous >= 0; previous -= 1) {
+          if (headings[previous].level > 1 && headings[previous].level < heading.level) {
+            parentId = headings[previous].id;
+            break;
+          }
+        }
+
+        return {
+          ...heading,
+          parentId,
+          hasChildren: heading.level > 1 && headings[index + 1]?.level > heading.level,
+        };
+      }),
+    [headings]
+  );
+
+  useEffect(() => {
+    if (activeId || !headings.length) return;
+
+    let frame = 0;
+    const updateActiveHeading = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const activationLine = window.scrollY + Math.min(180, window.innerHeight * 0.25);
+        let nextId = headings[0].id;
+
+        for (const heading of headings) {
+          const element = document.getElementById(heading.id);
+          if (!element) continue;
+          const elementTop = element.getBoundingClientRect().top + window.scrollY;
+          if (elementTop <= activationLine) nextId = heading.id;
+          else break;
+        }
+
+        setObservedActiveId((current) => (current === nextId ? current : nextId));
+      });
+    };
+
+    updateActiveHeading();
+    window.addEventListener("scroll", updateActiveHeading, { passive: true });
+    window.addEventListener("resize", updateActiveHeading);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", updateActiveHeading);
+      window.removeEventListener("resize", updateActiveHeading);
+    };
+  }, [activeId, headings]);
+
+  useEffect(() => {
+    if (!effectiveActiveId) return;
+
+    const activeItem = outline.find((heading) => heading.id === effectiveActiveId);
+    if (activeItem?.parentId) {
+      setExpandedIds((current) => {
+        if (current.has(activeItem.parentId!)) return current;
+        const next = new Set(current);
+        next.add(activeItem.parentId!);
+        return next;
+      });
     }
 
-    return {
-      ...heading,
-      parentId,
-      hasChildren: heading.level > 1 && headings[index + 1]?.level > heading.level,
-    };
-  });
+    const nav = navRef.current;
+    const link = nav?.querySelector<HTMLElement>(
+      `[data-toc-id="${CSS.escape(effectiveActiveId)}"]`
+    );
+    if (nav && link && nav.scrollHeight > nav.clientHeight) {
+      nav.scrollTo({
+        top: Math.max(0, link.offsetTop - nav.clientHeight / 2 + link.clientHeight / 2),
+        behavior: "smooth",
+      });
+    }
+  }, [effectiveActiveId, outline]);
+
+  const selectHeading = (
+    event: React.MouseEvent<HTMLAnchorElement>,
+    heading: BlogTocItem,
+    index: number
+  ) => {
+    event.preventDefault();
+    setObservedActiveId(heading.id);
+
+    if (onHeadingClick) {
+      onHeadingClick(heading, index);
+      return;
+    }
+
+    const target = document.getElementById(heading.id);
+    if (!target) return;
+    window.history.replaceState(null, "", `#${heading.id}`);
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   const toggleExpanded = (id: string) => {
     setExpandedIds((current) => {
@@ -101,6 +189,7 @@ export function BlogTableOfContents({
           </div>
         </div>
         <nav
+          ref={navRef}
           aria-label="Article table of contents"
           className="min-h-0 flex-1 space-y-0.5 overflow-y-auto overscroll-contain px-2 py-2"
         >
@@ -109,17 +198,15 @@ export function BlogTableOfContents({
               <a
                 key={heading.id}
                 href={`#${heading.id}`}
-                onClick={
-                  onHeadingClick
-                    ? (event) => {
-                        event.preventDefault();
-                        onHeadingClick(heading, index);
-                      }
-                    : undefined
-                }
+                onClick={(event) => selectHeading(event, heading, index)}
+                data-toc-id={heading.id}
                 title={heading.text}
-                aria-current={heading.id === activeId ? "location" : undefined}
-                className={getTocItemClassName(heading.level, variant, heading.id === activeId)}
+                aria-current={heading.id === effectiveActiveId ? "location" : undefined}
+                className={getTocItemClassName(
+                  heading.level,
+                  variant,
+                  heading.id === effectiveActiveId
+                )}
               >
                 {heading.level > 1 ? (
                   <span
@@ -149,10 +236,15 @@ export function BlogTableOfContents({
   return (
     <>
       {headings.length ? (
-        <nav className="space-y-2 text-sm text-muted-foreground">
-          {outline.map((heading) => {
+        <nav
+          ref={navRef}
+          aria-label="Article table of contents"
+          className="space-y-1 text-sm text-muted-foreground"
+        >
+          {outline.map((heading, index) => {
             const isVisible = !heading.parentId || expandedIds.has(heading.parentId);
             const isExpanded = expandedIds.has(heading.id);
+            const isActive = heading.id === effectiveActiveId;
 
             return (
               <div key={heading.id} className={isVisible ? "" : "hidden"}>
@@ -172,7 +264,13 @@ export function BlogTableOfContents({
                   )}
                   <a
                     href={`#${heading.id}`}
-                    className={`${getTocItemClassName(heading.level, variant, false)} flex-1`}
+                    onClick={(event) => selectHeading(event, heading, index)}
+                    data-toc-id={heading.id}
+                    aria-current={isActive ? "location" : undefined}
+                    className={cn(
+                      getTocItemClassName(heading.level, variant, isActive),
+                      "flex-1"
+                    )}
                   >
                     {heading.text}
                   </a>
