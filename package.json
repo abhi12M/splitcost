@@ -63,6 +63,7 @@
     "react-swipeable": "^7.0.2",
     "recharts": "^2.15.4",
     "rehype-raw": "^7.0.0",
+    "remark-directive": "^4.0.0",
     "remark-gfm": "^4.0.1",
     "resend": "^6.9.3",
     "sonner": "^1.7.4",

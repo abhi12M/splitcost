@@ -1,10 +1,12 @@
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
-import { ChevronDown, List } from "lucide-react";
+import { Building2, ChevronDown, Lightbulb, List, Quote } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
+import remarkDirective from "remark-directive";
 import remarkGfm from "remark-gfm";
 
 import { BlogTableOfContents } from "@/components/blog/BlogTableOfContents";
+import { remarkInsight } from "@/lib/blog/remarkInsight";
 import { buildBlogTableOfContents } from "@/lib/blog/toc";
 import type { Blog } from "@/lib/blog/types";
 
@@ -47,7 +49,7 @@ export function BlogArticle({ blog }: { blog: Blog }) {
       </aside>
       <article className="blog-article-content blog-detail-content max-w-[800px]">
         <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
+          remarkPlugins={[remarkGfm, remarkDirective, remarkInsight]}
           rehypePlugins={[rehypeRaw]}
           components={{
             h1: (props) => renderHeading("h1", props),
@@ -56,6 +58,32 @@ export function BlogArticle({ blog }: { blog: Blog }) {
             h4: (props) => renderHeading("h4", props),
             h5: (props) => renderHeading("h5", props),
             h6: (props) => renderHeading("h6", props),
+            aside({ children, className }) {
+              if (!className?.includes("blog-insight")) {
+                return <aside className={className}>{children}</aside>;
+              }
+
+              return (
+                <aside className="blog-insight">
+                  <div className="blog-insight-heading">
+                    <span className="blog-insight-icon">
+                      <Lightbulb aria-hidden="true" />
+                    </span>
+                    <span>Insight</span>
+                  </div>
+                  <div className="blog-insight-content">{children}</div>
+                </aside>
+              );
+            },
+            blockquote({ children }) {
+              return (
+                <blockquote className="blog-quote">
+                  <Quote className="blog-quote-mark" aria-hidden="true" />
+                  <div className="blog-quote-content">{children}</div>
+                  <Building2 className="blog-quote-watermark" aria-hidden="true" />
+                </blockquote>
+              );
+            },
             a({ children, href, ...props }) {
               const isExternal = href?.startsWith("http");
               return isExternal ? (

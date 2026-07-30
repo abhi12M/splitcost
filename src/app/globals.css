@@ -389,7 +389,69 @@
 
   .blog-editor-content blockquote,
   .blog-article-content blockquote {
-    @apply my-4 border-l-4 border-primary/40 pl-4 italic text-muted-foreground;
+    @apply relative my-5 overflow-hidden rounded-xl border border-primary/15 bg-card px-12 py-4 not-italic text-foreground shadow-sm;
+    background-image: linear-gradient(135deg, hsl(var(--primary) / 0.07), transparent 55%);
+  }
+
+  .blog-editor-content blockquote::before {
+    content: "\201C";
+    @apply absolute left-4 top-2 font-serif text-4xl font-bold leading-none text-primary/70;
+  }
+
+  .blog-editor-content blockquote p,
+  .blog-article-content .blog-quote p {
+    @apply my-0 text-sm font-medium leading-6;
+  }
+
+  .blog-quote-mark {
+    @apply absolute left-4 top-4 h-5 w-5 fill-primary/15 text-primary;
+  }
+
+  .blog-quote-content {
+    @apply relative z-10;
+  }
+
+  .blog-quote-watermark {
+    @apply absolute -bottom-3 right-2 h-16 w-16 text-primary/[0.08];
+  }
+
+  .blog-insight,
+  .blog-editor-insight {
+    @apply relative my-6 rounded-xl border border-primary/20 bg-card p-4 shadow-sm sm:p-5;
+    background-image: linear-gradient(135deg, hsl(var(--primary) / 0.09), transparent 58%);
+  }
+
+  .blog-insight-heading,
+  .blog-editor-insight-heading {
+    @apply mb-2 flex items-center gap-3 text-sm font-bold uppercase tracking-wide text-primary;
+  }
+
+  .blog-insight-icon,
+  .blog-editor-insight-icon {
+    @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm;
+  }
+
+  .blog-insight-icon svg,
+  .blog-editor-insight-icon svg {
+    @apply h-5 w-5;
+  }
+
+  .blog-insight-content {
+    @apply pl-12;
+  }
+
+  .blog-insight-content > :first-child,
+  .blog-editor-insight [contenteditable="true"] > :first-child {
+    @apply mt-0;
+  }
+
+  .blog-insight-content > :last-child,
+  .blog-editor-insight [contenteditable="true"] > :last-child {
+    @apply mb-0;
+  }
+
+  .blog-editor-insight [contenteditable="true"] {
+    @apply min-h-7 pl-12;
   }
 
   .blog-editor-content pre,

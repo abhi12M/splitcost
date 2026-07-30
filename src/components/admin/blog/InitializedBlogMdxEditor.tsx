@@ -4,6 +4,7 @@ import {
   AdmonitionDirectiveDescriptor,
   BlockTypeSelect,
   BoldItalicUnderlineToggles,
+  ButtonWithTooltip,
   ChangeAdmonitionType,
   ChangeCodeMirrorLanguage,
   CodeToggle,
@@ -18,6 +19,7 @@ import {
   InsertThematicBreak,
   ListsToggle,
   MDXEditor,
+  NestedLexicalEditor,
   Separator,
   UndoRedo,
   type EditorInFocus,
@@ -29,6 +31,8 @@ import {
   frontmatterPlugin,
   headingsPlugin,
   imagePlugin,
+  insertDirective$,
+  insertMarkdown$,
   jsxPlugin,
   linkDialogPlugin,
   linkPlugin,
@@ -38,14 +42,46 @@ import {
   tablePlugin,
   thematicBreakPlugin,
   toolbarPlugin,
+  type DirectiveDescriptor,
 } from "@mdxeditor/editor";
+import { usePublisher } from "@mdxeditor/gurx";
+import type { ContainerDirective } from "mdast-util-directive";
 import "@mdxeditor/editor/style.css";
+import { Lightbulb, Quote } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 
 type InitializedBlogMdxEditorProps = {
   value: string;
   onChange: (value: string) => void;
   onImageUpload: (image: File) => Promise<string>;
+};
+
+const InsightDirectiveDescriptor: DirectiveDescriptor<ContainerDirective> = {
+  name: "insight",
+  type: "containerDirective",
+  attributes: [],
+  hasChildren: true,
+  testNode: (node) => node.name === "insight",
+  Editor({ mdastNode }) {
+    return (
+      <aside className="blog-editor-insight">
+        <div className="blog-editor-insight-heading" contentEditable={false}>
+          <span className="blog-editor-insight-icon">
+            <Lightbulb aria-hidden="true" />
+          </span>
+          <span>Insight</span>
+        </div>
+        <NestedLexicalEditor<ContainerDirective>
+          block
+          getContent={(node) => node.children}
+          getUpdatedMdastNode={(node, children) => ({
+            ...node,
+            children: children as ContainerDirective["children"],
+          })}
+        />
+      </aside>
+    );
+  },
 };
 
 function whenInAdmonition(editorInFocus: EditorInFocus | null) {
@@ -60,6 +96,39 @@ function whenInAdmonition(editorInFocus: EditorInFocus | null) {
 
   const mdastNode = node.getMdastNode() as { name?: string };
   return ["note", "tip", "danger", "info", "caution"].includes(mdastNode.name ?? "");
+}
+
+function InsertInsight() {
+  const insertDirective = usePublisher(insertDirective$);
+
+  return (
+    <ButtonWithTooltip
+      title="Insert insight"
+      aria-label="Insert insight"
+      onClick={() => {
+        insertDirective({
+          type: "containerDirective",
+          name: "insight",
+        });
+      }}
+    >
+      <Lightbulb aria-hidden="true" />
+    </ButtonWithTooltip>
+  );
+}
+
+function InsertQuote() {
+  const insertMarkdown = usePublisher(insertMarkdown$);
+
+  return (
+    <ButtonWithTooltip
+      title="Insert quote"
+      aria-label="Insert quote"
+      onClick={() => insertMarkdown("\n> Add a thoughtful quote here.\n\n")}
+    >
+      <Quote aria-hidden="true" />
+    </ButtonWithTooltip>
+  );
 }
 
 function BlogEditorToolbar() {
@@ -96,6 +165,8 @@ function BlogEditorToolbar() {
                 <InsertThematicBreak />
                 <Separator />
                 <InsertCodeBlock />
+                <InsertQuote />
+                <InsertInsight />
                 <ConditionalContents
                   options={[
                     {
@@ -150,7 +221,7 @@ export function InitializedBlogMdxEditor({
         },
       }),
       directivesPlugin({
-        directiveDescriptors: [AdmonitionDirectiveDescriptor],
+        directiveDescriptors: [InsightDirectiveDescriptor, AdmonitionDirectiveDescriptor],
       }),
       frontmatterPlugin(),
       jsxPlugin({ jsxComponentDescriptors: [], allowFragment: true }),
