@@ -67,7 +67,7 @@ export default async function BlogIndexPage({ params, searchParams = {} }: PageP
             {BLOG_CATEGORIES.map((item) => (
               <a
                 key={item.slug}
-                href={`/en/blog/category/${item.slug}`}
+                href={`/en/blog?category=${encodeURIComponent(item.name)}`}
                 className="rounded-full border px-3 py-1 text-sm text-muted-foreground hover:text-foreground"
               >
                 {item.name}

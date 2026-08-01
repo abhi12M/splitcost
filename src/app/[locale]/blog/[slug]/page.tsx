@@ -13,7 +13,6 @@ import { resolveLocaleParam } from "@/i18n/params";
 import type { AppLocale } from "@/i18n/routing";
 import { getBlogBySlug, getRelatedBlogs, incrementBlogViews } from "@/lib/blog/queries";
 import { buildBlogStructuredData } from "@/lib/blog/schema";
-import { getBlogCategoryByName } from "@/lib/blog/categories";
 import { formatBlogDate } from "@/lib/blog/utils";
 import {
   DEFAULT_OG_IMAGE,
@@ -81,8 +80,6 @@ export default async function BlogDetailPage({ params }: PageProps) {
   void incrementBlogViews(blog.id, blog.views);
 
   const jsonLd = blog.schema_json ?? buildBlogStructuredData(blog);
-  const category = getBlogCategoryByName(blog.category);
-
   return (
     <Layout>
       <BlogReadingProgress />
@@ -106,13 +103,12 @@ export default async function BlogDetailPage({ params }: PageProps) {
                 <ChevronRight className="h-3.5 w-3.5" />
                 <Link href="/blog" className="transition-colors hover:text-primary hover:underline">Blog</Link>
                 <ChevronRight className="h-3.5 w-3.5" />
-                {category ? (
-                  <Link href={`/blog/category/${category.slug}`} className="truncate transition-colors hover:text-primary hover:underline">
-                    {blog.category}
-                  </Link>
-                ) : (
-                  <span className="truncate" aria-current="page">{blog.category}</span>
-                )}
+                <Link
+                  href={`/blog?category=${encodeURIComponent(blog.category)}`}
+                  className="truncate transition-colors hover:text-primary hover:underline"
+                >
+                  {blog.category}
+                </Link>
               </nav>
               <span className="mb-5 w-fit rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-primary">
                 {blog.category}
