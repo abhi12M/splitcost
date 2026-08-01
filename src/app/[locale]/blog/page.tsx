@@ -5,6 +5,7 @@ import { BlogCard } from "@/components/blog/BlogCard";
 import { BlogFilters } from "@/components/blog/BlogFilters";
 import { BlogPagination } from "@/components/blog/BlogPagination";
 import { Layout } from "@/components/layout/Layout";
+import { Link } from "@/i18n/navigation";
 import { resolveLocaleParam } from "@/i18n/params";
 import type { AppLocale } from "@/i18n/routing";
 import { BLOG_CATEGORIES } from "@/lib/blog/categories";
@@ -65,13 +66,13 @@ export default async function BlogIndexPage({ params, searchParams = {} }: PageP
           <BlogFilters />
           <div className="flex flex-wrap gap-2">
             {BLOG_CATEGORIES.map((item) => (
-              <a
+              <Link
                 key={item.slug}
-                href={`/en/blog?category=${encodeURIComponent(item.name)}`}
+                href={`/blog?category=${encodeURIComponent(item.name)}`}
                 className="rounded-full border px-3 py-1 text-sm text-muted-foreground hover:text-foreground"
               >
                 {item.name}
-              </a>
+              </Link>
             ))}
           </div>
           {result.blogs.length ? (
