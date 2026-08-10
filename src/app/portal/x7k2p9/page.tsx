@@ -33,16 +33,15 @@ type RecentGroup = {
   latestActivityAt: string;
 };
 
-type GroupMemberSummary = {
-  group_id: string;
-  is_active: boolean | null;
-};
-
-type GroupExpenseSummary = {
-  group_id: string;
-  amount: number;
-  created_at: string;
-  updated_at: string;
+type GroupSummaryResult = {
+  id: string;
+  name: string;
+  currency: string;
+  createdAt: string;
+  updatedAt: string | null;
+  memberCount: number;
+  totalExpenses: number;
+  latestExpenseActivityAt: string | null;
 };
 
 export const metadata: Metadata = buildMetadata({
@@ -58,13 +57,15 @@ async function getDashboardData() {
   const activityStart = new Date();
   activityStart.setUTCFullYear(activityStart.getUTCFullYear() - 1);
   activityStart.setUTCMonth(activityStart.getUTCMonth() - 1);
+  const groupSummaryClient = supabaseAdmin as unknown as {
+    rpc: (
+      functionName: "load_group_summaries",
+      args: { p_group_ids: null },
+    ) => Promise<{ data: GroupSummaryResult[] | null }>;
+  };
 
   const [recentGroupsResult, activityExpensesResult, activityGroupsResult] = await Promise.all([
-    supabaseAdmin
-      .from("groups")
-      .select("id,name,currency,created_at,updated_at")
-      .order("created_at", { ascending: false })
-      .limit(5),
+    groupSummaryClient.rpc("load_group_summaries", { p_group_ids: null }),
     supabaseAdmin
       .from("expenses")
       .select("created_at")
@@ -75,40 +76,21 @@ async function getDashboardData() {
       .gte("created_at", activityStart.toISOString()),
   ]);
 
-  const recentGroups = (recentGroupsResult.data ?? []) as Omit<
-    RecentGroup,
-    "memberCount" | "total" | "latestActivityAt"
-  >[];
-  const groupIds = recentGroups.map((group) => group.id);
-  let members: GroupMemberSummary[] = [];
-  let expenses: GroupExpenseSummary[] = [];
-
-  if (groupIds.length) {
-    const [membersResult, expensesResult] = await Promise.all([
-      supabaseAdmin.from("group_members").select("group_id,is_active").in("group_id", groupIds),
-      supabaseAdmin.from("expenses").select("group_id,amount,created_at,updated_at").in("group_id", groupIds),
-    ]);
-    members = (membersResult.data ?? []) as GroupMemberSummary[];
-    expenses = (expensesResult.data ?? []) as GroupExpenseSummary[];
-  }
+  const recentGroups = ((recentGroupsResult.data ?? []) as GroupSummaryResult[]).slice(0, 5);
 
   return {
-    recentGroups: recentGroups.map((group): RecentGroup => {
-      const groupExpenses = expenses.filter((expense) => expense.group_id === group.id);
-      const latestExpenseActivity = groupExpenses.reduce<string | null>((latest, expense) => {
-        const activityAt = expense.updated_at || expense.created_at;
-        return !latest || activityAt > latest ? activityAt : latest;
-      }, null);
-
-      return {
-        ...group,
-        memberCount: members.filter(
-          (member) => member.group_id === group.id && member.is_active !== false,
-        ).length,
-        total: groupExpenses.reduce((sum, expense) => sum + Number(expense.amount), 0),
-        latestActivityAt: latestExpenseActivity ?? group.updated_at ?? group.created_at,
-      };
-    }),
+    recentGroups: recentGroups.map(
+      (group): RecentGroup => ({
+        id: group.id,
+        name: group.name,
+        currency: group.currency,
+        created_at: group.createdAt,
+        updated_at: group.updatedAt,
+        memberCount: group.memberCount,
+        total: Number(group.totalExpenses),
+        latestActivityAt: group.latestExpenseActivityAt ?? group.updatedAt ?? group.createdAt,
+      }),
+    ),
     activityEvents: {
       expenses: (activityExpensesResult.data ?? []).map((expense) => expense.created_at),
       groups: (activityGroupsResult.data ?? []).map((group) => group.created_at),
