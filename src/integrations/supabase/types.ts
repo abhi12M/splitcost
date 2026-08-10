@@ -41,6 +41,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      blog_categories: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          name: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          id?: string
+          name: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          name?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       blog_drafts: {
         Row: {
           author: string | null
@@ -52,6 +82,7 @@ export type Database = {
           created_at: string
           excerpt: string | null
           id: string
+          is_featured: boolean
           no_index: boolean
           published_at: string | null
           reading_time: number
@@ -70,6 +101,7 @@ export type Database = {
           created_at?: string
           excerpt?: string | null
           id?: string
+          is_featured?: boolean
           no_index?: boolean
           published_at?: string | null
           reading_time?: number
@@ -88,6 +120,7 @@ export type Database = {
           created_at?: string
           excerpt?: string | null
           id?: string
+          is_featured?: boolean
           no_index?: boolean
           published_at?: string | null
           reading_time?: number
@@ -116,6 +149,7 @@ export type Database = {
           created_at: string
           excerpt: string | null
           id: string
+          is_featured: boolean
           published_at: string | null
           reading_time: number
           no_index: boolean
@@ -135,6 +169,7 @@ export type Database = {
           created_at?: string
           excerpt?: string | null
           id?: string
+          is_featured?: boolean
           published_at?: string | null
           reading_time?: number
           no_index?: boolean
@@ -154,6 +189,7 @@ export type Database = {
           created_at?: string
           excerpt?: string | null
           id?: string
+          is_featured?: boolean
           published_at?: string | null
           reading_time?: number
           no_index?: boolean
@@ -504,6 +540,12 @@ export type Database = {
           }[] | null
         }
         Returns: ExpenseResponse
+      },
+      increment_blog_view: {
+        Args: {
+          p_blog_id: string
+        }
+        Returns: boolean
       },
       load_group_details: {
         Args: {

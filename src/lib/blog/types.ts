@@ -16,6 +16,7 @@ export type Blog = {
   published_at: string | null;
   reading_time: number;
   no_index: boolean;
+  is_featured: boolean;
   schema_json: Json | null;
   views: number;
   created_at: string;
@@ -37,12 +38,13 @@ export type BlogInput = {
   published_at?: string | null;
   reading_time?: number;
   no_index?: boolean;
+  is_featured?: boolean;
   schema_json?: Json | null;
 };
 
 export type BlogAdminListItem = Pick<
   Blog,
-  "id" | "title" | "slug" | "status" | "category" | "created_at"
+  "id" | "title" | "slug" | "status" | "category" | "created_at" | "is_featured" | "views"
 > & {
   has_draft_changes?: boolean;
 };

@@ -8,7 +8,7 @@ export function BlogDetailSkeleton() {
           <div className="blog-hero-image absolute inset-0 hidden overflow-hidden lg:block">
             <Skeleton className="h-full w-full rounded-none" />
           </div>
-          <div className="relative z-10 flex min-h-[467px] max-w-[650px] flex-col justify-center rounded-2xl bg-white px-6 py-8 shadow-[0_18px_50px_rgba(45,37,25,0.08)] sm:px-10 lg:px-12">
+          <div className="relative z-10 flex min-h-[467px] max-w-[650px] flex-col justify-center rounded-2xl border border-border/60 bg-white px-6 py-8 shadow-[0_18px_50px_rgba(45,37,25,0.08)] dark:border-border dark:bg-card dark:shadow-card sm:px-10 lg:px-12">
             <Skeleton className="mb-7 h-4 w-48" />
             <Skeleton className="mb-5 h-6 w-24 rounded-full" />
             <Skeleton className="h-12 w-full" />

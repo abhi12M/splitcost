@@ -11,6 +11,7 @@ const navItems = [
   { href: ADMIN_BASE_PATH, label: "Dashboard" },
   { href: `${ADMIN_BASE_PATH}/groups`, label: "Groups" },
   { href: `${ADMIN_BASE_PATH}/blogs`, label: "Blogs" },
+  { href: `${ADMIN_BASE_PATH}/categories`, label: "Categories" },
   { href: `${ADMIN_BASE_PATH}/media`, label: "Media" },
 ];
 

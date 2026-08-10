@@ -31,20 +31,28 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+function formatViewCount(value: number) {
+  return new Intl.NumberFormat("en").format(value);
+}
+
 function BlogStatusBadges({ blog }: { blog: BlogAdminListItem }) {
   if (blog.status === "published" && blog.has_draft_changes) {
     return (
       <div className="flex flex-wrap gap-1.5">
         <Badge>Published</Badge>
+        {blog.is_featured ? <Badge variant="outline">Featured</Badge> : null}
         <Badge variant="secondary">Draft changes</Badge>
       </div>
     );
   }
 
   return (
-    <Badge variant={blog.status === "published" ? "default" : "secondary"}>
-      {blog.status === "published" ? "Published" : "Draft"}
-    </Badge>
+    <div className="flex flex-wrap gap-1.5">
+      <Badge variant={blog.status === "published" ? "default" : "secondary"}>
+        {blog.status === "published" ? "Published" : "Draft"}
+      </Badge>
+      {blog.is_featured ? <Badge variant="outline">Featured</Badge> : null}
+    </div>
   );
 }
 
@@ -113,6 +121,7 @@ export function BlogAdminList({ blogs }: { blogs: BlogAdminListItem[] }) {
                 <TableHead>Title</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Category</TableHead>
+                <TableHead className="text-right">Views</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -128,6 +137,7 @@ export function BlogAdminList({ blogs }: { blogs: BlogAdminListItem[] }) {
                   </TableCell>
                   <TableCell><BlogStatusBadges blog={blog} /></TableCell>
                   <TableCell>{blog.category}</TableCell>
+                  <TableCell className="text-right tabular-nums">{formatViewCount(blog.views)}</TableCell>
                   <TableCell>{formatBlogDate(blog.created_at)}</TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-2">

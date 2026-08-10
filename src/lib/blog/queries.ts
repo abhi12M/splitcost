@@ -8,7 +8,7 @@ import type {
 } from "./types";
 
 const BLOG_SELECT =
-  "id,title,slug,excerpt,content,cover_image,cover_alt,category,author,status,published_at,reading_time,no_index,schema_json,views,created_at,updated_at";
+  "id,title,slug,excerpt,content,cover_image,cover_alt,category,author,status,published_at,reading_time,no_index,is_featured,schema_json,views,created_at,updated_at";
 
 type ListBlogsArgs = {
   page?: number;
@@ -51,14 +51,19 @@ export async function listBlogs({
 
   query =
     sort === "popular"
-      ? query.order("views", { ascending: false }).order("published_at", {
-          ascending: false,
-          nullsFirst: false,
-        })
-      : query.order("published_at", {
-          ascending: false,
-          nullsFirst: false,
-        });
+      ? query
+          .order("is_featured", { ascending: false })
+          .order("views", { ascending: false })
+          .order("published_at", {
+            ascending: false,
+            nullsFirst: false,
+          })
+      : query
+          .order("is_featured", { ascending: false })
+          .order("published_at", {
+            ascending: false,
+            nullsFirst: false,
+          });
 
   const { data, count, error } = await query.range(from, to);
 
@@ -90,11 +95,50 @@ export async function listAllBlogs(): Promise<Blog[]> {
   return (data ?? []) as Blog[];
 }
 
+export async function listFeaturedBlogs(): Promise<Blog[]> {
+  const { data, error } = await supabaseAdmin
+    .from("blogs")
+    .select(BLOG_SELECT)
+    .eq("status", "published")
+    .eq("is_featured", true)
+    .order("published_at", { ascending: false, nullsFirst: false });
+
+  if (error) {
+    console.error("listFeaturedBlogs error:", error);
+    return [];
+  }
+
+  return (data ?? []) as Blog[];
+}
+
+export async function getPublishedBlogCategoryCounts(
+  categoryNames: string[]
+): Promise<Record<string, number>> {
+  const results = await Promise.all(
+    categoryNames.map(async (category) => {
+      const { count, error } = await supabaseAdmin
+        .from("blogs")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "published")
+        .eq("category", category);
+
+      if (error) {
+        console.error(`getPublishedBlogCategoryCounts error for ${category}:`, error);
+        return [category, 0] as const;
+      }
+
+      return [category, count ?? 0] as const;
+    })
+  );
+
+  return Object.fromEntries(results);
+}
+
 export async function listBlogsForAdmin(): Promise<BlogAdminListItem[]> {
   const [blogsResult, draftsResult] = await Promise.all([
     supabaseAdmin
       .from("blogs")
-      .select("id,title,slug,status,category,created_at")
+      .select("id,title,slug,status,category,created_at,is_featured,views")
       .order("created_at", { ascending: false }),
     supabaseAdmin.from("blog_drafts").select("blog_id"),
   ]);
@@ -149,7 +193,7 @@ export async function getBlogById(id: string): Promise<Blog | null> {
 
   const { data: draft, error: draftError } = await supabaseAdmin
     .from("blog_drafts")
-    .select("title,slug,excerpt,content,cover_image,cover_alt,category,author,published_at,reading_time,no_index,schema_json,updated_at")
+    .select("title,slug,excerpt,content,cover_image,cover_alt,category,author,published_at,reading_time,no_index,is_featured,schema_json,updated_at")
     .eq("blog_id", id)
     .maybeSingle();
 
@@ -203,7 +247,7 @@ export async function updateBlog(id: string, input: BlogInput): Promise<Blog> {
         },
         { onConflict: "blog_id" }
       )
-      .select("title,slug,excerpt,content,cover_image,cover_alt,category,author,published_at,reading_time,no_index,schema_json,updated_at")
+      .select("title,slug,excerpt,content,cover_image,cover_alt,category,author,published_at,reading_time,no_index,is_featured,schema_json,updated_at")
       .single();
 
     if (draftError) throw draftError;
@@ -243,11 +287,17 @@ export async function deleteBlog(id: string) {
   if (error) throw error;
 }
 
-export async function incrementBlogViews(id: string, views: number) {
-  await supabaseAdmin
-    .from("blogs")
-    .update({ views: views + 1 })
-    .eq("id", id);
+export async function recordBlogView(id: string): Promise<boolean> {
+  const { data, error } = await supabaseAdmin.rpc("increment_blog_view", {
+    p_blog_id: id,
+  });
+
+  if (error) {
+    console.error("recordBlogView error:", error);
+    return false;
+  }
+
+  return Boolean(data);
 }
 
 export async function getRelatedBlogs(blog: Blog, limit = 3): Promise<Blog[]> {

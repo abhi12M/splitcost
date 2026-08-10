@@ -28,13 +28,6 @@ import {
 } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -43,7 +36,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { BLOG_CATEGORIES } from "@/lib/blog/categories";
+import { BlogCategorySelect } from "./BlogCategorySelect";
 import { getBlogContentStats } from "@/lib/blog/content-stats";
 import { buildBlogStructuredData, formatStructuredData } from "@/lib/blog/schema";
 import { buildBlogTableOfContents } from "@/lib/blog/toc";
@@ -175,6 +168,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
   const [category, setCategory] = useState(blog?.category ?? "");
   const [author, setAuthor] = useState(blog?.author ?? "SplitCost Team");
   const [noIndex, setNoIndex] = useState(blog?.no_index ?? false);
+  const [isFeatured, setIsFeatured] = useState(blog?.is_featured ?? false);
   const [showToc, setShowToc] = useState(true);
   const [showSettings, setShowSettings] = useState(true);
   const [activeTocId, setActiveTocId] = useState<string>();
@@ -243,12 +237,13 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
       published_at: blog?.published_at ?? null,
       reading_time: readingTime,
       no_index: noIndex,
+      is_featured: isFeatured,
       schema_json: null,
       views: blog?.views ?? 0,
       created_at: blog?.created_at ?? new Date().toISOString(),
       updated_at: blog?.updated_at ?? new Date().toISOString(),
     }),
-    [author, blog?.created_at, blog?.published_at, blog?.status, blog?.updated_at, blog?.views, blogId, category, content, coverAlt, coverImage, excerpt, noIndex, readingTime, slug, title]
+    [author, blog?.created_at, blog?.published_at, blog?.status, blog?.updated_at, blog?.views, blogId, category, content, coverAlt, coverImage, excerpt, isFeatured, noIndex, readingTime, slug, title]
   );
 
   useEffect(() => {
@@ -321,6 +316,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
           : blog?.published_at ?? null,
       reading_time: readingTime,
       no_index: noIndex,
+      is_featured: isFeatured,
       schema_json: schemaEdited
         ? schemaJson.trim()
           ? JSON.parse(schemaJson)
@@ -336,6 +332,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
       coverImage,
       excerpt,
       generatedSchema,
+      isFeatured,
       noIndex,
       readingTime,
       schemaEdited,
@@ -478,7 +475,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
-  }, [blogId, content, coverAlt, coverImage, excerpt, isDirty, noIndex, saveBlog, saving, schemaJson, slug, title]);
+  }, [blogId, content, coverAlt, coverImage, excerpt, isDirty, isFeatured, noIndex, saveBlog, saving, schemaJson, slug, title]);
 
   const handlePreview = () => setPreviewOpen(true);
 
@@ -780,24 +777,13 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
                   </div>
 
                   <FieldLabel label="Category" required />
-                  <Select
+                  <BlogCategorySelect
                     value={category}
-                    onValueChange={(value) => {
+                    onChange={(value) => {
                       setCategory(value);
                       markDirty();
                     }}
-                  >
-                    <SelectTrigger aria-label="Category">
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {BLOG_CATEGORIES.map((item) => (
-                        <SelectItem key={item.slug} value={item.name}>
-                          {item.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  />
 
                   <FieldLabel htmlFor="author" label="Author" required />
                   <Input
@@ -881,6 +867,30 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
                     </pre>
                   )}
                 </div>
+              </section>
+
+              <section className="flex items-center justify-between gap-3 rounded-xl border bg-background px-4 py-3 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="featured-post">Featured post</Label>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button type="button" className="text-muted-foreground" aria-label="Featured post help">
+                        <HelpCircle className="h-3.5 w-3.5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left" className="max-w-xs">
+                      Highlight this post on the blog index. Featured posts appear first.
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <Switch
+                  id="featured-post"
+                  checked={isFeatured}
+                  onCheckedChange={(value) => {
+                    setIsFeatured(value);
+                    markDirty();
+                  }}
+                />
               </section>
 
               <section className="flex items-center justify-between gap-3 rounded-xl border bg-background px-4 py-3 shadow-sm">

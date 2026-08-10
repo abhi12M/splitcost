@@ -4,9 +4,7 @@ import { Search } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
 
-import { BLOG_CATEGORIES } from "@/lib/blog/categories";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import type { BlogCategory } from "@/lib/blog/categories";
 import {
   Select,
   SelectContent,
@@ -16,9 +14,15 @@ import {
 } from "@/components/ui/select";
 
 export function BlogFilters({
-  showCategory = true,
+  categories: _categories,
+  showCategory: _showCategory = true,
+  showSearch = true,
+  showSort = true,
 }: {
+  categories: BlogCategory[];
   showCategory?: boolean;
+  showSearch?: boolean;
+  showSort?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -33,7 +37,8 @@ export function BlogFilters({
     } else {
       params.delete(key);
     }
-    router.push(`${pathname}?${params.toString()}`);
+    const nextQuery = params.toString();
+    router.push(nextQuery ? `${pathname}?${nextQuery}` : pathname);
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -42,48 +47,33 @@ export function BlogFilters({
   };
 
   return (
-    <div className="grid gap-3 rounded-lg border bg-card p-3 sm:grid-cols-[1fr_auto_auto]">
-      <form className="flex gap-2" onSubmit={handleSubmit}>
-        <Input
+    <div className={showSearch && showSort ? "grid gap-3 sm:grid-cols-[1fr_auto]" : "contents"}>
+      {showSearch ? <form className="relative w-full" onSubmit={handleSubmit}>
+        <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search articles"
-          aria-label="Search articles"
+          placeholder="Search guides, topics, or keywords..."
+          aria-label="Search guides"
+          className="h-12 w-full rounded-xl border border-border bg-card pl-11 pr-4 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
         />
-        <Button type="submit" variant="outline" size="icon" aria-label="Search">
-          <Search className="h-4 w-4" />
-        </Button>
-      </form>
-      {showCategory ? (
+      </form> : null}
+
+      {showSort ? <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <span className="whitespace-nowrap">Sort by:</span>
         <Select
-          value={searchParams?.get("category") ?? "all"}
-          onValueChange={(value) => updateParam("category", value)}
+          value={searchParams?.get("sort") ?? "latest"}
+          onValueChange={(value) => updateParam("sort", value)}
         >
-          <SelectTrigger className="w-full sm:w-48" aria-label="Category">
-            <SelectValue placeholder="Category" />
+          <SelectTrigger className="h-9 w-[112px] rounded-lg bg-card text-xs" aria-label="Sort guides">
+            <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All categories</SelectItem>
-            {BLOG_CATEGORIES.map((category) => (
-              <SelectItem key={category.slug} value={category.name}>
-                {category.name}
-              </SelectItem>
-            ))}
+            <SelectItem value="latest">Latest</SelectItem>
+            <SelectItem value="popular">Popular</SelectItem>
           </SelectContent>
         </Select>
-      ) : null}
-      <Select
-        value={searchParams?.get("sort") ?? "latest"}
-        onValueChange={(value) => updateParam("sort", value)}
-      >
-        <SelectTrigger className="w-full sm:w-40" aria-label="Sort">
-          <SelectValue placeholder="Sort" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="latest">Latest</SelectItem>
-          <SelectItem value="popular">Popular</SelectItem>
-        </SelectContent>
-      </Select>
+      </div> : null}
     </div>
   );
 }

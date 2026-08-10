@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { CalendarDays, ChevronRight, Clock3 } from "lucide-react";
 
+import { BlogViewTracker } from "@/components/blog/BlogViewTracker";
 import { BlogArticle } from "@/components/blog/BlogArticle";
 import { BlogCta } from "@/components/blog/BlogCta";
 import { BlogReadingProgress } from "@/components/blog/BlogReadingProgress";
@@ -11,7 +12,7 @@ import { Layout } from "@/components/layout/Layout";
 import { Link } from "@/i18n/navigation";
 import { resolveLocaleParam } from "@/i18n/params";
 import type { AppLocale } from "@/i18n/routing";
-import { getBlogBySlug, getRelatedBlogs, incrementBlogViews } from "@/lib/blog/queries";
+import { getBlogBySlug, getRelatedBlogs } from "@/lib/blog/queries";
 import { buildBlogStructuredData } from "@/lib/blog/schema";
 import { formatBlogDate } from "@/lib/blog/utils";
 import {
@@ -77,11 +78,11 @@ export default async function BlogDetailPage({ params }: PageProps) {
   if (!blog) notFound();
 
   const relatedBlogs = await getRelatedBlogs(blog, 4);
-  void incrementBlogViews(blog.id, blog.views);
 
   const jsonLd = blog.schema_json ?? buildBlogStructuredData(blog);
   return (
     <Layout>
+      <BlogViewTracker blogId={blog.id} />
       <BlogReadingProgress />
       <script
         type="application/ld+json"
@@ -97,7 +98,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
                 <div className="h-full w-full bg-[radial-gradient(circle_at_75%_30%,hsl(var(--primary)/.2),transparent_32%),linear-gradient(135deg,hsl(var(--muted)),hsl(var(--background)))]" />
               )}
             </div>
-            <div className="relative z-10 flex min-h-[467px] max-w-[650px] flex-col justify-center rounded-2xl bg-white px-6 py-8 shadow-[0_18px_50px_rgba(45,37,25,0.08)] sm:px-10 lg:px-12">
+            <div className="relative z-10 flex min-h-[467px] max-w-[650px] flex-col justify-center rounded-2xl border border-border/60 bg-white px-6 py-8 shadow-[0_18px_50px_rgba(45,37,25,0.08)] dark:border-border dark:bg-card dark:shadow-card sm:px-10 lg:px-12">
               <nav aria-label="Breadcrumb" className="mb-7 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                 <Link href="/" className="transition-colors hover:text-primary hover:underline">Home</Link>
                 <ChevronRight className="h-3.5 w-3.5" />
