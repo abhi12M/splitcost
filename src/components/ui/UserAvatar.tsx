@@ -1,3 +1,5 @@
+"use client";
+
 import { cn } from "@/lib/utils";
 import { getAvatarColor, getInitials } from "@/lib/avatar-utils";
 import { SingleSelect } from "./single-select";

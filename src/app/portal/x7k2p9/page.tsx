@@ -6,12 +6,13 @@ import {
   FileImage,
   Eye,
   Plus,
-  Users,
 } from "lucide-react";
 
 import { AdminGate } from "@/components/admin/AdminGate";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { DashboardExpenseActivityChart } from "@/components/admin/DashboardExpenseActivityChart";
+import { ReceiptIcon } from "@/components/icons/CategoryIcons";
+import { AvatarGroup } from "@/components/ui/UserAvatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,6 +30,7 @@ type RecentGroup = {
   created_at: string;
   updated_at: string | null;
   memberCount: number;
+  members: string[];
   total: number;
   latestActivityAt: string;
 };
@@ -40,6 +42,7 @@ type GroupSummaryResult = {
   createdAt: string;
   updatedAt: string | null;
   memberCount: number;
+  members: string[];
   totalExpenses: number;
   latestExpenseActivityAt: string | null;
 };
@@ -76,7 +79,7 @@ async function getDashboardData() {
       .gte("created_at", activityStart.toISOString()),
   ]);
 
-  const recentGroups = ((recentGroupsResult.data ?? []) as GroupSummaryResult[]).slice(0, 5);
+  const recentGroups = ((recentGroupsResult.data ?? []) as GroupSummaryResult[]).slice(0, 10);
 
   return {
     recentGroups: recentGroups.map(
@@ -87,6 +90,7 @@ async function getDashboardData() {
         created_at: group.createdAt,
         updated_at: group.updatedAt,
         memberCount: group.memberCount,
+        members: group.members,
         total: Number(group.totalExpenses),
         latestActivityAt: group.latestExpenseActivityAt ?? group.updatedAt ?? group.createdAt,
       }),
@@ -194,55 +198,52 @@ export default async function Page() {
           </section>
 
           <section>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between gap-3">
-                <CardTitle>New groups</CardTitle>
-                <Button asChild variant="outline" size="sm">
-                  <Link href={`${ADMIN_BASE_PATH}/groups`}>View all</Link>
-                </Button>
-              </CardHeader>
-              <CardContent>
-                {dashboard.recentGroups.length ? (
-                  <div className="overflow-x-auto">
-                    <div className="min-w-[860px]">
-                      <div className="grid grid-cols-[minmax(10rem,1.4fr)_1fr_1fr_1fr_0.8fr_0.65fr] gap-4 border-b pb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                        <span>Group</span>
-                        <span>Created</span>
-                        <span>Updated</span>
-                        <span>Latest activity</span>
-                        <span>Total</span>
-                        <span>Members</span>
-                      </div>
-                      <div className="divide-y">
-                        {dashboard.recentGroups.map((group) => (
-                          <Link
-                            key={group.id}
-                            href={`${ADMIN_BASE_PATH}/group/${group.id}`}
-                            className="grid grid-cols-[minmax(10rem,1.4fr)_1fr_1fr_1fr_0.8fr_0.65fr] items-center gap-4 py-4 text-sm hover:text-primary"
-                          >
-                            <div className="min-w-0">
-                              <p className="truncate font-medium">{group.name}</p>
-                              <p className="text-xs text-muted-foreground">{group.currency}</p>
-                            </div>
-                            <span className="text-xs text-muted-foreground">{formatDisplayDateTime(group.created_at)}</span>
-                            <span className="text-xs text-muted-foreground">
-                              {formatDisplayDateTime(group.updated_at ?? group.created_at)}
-                            </span>
-                            <span className="text-xs text-muted-foreground">{formatDisplayDateTime(group.latestActivityAt)}</span>
-                            <span className="font-medium">{formatCurrency(group.total, group.currency)}</span>
-                            <span className="flex items-center gap-2">
-                              <Users className="h-4 w-4 text-primary" /> {group.memberCount}
-                            </span>
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="py-4 text-sm text-muted-foreground">No groups yet.</p>
-                )}
-              </CardContent>
-            </Card>
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-xl font-semibold text-foreground">New groups</h3>
+                <p className="mt-1 text-sm text-muted-foreground">The 10 groups with the latest activity.</p>
+              </div>
+              <Button asChild variant="outline" size="sm">
+                <Link href={`${ADMIN_BASE_PATH}/groups`}>View all</Link>
+              </Button>
+            </div>
+
+            {dashboard.recentGroups.length ? (
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                {dashboard.recentGroups.map((group) => (
+                  <Link key={group.id} href={`${ADMIN_BASE_PATH}/group/${group.id}`}>
+                    <Card hover className="h-full">
+                      <CardHeader>
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-muted">
+                          <ReceiptIcon className="h-6 w-6 text-primary" />
+                        </div>
+                        <CardTitle className="mt-3 truncate">{group.name}</CardTitle>
+                        <div className="space-y-1 text-sm text-muted-foreground">
+                          <p>Created {formatDisplayDateTime(group.created_at)}</p>
+                          <p>Updated {formatDisplayDateTime(group.updated_at ?? group.created_at)}</p>
+                          <p>Latest activity {formatDisplayDateTime(group.latestActivityAt)}</p>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex items-end justify-between gap-4">
+                          <AvatarGroup names={group.members} showBelow />
+                          <div className="text-right">
+                            <p className="text-lg font-semibold text-foreground">
+                              {formatCurrency(group.total, group.currency)}
+                            </p>
+                            <p className="text-xs text-muted-foreground">Total</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <Card>
+                <CardContent className="py-8 text-sm text-muted-foreground">No groups yet.</CardContent>
+              </Card>
+            )}
           </section>
         </div>
       </AdminShell>
