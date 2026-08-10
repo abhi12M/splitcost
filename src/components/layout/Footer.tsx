@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import { BrandIcon } from "@/components/brand/BrandIcon";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
@@ -45,6 +45,7 @@ function FooterNavColumn({
 }
 
 export function Footer() {
+  const locale = useLocale();
   const t = useTranslations("layout");
   const tUseCases = useTranslations("landing.useCases.items");
   const year = new Date().getFullYear();
@@ -132,6 +133,13 @@ export function Footer() {
                   {t("resources")}
                 </Link>
               </li>
+              {locale === "en" ? (
+                <li>
+                  <Link href="/blog" className={footerLinkClass}>
+                    {t("blog")}
+                  </Link>
+                </li>
+              ) : null}
             </ul>
           </nav>
 

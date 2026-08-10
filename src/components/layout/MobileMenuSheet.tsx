@@ -8,13 +8,14 @@ import {
   FileText,
   Mail,
   MessageCircleQuestion,
+  Newspaper,
   Scale,
   Shield,
   Star,
   Sun,
   type LucideIcon,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useEffect, useState, type CSSProperties, type MouseEvent } from "react";
 
@@ -39,9 +40,10 @@ type MobileMenuSheetProps = {
 };
 
 type MenuLink = {
-  href: "/" | "/#how-it-works" | "/#features" | "/use-cases" | "/compare" | "/resources" | "/#faq" | "/contact" | "/privacy" | "/terms";
-  labelKey: "howItWorks" | "features" | "useCases" | "compare" | "resources" | "faq" | "contact" | "privacy" | "terms";
+  href: "/" | "/#how-it-works" | "/#features" | "/use-cases" | "/compare" | "/resources" | "/blog" | "/#faq" | "/contact" | "/privacy" | "/terms";
+  labelKey: "howItWorks" | "features" | "useCases" | "compare" | "resources" | "blog" | "faq" | "contact" | "privacy" | "terms";
   icon: LucideIcon;
+  englishOnly?: boolean;
 };
 
 const MENU_SECTIONS: { titleKey: "product" | "support" | "legal"; links: MenuLink[] }[] = [
@@ -60,6 +62,7 @@ const MENU_SECTIONS: { titleKey: "product" | "support" | "legal"; links: MenuLin
       { href: "/#faq", labelKey: "faq", icon: MessageCircleQuestion },
       { href: "/contact", labelKey: "contact", icon: Mail },
       { href: "/resources", labelKey: "resources", icon: BookOpen },
+      { href: "/blog", labelKey: "blog", icon: Newspaper, englishOnly: true },
     ],
   },
   {
@@ -134,6 +137,7 @@ function LightModeToggle() {
 }
 
 export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
+  const locale = useLocale();
   const t = useTranslations("layout");
   const close = () => onOpenChange(false);
 
@@ -161,7 +165,7 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                 {t(section.titleKey)}
               </p>
               <nav aria-label={t(section.titleKey)}>
-                {section.links.map((link) => (
+                {section.links.filter((link) => !link.englishOnly || locale === "en").map((link) => (
                   <MenuRow
                     key={`${section.titleKey}-${link.href}`}
                     href={link.href}

@@ -152,6 +152,7 @@ export function BlogTableOfContents({
     if (!target) return;
     window.history.replaceState(null, "", `#${heading.id}`);
     target.scrollIntoView({ behavior: "smooth", block: "start" });
+    onClose?.();
   };
 
   const toggleExpanded = (id: string) => {

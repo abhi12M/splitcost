@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useRef, useState, type ReactNode } from "react";
 
 import { Link } from "@/i18n/navigation";
@@ -103,6 +103,7 @@ function HeaderNavLink({ href, children }: { href: string; children: ReactNode }
 }
 
 export function HeaderDesktopNav() {
+  const locale = useLocale();
   const t = useTranslations("layout");
   const tUseCases = useTranslations("landing.useCases.items");
 
@@ -148,6 +149,7 @@ export function HeaderDesktopNav() {
         <HeaderNavLink href="/#faq">{t("faq")}</HeaderNavLink>
         <HeaderNavLink href="/contact">{t("contact")}</HeaderNavLink>
         <HeaderNavLink href="/resources">{t("resources")}</HeaderNavLink>
+        {locale === "en" ? <HeaderNavLink href="/blog">{t("blog")}</HeaderNavLink> : null}
       </HeaderNavDropdown>
 
       <HeaderNavDropdown label={t("legal")}>

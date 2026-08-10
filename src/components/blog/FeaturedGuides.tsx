@@ -1,16 +1,29 @@
 "use client";
 
 import { ArrowLeft, ArrowRight, Clock3, WalletCards } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Link } from "@/i18n/navigation";
 import type { Blog } from "@/lib/blog/types";
 import { formatBlogDate } from "@/lib/blog/utils";
 import { cn } from "@/lib/utils";
 
+const FEATURED_GUIDE_INTERVAL_MS = 6_000;
+
 export function FeaturedGuides({ guides }: { guides: Blog[] }) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [timerKey, setTimerKey] = useState(0);
   const guide = guides[activeIndex];
+
+  useEffect(() => {
+    if (guides.length <= 1) return;
+
+    const timeout = window.setTimeout(() => {
+      setActiveIndex((current) => (current + 1) % guides.length);
+    }, FEATURED_GUIDE_INTERVAL_MS);
+
+    return () => window.clearTimeout(timeout);
+  }, [activeIndex, guides.length, timerKey]);
 
   if (!guide) {
     return (
@@ -23,6 +36,12 @@ export function FeaturedGuides({ guides }: { guides: Blog[] }) {
   const showNavigation = guides.length > 1;
   const move = (direction: -1 | 1) => {
     setActiveIndex((current) => (current + direction + guides.length) % guides.length);
+    setTimerKey((current) => current + 1);
+  };
+
+  const selectGuide = (index: number) => {
+    setActiveIndex(index);
+    setTimerKey((current) => current + 1);
   };
 
   return (
@@ -80,14 +99,22 @@ export function FeaturedGuides({ guides }: { guides: Blog[] }) {
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => setActiveIndex(index)}
+                  onClick={() => selectGuide(index)}
                   className={cn(
-                    "h-1.5 max-w-10 flex-1 rounded-full transition-all",
-                    index === activeIndex ? "bg-white" : "bg-white/30 hover:bg-white/60"
+                    "relative h-1.5 max-w-10 flex-1 overflow-hidden rounded-full bg-white/30 transition-colors hover:bg-white/45",
+                    index === activeIndex && "ring-1 ring-white/25"
                   )}
                   aria-label={`Show featured guide ${index + 1}: ${item.title}`}
                   aria-current={index === activeIndex ? "true" : undefined}
-                />
+                >
+                  {index === activeIndex ? (
+                    <span
+                      key={`${item.id}-${timerKey}`}
+                      className="featured-guide-progress absolute inset-0 origin-left rounded-full bg-white"
+                      aria-hidden="true"
+                    />
+                  ) : null}
+                </button>
               ))}
             </div>
             <div className="flex shrink-0 gap-2">

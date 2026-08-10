@@ -7,6 +7,7 @@ import { BlogViewTracker } from "@/components/blog/BlogViewTracker";
 import { BlogArticle } from "@/components/blog/BlogArticle";
 import { BlogCta } from "@/components/blog/BlogCta";
 import { BlogReadingProgress } from "@/components/blog/BlogReadingProgress";
+import { BlogScrollToTop } from "@/components/blog/BlogScrollToTop";
 import { RelatedBlogs } from "@/components/blog/RelatedBlogs";
 import { Layout } from "@/components/layout/Layout";
 import { Link } from "@/i18n/navigation";
@@ -84,6 +85,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
     <Layout>
       <BlogViewTracker blogId={blog.id} />
       <BlogReadingProgress />
+      <BlogScrollToTop />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

@@ -1,10 +1,11 @@
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
-import { Building2, ChevronDown, Lightbulb, List, Quote } from "lucide-react";
+import { Building2, Lightbulb, Quote } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkDirective from "remark-directive";
 import remarkGfm from "remark-gfm";
 
+import { BlogFloatingTableOfContents } from "@/components/blog/BlogFloatingTableOfContents";
 import { BlogTableOfContents } from "@/components/blog/BlogTableOfContents";
 import { remarkInsight } from "@/lib/blog/remarkInsight";
 import { buildBlogTableOfContents } from "@/lib/blog/toc";
@@ -33,74 +34,82 @@ export function BlogArticle({ blog }: { blog: Blog }) {
   };
 
   return (
-    <div className="grid gap-10 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-14">
-      <aside className="blog-outline lg:top-[6rem] lg:self-start lg:pr-1">
-        <div className="hidden border-r border-border pr-6 lg:block">
-          <p className="mb-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">On this page</p>
-          <div className="h-px w-10 bg-primary" />
-          <div className="mt-3"><BlogTableOfContents headings={headings} /></div>
-        </div>
-        <details className="rounded-lg border border-border bg-card lg:hidden">
-          <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-sm font-semibold text-foreground">
-            <span className="flex items-center gap-2"><List className="h-4 w-4 text-primary" /> On this page</span><ChevronDown className="h-4 w-4" />
-          </summary>
-          <div className="border-t border-border px-4 py-3"><BlogTableOfContents headings={headings} /></div>
-        </details>
-      </aside>
-      <article className="blog-article-content blog-detail-content max-w-[800px]">
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm, remarkDirective, remarkInsight]}
-          rehypePlugins={[rehypeRaw]}
-          components={{
-            h1: (props) => renderHeading("h1", props),
-            h2: (props) => renderHeading("h2", props),
-            h3: (props) => renderHeading("h3", props),
-            h4: (props) => renderHeading("h4", props),
-            h5: (props) => renderHeading("h5", props),
-            h6: (props) => renderHeading("h6", props),
-            aside({ children, className }) {
-              if (!className?.includes("blog-insight")) {
-                return <aside className={className}>{children}</aside>;
-              }
-
-              return (
-                <aside className="blog-insight">
-                  <div className="blog-insight-heading">
-                    <span className="blog-insight-icon">
-                      <Lightbulb aria-hidden="true" />
-                    </span>
-                    <span>Insight</span>
+    <>
+      <BlogFloatingTableOfContents headings={headings} />
+      <div className="grid gap-10 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-14">
+        <aside className="blog-outline hidden lg:block lg:top-[6rem] lg:self-start lg:pr-1">
+          <div className="border-r border-border pr-6">
+            <p className="mb-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+              On this page
+            </p>
+            <div className="h-px w-10 bg-primary" />
+            <div className="mt-3">
+              <BlogTableOfContents headings={headings} />
+            </div>
+          </div>
+        </aside>
+        <article className="blog-article-content blog-detail-content w-full min-w-0 max-w-[800px]">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm, remarkDirective, remarkInsight]}
+            rehypePlugins={[rehypeRaw]}
+            components={{
+              h1: (props) => renderHeading("h1", props),
+              h2: (props) => renderHeading("h2", props),
+              h3: (props) => renderHeading("h3", props),
+              h4: (props) => renderHeading("h4", props),
+              h5: (props) => renderHeading("h5", props),
+              h6: (props) => renderHeading("h6", props),
+              table({ node: _node, ...props }) {
+                return (
+                  <div className="blog-table-scroll" role="region" aria-label="Scrollable table" tabIndex={0}>
+                    <table {...props} />
                   </div>
-                  <div className="blog-insight-content">{children}</div>
-                </aside>
-              );
-            },
-            blockquote({ children }) {
-              return (
-                <blockquote className="blog-quote">
-                  <Quote className="blog-quote-mark" aria-hidden="true" />
-                  <div className="blog-quote-content">{children}</div>
-                  <Building2 className="blog-quote-watermark" aria-hidden="true" />
-                </blockquote>
-              );
-            },
-            a({ children, href, ...props }) {
-              const isExternal = href?.startsWith("http");
-              return isExternal ? (
-                <a href={href} target="_blank" rel="noreferrer" {...props}>
-                  {children}
-                </a>
-              ) : (
-                <a href={href} {...props}>
-                  {children}
-                </a>
-              );
-            },
-          }}
-        >
-          {blog.content}
-        </ReactMarkdown>
-      </article>
-    </div>
+                );
+              },
+              aside({ children, className }) {
+                if (!className?.includes("blog-insight")) {
+                  return <aside className={className}>{children}</aside>;
+                }
+
+                return (
+                  <aside className="blog-insight">
+                    <div className="blog-insight-heading">
+                      <span className="blog-insight-icon">
+                        <Lightbulb aria-hidden="true" />
+                      </span>
+                      <span>Insight</span>
+                    </div>
+                    <div className="blog-insight-content">{children}</div>
+                  </aside>
+                );
+              },
+              blockquote({ children }) {
+                return (
+                  <blockquote className="blog-quote">
+                    <Quote className="blog-quote-mark" aria-hidden="true" />
+                    <div className="blog-quote-content">{children}</div>
+                    <Building2 className="blog-quote-watermark" aria-hidden="true" />
+                  </blockquote>
+                );
+              },
+              a({ children, href, ...props }) {
+                const isExternal = href?.startsWith("http");
+                return isExternal ? (
+                  <a href={href} target="_blank" rel="noreferrer" {...props}>
+                    {children}
+                  </a>
+                ) : (
+                  <a href={href} {...props}>
+                    {children}
+                  </a>
+                );
+              },
+            }}
+          >
+            {blog.content}
+          </ReactMarkdown>
+        </article>
+      </div>
+    </>
   );
 }
