@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import {
   createBlogCategory,
-  listBlogCategories,
+  listBlogCategoriesWithCounts,
 } from "@/lib/blog/category-queries";
 import type { BlogCategoryInput } from "@/lib/blog/categories";
 
@@ -16,7 +16,7 @@ function getErrorMessage(error: unknown) {
 
 export async function GET() {
   try {
-    const categories = await listBlogCategories();
+    const categories = await listBlogCategoriesWithCounts();
     return NextResponse.json(categories);
   } catch (error: unknown) {
     console.error("listBlogCategories error:", error);

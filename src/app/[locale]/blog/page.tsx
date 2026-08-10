@@ -89,7 +89,7 @@ export default async function BlogIndexPage({ params, searchParams = {} }: PageP
             <span className="font-medium text-foreground">Guides</span>
           </nav>
 
-          <div className="grid gap-6 lg:grid-cols-[0.78fr_1.52fr] lg:items-stretch">
+          <div className={featuredGuides.length ? "grid gap-6 lg:grid-cols-[0.78fr_1.52fr] lg:items-stretch" : "max-w-2xl"}>
             <div className="flex flex-col justify-center py-2">
               <span className="mb-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-primary">
                 <Sparkles className="h-3 w-3" /> SplitCost guides
@@ -101,7 +101,7 @@ export default async function BlogIndexPage({ params, searchParams = {} }: PageP
               <div className="mt-6 max-w-md"><BlogFilters categories={categoriesWithPosts} showSort={false} /></div>
             </div>
 
-            <FeaturedGuides guides={featuredGuides} />
+            {featuredGuides.length ? <FeaturedGuides guides={featuredGuides} /> : null}
           </div>
         </section>
 

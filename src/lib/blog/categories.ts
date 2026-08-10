@@ -8,6 +8,10 @@ export type BlogCategory = {
   updated_at: string;
 };
 
+export type BlogCategoryWithCount = BlogCategory & {
+  blog_count: number;
+};
+
 export type BlogCategoryInput = {
   name: string;
   slug?: string;

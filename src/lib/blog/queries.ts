@@ -108,7 +108,22 @@ export async function listFeaturedBlogs(): Promise<Blog[]> {
     return [];
   }
 
-  return (data ?? []) as Blog[];
+  const featuredBlogs = (data ?? []) as Blog[];
+  if (featuredBlogs.length) return featuredBlogs;
+
+  const { data: latestData, error: latestError } = await supabaseAdmin
+    .from("blogs")
+    .select(BLOG_SELECT)
+    .eq("status", "published")
+    .order("published_at", { ascending: false, nullsFirst: false })
+    .limit(1);
+
+  if (latestError) {
+    console.error("listFeaturedBlogs fallback error:", latestError);
+    return [];
+  }
+
+  return (latestData ?? []) as Blog[];
 }
 
 export async function getPublishedBlogCategoryCounts(

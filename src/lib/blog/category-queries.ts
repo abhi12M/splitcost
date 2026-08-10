@@ -1,5 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabase/server";
-import type { BlogCategory, BlogCategoryInput } from "./categories";
+import type { BlogCategory, BlogCategoryInput, BlogCategoryWithCount } from "./categories";
 import { slugify } from "./utils";
 
 const CATEGORY_SELECT = "id,name,slug,description,sort_order,created_at,updated_at";
@@ -13,6 +13,26 @@ export async function listBlogCategories(): Promise<BlogCategory[]> {
 
   if (error) throw error;
   return data ?? [];
+}
+
+export async function listBlogCategoriesWithCounts(): Promise<BlogCategoryWithCount[]> {
+  const [categories, blogsResult] = await Promise.all([
+    listBlogCategories(),
+    supabaseAdmin.from("blogs").select("category"),
+  ]);
+
+  if (blogsResult.error) throw blogsResult.error;
+
+  const counts = new Map<string, number>();
+  for (const blog of blogsResult.data ?? []) {
+    if (!blog.category) continue;
+    counts.set(blog.category, (counts.get(blog.category) ?? 0) + 1);
+  }
+
+  return categories.map((category) => ({
+    ...category,
+    blog_count: counts.get(category.name) ?? 0,
+  }));
 }
 
 export async function getBlogCategoryBySlug(slug: string): Promise<BlogCategory | null> {

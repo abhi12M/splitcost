@@ -25,7 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import type { BlogCategory, BlogCategoryInput } from "@/lib/blog/categories";
+import type { BlogCategory, BlogCategoryInput, BlogCategoryWithCount } from "@/lib/blog/categories";
 import { slugify } from "@/lib/blog/utils";
 
 type CategoryFormState = {
@@ -41,14 +41,14 @@ const emptyForm = (): CategoryFormState => ({
 });
 
 export function BlogCategoryAdmin() {
-  const [categories, setCategories] = useState<BlogCategory[]>([]);
+  const [categories, setCategories] = useState<BlogCategoryWithCount[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<CategoryFormState>(emptyForm());
   const [slugEdited, setSlugEdited] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<BlogCategory | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<BlogCategoryWithCount | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   const loadCategories = useCallback(async () => {
@@ -56,7 +56,7 @@ export function BlogCategoryAdmin() {
     try {
       const response = await fetch("/api/blog-categories");
       if (!response.ok) throw new Error("Unable to load categories");
-      const data = (await response.json()) as BlogCategory[];
+      const data = (await response.json()) as BlogCategoryWithCount[];
       setCategories(data);
     } catch (error) {
       toast({
@@ -80,7 +80,7 @@ export function BlogCategoryAdmin() {
     setDialogOpen(true);
   };
 
-  const openEditDialog = (category: BlogCategory) => {
+  const openEditDialog = (category: BlogCategoryWithCount) => {
     setEditingId(category.id);
     setForm({
       name: category.name,
@@ -130,7 +130,11 @@ export function BlogCategoryAdmin() {
         throw new Error(data?.error ?? "Unable to save category");
       }
 
-      const saved = (await response.json()) as BlogCategory;
+      const savedCategory = (await response.json()) as BlogCategory;
+      const saved: BlogCategoryWithCount = {
+        ...savedCategory,
+        blog_count: categories.find((item) => item.id === savedCategory.id)?.blog_count ?? 0,
+      };
       setCategories((current) => {
         if (editingId) {
           return current.map((item) => (item.id === saved.id ? saved : item));
@@ -209,6 +213,7 @@ export function BlogCategoryAdmin() {
                 <th className="px-4 py-3 font-medium">Name</th>
                 <th className="px-4 py-3 font-medium">Slug</th>
                 <th className="px-4 py-3 font-medium">Description</th>
+                <th className="px-4 py-3 text-center font-medium">Blogs</th>
                 <th className="px-4 py-3 font-medium text-right">Actions</th>
               </tr>
             </thead>
@@ -219,6 +224,9 @@ export function BlogCategoryAdmin() {
                   <td className="px-4 py-3 text-muted-foreground">{category.slug}</td>
                   <td className="max-w-md px-4 py-3 text-muted-foreground">
                     <span className="line-clamp-2">{category.description}</span>
+                  </td>
+                  <td className="px-4 py-3 text-center font-medium tabular-nums">
+                    {category.blog_count}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-1">
