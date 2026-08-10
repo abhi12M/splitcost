@@ -160,12 +160,13 @@ export function ExpenseAttachmentControl({
             }
           }}
           className={cn(
-            "inline-flex h-10 w-10 items-center justify-center rounded-full border transition-colors [-webkit-tap-highlight-color:transparent] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-70",
+            "inline-flex h-10 w-10 items-center justify-center rounded-full border border-transparent bg-transparent transition-colors [-webkit-tap-highlight-color:transparent] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-70",
             attachment
-              ? "border-primary bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
-              : "border-transparent bg-transparent text-muted-foreground hover:text-primary"
+              ? "text-primary"
+              : "text-muted-foreground sm:hover:text-primary"
           )}
           aria-label={attachment ? t("openAttachment") : t("addAttachment")}
+          aria-pressed={Boolean(attachment)}
           title={attachment ? t("openAttachment") : t("addAttachment")}
           disabled={isReadingFile}
         >

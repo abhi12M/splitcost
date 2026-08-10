@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react"
 import { useTranslations } from "next-intl"
-import { ArrowLeft, CalendarIcon, Check, Settings } from "lucide-react"
+import { ArrowLeft, CalendarIcon, Check, NotebookPen, Settings } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
@@ -32,6 +32,7 @@ import { fieldErrorStyles } from "@/lib/brand-styles"
 import { cn } from "@/lib/utils"
 import { ExpenseAttachmentControl } from "./ExpenseAttachmentControl"
 import type { ExpenseAttachment } from "@/lib/expenseAttachments"
+import { ExpenseNotesScreen } from "./ExpenseNotesScreen"
 
 interface Props {
   members: any[]
@@ -93,6 +94,8 @@ export default function ExpenseFormMobile({
   const [showSplit, setShowSplit] = useState(false)
   const [showCalendar, setShowCalendar] = useState(false)
   const [attachment, setAttachment] = useState<ExpenseAttachment | null>(initialAttachment);
+  const [notes, setNotes] = useState(initialData?.notes || "");
+  const [showNotes, setShowNotes] = useState(false);
   const [date, setDate] = useState<Date>(
     initialData?.date ? new Date(initialData.date) : new Date()
   );
@@ -197,6 +200,7 @@ export default function ExpenseFormMobile({
       subcategory,
       date: formatDateForDB(date),
       attachment,
+      notes: notes.trim() || null,
     });
   };
 
@@ -568,9 +572,20 @@ export default function ExpenseFormMobile({
         {/* Date selector */}
         <Popover modal open={showCalendar} onOpenChange={setShowCalendar}>
           <PopoverTrigger asChild>
-            <button className="flex items-center gap-2 text-sm font-medium">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 dark:bg-primary-muted">
-                <CalendarIcon className="h-4 w-4 text-primary dark:text-primary/90" />
+            <button
+              type="button"
+              className="flex items-center gap-2 text-sm font-medium"
+              aria-pressed={showCalendar}
+            >
+              <div
+                className={cn(
+                  "flex h-9 w-9 items-center justify-center rounded-full transition-colors",
+                  showCalendar
+                    ? "text-primary"
+                    : "text-primary dark:text-primary/90"
+                )}
+              >
+                <CalendarIcon className="h-4 w-4" />
               </div>
 
               <span>
@@ -600,12 +615,37 @@ export default function ExpenseFormMobile({
           </PopoverContent>
         </Popover>
 
-        <ExpenseAttachmentControl
-          attachment={attachment}
-          onChange={setAttachment}
-          compact
-        />
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setShowNotes(true)}
+            className={cn(
+              "relative flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-colors sm:hover:text-foreground",
+              notes && "text-primary"
+            )}
+            aria-label={t("addNotes")}
+            aria-pressed={Boolean(notes)}
+            title={t("addNotes")}
+          >
+            <NotebookPen className="h-5 w-5" />
+          </button>
+          <ExpenseAttachmentControl
+            attachment={attachment}
+            onChange={setAttachment}
+            compact
+          />
+        </div>
       </div>
+
+      <ExpenseNotesScreen
+        open={showNotes}
+        value={notes}
+        onCancel={() => setShowNotes(false)}
+        onConfirm={(value) => {
+          setNotes(value);
+          setShowNotes(false);
+        }}
+      />
 
       {showSplit &&
         <SplitScreen

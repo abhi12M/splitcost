@@ -79,6 +79,7 @@ export interface ExpenseResponse {
   groupId?: string;
   amount: number;
   description: string;
+  notes?: string | null;
   currency: string;
   paidBy: UserInterface | null;
   payers?: ExpensePayerResponse[];
@@ -96,6 +97,7 @@ export interface ExpenseResponse {
 export interface ExpenseRequest {
   amount: number;
   description: string;
+  notes?: string | null;
   currency: string;
   paidByUserId: string | null;
   payers?: ExpensePayerRequest[];
@@ -110,6 +112,7 @@ export interface ExpenseFormInterface {
   id: string;
   amount: number;
   description: string;
+  notes?: string | null;
   currency: string;
   paidByUserId: string | null;
   payers?: ExpensePayerRequest[];

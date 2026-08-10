@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import {
+  EXPENSE_NOTES_STORAGE_MAX,
+  sanitizeExpenseNotes,
+} from "@/lib/expenseNotes";
 
 export async function POST(req: Request) {
   const body = await req.json();
@@ -7,6 +11,7 @@ export async function POST(req: Request) {
   const {
     groupId,
     description,
+    notes,
     amount,
     currency,
     paidByUserId,
@@ -34,6 +39,10 @@ export async function POST(req: Request) {
     );
   }
 
+  if (typeof notes === "string" && notes.length > EXPENSE_NOTES_STORAGE_MAX) {
+    return NextResponse.json({ error: "Notes are too long" }, { status: 400 });
+  }
+
   const { data, error } = await supabaseAdmin.rpc("add_expense", {
     p_group_id: groupId,
     p_description: description,
@@ -46,6 +55,7 @@ export async function POST(req: Request) {
     p_date: date,
     p_participants: participants,
     p_payers: payers || null,
+    p_notes: typeof notes === "string" ? sanitizeExpenseNotes(notes).trim() || null : null,
   });
 
   if (error) {
@@ -55,6 +65,5 @@ export async function POST(req: Request) {
       { status: 400 }
     );
   }
-
   return NextResponse.json(data);
 }

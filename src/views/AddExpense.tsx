@@ -84,6 +84,7 @@ export default function AddExpensePage({ groupId }: { groupId: string }) {
             id: expense.id,
             amount: data.amount,
             description: data.description,
+            notes: data.notes,
             currency: data.currency,
             paidByUserId: data.paidByUserId,
             payers: data.payers,

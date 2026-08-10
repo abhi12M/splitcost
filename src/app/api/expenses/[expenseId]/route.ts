@@ -9,6 +9,10 @@ import {
   getStoragePathFromValue,
   resolveExpenseAttachmentPayload,
 } from "@/lib/supabase/attachments";
+import {
+  EXPENSE_NOTES_STORAGE_MAX,
+  sanitizeExpenseNotes,
+} from "@/lib/expenseNotes";
 
 type ParticipantPayload = {
   userId: string;
@@ -37,6 +41,7 @@ type ExpenseParticipantRow = {
 type ExpenseDetailsRow = {
   id: string;
   description: string;
+  notes: string | null;
   amount: number | string;
   currency: string;
   paid_by_user_id: string | null;
@@ -66,6 +71,7 @@ export async function PUT(
   const {
     groupId,
     description,
+    notes,
     amount,
     currency,
     paidByUserId,
@@ -93,6 +99,10 @@ export async function PUT(
     );
   }
 
+  if (typeof notes === "string" && notes.length > EXPENSE_NOTES_STORAGE_MAX) {
+    return NextResponse.json({ error: "Notes are too long" }, { status: 400 });
+  }
+
   const { data, error } = await supabaseAdmin.rpc(
     "edit_expense",
     {
@@ -112,6 +122,7 @@ export async function PUT(
         percent: p.percent ?? null,
       })),
       p_payers: payers || null,
+      p_notes: typeof notes === "string" ? sanitizeExpenseNotes(notes).trim() || null : null,
     }
   );
 
@@ -129,6 +140,7 @@ export async function PUT(
     id: row.id,
     groupId: row.group_id,
     description: row.description,
+    notes: row.notes,
     amount: Number(row.amount),
     currency: row.currency,
     paidBy: {
@@ -260,6 +272,7 @@ export async function GET(
     .select(`
       id,
       description,
+      notes,
       amount,
       currency,
       paid_by_user_id,
@@ -336,6 +349,7 @@ export async function GET(
       id: expenseRow.id,
       amount: expenseRow.amount,
       description: expenseRow.description,
+      notes: expenseRow.notes,
       currency: expenseRow.currency,
       paidByUserId: expenseRow.paid_by_user_id,
       payers: payersData?.map((p: ExpensePayerRow) => ({

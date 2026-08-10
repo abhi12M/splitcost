@@ -14,6 +14,7 @@ import {
   FileText,
   ImagePlus,
   Loader2,
+  NotebookPen,
   Pencil,
   Trash2,
   Users,
@@ -72,6 +73,7 @@ import {
 } from "@/lib/attachmentUploads";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SingleSelect } from "@/components/ui/single-select";
+import { sanitizeExpenseNotes } from "@/lib/expenseNotes";
 
 function memberName(
   members: EditExpenseInterface["group"]["members"],
@@ -523,6 +525,11 @@ export default function ExpenseDetailsPage({
     amount: Number(participant.amount) || 0,
   }));
   const isImageAttachment = attachment?.type.startsWith("image/");
+  const safeNotes = expense.notes ? sanitizeExpenseNotes(expense.notes) : "";
+  const hasNotes = safeNotes
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .trim().length > 0;
   const createdAtLabel = getDateTimeMs(expense.createdAt) !== null
     ? formatDisplayDateTime(expense.createdAt)
     : "";
@@ -823,6 +830,19 @@ export default function ExpenseDetailsPage({
             </div>
 
           </section>
+
+          {hasNotes && (
+            <section className="shrink-0 rounded-lg border bg-card p-4">
+              <h2 className="flex items-center gap-2 text-sm font-medium">
+                <NotebookPen className="h-4 w-4 text-muted-foreground" />
+                {t("notesLabel")}
+              </h2>
+              <div
+                className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed [overflow-wrap:anywhere] [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5"
+                dangerouslySetInnerHTML={{ __html: safeNotes }}
+              />
+            </section>
+          )}
 
         </main>
 

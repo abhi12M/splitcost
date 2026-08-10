@@ -45,6 +45,7 @@ export type Database = {
         Row: {
           created_at: string
           description: string
+          notes: string | null
           id: string
           name: string
           slug: string
@@ -287,6 +288,7 @@ export type Database = {
           currency: string
           date: string
           description: string
+          notes?: string | null
           group_id: string
           id: string
           paid_by_user_id: string | null
@@ -319,6 +321,7 @@ export type Database = {
           currency?: string
           date?: string
           description?: string
+          notes?: string | null
           group_id?: string
           id?: string
           paid_by_user_id?: string | null
@@ -514,6 +517,7 @@ export type Database = {
             userId: string
             amount: number
           }[] | null
+          p_notes?: string | null
         }
         Returns: ExpenseResponse
       },
@@ -538,6 +542,7 @@ export type Database = {
             userId: string
             amount: number
           }[] | null
+          p_notes?: string | null
         }
         Returns: ExpenseResponse
       },

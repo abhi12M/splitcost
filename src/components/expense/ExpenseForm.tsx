@@ -25,6 +25,10 @@ import { InfoLabel } from "../ui/InfoLabel";
 import PaidBySheet from "./PaidBySheet";
 import { ExpenseAttachmentControl } from "./ExpenseAttachmentControl";
 import type { ExpenseAttachment } from "@/lib/expenseAttachments";
+import {
+  EXPENSE_NOTES_TEXT_MAX,
+  sanitizeExpenseNotes,
+} from "@/lib/expenseNotes";
 
 interface ExpenseFormProps {
   members: UserInterface[];
@@ -99,6 +103,7 @@ export function ExpenseForm({
   const [payers, setPayers] = useState<EditablePayer[]>(initialPayers);
   const [showPaidBy, setShowPaidBy] = useState(false);
   const [attachment, setAttachment] = useState<ExpenseAttachment | null>(initialAttachment);
+  const [notes, setNotes] = useState(initialData?.notes || "");
   const totalAmount = parseFloat(amount) || 0;
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const isFirstRender = useRef(true);
@@ -314,6 +319,7 @@ export function ExpenseForm({
       subcategory: subcategory || "general",
       date: formatDateForDB(date),
       attachment,
+      notes: notes.trim() || null,
     });
   };
   const [errors, setErrors] = useState<{
@@ -707,6 +713,26 @@ export function ExpenseForm({
         attachment={attachment}
         onChange={setAttachment}
       />
+
+      <div className="space-y-2">
+        <Label htmlFor="expense-notes">{t("notesLabel")}</Label>
+        <div
+          id="expense-notes"
+          contentEditable
+          suppressContentEditableWarning
+          role="textbox"
+          aria-multiline="true"
+          data-placeholder={t("notesPlaceholder")}
+          dangerouslySetInnerHTML={{ __html: sanitizeExpenseNotes(notes) }}
+          onInput={(event) => {
+            const element = event.currentTarget;
+            if ((element.textContent?.length ?? 0) <= EXPENSE_NOTES_TEXT_MAX) {
+              setNotes(sanitizeExpenseNotes(element.innerHTML));
+            }
+          }}
+          className="min-h-28 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none empty:before:text-muted-foreground empty:before:content-[attr(data-placeholder)] focus-visible:ring-2 focus-visible:ring-ring [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5"
+        />
+      </div>
 
       {/* Submit */}
       <div className="pt-3 border-t border-border">
