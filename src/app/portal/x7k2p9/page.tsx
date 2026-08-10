@@ -3,11 +3,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
-  ArrowRight,
   FileImage,
-  FileText,
+  Eye,
   Plus,
-  ReceiptText,
   Users,
 } from "lucide-react";
 
@@ -29,23 +27,22 @@ type RecentGroup = {
   name: string;
   currency: string;
   created_at: string;
+  updated_at: string | null;
+  memberCount: number;
+  total: number;
+  latestActivityAt: string;
 };
 
-type RecentExpense = {
-  id: string;
+type GroupMemberSummary = {
   group_id: string;
-  description: string;
-  amount: number;
-  currency: string;
-  date: string;
-  created_at: string;
-  groups?: { name?: string | null } | { name?: string | null }[] | null;
+  is_active: boolean | null;
 };
 
-type ExpenseActivityPoint = {
-  date: string;
-  label: string;
-  count: number;
+type GroupExpenseSummary = {
+  group_id: string;
+  amount: number;
+  created_at: string;
+  updated_at: string;
 };
 
 export const metadata: Metadata = buildMetadata({
@@ -57,83 +54,65 @@ export const metadata: Metadata = buildMetadata({
 
 export const dynamic = "force-dynamic";
 
-function getGroupName(group: RecentExpense["groups"]) {
-  return Array.isArray(group) ? group[0]?.name ?? "Unknown group" : group?.name ?? "Unknown group";
-}
-
-function buildExpenseActivity(createdAtValues: { created_at: string }[], startDate: Date) {
-  const counts = new Map<string, number>();
-  for (const expense of createdAtValues) {
-    const date = expense.created_at.slice(0, 10);
-    counts.set(date, (counts.get(date) ?? 0) + 1);
-  }
-
-  return Array.from({ length: 30 }, (_, index): ExpenseActivityPoint => {
-    const date = new Date(startDate);
-    date.setUTCDate(startDate.getUTCDate() + index);
-    const key = date.toISOString().slice(0, 10);
-
-    return {
-      date: new Intl.DateTimeFormat("en", {
-        month: "short",
-        day: "numeric",
-        timeZone: "UTC",
-      }).format(date),
-      label: new Intl.DateTimeFormat("en", {
-        month: "short",
-        day: "numeric",
-        timeZone: "UTC",
-      }).format(date),
-      count: counts.get(key) ?? 0,
-    };
-  });
-}
-
 async function getDashboardData() {
-  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
   const activityStart = new Date();
-  activityStart.setUTCHours(0, 0, 0, 0);
-  activityStart.setUTCDate(activityStart.getUTCDate() - 29);
-  const [
-    recentGroupsResult,
-    recentExpensesResult,
-    groupCountResult,
-    memberCountResult,
-    expenseCountResult,
-    weeklyExpenseCountResult,
-    activityExpensesResult,
-  ] = await Promise.all([
+  activityStart.setUTCFullYear(activityStart.getUTCFullYear() - 1);
+  activityStart.setUTCMonth(activityStart.getUTCMonth() - 1);
+
+  const [recentGroupsResult, activityExpensesResult, activityGroupsResult] = await Promise.all([
     supabaseAdmin
       .from("groups")
-      .select("id,name,currency,created_at")
+      .select("id,name,currency,created_at,updated_at")
       .order("created_at", { ascending: false })
       .limit(5),
     supabaseAdmin
       .from("expenses")
-      .select("id,group_id,description,amount,currency,date,created_at,groups(name)")
-      .order("created_at", { ascending: false })
-      .limit(6),
-    supabaseAdmin.from("groups").select("id", { count: "exact", head: true }),
-    supabaseAdmin.from("group_members").select("id", { count: "exact", head: true }).eq("is_active", true),
-    supabaseAdmin.from("expenses").select("id", { count: "exact", head: true }),
+      .select("created_at")
+      .gte("created_at", activityStart.toISOString()),
     supabaseAdmin
-      .from("expenses")
-      .select("id", { count: "exact", head: true })
-      .gte("created_at", weekAgo),
-    supabaseAdmin
-      .from("expenses")
+      .from("groups")
       .select("created_at")
       .gte("created_at", activityStart.toISOString()),
   ]);
 
+  const recentGroups = (recentGroupsResult.data ?? []) as Omit<
+    RecentGroup,
+    "memberCount" | "total" | "latestActivityAt"
+  >[];
+  const groupIds = recentGroups.map((group) => group.id);
+  let members: GroupMemberSummary[] = [];
+  let expenses: GroupExpenseSummary[] = [];
+
+  if (groupIds.length) {
+    const [membersResult, expensesResult] = await Promise.all([
+      supabaseAdmin.from("group_members").select("group_id,is_active").in("group_id", groupIds),
+      supabaseAdmin.from("expenses").select("group_id,amount,created_at,updated_at").in("group_id", groupIds),
+    ]);
+    members = (membersResult.data ?? []) as GroupMemberSummary[];
+    expenses = (expensesResult.data ?? []) as GroupExpenseSummary[];
+  }
+
   return {
-    recentGroups: (recentGroupsResult.data ?? []) as RecentGroup[],
-    recentExpenses: (recentExpensesResult.data ?? []) as RecentExpense[],
-    totalGroups: groupCountResult.count ?? 0,
-    totalMembers: memberCountResult.count ?? 0,
-    totalExpenses: expenseCountResult.count ?? 0,
-    weeklyExpenses: weeklyExpenseCountResult.count ?? 0,
-    expenseActivity: buildExpenseActivity(activityExpensesResult.data ?? [], activityStart),
+    recentGroups: recentGroups.map((group): RecentGroup => {
+      const groupExpenses = expenses.filter((expense) => expense.group_id === group.id);
+      const latestExpenseActivity = groupExpenses.reduce<string | null>((latest, expense) => {
+        const activityAt = expense.updated_at || expense.created_at;
+        return !latest || activityAt > latest ? activityAt : latest;
+      }, null);
+
+      return {
+        ...group,
+        memberCount: members.filter(
+          (member) => member.group_id === group.id && member.is_active !== false,
+        ).length,
+        total: groupExpenses.reduce((sum, expense) => sum + Number(expense.amount), 0),
+        latestActivityAt: latestExpenseActivity ?? group.updated_at ?? group.created_at,
+      };
+    }),
+    activityEvents: {
+      expenses: (activityExpensesResult.data ?? []).map((expense) => expense.created_at),
+      groups: (activityGroupsResult.data ?? []).map((group) => group.created_at),
+    },
   };
 }
 
@@ -141,6 +120,7 @@ export default async function Page() {
   const [blogs, dashboard] = await Promise.all([listAllBlogs(), getDashboardData()]);
   const publishedBlogs = blogs.filter((blog) => blog.status === "published");
   const draftBlogs = blogs.filter((blog) => blog.status === "draft");
+  const totalViews = blogs.reduce((sum, blog) => sum + blog.views, 0);
 
   return (
     <AdminGate>
@@ -170,81 +150,8 @@ export default async function Page() {
             </div>
           </section>
 
-          <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            <Card>
-              <CardContent className="flex items-center gap-3 p-5">
-                <Users className="h-5 w-5 text-primary" />
-                <div>
-                  <p className="text-2xl font-bold">{dashboard.totalGroups}</p>
-                  <p className="text-sm text-muted-foreground">Groups</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="flex items-center gap-3 p-5">
-                <Users className="h-5 w-5 text-primary" />
-                <div>
-                  <p className="text-2xl font-bold">{dashboard.totalMembers}</p>
-                  <p className="text-sm text-muted-foreground">Active members</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="flex items-center gap-3 p-5">
-                <ReceiptText className="h-5 w-5 text-primary" />
-                <div>
-                  <p className="text-2xl font-bold">{dashboard.totalExpenses}</p>
-                  <p className="text-sm text-muted-foreground">
-                    Expenses <span className="text-xs">{dashboard.weeklyExpenses} this week</span>
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </section>
-
-          <section className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.85fr)]">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between gap-3">
-                <div>
-                  <CardTitle>Recent expense activity</CardTitle>
-                  <p className="mt-1 text-sm text-muted-foreground">The latest entries across all groups.</p>
-                </div>
-                <Button asChild variant="outline" size="sm">
-                  <Link href={`${ADMIN_BASE_PATH}/groups`}>
-                    Groups <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </CardHeader>
-              <CardContent className="divide-y">
-                {dashboard.recentExpenses.length ? (
-                  dashboard.recentExpenses.map((expense) => (
-                    <Link
-                      key={expense.id}
-                      href={`/group/${expense.group_id}/expense/${expense.id}`}
-                      className="flex items-center gap-3 py-3 first:pt-0 last:pb-0 hover:text-primary"
-                    >
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-                        <ReceiptText className="h-4 w-4" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">{expense.description}</p>
-                        <p className="truncate text-xs text-muted-foreground">
-                          {getGroupName(expense.groups)} | {formatDisplayDateTime(expense.created_at)}
-                        </p>
-                      </div>
-                      <div className="shrink-0 text-right">
-                        <p className="text-sm font-medium">{formatCurrency(expense.amount, expense.currency)}</p>
-                        <p className="text-xs text-muted-foreground">{expense.date}</p>
-                      </div>
-                    </Link>
-                  ))
-                ) : (
-                  <p className="py-4 text-sm text-muted-foreground">No expenses recorded yet.</p>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
+          <section className="grid gap-6 xl:grid-cols-12">
+            <Card className="xl:col-span-5">
               <CardHeader className="flex flex-row items-center justify-between gap-3">
                 <div>
                   <CardTitle>Content status</CardTitle>
@@ -255,7 +162,7 @@ export default async function Page() {
                 </Button>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid gap-3 sm:grid-cols-3">
                   <div className="border-l-2 border-primary pl-3">
                     <p className="text-xl font-semibold">{publishedBlogs.length}</p>
                     <p className="text-xs text-muted-foreground">Published</p>
@@ -264,8 +171,15 @@ export default async function Page() {
                     <p className="text-xl font-semibold">{draftBlogs.length}</p>
                     <p className="text-xs text-muted-foreground">Drafts waiting</p>
                   </div>
+                  <div className="border-l-2 border-primary/50 pl-3">
+                    <div className="flex items-center gap-2">
+                      <Eye className="h-4 w-4 text-primary" />
+                      <p className="text-xl font-semibold">{totalViews.toLocaleString()}</p>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Total views</p>
+                  </div>
                 </div>
-                <div className="space-y-2 border-t pt-4">
+                <div className="grid gap-2 border-t pt-4 sm:grid-cols-2">
                   {blogs.slice(0, 4).map((blog) => (
                     <Link
                       key={blog.id}
@@ -274,7 +188,7 @@ export default async function Page() {
                     >
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium">{blog.title}</p>
-                        <p className="text-xs text-muted-foreground">{blog.category}</p>
+                        <p className="text-xs text-muted-foreground">{blog.views.toLocaleString()} views</p>
                       </div>
                       <Badge variant={blog.status === "published" ? "default" : "secondary"}>{blog.status}</Badge>
                     </Link>
@@ -283,31 +197,21 @@ export default async function Page() {
                 </div>
               </CardContent>
             </Card>
-          </section>
 
-          <section className="grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.85fr)]">
-            <Card>
+            <Card className="xl:col-span-7">
               <CardHeader>
-                <CardTitle>Expense activity</CardTitle>
-                <p className="text-sm text-muted-foreground">Expenses created each day in the last 30 days.</p>
+                <CardTitle>Activity</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Compare expense and group creation counts over time.
+                </p>
               </CardHeader>
               <CardContent>
-                <DashboardExpenseActivityChart data={dashboard.expenseActivity} />
+                <DashboardExpenseActivityChart events={dashboard.activityEvents} />
               </CardContent>
             </Card>
-            <div className="border p-5">
-              <p className="text-sm font-medium text-foreground">Activity summary</p>
-              <p className="mt-2 text-3xl font-semibold text-foreground">{dashboard.weeklyExpenses}</p>
-              <p className="text-sm text-muted-foreground">expenses created in the last seven days</p>
-              <Button asChild variant="outline" className="mt-5 w-full justify-between">
-                <Link href={`${ADMIN_BASE_PATH}/groups`}>
-                  Explore group activity <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
           </section>
 
-          <section className="grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.85fr)]">
+          <section>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between gap-3">
                 <CardTitle>New groups</CardTitle>
@@ -315,49 +219,48 @@ export default async function Page() {
                   <Link href={`${ADMIN_BASE_PATH}/groups`}>View all</Link>
                 </Button>
               </CardHeader>
-              <CardContent className="divide-y">
+              <CardContent>
                 {dashboard.recentGroups.length ? (
-                  dashboard.recentGroups.map((group) => (
-                    <Link
-                      key={group.id}
-                      href={`${ADMIN_BASE_PATH}/group/${group.id}`}
-                      className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0 hover:text-primary"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">{group.name}</p>
-                        <p className="text-xs text-muted-foreground">{group.currency}</p>
+                  <div className="overflow-x-auto">
+                    <div className="min-w-[860px]">
+                      <div className="grid grid-cols-[minmax(10rem,1.4fr)_1fr_1fr_1fr_0.8fr_0.65fr] gap-4 border-b pb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        <span>Group</span>
+                        <span>Created</span>
+                        <span>Updated</span>
+                        <span>Latest activity</span>
+                        <span>Total</span>
+                        <span>Members</span>
                       </div>
-                      <p className="shrink-0 text-xs text-muted-foreground">
-                        {formatDisplayDateTime(group.created_at)}
-                      </p>
-                    </Link>
-                  ))
+                      <div className="divide-y">
+                        {dashboard.recentGroups.map((group) => (
+                          <Link
+                            key={group.id}
+                            href={`${ADMIN_BASE_PATH}/group/${group.id}`}
+                            className="grid grid-cols-[minmax(10rem,1.4fr)_1fr_1fr_1fr_0.8fr_0.65fr] items-center gap-4 py-4 text-sm hover:text-primary"
+                          >
+                            <div className="min-w-0">
+                              <p className="truncate font-medium">{group.name}</p>
+                              <p className="text-xs text-muted-foreground">{group.currency}</p>
+                            </div>
+                            <span className="text-xs text-muted-foreground">{formatDisplayDateTime(group.created_at)}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {formatDisplayDateTime(group.updated_at ?? group.created_at)}
+                            </span>
+                            <span className="text-xs text-muted-foreground">{formatDisplayDateTime(group.latestActivityAt)}</span>
+                            <span className="font-medium">{formatCurrency(group.total, group.currency)}</span>
+                            <span className="flex items-center gap-2">
+                              <Users className="h-4 w-4 text-primary" /> {group.memberCount}
+                            </span>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 ) : (
                   <p className="py-4 text-sm text-muted-foreground">No groups yet.</p>
                 )}
               </CardContent>
             </Card>
-
-            <div className="border p-5">
-              <p className="text-sm font-medium text-foreground">Admin shortcuts</p>
-              <div className="mt-4 grid gap-2">
-                <Button asChild variant="outline" className="justify-between">
-                  <Link href={`${ADMIN_BASE_PATH}/groups`}>
-                    Browse groups <Users className="h-4 w-4" />
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="justify-between">
-                  <Link href={`${ADMIN_BASE_PATH}/blogs`}>
-                    Review blog posts <FileText className="h-4 w-4" />
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="justify-between">
-                  <Link href={`${ADMIN_BASE_PATH}/media`}>
-                    Review media <FileImage className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-            </div>
           </section>
         </div>
       </AdminShell>
