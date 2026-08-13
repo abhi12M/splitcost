@@ -17,6 +17,7 @@ import { useBackButtonClose } from "@/hooks/useBackButtonClose";
 import { useKeyboardLayout } from "@/hooks/useKeyboardOffset";
 import {
   EXPENSE_NOTES_TEXT_MAX,
+  normalizeExpenseNotes,
   sanitizeExpenseNotes,
 } from "@/lib/expenseNotes";
 import { cn } from "@/lib/utils";
@@ -120,7 +121,7 @@ export function ExpenseNotesScreen({
         <h1 className="px-3 text-lg font-medium">{t("addNotes")}</h1>
         <button
           type="button"
-          onClick={() => onConfirm(sanitizeExpenseNotes(draft))}
+          onClick={() => onConfirm(normalizeExpenseNotes(draft))}
           className="flex h-10 w-10 items-center justify-center text-primary"
           aria-label={t("saveNotes")}
         >

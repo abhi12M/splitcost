@@ -43,3 +43,18 @@ export function sanitizeExpenseNotes(value: string): string {
   result += escapeHtml(value.slice(cursor));
   return result;
 }
+
+/** Whether sanitized note markup contains any visible text. */
+export function hasExpenseNotesContent(value: string): boolean {
+  return sanitizeExpenseNotes(value)
+    .replace(/<[^>]*>/g, "")
+    .replace(/(?:&nbsp;|&#160;|&#x0*a0;)/gi, " ")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .trim().length > 0;
+}
+
+/** Collapse browser-generated empty rich-text markup to an empty string. */
+export function normalizeExpenseNotes(value: string): string {
+  const sanitized = sanitizeExpenseNotes(value);
+  return hasExpenseNotesContent(sanitized) ? sanitized : "";
+}

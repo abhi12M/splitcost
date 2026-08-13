@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import {
   EXPENSE_NOTES_STORAGE_MAX,
-  sanitizeExpenseNotes,
+  normalizeExpenseNotes,
 } from "@/lib/expenseNotes";
 
 export async function POST(req: Request) {
@@ -55,7 +55,7 @@ export async function POST(req: Request) {
     p_date: date,
     p_participants: participants,
     p_payers: payers || null,
-    p_notes: typeof notes === "string" ? sanitizeExpenseNotes(notes).trim() || null : null,
+    p_notes: typeof notes === "string" ? normalizeExpenseNotes(notes) || null : null,
   });
 
   if (error) {

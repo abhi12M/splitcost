@@ -27,6 +27,7 @@ import { ExpenseAttachmentControl } from "./ExpenseAttachmentControl";
 import type { ExpenseAttachment } from "@/lib/expenseAttachments";
 import {
   EXPENSE_NOTES_TEXT_MAX,
+  normalizeExpenseNotes,
   sanitizeExpenseNotes,
 } from "@/lib/expenseNotes";
 
@@ -319,7 +320,7 @@ export function ExpenseForm({
       subcategory: subcategory || "general",
       date: formatDateForDB(date),
       attachment,
-      notes: notes.trim() || null,
+      notes: normalizeExpenseNotes(notes) || null,
     });
   };
   const [errors, setErrors] = useState<{

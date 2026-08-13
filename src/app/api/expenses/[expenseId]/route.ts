@@ -11,7 +11,7 @@ import {
 } from "@/lib/supabase/attachments";
 import {
   EXPENSE_NOTES_STORAGE_MAX,
-  sanitizeExpenseNotes,
+  normalizeExpenseNotes,
 } from "@/lib/expenseNotes";
 
 type ParticipantPayload = {
@@ -122,7 +122,7 @@ export async function PUT(
         percent: p.percent ?? null,
       })),
       p_payers: payers || null,
-      p_notes: typeof notes === "string" ? sanitizeExpenseNotes(notes).trim() || null : null,
+      p_notes: typeof notes === "string" ? normalizeExpenseNotes(notes) || null : null,
     }
   );
 

@@ -81,7 +81,7 @@ import {
 } from "@/lib/attachmentUploads";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SingleSelect } from "@/components/ui/single-select";
-import { sanitizeExpenseNotes } from "@/lib/expenseNotes";
+import { hasExpenseNotesContent, sanitizeExpenseNotes } from "@/lib/expenseNotes";
 
 function memberName(
   members: EditExpenseInterface["group"]["members"],
@@ -536,10 +536,7 @@ export default function ExpenseDetailsPage({
   }));
   const isImageAttachment = attachment?.type.startsWith("image/");
   const safeNotes = expense.notes ? sanitizeExpenseNotes(expense.notes) : "";
-  const hasNotes = safeNotes
-    .replace(/<[^>]*>/g, "")
-    .replace(/&nbsp;/g, " ")
-    .trim().length > 0;
+  const hasNotes = hasExpenseNotesContent(safeNotes);
   const createdAtLabel = getDateTimeMs(expense.createdAt) !== null
     ? formatDisplayDateTime(expense.createdAt)
     : "";

@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils"
 import { ExpenseAttachmentControl } from "./ExpenseAttachmentControl"
 import type { ExpenseAttachment } from "@/lib/expenseAttachments"
 import { ExpenseNotesScreen } from "./ExpenseNotesScreen"
+import { hasExpenseNotesContent, normalizeExpenseNotes } from "@/lib/expenseNotes"
 
 interface Props {
   members: any[]
@@ -95,6 +96,7 @@ export default function ExpenseFormMobile({
   const [showCalendar, setShowCalendar] = useState(false)
   const [attachment, setAttachment] = useState<ExpenseAttachment | null>(initialAttachment);
   const [notes, setNotes] = useState(initialData?.notes || "");
+  const hasNotes = hasExpenseNotesContent(notes);
   const [showNotes, setShowNotes] = useState(false);
   const [date, setDate] = useState<Date>(
     initialData?.date ? new Date(initialData.date) : new Date()
@@ -200,7 +202,7 @@ export default function ExpenseFormMobile({
       subcategory,
       date: formatDateForDB(date),
       attachment,
-      notes: notes.trim() || null,
+      notes: normalizeExpenseNotes(notes) || null,
     });
   };
 
@@ -621,10 +623,10 @@ export default function ExpenseFormMobile({
             onClick={() => setShowNotes(true)}
             className={cn(
               "relative flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-colors sm:hover:text-foreground",
-              notes && "text-primary"
+              hasNotes && "text-primary"
             )}
             aria-label={t("addNotes")}
-            aria-pressed={Boolean(notes)}
+            aria-pressed={hasNotes}
             title={t("addNotes")}
           >
             <NotebookPen className="h-5 w-5" />
