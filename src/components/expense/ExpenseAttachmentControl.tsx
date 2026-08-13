@@ -2,7 +2,7 @@
 
 import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { ImagePlus, Loader2, Pencil, Trash2, X } from "lucide-react";
+import { Camera, Images, ImagePlus, Loader2, Pencil, Trash2, X } from "lucide-react";
 
 import {
   AlertDialog,
@@ -14,6 +14,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import {
   ExpenseAttachment,
   formatAttachmentSize,
@@ -37,10 +43,12 @@ export function ExpenseAttachmentControl({
 }: ExpenseAttachmentControlProps) {
   const t = useTranslations("expense");
   const tCommon = useTranslations("common");
-  const inputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState("");
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [isReadingFile, setIsReadingFile] = useState(false);
+  const [isSourcePickerOpen, setIsSourcePickerOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   // Track the blob URL we created locally so we can revoke it when the user
   // replaces it, removes it, or unmounts the form. Without this the File
@@ -77,6 +85,16 @@ export function ExpenseAttachmentControl({
     setIsDeleteConfirmOpen(false);
     releaseOwnedBlobUrl();
     onChange(null);
+  };
+
+  const openSourcePicker = () => {
+    setError("");
+    setIsSourcePickerOpen(true);
+  };
+
+  const chooseSource = (input: HTMLInputElement | null) => {
+    input?.click();
+    setIsSourcePickerOpen(false);
   };
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -116,7 +134,7 @@ export function ExpenseAttachmentControl({
     <>
       <button
         type="button"
-        onClick={() => inputRef.current?.click()}
+        onClick={openSourcePicker}
         aria-label={t("replaceAttachment")}
         className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-transparent text-foreground/70 transition-colors [-webkit-tap-highlight-color:transparent] hover:bg-transparent hover:text-foreground active:bg-transparent focus:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60 sm:hover:bg-muted"
         disabled={isReadingFile}
@@ -142,9 +160,17 @@ export function ExpenseAttachmentControl({
   return (
     <div className={cn("min-w-0", compact ? "shrink-0" : "w-full")}>
       <input
-        ref={inputRef}
+        ref={galleryInputRef}
         type="file"
         accept="image/*"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
         className="hidden"
         onChange={handleFileChange}
       />
@@ -156,7 +182,7 @@ export function ExpenseAttachmentControl({
             if (attachment) {
               setIsViewerOpen(true);
             } else {
-              inputRef.current?.click();
+              openSourcePicker();
             }
           }}
           className={cn(
@@ -218,7 +244,7 @@ export function ExpenseAttachmentControl({
       ) : (
         <button
           type="button"
-          onClick={() => inputRef.current?.click()}
+          onClick={openSourcePicker}
           className={cn(
             "flex items-center gap-2 rounded-full border border-dashed px-3 py-2 text-xs font-medium text-muted-foreground hover:border-primary/60 hover:text-primary",
             !compact && "w-full justify-center rounded-lg py-3"
@@ -242,6 +268,35 @@ export function ExpenseAttachmentControl({
         onOpenChange={setIsViewerOpen}
         actions={viewerActions}
       />
+
+      <Drawer open={isSourcePickerOpen} onOpenChange={setIsSourcePickerOpen}>
+        <DrawerContent className="rounded-t-3xl border-x-0 border-b-0 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 shadow-2xl [&>div:first-child]:hidden">
+          <div className="mx-auto w-full max-w-md">
+            <DrawerTitle className="sr-only">{t("imageSourceTitle")}</DrawerTitle>
+            <DrawerDescription className="sr-only">
+              {t("imageSourceDescription")}
+            </DrawerDescription>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => chooseSource(cameraInputRef.current)}
+                className="flex h-14 items-center justify-center gap-2.5 rounded-2xl bg-primary px-3 text-primary-foreground shadow-sm transition-transform active:scale-[0.97]"
+              >
+                <Camera className="h-5 w-5" />
+                <span className="text-sm font-semibold">{t("takePhoto")}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => chooseSource(galleryInputRef.current)}
+                className="flex h-14 items-center justify-center gap-2.5 rounded-2xl border bg-muted/60 px-3 text-foreground transition-transform hover:bg-muted active:scale-[0.97]"
+              >
+                <Images className="h-5 w-5 text-primary" />
+                <span className="text-sm font-semibold">{t("chooseFromGallery")}</span>
+              </button>
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
 
       <AlertDialog
         open={isDeleteConfirmOpen}

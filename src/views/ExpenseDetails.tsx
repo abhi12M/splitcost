@@ -9,10 +9,12 @@ import {
   AlertCircle,
   ArrowLeft,
   CalendarDays,
+  Camera,
   Check,
   ChevronDown,
   FileText,
   ImagePlus,
+  Images,
   Loader2,
   NotebookPen,
   Pencil,
@@ -31,6 +33,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { ExpenseAttachmentViewer } from "@/components/expense/ExpenseAttachmentViewer";
 import { Spinner } from "@/components/ui/Spinner";
 import {
@@ -252,7 +260,8 @@ export default function ExpenseDetailsPage({
   const queryClient = useQueryClient();
   const t = useTranslations("expense");
   const tCommon = useTranslations("common");
-  const attachmentInputRef = useRef<HTMLInputElement>(null);
+  const attachmentGalleryInputRef = useRef<HTMLInputElement>(null);
+  const attachmentCameraInputRef = useRef<HTMLInputElement>(null);
 
   // React Query owns expense fetching. With initialData hydrated from the
   // session cache and a 30s staleTime, navigating view -> edit (or vice
@@ -336,6 +345,7 @@ export default function ExpenseDetailsPage({
   const [isDeletingExpense, setIsDeletingExpense] = useState(false);
   const [isUpdatingCategory, setIsUpdatingCategory] = useState(false);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
+  const [isAttachmentSourceOpen, setIsAttachmentSourceOpen] = useState(false);
   const [isExpenseDeleteConfirmOpen, setIsExpenseDeleteConfirmOpen] = useState(false);
   const [isAttachmentDeleteConfirmOpen, setIsAttachmentDeleteConfirmOpen] = useState(false);
   const [attachmentSpinnerMessage, setAttachmentSpinnerMessage] = useState("");
@@ -547,7 +557,7 @@ export default function ExpenseDetailsPage({
     <>
       <button
         type="button"
-        onClick={() => attachmentInputRef.current?.click()}
+        onClick={() => setIsAttachmentSourceOpen(true)}
         aria-label={attachment ? t("replaceAttachment") : t("uploadAttachment")}
         className={attachmentActionButtonClass}
         disabled={attachmentActionsDisabled}
@@ -575,12 +585,59 @@ export default function ExpenseDetailsPage({
   return (
     <div className="h-dvh overflow-hidden bg-background text-foreground">
       <input
-        ref={attachmentInputRef}
+        ref={attachmentGalleryInputRef}
         type="file"
         accept="image/*"
         className="hidden"
         onChange={handleAttachmentFileChange}
       />
+      <input
+        ref={attachmentCameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={handleAttachmentFileChange}
+      />
+      <Drawer
+        open={isAttachmentSourceOpen}
+        onOpenChange={setIsAttachmentSourceOpen}
+      >
+        <DrawerContent className="rounded-t-3xl border-x-0 border-b-0 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 shadow-2xl [&>div:first-child]:hidden">
+          <div className="mx-auto w-full max-w-md">
+            <DrawerTitle className="sr-only">{t("imageSourceTitle")}</DrawerTitle>
+            <DrawerDescription className="sr-only">
+              {t("imageSourceDescription")}
+            </DrawerDescription>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  attachmentCameraInputRef.current?.click();
+                  setIsAttachmentSourceOpen(false);
+                }}
+                className="flex h-14 items-center justify-center gap-2.5 rounded-2xl bg-primary px-3 text-primary-foreground shadow-sm transition-transform active:scale-[0.97]"
+              >
+                <Camera className="h-5 w-5" />
+                <span className="text-sm font-semibold">{t("takePhoto")}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  attachmentGalleryInputRef.current?.click();
+                  setIsAttachmentSourceOpen(false);
+                }}
+                className="flex h-14 items-center justify-center gap-2.5 rounded-2xl border bg-muted/60 px-3 text-foreground transition-transform hover:bg-muted active:scale-[0.97]"
+              >
+                <Images className="h-5 w-5 text-primary" />
+                <span className="text-sm font-semibold">
+                  {t("chooseFromGallery")}
+                </span>
+              </button>
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
       <div className="mx-auto flex h-full max-w-3xl flex-col">
         <header
           className="relative shrink-0 border-b px-3 sm:px-4"
@@ -598,7 +655,7 @@ export default function ExpenseDetailsPage({
               {!attachment && (
                 <button
                   type="button"
-                  onClick={() => attachmentInputRef.current?.click()}
+                  onClick={() => setIsAttachmentSourceOpen(true)}
                   aria-label={t("uploadAttachment")}
                   className={headerIconButtonClass}
                   disabled={attachmentActionsDisabled}
