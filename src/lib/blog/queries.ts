@@ -316,15 +316,19 @@ export async function recordBlogView(id: string): Promise<boolean> {
 }
 
 export async function getRelatedBlogs(blog: Blog, limit = 3): Promise<Blog[]> {
+  const categoryQuery = blog.category
+    ? supabaseAdmin
+        .from("blogs")
+        .select(BLOG_SELECT)
+        .eq("status", "published")
+        .eq("category", blog.category)
+        .neq("id", blog.id)
+        .order("published_at", { ascending: false })
+        .limit(limit)
+    : Promise.resolve({ data: [], error: null });
+
   const [categoryResult, latestResult] = await Promise.all([
-    supabaseAdmin
-      .from("blogs")
-      .select(BLOG_SELECT)
-      .eq("status", "published")
-      .eq("category", blog.category)
-      .neq("id", blog.id)
-      .order("published_at", { ascending: false })
-      .limit(limit),
+    categoryQuery,
     supabaseAdmin
       .from("blogs")
       .select(BLOG_SELECT)

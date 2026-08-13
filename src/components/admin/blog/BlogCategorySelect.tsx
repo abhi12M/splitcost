@@ -34,6 +34,8 @@ type BlogCategorySelectProps = {
   className?: string;
 };
 
+const NO_CATEGORY_VALUE = "__no_category__";
+
 export function BlogCategorySelect({
   value,
   onChange,
@@ -121,7 +123,13 @@ export function BlogCategorySelect({
 
   return (
     <div className={cn("space-y-2", className)}>
-      <Select value={value} onValueChange={onChange} disabled={loading}>
+      <Select
+        value={value || NO_CATEGORY_VALUE}
+        onValueChange={(nextValue) =>
+          onChange(nextValue === NO_CATEGORY_VALUE ? "" : nextValue)
+        }
+        disabled={loading}
+      >
         <SelectTrigger aria-label="Category">
           {loading ? (
             <span className="flex items-center gap-2 text-muted-foreground">
@@ -133,6 +141,7 @@ export function BlogCategorySelect({
           )}
         </SelectTrigger>
         <SelectContent>
+          <SelectItem value={NO_CATEGORY_VALUE}>No category</SelectItem>
           {categories.map((item) => (
             <SelectItem key={item.id} value={item.name}>
               {item.name}

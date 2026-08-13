@@ -23,7 +23,7 @@ export function BlogPreviewDialog({ blog, open, onOpenChange }: BlogPreviewDialo
                 <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">
                   Draft preview
                 </Badge>
-                <Badge>{blog.category}</Badge>
+                {blog.category ? <Badge>{blog.category}</Badge> : null}
                 <span>{formatBlogDate(blog.published_at)}</span>
                 <span>{blog.reading_time} min read</span>
                 <span>By {blog.author}</span>

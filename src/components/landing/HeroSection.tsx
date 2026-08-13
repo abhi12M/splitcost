@@ -21,7 +21,7 @@ export function HeroSection() {
   return (
     <section
       className={cn(
-        "gradient-hero relative overflow-hidden border-b pt-6 pb-12 sm:py-24 lg:py-10",
+        "gradient-hero relative flex min-h-[calc(100dvh-4.25rem)] items-center overflow-hidden border-b py-10 sm:min-h-[calc(100dvh-5rem)] sm:py-16 lg:py-10",
         landingSection.divider
       )}
     >

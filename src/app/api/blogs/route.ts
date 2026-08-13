@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     const payload = normalizePayload(await req.json());
     if (
       payload.status === "published" &&
-      (!payload.title || !payload.slug || !payload.excerpt || !payload.category)
+      (!payload.title || !payload.slug || !payload.excerpt)
     ) {
       return NextResponse.json({ error: "Missing required blog fields" }, { status: 400 });
     }

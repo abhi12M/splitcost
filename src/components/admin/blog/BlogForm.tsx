@@ -371,7 +371,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
         if (!response.ok) {
           const data = await response.json().catch(() => null);
           if (data?.error === "Missing required blog fields") {
-            throw new Error("Add a title, slug, description, and category before publishing.");
+            throw new Error("Add a title, slug, and description before publishing.");
           }
           throw new Error(data?.error ?? "Unable to save blog");
         }
@@ -776,7 +776,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
                     <CharacterCounter value={excerpt} max={DESCRIPTION_MAX} />
                   </div>
 
-                  <FieldLabel label="Category" required />
+                  <FieldLabel label="Category (optional)" />
                   <BlogCategorySelect
                     value={category}
                     onChange={(value) => {

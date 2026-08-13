@@ -7,7 +7,7 @@ CREATE TABLE public.blogs (
   excerpt text,
   content text DEFAULT '',
   cover_image text,
-  category text NOT NULL,
+  category text,
   author text DEFAULT 'SplitCost Team',
   status public.blog_status NOT NULL DEFAULT 'draft',
   published_at timestamp with time zone,

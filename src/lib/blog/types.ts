@@ -10,7 +10,7 @@ export type Blog = {
   content: string;
   cover_image: string | null;
   cover_alt: string | null;
-  category: string;
+  category: string | null;
   author: string;
   status: BlogStatus;
   published_at: string | null;

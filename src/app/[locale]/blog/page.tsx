@@ -151,17 +151,20 @@ export default async function BlogIndexPage({ params, searchParams = {} }: PageP
             </div>
 
             <aside className="h-fit rounded-2xl border border-border/60 bg-muted/40 p-5 lg:sticky lg:top-28">
-              <div className="flex items-center gap-2 text-sm font-bold"><BarChart3 className="h-4 w-4 text-primary" /> Trending topics</div>
-              <div className="mt-4 space-y-1">
-                {categoriesWithPosts.slice(0, 5).map((item) => (
-                  <Link key={item.slug} href={`/blog?category=${encodeURIComponent(item.name)}`} className="flex items-center justify-between rounded-lg px-2 py-2 text-xs transition hover:bg-card hover:text-primary">
-                    <span className="flex items-center gap-2"><Tag className="h-3.5 w-3.5 text-primary/70" />{item.name}</span>
-                    <span className="rounded-full bg-primary/10 px-2 py-0.5 font-bold tabular-nums text-primary">{categoryCounts[item.name]}</span>
-                  </Link>
-                ))}
-              </div>
-
-              <div className="my-5 h-px bg-border" />
+              {categoriesWithPosts.length ? (
+                <>
+                  <div className="flex items-center gap-2 text-sm font-bold"><BarChart3 className="h-4 w-4 text-primary" /> Trending topics</div>
+                  <div className="mt-4 space-y-1">
+                    {categoriesWithPosts.slice(0, 5).map((item) => (
+                      <Link key={item.slug} href={`/blog?category=${encodeURIComponent(item.name)}`} className="flex items-center justify-between rounded-lg px-2 py-2 text-xs transition hover:bg-card hover:text-primary">
+                        <span className="flex items-center gap-2"><Tag className="h-3.5 w-3.5 text-primary/70" />{item.name}</span>
+                        <span className="rounded-full bg-primary/10 px-2 py-0.5 font-bold tabular-nums text-primary">{categoryCounts[item.name]}</span>
+                      </Link>
+                    ))}
+                  </div>
+                  <div className="my-5 h-px bg-border" />
+                </>
+              ) : null}
               <div className="flex items-center gap-2 text-sm font-bold"><Lightbulb className="h-4 w-4 text-primary" /> Helpful tools</div>
               <div className="mt-4 space-y-2">
                 <ToolLink href="/create-group" icon={Calculator} title="Group expense splitter" text="Split a bill and settle fairly" />

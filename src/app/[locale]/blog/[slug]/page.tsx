@@ -100,18 +100,22 @@ export default async function BlogDetailPage({ params }: PageProps) {
                   <Link href="/" className="transition-colors hover:text-primary hover:underline">Home</Link>
                   <ChevronRight className="h-3.5 w-3.5" />
                   <Link href="/blog" className="transition-colors hover:text-primary hover:underline">Blog</Link>
-                  <ChevronRight className="h-3.5 w-3.5" />
-                  <Link
-                    href={`/blog?category=${encodeURIComponent(blog.category)}`}
-                    className="truncate transition-colors hover:text-primary hover:underline"
-                  >
-                    {blog.category}
-                  </Link>
+                  {blog.category ? (
+                    <>
+                      <ChevronRight className="h-3.5 w-3.5" />
+                      <Link
+                        href={`/blog?category=${encodeURIComponent(blog.category)}`}
+                        className="truncate transition-colors hover:text-primary hover:underline"
+                      >
+                        {blog.category}
+                      </Link>
+                    </>
+                  ) : null}
                 </nav>
                 <div className="mb-5 flex items-center gap-3">
                   <span className="h-px w-7 bg-primary" aria-hidden="true" />
                   <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
-                    {blog.category}
+                    {blog.category ?? "Guide"}
                   </span>
                 </div>
                 <h1 className="max-w-[610px] font-serif text-[2.5rem] leading-[1.04] tracking-[-0.04em] text-foreground sm:text-5xl lg:text-[3.25rem] xl:text-[3.6rem]">
@@ -136,7 +140,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
                 )}
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-foreground/15 via-transparent to-transparent lg:bg-gradient-to-r lg:from-card/20 lg:via-transparent lg:to-transparent" />
                 <div className="absolute bottom-5 left-5 rounded-full border border-white/30 bg-black/35 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-white shadow-sm backdrop-blur-md sm:bottom-6 sm:left-6">
-                  {blog.category} guide
+                  {blog.category ? `${blog.category} guide` : "Guide"}
                 </div>
               </div>
             </div>

@@ -68,7 +68,7 @@ export function FeaturedGuides({ guides }: { guides: Blog[] }) {
             <span className="rounded bg-primary px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
               {guide.is_featured ? "Featured guide" : "Latest guide"}
             </span>
-            <span>{guide.category}</span>
+            {guide.category ? <span>{guide.category}</span> : null}
             {showNavigation ? <span className="tabular-nums">· {activeIndex + 1} of {guides.length}</span> : null}
           </div>
 

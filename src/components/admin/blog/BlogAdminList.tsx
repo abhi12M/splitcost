@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Edit, Loader2, Plus, Trash2 } from "lucide-react";
+import { Edit, Plus, Trash2 } from "lucide-react";
 import { type MouseEvent, useEffect, useState } from "react";
 
 import type { BlogAdminListItem } from "@/lib/blog/types";
@@ -136,7 +136,7 @@ export function BlogAdminList({ blogs }: { blogs: BlogAdminListItem[] }) {
                     </div>
                   </TableCell>
                   <TableCell><BlogStatusBadges blog={blog} /></TableCell>
-                  <TableCell>{blog.category}</TableCell>
+                  <TableCell>{blog.category ?? "—"}</TableCell>
                   <TableCell className="text-right tabular-nums">{formatViewCount(blog.views)}</TableCell>
                   <TableCell>{formatBlogDate(blog.created_at)}</TableCell>
                   <TableCell>
@@ -177,32 +177,26 @@ export function BlogAdminList({ blogs }: { blogs: BlogAdminListItem[] }) {
 
       <AlertDialog
         open={Boolean(deleteTarget)}
-        onOpenChange={(open) => {
-          if (!open && !deletingId) setDeleteTarget(null);
-        }}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
       >
-        <AlertDialogContent className="max-w-[290px] rounded-2xl">
+        <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-lg">Delete blog post?</AlertDialogTitle>
-            <AlertDialogDescription className="text-xs">
-              This permanently deletes {deleteTarget?.title ?? "this blog post"}.
+            <AlertDialogTitle>Delete blog post?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTarget
+                ? `Delete "${deleteTarget.title}". This permanently deletes the blog post.`
+                : null}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="mt-4 flex-row gap-2">
-            <AlertDialogCancel
-              disabled={Boolean(deletingId)}
-              className="mt-0 flex-1 rounded-xl border-none bg-muted hover:bg-muted/80"
-            >
-              Cancel
-            </AlertDialogCancel>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={Boolean(deletingId)}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
+              onClick={(event) => {
+                event.preventDefault();
                 if (deleteTarget) void handleDelete(deleteTarget.id);
               }}
               disabled={Boolean(deletingId)}
-              className="flex-1 rounded-xl bg-destructive text-white hover:bg-destructive/90"
             >
-              {deletingId ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               {deletingId ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
