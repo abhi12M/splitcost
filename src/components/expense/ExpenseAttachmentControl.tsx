@@ -28,6 +28,7 @@ import {
   validateAttachmentFile,
 } from "@/lib/expenseAttachments";
 import { cn } from "@/lib/utils";
+import { useBackButtonClose } from "@/hooks/useBackButtonClose";
 import { ExpenseAttachmentViewer } from "./ExpenseAttachmentViewer";
 
 type ExpenseAttachmentControlProps = {
@@ -50,6 +51,9 @@ export function ExpenseAttachmentControl({
   const [isReadingFile, setIsReadingFile] = useState(false);
   const [isSourcePickerOpen, setIsSourcePickerOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+
+  useBackButtonClose(isSourcePickerOpen, () => setIsSourcePickerOpen(false));
+
   // Track the blob URL we created locally so we can revoke it when the user
   // replaces it, removes it, or unmounts the form. Without this the File
   // reference behind the blob URL stays alive for the page's lifetime.

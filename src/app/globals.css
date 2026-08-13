@@ -175,6 +175,15 @@
   body {
     @apply bg-background text-foreground antialiased;
   }
+
+  /* Recharts makes SVG layers focusable for tooltip navigation. Mobile
+     browsers otherwise draw a heavy black outline around the tapped slice's
+     SVG bounding box, which looks like a stray rectangular border. */
+  .recharts-wrapper .recharts-surface,
+  .recharts-wrapper .recharts-layer,
+  .recharts-wrapper .recharts-sector {
+    outline: none;
+  }
 }
 
 @layer utilities {

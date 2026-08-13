@@ -560,14 +560,14 @@ export function ExpenseForm({
                   : `${Math.abs(validationState.diff).toFixed(2)}${splitType === 'percentage' ? '%' : ''} ${validationState.diff > 0 ? t("left") : t("over")}`}
               </span>
             </div>
-            <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-muted ring-1 ring-inset ring-border/60">
               <div
                 className={cn(
                   "h-full transition-all duration-500 ease-out rounded-full",
                   validationState.isValid ? validationStyles.validBg : "bg-primary"
                 )}
                 style={{
-                  width: `${Math.min(validationState.percentageOfTotal ?? 0, 100)}%`
+                  width: `${Math.max(0, Math.min(validationState.percentageOfTotal ?? 0, 100))}%`
                 }}
               />
             </div>

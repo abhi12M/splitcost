@@ -82,6 +82,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { SingleSelect } from "@/components/ui/single-select";
 import { hasExpenseNotesContent, sanitizeExpenseNotes } from "@/lib/expenseNotes";
+import { useBackButtonClose } from "@/hooks/useBackButtonClose";
 
 function memberName(
   members: EditExpenseInterface["group"]["members"],
@@ -349,6 +350,11 @@ export default function ExpenseDetailsPage({
   const [isExpenseDeleteConfirmOpen, setIsExpenseDeleteConfirmOpen] = useState(false);
   const [isAttachmentDeleteConfirmOpen, setIsAttachmentDeleteConfirmOpen] = useState(false);
   const [attachmentSpinnerMessage, setAttachmentSpinnerMessage] = useState("");
+
+  useBackButtonClose(isAttachmentSourceOpen, () =>
+    setIsAttachmentSourceOpen(false)
+  );
+
   const headerIconButtonClass =
     "inline-flex h-10 w-10 items-center justify-center rounded-full bg-transparent text-foreground/70 transition-colors [-webkit-tap-highlight-color:transparent] hover:bg-transparent hover:text-foreground active:bg-transparent focus:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60 sm:hover:bg-background/40";
 
