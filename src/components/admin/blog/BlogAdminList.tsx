@@ -59,8 +59,13 @@ function BlogStatusBadges({ blog }: { blog: BlogAdminListItem }) {
 export function BlogAdminList({ blogs }: { blogs: BlogAdminListItem[] }) {
   const router = useRouter();
   const { toast } = useToast();
+  const [visibleBlogs, setVisibleBlogs] = useState(blogs);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<BlogAdminListItem | null>(null);
+
+  useEffect(() => {
+    setVisibleBlogs(blogs);
+  }, [blogs]);
 
   useEffect(() => {
     // Browser Back can restore this route from Next.js' client cache after a
@@ -89,6 +94,7 @@ export function BlogAdminList({ blogs }: { blogs: BlogAdminListItem[] }) {
       }
 
       toast({ title: "Blog post deleted" });
+      setVisibleBlogs((currentBlogs) => currentBlogs.filter((blog) => blog.id !== id));
       router.refresh();
     } catch (error) {
       toast({
@@ -114,7 +120,7 @@ export function BlogAdminList({ blogs }: { blogs: BlogAdminListItem[] }) {
         </Button>
       </CardHeader>
       <CardContent>
-        {blogs.length ? (
+        {visibleBlogs.length ? (
           <Table>
             <TableHeader>
               <TableRow>
@@ -127,7 +133,7 @@ export function BlogAdminList({ blogs }: { blogs: BlogAdminListItem[] }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {blogs.map((blog) => (
+              {visibleBlogs.map((blog) => (
                 <TableRow key={blog.id}>
                   <TableCell>
                     <div className="max-w-md">

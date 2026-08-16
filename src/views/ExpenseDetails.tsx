@@ -82,6 +82,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { SingleSelect } from "@/components/ui/single-select";
 import { hasExpenseNotesContent, sanitizeExpenseNotes } from "@/lib/expenseNotes";
+import { clearCachedExpense } from "@/lib/expenseCache";
 import { useBackButtonClose } from "@/hooks/useBackButtonClose";
 
 function memberName(
@@ -461,7 +462,7 @@ export default function ExpenseDetailsPage({
       // category/subcategory immediately and the dashboard refetch (kicked
       // off below) is the only network call this action makes.
       queryClient.setQueryData<EditExpenseInterface | null>(
-        ["expense", expenseId],
+        queryKeys.expense(expenseId),
         (current) =>
           current
             ? {
@@ -475,6 +476,7 @@ export default function ExpenseDetailsPage({
               }
             : current
       );
+      clearCachedExpense(expenseId);
       invalidateGroupDashboard(queryClient, groupId);
     }
 

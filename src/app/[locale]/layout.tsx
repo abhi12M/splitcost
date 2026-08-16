@@ -4,12 +4,12 @@ import type { Metadata, Viewport } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
-import { Plus_Jakarta_Sans } from "next/font/google";
 import { hasLocale } from "next-intl";
 import { Suspense, type ReactNode } from "react";
 
 import { GoogleAnalyticsPageTracker } from "@/components/analytics/GoogleAnalyticsPageTracker";
 import AppProviders from "@/components/providers/AppProviders";
+import { plusJakarta } from "@/app/fonts";
 import {
   GA_MEASUREMENT_ID,
   isGoogleAnalyticsEnabled,
@@ -26,11 +26,6 @@ import {
 } from "@/lib/seo";
 import { getSiteRootAlternates, getLocalizedCanonicalUrl } from "@/lib/seo-i18n";
 
-const plusJakarta = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  display: "swap",
-});
-
 const siteUrl = getSiteUrl();
 
 export const viewport: Viewport = {
@@ -43,10 +38,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   applicationName: SITE_NAME,
-  title: {
-    default: SITE_TITLE,
-    template: `%s | ${SITE_NAME}`,
-  },
+  title: SITE_TITLE,
   description: SITE_DESCRIPTION,
   alternates: getSiteRootAlternates(),
   openGraph: {
@@ -189,7 +181,7 @@ export default async function LocaleLayout({
           </>
         ) : null}
       </head>
-      <body className={plusJakarta.className}>
+      <body className={`${plusJakarta.variable} font-sans`}>
         <NextIntlClientProvider messages={messages}>
           {isGoogleAnalyticsEnabled() ? (
             <Suspense fallback={null}>

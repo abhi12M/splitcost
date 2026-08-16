@@ -43,7 +43,7 @@ export async function POST(req: Request) {
       .rotate()
       .webp({ quality: 85 })
       .toBuffer();
-    const path = buildBlogImagePath(blog.id, kind, new Date(blog.created_at));
+    const path = buildBlogImagePath(blog.id, file.name, new Date(blog.created_at));
 
     const { error } = await supabaseAdmin.storage
       .from(BLOG_IMAGE_BUCKET)

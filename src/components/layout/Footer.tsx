@@ -35,7 +35,7 @@ function FooterNavColumn({
   return (
     <nav aria-label={title}>
       <p className="mb-4">
-        <Link href={hubHref} className={footerHubLinkClass}>
+        <Link href={hubHref} prefetch={false} className={footerHubLinkClass}>
           {hubLabel}
         </Link>
       </p>
@@ -91,7 +91,11 @@ export function Footer() {
           >
             {orderedCompareLinks.map((item) => (
               <li key={item.slug}>
-                <Link href={getComparePath(item.slug)} className={footerLinkClass}>
+                <Link
+                  href={getComparePath(item.slug)}
+                  prefetch={false}
+                  className={footerLinkClass}
+                >
                   {t("footerCompareLink", {
                     competitor: item.competitorName,
                     appName: APP_NAME,
@@ -108,7 +112,11 @@ export function Footer() {
           >
             {USE_CASE_SLUGS.map((slug) => (
               <li key={slug}>
-                <Link href={getUseCasePath(slug)} className={footerLinkClass}>
+                <Link
+                  href={getUseCasePath(slug)}
+                  prefetch={false}
+                  className={footerLinkClass}
+                >
                   {tUseCases(`${slug}.title`)}
                 </Link>
               </li>
@@ -124,18 +132,18 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className={footerLinkClass}>
+                <Link href="/contact" prefetch={false} className={footerLinkClass}>
                   {t("contact")}
                 </Link>
               </li>
               <li>
-                <Link href="/resources" className={footerLinkClass}>
+                <Link href="/resources" prefetch={false} className={footerLinkClass}>
                   {t("resources")}
                 </Link>
               </li>
               {locale === "en" ? (
                 <li>
-                  <Link href="/blog" className={footerLinkClass}>
+                  <Link href="/blog" prefetch={false} className={footerLinkClass}>
                     {t("blog")}
                   </Link>
                 </li>
@@ -147,12 +155,12 @@ export function Footer() {
             <p className="mb-4 font-semibold text-foreground">{t("legal")}</p>
             <ul className="space-y-2.5">
               <li>
-                <Link href="/privacy" className={footerLinkClass}>
+                <Link href="/privacy" prefetch={false} className={footerLinkClass}>
                   {t("privacy")}
                 </Link>
               </li>
               <li>
-                <Link href="/terms" className={footerLinkClass}>
+                <Link href="/terms" prefetch={false} className={footerLinkClass}>
                   {t("terms")}
                 </Link>
               </li>

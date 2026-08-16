@@ -14,6 +14,7 @@ import {
   type UserInterface,
 } from "@/lib/storage";
 import { clearCachedExpense, readCachedExpense } from "@/lib/expenseCache";
+import { DATA_STALE_TIME_MS } from "@/lib/queryConfig";
 
 // Stable query keys so callers can invalidate from anywhere without typos.
 export const queryKeys = {
@@ -26,7 +27,7 @@ export const queryKeys = {
 // React Query will treat the data as fresh and skip refetching, which means
 // navigating view -> edit (or vice versa) doesn't fire a duplicate network
 // request just to re-render the same data we loaded a moment ago.
-const EXPENSE_STALE_TIME = 30_000;
+const EXPENSE_STALE_TIME = DATA_STALE_TIME_MS;
 
 export async function fetchGroupDashboard(
   groupId: string
@@ -49,7 +50,7 @@ export function useGroupDashboardQuery(groupId: string) {
 // the Add Expense / Edit Group pages can render instantly with no extra
 // network request. We still fall back to `GET /api/groups/:id` for direct
 // URLs / hard reloads where the dashboard cache is empty.
-const GROUP_STALE_TIME = 30_000;
+const GROUP_STALE_TIME = DATA_STALE_TIME_MS;
 
 export function useGroupQuery(groupId: string) {
   const queryClient = useQueryClient();

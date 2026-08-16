@@ -176,6 +176,13 @@
     @apply bg-background text-foreground antialiased;
   }
 
+  /* Give every keyboard-focusable element a consistent, theme-aware fallback.
+     Components can still replace this with their own Tailwind focus ring. */
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+
   /* Recharts makes SVG layers focusable for tooltip navigation. Mobile
      browsers otherwise draw a heavy black outline around the tapped slice's
      SVG bounding box, which looks like a stray rectangular border. */
@@ -420,20 +427,23 @@
     @apply my-1;
   }
 
-  .blog-editor-content blockquote,
-  .blog-article-content blockquote {
+  .blog-article-content blockquote:not(.blog-quote) {
+    @apply my-5 border-l-4 border-primary/40 pl-4 italic text-muted-foreground;
+  }
+
+  .blog-article-content blockquote:not(.blog-quote) p {
+    @apply my-0 text-inherit;
+  }
+
+  .blog-editor-content .blog-editor-quote,
+  .blog-article-content blockquote.blog-quote {
     @apply relative my-5 overflow-hidden rounded-xl border border-primary/15 bg-card px-12 py-4 not-italic text-foreground shadow-sm;
     background-image: linear-gradient(135deg, hsl(var(--primary) / 0.07), transparent 55%);
   }
 
-  .blog-editor-content blockquote::before {
-    content: "\201C";
-    @apply absolute left-4 top-2 font-serif text-4xl font-bold leading-none text-primary/70;
-  }
-
-  .blog-editor-content blockquote p,
+  .blog-editor-content .blog-editor-quote p,
   .blog-article-content .blog-quote p {
-    @apply my-0 text-sm font-medium leading-6;
+    @apply my-0 text-sm font-medium leading-6 text-foreground;
   }
 
   .blog-quote-mark {
@@ -558,5 +568,132 @@
 
   .blog-editor-content p.is-editor-empty:first-child::before {
     @apply pointer-events-none float-left h-0 text-muted-foreground content-[attr(data-placeholder)];
+  }
+
+  .blog-faq-section {
+    @apply relative my-14 overflow-hidden rounded-[2rem] border border-primary/10 px-5 py-12 shadow-sm sm:px-10 sm:py-14;
+    background:
+      radial-gradient(circle at 50% 22%, hsl(196 100% 88% / 0.52), transparent 32%),
+      linear-gradient(135deg, hsl(218 100% 96%), hsl(0 0% 100%) 58%, hsl(220 100% 97%));
+  }
+
+  .dark .blog-faq-section {
+    background:
+      radial-gradient(circle at 50% 22%, hsl(var(--primary) / 0.17), transparent 34%),
+      linear-gradient(135deg, hsl(222 42% 12%), hsl(222 40% 9%) 58%, hsl(221 40% 13%));
+  }
+
+  .blog-faq-inner {
+    @apply relative z-10 mx-auto max-w-[660px];
+  }
+
+  .blog-faq-header {
+    @apply mb-10 text-center sm:mb-12;
+  }
+
+  .blog-faq-header .blog-faq-eyebrow {
+    @apply mb-3 mt-0 text-sm font-extrabold uppercase tracking-[0.08em] text-primary sm:text-base;
+  }
+
+  .blog-faq-header h2 {
+    @apply m-0 font-sans text-3xl font-extrabold leading-tight tracking-tight text-foreground sm:text-4xl;
+  }
+
+  .blog-faq-header .blog-faq-description,
+  .blog-faq-header .blog-faq-description p {
+    @apply mx-auto mb-0 mt-3 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base;
+  }
+
+  .blog-faq-list {
+    @apply border-t border-border/80;
+  }
+
+  .blog-faq-item {
+    @apply relative border-b border-border/80;
+  }
+
+  .blog-faq-item[data-state="open"]::before {
+    content: "";
+    @apply absolute bottom-4 left-0 top-4 w-0.5 rounded-full bg-primary;
+  }
+
+  .blog-faq-trigger {
+    @apply w-full gap-4 py-4 pl-4 pr-1 text-left font-sans text-sm font-bold leading-6 text-foreground sm:py-5 sm:pl-5 sm:text-base;
+  }
+
+  .blog-faq-question {
+    @apply flex min-w-0 items-start gap-2;
+  }
+
+  .blog-faq-toggle {
+    @apply flex h-7 w-7 shrink-0 items-center justify-center text-muted-foreground;
+  }
+
+  .blog-faq-toggle svg {
+    @apply h-4 w-4;
+  }
+
+  .blog-faq-answer {
+    @apply pb-5 pl-4 pr-8 pt-0 text-sm leading-7 text-muted-foreground sm:pl-5 sm:pr-12 sm:text-[15px];
+  }
+
+  .blog-faq-answer > :first-child {
+    @apply mt-0;
+  }
+
+  .blog-faq-answer > :last-child {
+    @apply mb-0;
+  }
+
+  .blog-faq-answer p,
+  .blog-faq-answer li {
+    @apply text-inherit;
+  }
+
+  .blog-faq-blob,
+  .blog-faq-orbit {
+    @apply pointer-events-none absolute;
+  }
+
+  .blog-faq-blob {
+    @apply rounded-full bg-primary/10 blur-[1px];
+  }
+
+  .blog-faq-blob-left {
+    @apply -left-12 -top-12 h-28 w-28;
+  }
+
+  .blog-faq-blob-right {
+    @apply -bottom-14 -right-12 h-36 w-36;
+  }
+
+  .blog-faq-orbit {
+    @apply rounded-[50%] border border-white/80 dark:border-primary/10;
+  }
+
+  .blog-faq-orbit-one {
+    left: 5%;
+    top: -5%;
+    height: 34%;
+    width: 90%;
+    transform: rotate(-8deg);
+  }
+
+  .blog-faq-orbit-two {
+    left: 12%;
+    top: 1%;
+    height: 27%;
+    width: 78%;
+    transform: rotate(8deg);
+  }
+
+  @media (max-width: 639px) {
+    .blog-faq-section {
+      @apply -mx-2 rounded-2xl;
+    }
+
+    .blog-faq-orbit {
+      display: none;
+    }
   }
 }

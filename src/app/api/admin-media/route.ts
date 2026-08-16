@@ -6,7 +6,10 @@ import {
   buildAttachmentPayload,
   getStoragePathFromValue,
 } from "@/lib/supabase/attachments";
-import { buildAdminMediaPath } from "@/lib/supabase/storagePaths";
+import {
+  buildAdminMediaPath,
+  getStorageImageFileName,
+} from "@/lib/supabase/storagePaths";
 
 const MEDIA_BUCKET = "blog-images";
 const MAX_MEDIA_IMAGE_SIZE = 10 * 1024 * 1024;
@@ -220,7 +223,7 @@ export async function POST(req: Request) {
       .rotate()
       .webp({ quality: 85 })
       .toBuffer();
-    const path = buildAdminMediaPath();
+    const path = buildAdminMediaPath(file.name);
 
     const { error } = await supabaseAdmin.storage
       .from(MEDIA_BUCKET)
@@ -255,6 +258,101 @@ export async function POST(req: Request) {
       { status: 400 }
     );
   }
+}
+
+function replaceStoredUrl(value: string | null, oldUrl: string, newUrl: string) {
+  if (!value || !value.includes(oldUrl)) return value;
+
+  const escapedUrl = oldUrl.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return value.replace(new RegExp(`${escapedUrl}(?:\\?v=\\d+)?`, "g"), newUrl);
+}
+
+async function updateBlogImageReferences(oldUrl: string, newUrl: string) {
+  for (const table of ["blogs", "blog_drafts"] as const) {
+    const { data: rows, error } = await supabaseAdmin
+      .from(table)
+      .select("id,content,cover_image");
+
+    if (error) throw error;
+
+    await Promise.all(
+      (rows ?? []).map(async (row) => {
+        const content = replaceStoredUrl(row.content, oldUrl, newUrl);
+        const coverImage = replaceStoredUrl(row.cover_image, oldUrl, newUrl);
+        if (content === row.content && coverImage === row.cover_image) {
+          return;
+        }
+
+        const { error: updateError } = await supabaseAdmin
+          .from(table)
+          .update({
+            content: content ?? "",
+            cover_image: coverImage,
+          })
+          .eq("id", row.id);
+
+        if (updateError) throw updateError;
+      })
+    );
+  }
+}
+
+export async function PATCH(req: Request) {
+  const { path, name } = (await req.json().catch(() => ({}))) as {
+    path?: string;
+    name?: string;
+  };
+
+  if (!path || !name?.trim()) {
+    return NextResponse.json(
+      { error: "Media path and new filename are required" },
+      { status: 400 }
+    );
+  }
+
+  if (!path.startsWith("blogs/") && !path.startsWith("media/")) {
+    return NextResponse.json({ error: "This media file cannot be renamed" }, { status: 400 });
+  }
+
+  const folder = path.includes("/") ? path.slice(0, path.lastIndexOf("/")) : "";
+  const fileName = getStorageImageFileName(name);
+  const nextPath = folder ? `${folder}/${fileName}` : fileName;
+
+  if (nextPath === path) {
+    return NextResponse.json({ error: "Enter a different filename" }, { status: 400 });
+  }
+
+  const oldPublicUrl = supabaseAdmin.storage.from(MEDIA_BUCKET).getPublicUrl(path).data.publicUrl;
+  const newPublicUrl = supabaseAdmin.storage.from(MEDIA_BUCKET).getPublicUrl(nextPath).data.publicUrl;
+  const versionedUrl = `${newPublicUrl}?v=${Date.now()}`;
+
+  const { error: moveError } = await supabaseAdmin.storage
+    .from(MEDIA_BUCKET)
+    .move(path, nextPath);
+
+  if (moveError) {
+    return NextResponse.json({ error: moveError.message }, { status: 400 });
+  }
+
+  try {
+    await updateBlogImageReferences(oldPublicUrl, versionedUrl);
+  } catch (error) {
+    await supabaseAdmin.storage.from(MEDIA_BUCKET).move(nextPath, path);
+    console.error("renameAdminMedia references error:", error);
+    return NextResponse.json(
+      { error: "Unable to update blog references for the renamed file" },
+      { status: 500 }
+    );
+  }
+
+  return NextResponse.json({
+    media: {
+      path: nextPath,
+      name: fileName,
+      url: versionedUrl,
+      updatedAt: new Date().toISOString(),
+    },
+  });
 }
 
 export async function DELETE(req: Request) {

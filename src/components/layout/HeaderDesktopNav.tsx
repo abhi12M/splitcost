@@ -96,7 +96,7 @@ function HeaderNavDropdown({
 
 function HeaderNavLink({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <Link href={href} className={navLinkClass}>
+    <Link href={href} prefetch={false} className={navLinkClass}>
       {children}
     </Link>
   );
