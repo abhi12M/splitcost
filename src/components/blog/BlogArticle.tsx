@@ -8,6 +8,7 @@ import remarkGfm from "remark-gfm";
 import { BlogFaqSection } from "@/components/blog/BlogFaqSection";
 import { BlogFloatingTableOfContents } from "@/components/blog/BlogFloatingTableOfContents";
 import { BlogTableOfContents } from "@/components/blog/BlogTableOfContents";
+import { extractBlogContentHeading } from "@/lib/blog/content-heading";
 import { getBlogFaqDescription, parseBlogFaq } from "@/lib/blog/faq";
 import { remarkInsight } from "@/lib/blog/remarkInsight";
 import { remarkQuote } from "@/lib/blog/remarkQuote";
@@ -101,8 +102,9 @@ function BlogMarkdown({ content, headingOffset = 0 }: { content: string; heading
 }
 
 export function BlogArticle({ blog }: { blog: Blog }) {
-  const headings = buildBlogTableOfContents(blog.content);
-  const faq = parseBlogFaq(blog.content);
+  const { content } = extractBlogContentHeading(blog.content);
+  const headings = buildBlogTableOfContents(content);
+  const faq = parseBlogFaq(content);
 
   return (
     <>
@@ -138,7 +140,7 @@ export function BlogArticle({ blog }: { blog: Blog }) {
               ) : null}
             </>
           ) : (
-            <BlogMarkdown content={blog.content} />
+            <BlogMarkdown content={content} />
           )}
         </article>
       </div>

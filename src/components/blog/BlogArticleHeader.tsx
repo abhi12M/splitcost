@@ -2,6 +2,7 @@ import { ChevronRight } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Link } from "@/i18n/navigation";
+import { extractBlogContentHeading } from "@/lib/blog/content-heading";
 import type { Blog } from "@/lib/blog/types";
 import { formatBlogDate } from "@/lib/blog/utils";
 
@@ -16,6 +17,8 @@ export function BlogArticleHeader({
   draftPreview = false,
   showBreadcrumb = false,
 }: BlogArticleHeaderProps) {
+  const { h1 } = extractBlogContentHeading(blog.content);
+
   return (
     <>
       <section className="border-b bg-muted/30 px-6 py-8 md:px-10 md:py-12">
@@ -57,7 +60,7 @@ export function BlogArticleHeader({
             <span>By {blog.author}</span>
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-5xl">
-            {blog.title}
+            {h1 || blog.title}
           </h1>
           <p className="text-lg leading-8 text-muted-foreground">{blog.excerpt}</p>
         </div>
