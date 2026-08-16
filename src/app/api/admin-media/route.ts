@@ -271,7 +271,7 @@ async function updateBlogImageReferences(oldUrl: string, newUrl: string) {
   for (const table of ["blogs", "blog_drafts"] as const) {
     const { data: rows, error } = await supabaseAdmin
       .from(table)
-      .select("id,content,cover_image,schema_json");
+      .select("id,content,cover_image");
 
     if (error) throw error;
 
@@ -279,14 +279,7 @@ async function updateBlogImageReferences(oldUrl: string, newUrl: string) {
       (rows ?? []).map(async (row) => {
         const content = replaceStoredUrl(row.content, oldUrl, newUrl);
         const coverImage = replaceStoredUrl(row.cover_image, oldUrl, newUrl);
-        const schemaText = row.schema_json ? JSON.stringify(row.schema_json) : null;
-        const nextSchemaText = replaceStoredUrl(schemaText, oldUrl, newUrl);
-
-        if (
-          content === row.content &&
-          coverImage === row.cover_image &&
-          nextSchemaText === schemaText
-        ) {
+        if (content === row.content && coverImage === row.cover_image) {
           return;
         }
 
@@ -295,7 +288,6 @@ async function updateBlogImageReferences(oldUrl: string, newUrl: string) {
           .update({
             content: content ?? "",
             cover_image: coverImage,
-            schema_json: nextSchemaText ? JSON.parse(nextSchemaText) : null,
           })
           .eq("id", row.id);
 

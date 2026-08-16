@@ -8,7 +8,7 @@ import type {
 } from "./types";
 
 const BLOG_SELECT =
-  "id,title,slug,excerpt,content,cover_image,cover_alt,category,author,status,published_at,reading_time,no_index,is_featured,schema_json,views,created_at,updated_at";
+  "id,title,slug,excerpt,content,cover_image,cover_alt,category,author,status,published_at,reading_time,no_index,is_featured,views,created_at,updated_at";
 
 type ListBlogsArgs = {
   page?: number;
@@ -208,7 +208,7 @@ export async function getBlogById(id: string): Promise<Blog | null> {
 
   const { data: draft, error: draftError } = await supabaseAdmin
     .from("blog_drafts")
-    .select("title,slug,excerpt,content,cover_image,cover_alt,category,author,published_at,reading_time,no_index,is_featured,schema_json,updated_at")
+    .select("title,slug,excerpt,content,cover_image,cover_alt,category,author,published_at,reading_time,no_index,is_featured,updated_at")
     .eq("blog_id", id)
     .maybeSingle();
 
@@ -262,7 +262,7 @@ export async function updateBlog(id: string, input: BlogInput): Promise<Blog> {
         },
         { onConflict: "blog_id" }
       )
-      .select("title,slug,excerpt,content,cover_image,cover_alt,category,author,published_at,reading_time,no_index,is_featured,schema_json,updated_at")
+      .select("title,slug,excerpt,content,cover_image,cover_alt,category,author,published_at,reading_time,no_index,is_featured,updated_at")
       .single();
 
     if (draftError) throw draftError;

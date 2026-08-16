@@ -70,7 +70,7 @@ type BuildLocalizedMetadataArgs = {
   /** Path without locale prefix */
   path: string;
   noIndex?: boolean;
-  /** Skip the layout `%s | SplitCost` title template */
+  /** Emit an explicit absolute title. */
   absoluteTitle?: boolean;
 };
 

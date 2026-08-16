@@ -12,7 +12,6 @@ import {
   CreateLink,
   DiffSourceToggleWrapper,
   HighlightToggle,
-  InsertAdmonition,
   InsertCodeBlock,
   InsertImage,
   InsertTable,
@@ -201,19 +200,6 @@ function BlogEditorToolbar() {
                 <InsertCodeBlock />
                 <InsertQuote />
                 <InsertInsight />
-                <ConditionalContents
-                  options={[
-                    {
-                      when: (editorInFocus) => !whenInAdmonition(editorInFocus),
-                      contents: () => (
-                        <>
-                          <Separator />
-                          <InsertAdmonition />
-                        </>
-                      ),
-                    },
-                  ]}
-                />
               </>
             ),
           },

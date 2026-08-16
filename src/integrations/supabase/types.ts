@@ -87,7 +87,6 @@ export type Database = {
           no_index: boolean
           published_at: string | null
           reading_time: number
-          schema_json: Json | null
           slug: string | null
           title: string | null
           updated_at: string
@@ -106,7 +105,6 @@ export type Database = {
           no_index?: boolean
           published_at?: string | null
           reading_time?: number
-          schema_json?: Json | null
           slug?: string | null
           title?: string | null
           updated_at?: string
@@ -125,7 +123,6 @@ export type Database = {
           no_index?: boolean
           published_at?: string | null
           reading_time?: number
-          schema_json?: Json | null
           slug?: string | null
           title?: string | null
           updated_at?: string
@@ -154,7 +151,6 @@ export type Database = {
           published_at: string | null
           reading_time: number
           no_index: boolean
-          schema_json: Json | null
           slug: string | null
           status: Database["public"]["Enums"]["blog_status"]
           title: string | null
@@ -174,7 +170,6 @@ export type Database = {
           published_at?: string | null
           reading_time?: number
           no_index?: boolean
-          schema_json?: Json | null
           slug?: string | null
           status?: Database["public"]["Enums"]["blog_status"]
           title?: string | null
@@ -194,7 +189,6 @@ export type Database = {
           published_at?: string | null
           reading_time?: number
           no_index?: boolean
-          schema_json?: Json | null
           slug?: string | null
           status?: Database["public"]["Enums"]["blog_status"]
           title?: string | null

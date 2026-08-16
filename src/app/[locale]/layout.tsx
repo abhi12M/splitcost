@@ -38,10 +38,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   applicationName: SITE_NAME,
-  title: {
-    default: SITE_TITLE,
-    template: `%s | ${SITE_NAME}`,
-  },
+  title: SITE_TITLE,
   description: SITE_DESCRIPTION,
   alternates: getSiteRootAlternates(),
   openGraph: {

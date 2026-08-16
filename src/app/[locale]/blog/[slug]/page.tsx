@@ -13,10 +13,7 @@ import { Layout } from "@/components/layout/Layout";
 import { resolveLocaleParam } from "@/i18n/params";
 import type { AppLocale } from "@/i18n/routing";
 import { getBlogBySlug, getRelatedBlogs } from "@/lib/blog/queries";
-import {
-  buildBlogStructuredData,
-  isGeneratedBlogStructuredData,
-} from "@/lib/blog/schema";
+import { buildBlogStructuredData } from "@/lib/blog/schema";
 import {
   DEFAULT_OG_IMAGE,
   SITE_NAME,
@@ -38,7 +35,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const image = blog.cover_image || DEFAULT_OG_IMAGE;
 
   return {
-    title: { absolute: `${blog.title} | ${SITE_NAME}` },
+    title: { absolute: blog.title },
     description: blog.excerpt,
     alternates: { canonical: canonicalUrl },
     robots: blog.no_index
@@ -81,10 +78,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
 
   const relatedBlogs = await getRelatedBlogs(blog, 4);
 
-  const jsonLd =
-    blog.schema_json && !isGeneratedBlogStructuredData(blog.schema_json, blog)
-      ? blog.schema_json
-      : buildBlogStructuredData(blog);
+  const jsonLd = buildBlogStructuredData(blog);
   return (
     <Layout>
       <BlogViewTracker blogId={blog.id} />

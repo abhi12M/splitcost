@@ -24,7 +24,6 @@ function normalizePayload(body: BlogInput): BlogInput {
     reading_time: body.reading_time ?? estimateReadingTime(body.content ?? ""),
     no_index: body.no_index ?? false,
     is_featured: body.is_featured ?? false,
-    schema_json: body.schema_json ?? null,
   };
 }
 

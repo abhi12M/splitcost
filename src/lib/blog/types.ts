@@ -1,5 +1,3 @@
-import type { Json } from "@/integrations/supabase/types";
-
 export type BlogStatus = "draft" | "published";
 
 export type Blog = {
@@ -17,7 +15,6 @@ export type Blog = {
   reading_time: number;
   no_index: boolean;
   is_featured: boolean;
-  schema_json: Json | null;
   views: number;
   created_at: string;
   updated_at: string;
@@ -39,7 +36,6 @@ export type BlogInput = {
   reading_time?: number;
   no_index?: boolean;
   is_featured?: boolean;
-  schema_json?: Json | null;
 };
 
 export type BlogAdminListItem = Pick<

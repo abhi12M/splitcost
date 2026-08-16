@@ -14,7 +14,6 @@ import {
   PanelRightClose,
   PanelRightOpen,
   Trash2,
-  X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -38,11 +37,7 @@ import {
 } from "@/components/ui/tooltip";
 import { BlogCategorySelect } from "./BlogCategorySelect";
 import { getBlogContentStats } from "@/lib/blog/content-stats";
-import {
-  buildBlogStructuredData,
-  formatStructuredData,
-  isGeneratedBlogStructuredData,
-} from "@/lib/blog/schema";
+import { buildBlogStructuredData, formatStructuredData } from "@/lib/blog/schema";
 import { buildBlogTableOfContents } from "@/lib/blog/toc";
 import type { Blog, BlogInput, BlogStatus } from "@/lib/blog/types";
 import { estimateReadingTime, getExcerpt, slugify } from "@/lib/blog/utils";
@@ -186,11 +181,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
   );
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(blog ? new Date(blog.updated_at) : null);
   const [isDirty, setIsDirty] = useState(false);
-  const [schemaEdited, setSchemaEdited] = useState(
-    Boolean(blog?.schema_json && !isGeneratedBlogStructuredData(blog.schema_json, blog))
-  );
   const [schemaCopied, setSchemaCopied] = useState(false);
-  const [schemaEditorOpen, setSchemaEditorOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [hasDraftChanges, setHasDraftChanges] = useState(Boolean(blog?.has_draft_changes));
   const [slugCopied, setSlugCopied] = useState(false);
@@ -227,13 +218,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
       }),
     [author, blog?.published_at, blog?.updated_at, category, content, coverAlt, coverImage, excerpt, readingTime, slug, title]
   );
-  const [schemaJson, setSchemaJson] = useState(() =>
-    formatStructuredData(
-      blog?.schema_json && !isGeneratedBlogStructuredData(blog.schema_json, blog)
-        ? blog.schema_json
-        : generatedSchema
-    )
-  );
+  const schemaJson = useMemo(() => formatStructuredData(generatedSchema), [generatedSchema]);
 
   const previewBlog = useMemo<Blog>(
     () => ({
@@ -251,19 +236,12 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
       reading_time: readingTime,
       no_index: noIndex,
       is_featured: isFeatured,
-      schema_json: null,
       views: blog?.views ?? 0,
       created_at: blog?.created_at ?? new Date().toISOString(),
       updated_at: blog?.updated_at ?? new Date().toISOString(),
     }),
     [author, blog?.created_at, blog?.published_at, blog?.updated_at, blog?.views, blogId, blogStatus, category, content, coverAlt, coverImage, excerpt, isFeatured, noIndex, readingTime, slug, title]
   );
-
-  useEffect(() => {
-    if (!schemaEdited) {
-      setSchemaJson(formatStructuredData(generatedSchema));
-    }
-  }, [generatedSchema, schemaEdited]);
 
   const savedLabel = lastSavedAt
     ? `Saved ${formatDistanceToNow(lastSavedAt, { addSuffix: true })}`
@@ -330,11 +308,6 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
       reading_time: readingTime,
       no_index: noIndex,
       is_featured: isFeatured,
-      schema_json: schemaEdited
-        ? schemaJson.trim()
-          ? JSON.parse(schemaJson)
-          : null
-        : null,
     }),
     [
       author,
@@ -347,8 +320,6 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
       isFeatured,
       noIndex,
       readingTime,
-      schemaEdited,
-      schemaJson,
       slug,
       title,
     ]
@@ -362,19 +333,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
       if (!options?.silent) setSaving(true);
       setSaveStatus("saving");
 
-      let payload: BlogInput;
-      try {
-        payload = buildPayload(nextStatus);
-      } catch {
-        setSaveStatus("error");
-        toast({
-          variant: "destructive",
-          title: "Unable to save blog",
-          description: "Structured schema must be valid JSON.",
-        });
-        if (!options?.silent) setSaving(false);
-        return null;
-      }
+      const payload = buildPayload(nextStatus);
 
       const publishedWindow =
         nextStatus === "published" && options?.openPublishedInNewTab
@@ -504,7 +463,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
-  }, [blogId, content, coverAlt, coverImage, excerpt, isDirty, isFeatured, noIndex, saveBlog, saving, schemaJson, slug, title]);
+  }, [blogId, content, coverAlt, coverImage, excerpt, isDirty, isFeatured, noIndex, saveBlog, saving, slug, title]);
 
   const handlePreview = () => setPreviewOpen(true);
 
@@ -851,66 +810,22 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
                     </span>
                     Schema – JSON-LD Preview
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      className="h-8 w-8"
-                      aria-label="Copy structured schema"
-                      title="Copy schema"
-                      onClick={() => void copySchemaJson()}
-                    >
-                      {schemaCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-8 px-2.5 text-xs"
-                      onClick={() => setSchemaEditorOpen((open) => !open)}
-                    >
-                      {schemaEditorOpen ? "Close" : "Edit JSON"}
-                      {schemaEditorOpen ? <X className="h-3.5 w-3.5" /> : null}
-                    </Button>
-                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    aria-label="Copy structured schema"
+                    title="Copy schema"
+                    onClick={() => void copySchemaJson()}
+                  >
+                    {schemaCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  </Button>
                 </div>
                 <div className="px-4 pb-4">
-                  {schemaEditorOpen ? (
-                    <div className="space-y-3">
-                      <Textarea
-                        value={schemaJson}
-                        onChange={(event) => {
-                          setSchemaEdited(true);
-                          setSchemaJson(event.target.value);
-                          markDirty();
-                        }}
-                        rows={14}
-                        spellCheck={false}
-                        aria-label="Structured schema JSON"
-                        className="min-h-64 resize-y bg-slate-950 font-mono text-xs text-slate-100"
-                      />
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => {
-                            setSchemaEdited(false);
-                            setSchemaJson(formatStructuredData(generatedSchema));
-                            markDirty();
-                          }}
-                        >
-                          Regenerate
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <pre className="max-h-36 overflow-hidden whitespace-pre-wrap rounded-lg bg-slate-950 p-4 font-mono text-[11px] leading-5 text-slate-200">
-                      {schemaJson}
-                    </pre>
-                  )}
+                  <pre className="max-h-36 overflow-auto whitespace-pre-wrap rounded-lg bg-slate-950 p-4 font-mono text-[11px] leading-5 text-slate-200">
+                    {schemaJson}
+                  </pre>
                 </div>
               </section>
 
