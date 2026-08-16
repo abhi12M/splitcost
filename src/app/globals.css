@@ -176,6 +176,13 @@
     @apply bg-background text-foreground antialiased;
   }
 
+  /* Give every keyboard-focusable element a consistent, theme-aware fallback.
+     Components can still replace this with their own Tailwind focus ring. */
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+
   /* Recharts makes SVG layers focusable for tooltip navigation. Mobile
      browsers otherwise draw a heavy black outline around the tapped slice's
      SVG bounding box, which looks like a stray rectangular border. */
