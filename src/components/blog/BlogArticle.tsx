@@ -5,8 +5,10 @@ import rehypeRaw from "rehype-raw";
 import remarkDirective from "remark-directive";
 import remarkGfm from "remark-gfm";
 
+import { BlogFaqSection } from "@/components/blog/BlogFaqSection";
 import { BlogFloatingTableOfContents } from "@/components/blog/BlogFloatingTableOfContents";
 import { BlogTableOfContents } from "@/components/blog/BlogTableOfContents";
+import { getBlogFaqDescription, parseBlogFaq } from "@/lib/blog/faq";
 import { remarkInsight } from "@/lib/blog/remarkInsight";
 import { remarkQuote } from "@/lib/blog/remarkQuote";
 import { buildBlogTableOfContents } from "@/lib/blog/toc";
@@ -17,10 +19,8 @@ type HeadingProps = {
   id?: string;
 };
 
-export function BlogArticle({ blog }: { blog: Blog }) {
-  const headings = buildBlogTableOfContents(blog.content);
-  let renderedHeadingIndex = 0;
-
+function BlogMarkdown({ content, headingOffset = 0 }: { content: string; headingOffset?: number }) {
+  let renderedHeadingIndex = headingOffset;
   const renderHeading = (
     Tag: "h1" | "h2" | "h3" | "h4" | "h5" | "h6",
     { children, id, ...props }: HeadingProps & ComponentPropsWithoutRef<"h1">
@@ -32,6 +32,77 @@ export function BlogArticle({ blog }: { blog: Blog }) {
       </Tag>
     );
   };
+
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm, remarkDirective, remarkInsight, remarkQuote]}
+      rehypePlugins={[rehypeRaw]}
+      components={{
+        h1: (props) => renderHeading("h1", props),
+        h2: (props) => renderHeading("h2", props),
+        h3: (props) => renderHeading("h3", props),
+        h4: (props) => renderHeading("h4", props),
+        h5: (props) => renderHeading("h5", props),
+        h6: (props) => renderHeading("h6", props),
+        table({ node: _node, ...props }) {
+          return (
+            <div className="blog-table-scroll" role="region" aria-label="Scrollable table" tabIndex={0}>
+              <table {...props} />
+            </div>
+          );
+        },
+        aside({ children, className }) {
+          if (!className?.includes("blog-insight")) {
+            return <aside className={className}>{children}</aside>;
+          }
+
+          return (
+            <aside className="blog-insight">
+              <div className="blog-insight-heading">
+                <span className="blog-insight-icon">
+                  <Lightbulb aria-hidden="true" />
+                </span>
+                <span>Insight</span>
+              </div>
+              <div className="blog-insight-content">{children}</div>
+            </aside>
+          );
+        },
+        blockquote({ children, className }) {
+          if (!className?.includes("blog-quote")) {
+            return <blockquote className={className}>{children}</blockquote>;
+          }
+
+          return (
+            <blockquote className="blog-quote">
+              <Quote className="blog-quote-mark" aria-hidden="true" />
+              <div className="blog-quote-content">{children}</div>
+              <Building2 className="blog-quote-watermark" aria-hidden="true" />
+            </blockquote>
+          );
+        },
+        a({ children, href, ...props }) {
+          const isExternal = href?.startsWith("http");
+          return isExternal ? (
+            <a href={href} target="_blank" rel="noreferrer" {...props}>
+              {children}
+            </a>
+          ) : (
+            <a href={href} {...props}>
+              {children}
+            </a>
+          );
+        },
+      }}
+    >
+      {content}
+    </ReactMarkdown>
+  );
+}
+
+export function BlogArticle({ blog }: { blog: Blog }) {
+  const headings = buildBlogTableOfContents(blog.content);
+  const faq = parseBlogFaq(blog.content);
 
   return (
     <>
@@ -49,69 +120,26 @@ export function BlogArticle({ blog }: { blog: Blog }) {
           </div>
         </aside>
         <article className="blog-article-content blog-detail-content w-full min-w-0 max-w-[800px]">
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm, remarkDirective, remarkInsight, remarkQuote]}
-            rehypePlugins={[rehypeRaw]}
-            components={{
-              h1: (props) => renderHeading("h1", props),
-              h2: (props) => renderHeading("h2", props),
-              h3: (props) => renderHeading("h3", props),
-              h4: (props) => renderHeading("h4", props),
-              h5: (props) => renderHeading("h5", props),
-              h6: (props) => renderHeading("h6", props),
-              table({ node: _node, ...props }) {
-                return (
-                  <div className="blog-table-scroll" role="region" aria-label="Scrollable table" tabIndex={0}>
-                    <table {...props} />
-                  </div>
-                );
-              },
-              aside({ children, className }) {
-                if (!className?.includes("blog-insight")) {
-                  return <aside className={className}>{children}</aside>;
-                }
-
-                return (
-                  <aside className="blog-insight">
-                    <div className="blog-insight-heading">
-                      <span className="blog-insight-icon">
-                        <Lightbulb aria-hidden="true" />
-                      </span>
-                      <span>Insight</span>
-                    </div>
-                    <div className="blog-insight-content">{children}</div>
-                  </aside>
-                );
-              },
-              blockquote({ children, className }) {
-                if (!className?.includes("blog-quote")) {
-                  return <blockquote className={className}>{children}</blockquote>;
-                }
-
-                return (
-                  <blockquote className="blog-quote">
-                    <Quote className="blog-quote-mark" aria-hidden="true" />
-                    <div className="blog-quote-content">{children}</div>
-                    <Building2 className="blog-quote-watermark" aria-hidden="true" />
-                  </blockquote>
-                );
-              },
-              a({ children, href, ...props }) {
-                const isExternal = href?.startsWith("http");
-                return isExternal ? (
-                  <a href={href} target="_blank" rel="noreferrer" {...props}>
-                    {children}
-                  </a>
-                ) : (
-                  <a href={href} {...props}>
-                    {children}
-                  </a>
-                );
-              },
-            }}
-          >
-            {blog.content}
-          </ReactMarkdown>
+          {faq ? (
+            <>
+              <BlogMarkdown content={faq.before} />
+              <BlogFaqSection
+                title={faq.title}
+                description={getBlogFaqDescription(blog.title)}
+                intro={faq.intro}
+                headingId={`section-${faq.headingIndex}`}
+                items={faq.items}
+              />
+              {faq.after ? (
+                <BlogMarkdown
+                  content={faq.after}
+                  headingOffset={faq.afterHeadingOffset}
+                />
+              ) : null}
+            </>
+          ) : (
+            <BlogMarkdown content={blog.content} />
+          )}
         </article>
       </div>
     </>

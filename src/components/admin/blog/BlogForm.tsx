@@ -38,7 +38,11 @@ import {
 } from "@/components/ui/tooltip";
 import { BlogCategorySelect } from "./BlogCategorySelect";
 import { getBlogContentStats } from "@/lib/blog/content-stats";
-import { buildBlogStructuredData, formatStructuredData } from "@/lib/blog/schema";
+import {
+  buildBlogStructuredData,
+  formatStructuredData,
+  isGeneratedBlogStructuredData,
+} from "@/lib/blog/schema";
 import { buildBlogTableOfContents } from "@/lib/blog/toc";
 import type { Blog, BlogInput, BlogStatus } from "@/lib/blog/types";
 import { estimateReadingTime, getExcerpt, slugify } from "@/lib/blog/utils";
@@ -182,7 +186,9 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
   );
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(blog ? new Date(blog.updated_at) : null);
   const [isDirty, setIsDirty] = useState(false);
-  const [schemaEdited, setSchemaEdited] = useState(Boolean(blog?.schema_json));
+  const [schemaEdited, setSchemaEdited] = useState(
+    Boolean(blog?.schema_json && !isGeneratedBlogStructuredData(blog.schema_json, blog))
+  );
   const [schemaCopied, setSchemaCopied] = useState(false);
   const [schemaEditorOpen, setSchemaEditorOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -212,15 +218,21 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
         excerpt: excerpt.trim(),
         content,
         cover_image: coverImage || null,
+        cover_alt: coverAlt.trim() || null,
+        category: category || null,
         author: author.trim() || "SplitCost Team",
         published_at: blog?.published_at ?? null,
         updated_at: blog?.updated_at ?? null,
         reading_time: readingTime,
       }),
-    [author, blog?.published_at, blog?.updated_at, content, coverImage, excerpt, readingTime, slug, title]
+    [author, blog?.published_at, blog?.updated_at, category, content, coverAlt, coverImage, excerpt, readingTime, slug, title]
   );
   const [schemaJson, setSchemaJson] = useState(() =>
-    formatStructuredData(blog?.schema_json)
+    formatStructuredData(
+      blog?.schema_json && !isGeneratedBlogStructuredData(blog.schema_json, blog)
+        ? blog.schema_json
+        : generatedSchema
+    )
   );
 
   const previewBlog = useMemo<Blog>(
@@ -322,7 +334,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
         ? schemaJson.trim()
           ? JSON.parse(schemaJson)
           : null
-        : generatedSchema,
+        : null,
     }),
     [
       author,
@@ -332,7 +344,6 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
       coverAlt,
       coverImage,
       excerpt,
-      generatedSchema,
       isFeatured,
       noIndex,
       readingTime,
