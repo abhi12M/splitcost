@@ -32,7 +32,6 @@ import {
   headingsPlugin,
   imagePlugin,
   insertDirective$,
-  insertMarkdown$,
   jsxPlugin,
   linkDialogPlugin,
   linkPlugin,
@@ -47,7 +46,7 @@ import {
 import { usePublisher } from "@mdxeditor/gurx";
 import type { ContainerDirective } from "mdast-util-directive";
 import "@mdxeditor/editor/style.css";
-import { Lightbulb, Quote } from "lucide-react";
+import { Building2, Lightbulb, Quote } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 
 type InitializedBlogMdxEditorProps = {
@@ -80,6 +79,36 @@ const InsightDirectiveDescriptor: DirectiveDescriptor<ContainerDirective> = {
           })}
         />
       </aside>
+    );
+  },
+};
+
+const QuoteDirectiveDescriptor: DirectiveDescriptor<ContainerDirective> = {
+  name: "quote",
+  type: "containerDirective",
+  attributes: [],
+  hasChildren: true,
+  testNode: (node) => node.name === "quote",
+  Editor({ mdastNode }) {
+    return (
+      <blockquote className="blog-editor-quote">
+        <span contentEditable={false}>
+          <Quote className="blog-quote-mark" aria-hidden="true" />
+        </span>
+        <div className="blog-quote-content">
+          <NestedLexicalEditor<ContainerDirective>
+            block
+            getContent={(node) => node.children}
+            getUpdatedMdastNode={(node, children) => ({
+              ...node,
+              children: children as ContainerDirective["children"],
+            })}
+          />
+        </div>
+        <span contentEditable={false}>
+          <Building2 className="blog-quote-watermark" aria-hidden="true" />
+        </span>
+      </blockquote>
     );
   },
 };
@@ -118,13 +147,18 @@ function InsertInsight() {
 }
 
 function InsertQuote() {
-  const insertMarkdown = usePublisher(insertMarkdown$);
+  const insertDirective = usePublisher(insertDirective$);
 
   return (
     <ButtonWithTooltip
-      title="Insert quote"
-      aria-label="Insert quote"
-      onClick={() => insertMarkdown("\n> Add a thoughtful quote here.\n\n")}
+      title="Insert custom quote"
+      aria-label="Insert custom quote"
+      onClick={() => {
+        insertDirective({
+          type: "containerDirective",
+          name: "quote",
+        });
+      }}
     >
       <Quote aria-hidden="true" />
     </ButtonWithTooltip>
@@ -221,7 +255,11 @@ export function InitializedBlogMdxEditor({
         },
       }),
       directivesPlugin({
-        directiveDescriptors: [InsightDirectiveDescriptor, AdmonitionDirectiveDescriptor],
+        directiveDescriptors: [
+          InsightDirectiveDescriptor,
+          QuoteDirectiveDescriptor,
+          AdmonitionDirectiveDescriptor,
+        ],
       }),
       frontmatterPlugin(),
       jsxPlugin({ jsxComponentDescriptors: [], allowFragment: true }),

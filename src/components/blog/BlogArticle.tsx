@@ -8,6 +8,7 @@ import remarkGfm from "remark-gfm";
 import { BlogFloatingTableOfContents } from "@/components/blog/BlogFloatingTableOfContents";
 import { BlogTableOfContents } from "@/components/blog/BlogTableOfContents";
 import { remarkInsight } from "@/lib/blog/remarkInsight";
+import { remarkQuote } from "@/lib/blog/remarkQuote";
 import { buildBlogTableOfContents } from "@/lib/blog/toc";
 import type { Blog } from "@/lib/blog/types";
 
@@ -50,7 +51,7 @@ export function BlogArticle({ blog }: { blog: Blog }) {
         </aside>
         <article className="blog-article-content blog-detail-content w-full min-w-0 max-w-[800px]">
           <ReactMarkdown
-            remarkPlugins={[remarkGfm, remarkDirective, remarkInsight]}
+            remarkPlugins={[remarkGfm, remarkDirective, remarkInsight, remarkQuote]}
             rehypePlugins={[rehypeRaw]}
             components={{
               h1: (props) => renderHeading("h1", props),
@@ -83,7 +84,11 @@ export function BlogArticle({ blog }: { blog: Blog }) {
                   </aside>
                 );
               },
-              blockquote({ children }) {
+              blockquote({ children, className }) {
+                if (!className?.includes("blog-quote")) {
+                  return <blockquote className={className}>{children}</blockquote>;
+                }
+
                 return (
                   <blockquote className="blog-quote">
                     <Quote className="blog-quote-mark" aria-hidden="true" />

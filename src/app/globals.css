@@ -420,20 +420,23 @@
     @apply my-1;
   }
 
-  .blog-editor-content blockquote,
-  .blog-article-content blockquote {
+  .blog-article-content blockquote:not(.blog-quote) {
+    @apply my-5 border-l-4 border-primary/40 pl-4 italic text-muted-foreground;
+  }
+
+  .blog-article-content blockquote:not(.blog-quote) p {
+    @apply my-0 text-inherit;
+  }
+
+  .blog-editor-content .blog-editor-quote,
+  .blog-article-content blockquote.blog-quote {
     @apply relative my-5 overflow-hidden rounded-xl border border-primary/15 bg-card px-12 py-4 not-italic text-foreground shadow-sm;
     background-image: linear-gradient(135deg, hsl(var(--primary) / 0.07), transparent 55%);
   }
 
-  .blog-editor-content blockquote::before {
-    content: "\201C";
-    @apply absolute left-4 top-2 font-serif text-4xl font-bold leading-none text-primary/70;
-  }
-
-  .blog-editor-content blockquote p,
+  .blog-editor-content .blog-editor-quote p,
   .blog-article-content .blog-quote p {
-    @apply my-0 text-sm font-medium leading-6;
+    @apply my-0 text-sm font-medium leading-6 text-foreground;
   }
 
   .blog-quote-mark {
