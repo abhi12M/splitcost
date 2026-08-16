@@ -25,10 +25,9 @@ export function BlogArticle({ blog }: { blog: Blog }) {
     Tag: "h1" | "h2" | "h3" | "h4" | "h5" | "h6",
     { children, id, ...props }: HeadingProps & ComponentPropsWithoutRef<"h1">
   ) => {
-    const tocId = headings[renderedHeadingIndex]?.id;
     renderedHeadingIndex += 1;
     return (
-      <Tag id={id ?? tocId ?? `section-${renderedHeadingIndex}`} {...props}>
+      <Tag id={id ?? `section-${renderedHeadingIndex}`} {...props}>
         {children}
       </Tag>
     );

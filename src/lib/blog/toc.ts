@@ -12,6 +12,8 @@ export function buildBlogTableOfContents(content: string): BlogTocItem[] {
 
   content.replace(/<h([1-6])([^>]*)>(.*?)<\/h\1>/gi, (_match, level, attrs, text) => {
     index += 1;
+    if (Number(level) === 1) return "";
+
     const existingId = String(attrs).match(/\sid=["']([^"']+)["']/i)?.[1];
     headings.push({
       id: existingId ?? `section-${index}`,
@@ -25,6 +27,8 @@ export function buildBlogTableOfContents(content: string): BlogTocItem[] {
 
   for (const match of content.matchAll(/^(#{1,6})\s+(.+)$/gm)) {
     index += 1;
+    if (match[1].length === 1) continue;
+
     headings.push({
       id: `section-${index}`,
       text: stripHtml(match[2]),

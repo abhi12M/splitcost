@@ -543,25 +543,41 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
             )}
           >
             {showToc ? (
-              <BlogTableOfContents
-                headings={generatedToc}
-                variant="sidebar"
-                activeId={activeTocId}
-                onClose={() => setShowToc(false)}
-                onHeadingClick={(heading, index) => {
-                  const editorHeadings =
-                    editorContainerRef.current?.querySelectorAll<HTMLElement>(
-                      ".blog-editor-content h1, .blog-editor-content h2, .blog-editor-content h3, .blog-editor-content h4, .blog-editor-content h5, .blog-editor-content h6"
-                    );
-                  const target = editorHeadings?.[index];
-                  if (!target) return;
+              <div className="blog-outline flex h-full min-h-0 w-full flex-col px-4 py-4">
+                <div className="mb-3 flex items-center justify-between gap-2">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    On this page
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowToc(false)}
+                    className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    aria-label="Collapse table of contents"
+                  >
+                    <ListTree className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="h-px w-10 shrink-0 bg-primary" />
+                <div className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1">
+                  <BlogTableOfContents
+                    headings={generatedToc}
+                    activeId={activeTocId}
+                    onHeadingClick={(heading, index) => {
+                      const editorHeadings =
+                        editorContainerRef.current?.querySelectorAll<HTMLElement>(
+                          ".blog-editor-content h2, .blog-editor-content h3, .blog-editor-content h4, .blog-editor-content h5, .blog-editor-content h6"
+                        );
+                      const target = editorHeadings?.[index];
+                      if (!target) return;
 
-                  target.id = heading.id;
-                  target.scrollIntoView({ behavior: "smooth", block: "start" });
-                  setActiveTocId(heading.id);
-                  window.history.replaceState(null, "", `#${heading.id}`);
-                }}
-              />
+                      target.id = heading.id;
+                      target.scrollIntoView({ behavior: "smooth", block: "start" });
+                      setActiveTocId(heading.id);
+                      window.history.replaceState(null, "", `#${heading.id}`);
+                    }}
+                  />
+                </div>
+              </div>
             ) : (
               <div className="flex h-full w-full flex-col items-center border-b py-3">
                 <button
