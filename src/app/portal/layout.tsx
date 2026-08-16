@@ -2,16 +2,11 @@ import "../globals.css";
 
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
-import { Plus_Jakarta_Sans } from "next/font/google";
 import type { ReactNode } from "react";
 
+import { plusJakarta } from "@/app/fonts";
 import AppProviders from "@/components/providers/AppProviders";
 import { defaultLocale } from "@/i18n/routing";
-
-const plusJakarta = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  display: "swap",
-});
 
 type PortalLayoutProps = {
   children: ReactNode;
@@ -24,7 +19,7 @@ export default async function PortalLayout({ children }: PortalLayoutProps) {
 
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
-      <body className={`${plusJakarta.className} min-h-full`}>
+      <body className={`${plusJakarta.variable} min-h-full font-sans`}>
         <NextIntlClientProvider locale={defaultLocale} messages={messages}>
           <AppProviders>{children}</AppProviders>
         </NextIntlClientProvider>
