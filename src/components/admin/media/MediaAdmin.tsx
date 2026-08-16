@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Check, CheckSquare, Copy, ExternalLink, FileImage, ImageIcon, LayoutGrid, List, Loader2, Receipt, Square, Trash2, UploadCloud } from "lucide-react";
+import { Check, CheckSquare, Copy, ExternalLink, FileImage, ImageIcon, LayoutGrid, List, Loader2, Pencil, Receipt, Square, Trash2, UploadCloud } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -105,6 +105,9 @@ export function MediaAdmin() {
   const [uploading, setUploading] = useState(false);
   const [deletingPath, setDeletingPath] = useState("");
   const [deleteTargets, setDeleteTargets] = useState<MediaItem[]>([]);
+  const [renameTarget, setRenameTarget] = useState<MediaItem | null>(null);
+  const [renameName, setRenameName] = useState("");
+  const [renaming, setRenaming] = useState(false);
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(() => new Set());
   const [copiedPath, setCopiedPath] = useState("");
   const [dragging, setDragging] = useState(false);
@@ -339,6 +342,54 @@ export function MediaAdmin() {
     }
   };
 
+  const openRename = (item: MediaItem) => {
+    setRenameTarget(item);
+    setRenameName(item.name);
+    setError("");
+  };
+
+  const renameMedia = async () => {
+    if (!renameTarget || !renameName.trim()) return;
+
+    setRenaming(true);
+    setError("");
+
+    try {
+      const response = await fetch("/api/admin-media", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path: renameTarget.path, name: renameName }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error ?? "Unable to rename media");
+      }
+
+      const data = (await response.json()) as { media: Partial<MediaItem> & Pick<MediaItem, "path" | "name" | "url"> };
+      setMedia((current) =>
+        current.map((item) =>
+          item.source === "admin" && item.path === renameTarget.path
+            ? { ...item, ...data.media }
+            : item
+        )
+      );
+      setSelectedPaths((current) => {
+        if (!current.has(renameTarget.path)) return current;
+        const next = new Set(current);
+        next.delete(renameTarget.path);
+        next.add(data.media.path);
+        return next;
+      });
+      setRenameTarget(null);
+      setRenameName("");
+    } catch (renameError) {
+      setError(renameError instanceof Error ? renameError.message : "Unable to rename media");
+    } finally {
+      setRenaming(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
@@ -567,6 +618,18 @@ export function MediaAdmin() {
                       type="button"
                       variant="outline"
                       size="icon"
+                      onClick={() => openRename(item)}
+                      disabled={renaming || Boolean(deletingPath)}
+                      aria-label={`Rename ${item.name}`}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  ) : null}
+                  {item.source === "admin" ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
                       onClick={() => setDeleteTargets([item])}
                       disabled={Boolean(deletingPath)}
                       aria-label={`Delete ${item.name}`}
@@ -625,6 +688,18 @@ export function MediaAdmin() {
                 {item.source === "admin" ? (
                   <Button
                     type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => openRename(item)}
+                    disabled={renaming || Boolean(deletingPath)}
+                    aria-label={`Rename ${item.name}`}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                ) : null}
+                {item.source === "admin" ? (
+                  <Button
+                    type="button"
                     variant="ghost"
                     size="icon"
                     onClick={() => toggleSelected(item)}
@@ -659,6 +734,57 @@ export function MediaAdmin() {
           </p>
         </div>
       )}
+
+      <AlertDialog
+        open={Boolean(renameTarget)}
+        onOpenChange={(open) => {
+          if (!open && !renaming) {
+            setRenameTarget(null);
+            setRenameName("");
+          }
+        }}
+      >
+        <AlertDialogContent className="max-w-sm rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-lg">Rename media</AlertDialogTitle>
+            <AlertDialogDescription className="text-xs">
+              The image remains in its current folder. Blog references are updated automatically.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Input
+            value={renameName}
+            onChange={(event) => setRenameName(event.target.value)}
+            placeholder="Image filename"
+            disabled={renaming}
+            autoFocus
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                void renameMedia();
+              }
+            }}
+          />
+          <p className="text-xs text-muted-foreground">
+            Images are stored as WebP, so the filename will end in .webp.
+          </p>
+          <AlertDialogFooter className="mt-2 flex-row gap-2">
+            <AlertDialogCancel disabled={renaming} className="mt-0 flex-1 rounded-xl">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(event) => {
+                event.preventDefault();
+                void renameMedia();
+              }}
+              disabled={renaming || !renameName.trim()}
+              className="flex-1 rounded-xl"
+            >
+              {renaming ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              Rename
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog
         open={Boolean(deleteTargets.length)}

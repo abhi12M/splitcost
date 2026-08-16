@@ -73,6 +73,17 @@ ON storage.objects
 FOR INSERT
 WITH CHECK (bucket_id = 'blog-images');
 
+CREATE POLICY "Allow blog image updates"
+ON storage.objects
+FOR UPDATE
+USING (bucket_id = 'blog-images')
+WITH CHECK (bucket_id = 'blog-images');
+
+CREATE POLICY "Allow blog image deletes"
+ON storage.objects
+FOR DELETE
+USING (bucket_id = 'blog-images');
+
 -- Published posts remain the public source of truth. Revisions are stored
 -- separately until an editor explicitly publishes them.
 CREATE TABLE public.blog_drafts (
