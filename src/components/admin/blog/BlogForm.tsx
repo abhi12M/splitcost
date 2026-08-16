@@ -157,6 +157,7 @@ function FieldLabel({
 export function BlogForm({ blog }: { blog?: Blog | null }) {
   const router = useRouter();
   const [blogId, setBlogId] = useState(blog?.id ?? "");
+  const [blogStatus, setBlogStatus] = useState<BlogStatus>(blog?.status ?? "draft");
   const [title, setTitle] = useState(blog?.title ?? "");
   const [slug, setSlug] = useState(blog?.slug ?? "");
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(Boolean(blog?.slug));
@@ -233,7 +234,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
       cover_alt: coverAlt.trim() || null,
       category,
       author: author.trim() || "SplitCost Team",
-      status: blog?.status ?? "draft",
+      status: blogStatus,
       published_at: blog?.published_at ?? null,
       reading_time: readingTime,
       no_index: noIndex,
@@ -243,7 +244,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
       created_at: blog?.created_at ?? new Date().toISOString(),
       updated_at: blog?.updated_at ?? new Date().toISOString(),
     }),
-    [author, blog?.created_at, blog?.published_at, blog?.status, blog?.updated_at, blog?.views, blogId, category, content, coverAlt, coverImage, excerpt, isFeatured, noIndex, readingTime, slug, title]
+    [author, blog?.created_at, blog?.published_at, blog?.updated_at, blog?.views, blogId, blogStatus, category, content, coverAlt, coverImage, excerpt, isFeatured, noIndex, readingTime, slug, title]
   );
 
   useEffect(() => {
@@ -343,7 +344,10 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
   );
 
   const saveBlog = useCallback(
-    async (nextStatus: BlogStatus, options?: { silent?: boolean }) => {
+    async (
+      nextStatus: BlogStatus,
+      options?: { silent?: boolean; openPublishedInNewTab?: boolean }
+    ) => {
       if (!options?.silent) setSaving(true);
       setSaveStatus("saving");
 
@@ -360,6 +364,12 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
         if (!options?.silent) setSaving(false);
         return null;
       }
+
+      const publishedWindow =
+        nextStatus === "published" && options?.openPublishedInNewTab
+          ? window.open("about:blank", "_blank")
+          : null;
+      if (publishedWindow) publishedWindow.opener = null;
 
       try {
         const response = await fetch(blogId ? `/api/blogs/${blogId}` : "/api/blogs", {
@@ -378,21 +388,29 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
 
         const saved = (await response.json()) as Blog;
         setBlogId(saved.id);
+        setBlogStatus(saved.status);
         setLastSavedAt(new Date(saved.updated_at));
         setIsDirty(false);
         setSaveStatus("saved");
-        if (nextStatus === "draft" && blog?.status === "published") {
+        if (nextStatus === "draft" && blogStatus === "published") {
           setHasDraftChanges(true);
         }
 
         if (nextStatus === "published") {
-          router.replace(`/en/blog/${encodeURIComponent(saved.slug)}`);
+          setHasDraftChanges(false);
+          const publishedPath = `/en/blog/${encodeURIComponent(saved.slug)}`;
+          if (options?.openPublishedInNewTab && publishedWindow) {
+            publishedWindow.location.replace(publishedPath);
+          } else {
+            router.replace(publishedPath);
+          }
         } else if (!blogId) {
           router.replace(`${ADMIN_BASE_PATH}/blogs/edit/${saved.id}`);
         }
 
         return saved;
       } catch (saveError) {
+        publishedWindow?.close();
         setSaveStatus("error");
         toast({
           variant: "destructive",
@@ -404,7 +422,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
         if (!options?.silent) setSaving(false);
       }
     },
-    [blog?.status, blogId, buildPayload, router]
+    [blogId, blogStatus, buildPayload, router]
   );
 
   const uploadBlogImage = useCallback(
@@ -510,11 +528,11 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
         footer={footer}
         saveStatus={saveStatus}
         savedLabel={savedLabel}
-        blogStatus={blog?.status ?? "draft"}
+        blogStatus={blogStatus}
         hasDraftChanges={hasDraftChanges}
         onPreview={slug || title ? handlePreview : undefined}
         onSaveDraft={() => void saveBlog("draft")}
-        onPublish={() => void saveBlog("published")}
+        onPublish={() => void saveBlog("published", { openPublishedInNewTab: true })}
         saving={saving}
       >
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overscroll-contain lg:flex-row lg:overflow-hidden">

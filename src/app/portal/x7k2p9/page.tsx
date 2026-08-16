@@ -165,8 +165,8 @@ export default async function Page() {
                     <p className="text-xs text-muted-foreground">Total views</p>
                   </div>
                 </div>
-                <div className="grid gap-2 border-t pt-4 sm:grid-cols-2">
-                  {blogs.slice(0, 4).map((blog) => (
+                <div className="grid max-h-72 grid-cols-1 gap-2 overflow-y-auto border-t pt-4 pr-1">
+                  {blogs.map((blog) => (
                     <Link
                       key={blog.id}
                       href={`${ADMIN_BASE_PATH}/blogs/edit/${blog.id}`}
