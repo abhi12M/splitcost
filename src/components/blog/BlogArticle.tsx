@@ -110,7 +110,7 @@ export function BlogArticle({ blog }: { blog: Blog }) {
     <>
       <BlogFloatingTableOfContents headings={headings} />
       <div className="grid gap-10 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-14">
-        <aside className="blog-outline hidden lg:block lg:top-[6rem] lg:self-start lg:pr-1">
+        <aside className="blog-outline hidden lg:block lg:top-[6rem] lg:self-start lg:pr-1 mt-[17px]">
           <div className="border-r border-border pr-6">
             <p className="mb-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
               On this page

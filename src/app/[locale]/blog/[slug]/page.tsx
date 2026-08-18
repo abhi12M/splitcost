@@ -90,7 +90,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
       />
       <article data-blog-article className="blog-detail-page bg-background text-foreground">
         <BlogArticleHeader blog={blog} showBreadcrumb />
-        <section className="pb-8 pt-10 md:pb-10 md:pt-14">
+        <section className="pb-8 md:pb-10">
           <div className="container max-w-[1180px]">
             <BlogArticle blog={blog} />
           </div>

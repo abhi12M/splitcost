@@ -13,11 +13,14 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { useBackButtonClose } from "@/hooks/useBackButtonClose";
 import type { BlogTocItem } from "@/lib/blog/toc";
 
 export function BlogFloatingTableOfContents({ headings }: { headings: BlogTocItem[] }) {
   const [open, setOpen] = useState(false);
   const reduceMotion = useReducedMotion();
+
+  useBackButtonClose(open, () => setOpen(false));
 
   if (!headings.length) return null;
 
@@ -47,7 +50,7 @@ export function BlogFloatingTableOfContents({ headings }: { headings: BlogTocIte
 
       <SheetContent
         side="left"
-        className="flex h-full w-[min(22rem,calc(100vw-2rem))] max-w-none flex-col gap-0 p-0 lg:hidden"
+        className="bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] flex h-[calc(100dvh-4.25rem-env(safe-area-inset-bottom,0px))] w-[min(22rem,calc(100vw-2rem))] max-w-none flex-col gap-0 p-0 lg:bottom-0 lg:h-full lg:hidden"
       >
         <SheetHeader className="shrink-0 border-b border-border px-5 py-4 pr-12 text-left">
           <div className="flex items-center gap-3">

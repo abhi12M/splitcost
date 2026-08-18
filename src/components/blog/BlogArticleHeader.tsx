@@ -65,7 +65,7 @@ export function BlogArticleHeader({
           <p className="text-lg leading-8 text-muted-foreground">{blog.excerpt}</p>
         </div>
       </section>
-      <section className="px-6 pb-10 pt-8 md:px-10">
+      <section className="px-6 pb-[20px] pt-8 md:px-10">
         <div className="relative mx-auto aspect-[16/8] max-w-5xl overflow-hidden rounded-lg bg-muted">
           {blog.cover_image ? (
             <img
