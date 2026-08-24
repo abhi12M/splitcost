@@ -19,6 +19,16 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { BlogTableOfContents } from "@/components/blog/BlogTableOfContents";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -183,6 +193,8 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
   const [isDirty, setIsDirty] = useState(false);
   const [schemaCopied, setSchemaCopied] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [hasDraftChanges, setHasDraftChanges] = useState(Boolean(blog?.has_draft_changes));
   const [slugCopied, setSlugCopied] = useState(false);
   const [uploadingImageKind, setUploadingImageKind] = useState<"cover" | "inline" | null>(null);
@@ -334,7 +346,6 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
       setSaveStatus("saving");
 
       const payload = buildPayload(nextStatus);
-
       const publishedWindow =
         nextStatus === "published" && options?.openPublishedInNewTab
           ? window.open("about:blank", "_blank")
@@ -394,6 +405,30 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
     },
     [blogId, blogStatus, buildPayload, router]
   );
+
+  const deleteBlog = useCallback(async () => {
+    if (!blogId) return;
+
+    setSaving(true);
+    try {
+      const response = await fetch(`/api/blogs/${blogId}`, { method: "DELETE" });
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error ?? "Unable to delete blog post");
+      }
+
+      toast({ title: "Blog post deleted" });
+      router.replace(`${ADMIN_BASE_PATH}/blogs?updated=${Date.now()}`);
+    } catch (deleteError) {
+      toast({
+        variant: "destructive",
+        title: "Unable to delete blog post",
+        description: deleteError instanceof Error ? deleteError.message : "Unable to delete blog post",
+      });
+    } finally {
+      setSaving(false);
+    }
+  }, [blogId, router]);
 
   const uploadBlogImage = useCallback(
     async (file: File, kind: "cover" | "inline") => {
@@ -494,6 +529,52 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
   return (
     <TooltipProvider>
       <BlogPreviewDialog blog={previewBlog} open={previewOpen} onOpenChange={setPreviewOpen} />
+      <AlertDialog open={publishConfirmOpen} onOpenChange={setPublishConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Publish blog post?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {blogStatus === "published"
+                ? "This will make your latest changes publicly visible."
+                : "This will make this blog post publicly visible."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={saving}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={saving}
+              onClick={() => {
+                setPublishConfirmOpen(false);
+                void saveBlog("published", { openPublishedInNewTab: true });
+              }}
+            >
+              {saving ? "Publishing..." : "Publish"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete blog post?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {`Delete "${title.trim() || "this blog post"}". This permanently deletes the blog post.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={saving}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={saving}
+              onClick={() => {
+                setDeleteConfirmOpen(false);
+                void deleteBlog();
+              }}
+            >
+              {saving ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <BlogEditorShell
         footer={footer}
         saveStatus={saveStatus}
@@ -502,7 +583,8 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
         hasDraftChanges={hasDraftChanges}
         onPreview={slug || title ? handlePreview : undefined}
         onSaveDraft={() => void saveBlog("draft")}
-        onPublish={() => void saveBlog("published", { openPublishedInNewTab: true })}
+        onPublish={() => setPublishConfirmOpen(true)}
+        onDelete={blogId ? () => setDeleteConfirmOpen(true) : undefined}
         saving={saving}
       >
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overscroll-contain lg:flex-row lg:overflow-hidden">

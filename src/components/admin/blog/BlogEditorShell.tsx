@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Check, Eye } from "lucide-react";
+import { ArrowLeft, Check, Eye, Trash2 } from "lucide-react";
 import { ReactNode } from "react";
 
 import { BrandIcon } from "@/components/brand/BrandIcon";
@@ -20,6 +20,7 @@ type BlogEditorShellProps = {
   onPreview?: () => void;
   onSaveDraft: () => void;
   onPublish: () => void;
+  onDelete?: () => void;
   saving: boolean;
 };
 
@@ -33,6 +34,7 @@ export function BlogEditorShell({
   onPreview,
   onSaveDraft,
   onPublish,
+  onDelete,
   saving,
 }: BlogEditorShellProps) {
   return (
@@ -47,6 +49,9 @@ export function BlogEditorShell({
               href={`${ADMIN_BASE_PATH}/blogs`}
               prefetch={false}
               onClick={(event) => {
+                if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
+                  return;
+                }
                 event.preventDefault();
                 // A document navigation bypasses the App Router's stale
                 // client cache after saving or publishing from this editor.
@@ -94,6 +99,12 @@ export function BlogEditorShell({
             <Button type="button" size="sm" onClick={onPublish} disabled={saving}>
               Publish
             </Button>
+            {onDelete ? (
+              <Button type="button" variant="destructive" size="sm" onClick={onDelete} disabled={saving}>
+                <Trash2 className="h-4 w-4" />
+                <span className="hidden sm:inline">Delete</span>
+              </Button>
+            ) : null}
           </div>
         </div>
       </header>
