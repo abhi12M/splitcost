@@ -1,0 +1,38 @@
+# SplitCost
+
+> SplitCost is a web-based group expense tracker for friends, roommates, couples, travel groups, teams, clubs, and communities. It helps groups record shared expenses, divide costs equally, by percentage, or with custom amounts, track balances, and organize settlements.
+
+## Product
+
+- [SplitCost](https://www.splitcost.in/en): Provides the primary product overview, workflow, features, supported groups, and answers to frequently asked questions.
+- [Create an Expense Group](https://www.splitcost.in/en/create-group): Shows the public starting point for creating a group with members and a group currency, without requiring an account.
+
+## Important Concepts
+
+- Groups keep members, shared expenses, balances, and settlement information together. A shared group link lets participants use the group without every participant creating an account.
+- An expense can have one or multiple payers and can be divided equally, by percentage, or with custom amounts among selected participants.
+- SplitCost calculates balances and suggests simplified settlements; participants make the actual payments outside SplitCost.
+- An expense can include one image attachment, such as a receipt or payment screenshot.
+- A group's expense records and calculated member balances can be exported together as a CSV file.
+- Each group has a selected currency, and expenses in that group are recorded using the group currency.
+
+## Use Cases
+
+- [Use Cases](https://www.splitcost.in/en/use-cases): Summarizes how SplitCost supports travel groups, roommates, couples, friends, teams, clubs, and communities.
+- [Travel Groups](https://www.splitcost.in/en/use-cases/travel): Explains tracking shared trip costs such as accommodation, transport, meals, and activities, including expenses with different participants or multiple payers.
+- [Roommates](https://www.splitcost.in/en/use-cases/roommates): Covers recurring shared household costs such as rent, utilities, groceries, subscriptions, and one-off purchases.
+- [Couples and Partners](https://www.splitcost.in/en/use-cases/couples): Describes tracking shared daily spending, subscriptions, travel, and larger purchases while keeping personal accounts separate.
+- [Friends and Events](https://www.splitcost.in/en/use-cases/friends): Covers dinners, parties, concerts, outings, gifts, and other one-time or ongoing costs shared among friends.
+- [Teams and Communities](https://www.splitcost.in/en/use-cases/teams): Explains expense records, receipts, reimbursements, balances, and CSV exports for teams, clubs, and community groups.
+
+## Guides and Resources
+
+- [SplitCost Guides](https://www.splitcost.in/en/blog): Lists SplitCost's practical guides about fair expense splitting, shared budgeting, and settlements.
+- [How to Split Expenses With Friends Fairly](https://www.splitcost.in/en/blog/how-to-split-expenses-with-friends): Gives detailed examples of equal, participant-only, weighted, percentage, custom, and multiple-payer expense scenarios and explains how net balances are calculated.
+- [Shared Expense Resources](https://www.splitcost.in/en/resources): Curates third-party guidance about shared-expense records, equal and proportional splits, roommate finances, rent, utilities, and household bills.
+
+## Policies and Contact
+
+- [Privacy Policy](https://www.splitcost.in/en/privacy): Describes the data SplitCost uses for shared expense groups, storage practices, third-party services, cookies, and user choices.
+- [Terms of Service](https://www.splitcost.in/en/terms): Defines SplitCost as a web-based expense tracker and calculation tool and explains user responsibilities and service limitations.
+- [Contact SplitCost](https://www.splitcost.in/en/contact): Provides the official channel for product support, feedback, and partnership inquiries.
