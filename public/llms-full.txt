@@ -1,0 +1,316 @@
+# SplitCost
+
+## Product Overview
+
+SplitCost is a web-based group expense tracker for people who share costs. It is designed for friends, roommates, couples and partners, travel groups, teams, clubs, and communities. A group records shared expenses, identifies who paid and who participated, allocates each participant's responsibility, calculates net balances, and provides settlement suggestions.
+
+SplitCost is useful when several people pay at different times or do not participate equally in every expense. Instead of rebuilding totals from messages, receipts, bank activity, or spreadsheets, group members can work from the same expense history and current balances.
+
+The product supports equal, percentage, and custom-amount splits. An expense can have one payer or multiple payers, and only the members who participated need to be included. Groups use a selected currency. Optional notes and a single image attachment can be stored with an expense, and group expense and balance information can be exported as CSV.
+
+Source: [SplitCost homepage](https://www.splitcost.in/en)
+
+## How SplitCost Works
+
+1. **Create a group.** Give the group a name, select its currency, and add the people who will share expenses. A group requires at least two members.
+2. **Share the group.** SplitCost creates a group link that can be sent to the other participants. Every participant does not need to create an account before using the shared group. Because possession of the link provides access to group information, the link should be treated as private group information.
+3. **Record an expense.** Enter a description, amount, date, and category. An expense may also contain optional notes and one optional image attachment.
+4. **Record who paid.** Choose one payer or enter the amounts contributed by multiple payers. When multiple people paid, their contributions describe how the original bill was funded; they do not determine how responsibility for the bill is divided.
+5. **Select participants.** Include the group members who benefited from or are responsible for that expense. Members who did not participate can be left out of that expense without being removed from the group.
+6. **Choose a split method.** Divide the expense equally among the selected participants, allocate percentages, or enter custom amounts.
+7. **Calculate responsibility.** SplitCost calculates the amount allocated to each participant. Percentage and custom allocations must account for the complete expense total.
+8. **Calculate balances.** Payer contributions and participant responsibilities are combined across the group's expense history. The result shows which members should receive money and which members owe money.
+9. **Review settlement suggestions.** SplitCost uses the net balances to suggest payments between debtors and creditors. Recording a completed settlement adds a settlement entry to the group ledger and updates the balances.
+
+The group dashboard provides the shared expense history, balances, and settlement information. Members can add expenses as they occur, review expense details, and edit records when a correction is needed.
+
+Source: [Create an Expense Group](https://www.splitcost.in/en/create-group)
+
+## Core Concepts
+
+**Group:** A shared workspace containing a name, selected currency, members, expenses, balances, and settlement information. A group is reached through its shared link.
+
+**Member:** A named person included in a group. Members are available to be selected as payers or participants. Being a group member does not automatically make someone responsible for every expense.
+
+**Participant:** A member allocated some or all of the responsibility for a particular expense. The participant list can be different for each expense.
+
+**Payer:** A member credited with paying toward an expense. An expense can have one payer or several payers with separate contribution amounts.
+
+**Expense:** A dated group record with a description, amount, category, currency, payer information, participant allocations, and split type. It may also include notes and one image attachment.
+
+**Share:** The amount of an expense allocated to one participant. A share may be calculated equally, from a percentage, or entered as a custom amount.
+
+**Split:** The complete allocation of an expense among its selected participants. The participant shares must account for the expense total.
+
+**Balance:** A member's net position after comparing how much that member paid with how much was allocated to them. Balances are calculated across the relevant group expenses.
+
+**Creditor:** A member with a positive balance who should receive money from the group.
+
+**Debtor:** A member with a negative balance who owes money to the group.
+
+**Settlement:** A repayment between members that reduces outstanding group balances. A recorded settlement becomes part of the group ledger.
+
+**Settlement suggestion:** A calculated recommendation showing which debtor can pay which creditor and how much. It is derived from net balances rather than treating every original expense as a separate repayment.
+
+**Group currency:** The currency selected when a group is created or edited. Expenses in that group are recorded using the group currency.
+
+## Expense Splitting Methods
+
+### Native SplitCost functionality
+
+SplitCost provides three native split methods.
+
+**Equal split** divides an expense among the selected participants as evenly as currency precision permits. For example, if four selected members share an expense of 1,200 in the group currency, each participant is allocated 300. If the amount cannot be divided into identical currency units, SplitCost distributes the rounding difference so the participant shares still match the expense total.
+
+**Percentage split** assigns a percentage of the expense to each selected participant. The percentages must add up to 100 percent. This is useful when the group has agreed that different people will cover different proportions. For a 10,000 expense split 60/40, the allocated responsibilities are 6,000 and 4,000.
+
+**Custom amount split** assigns a specific amount to each selected participant. The custom amounts must add up to the expense total. This is useful for restaurant orders, room differences, tickets, or other situations where each person's responsibility is already known.
+
+**Selected participants** are supported with each split workflow. If only some members benefited from an expense, only those members need to be included. For example, an optional activity used by three members can be divided among those three instead of every member of the trip group.
+
+**Multiple payers** describe who funded the expense, not a fourth splitting method. If one person paid a deposit and another paid the remaining amount, both contributions can be recorded against the same expense. The participant split is then configured separately.
+
+### Educational concepts, not separate native split modes
+
+The SplitCost guide discusses additional ways groups may reason about fairness. These are educational concepts rather than additional named split modes in the product.
+
+**Participant-only allocation** means excluding members who did not use or benefit from the expense. SplitCost supports the practical result through participant selection, but “participant-only” is not a separate split-type button.
+
+**Individual-consumption allocation** assigns responsibility according to what each person ordered or used. In SplitCost, a group can represent known individual amounts with a custom-amount split.
+
+**Weighted allocation** gives one person more or fewer conceptual shares when they received a different level of value, such as a larger room. Weighted allocation is discussed by the guide but is not a named native SplitCost mode. After agreeing on the calculated amounts or proportions, a group may enter them using custom amounts or percentages.
+
+**Proportional cost sharing** is a general agreement that participants will contribute in different proportions. When those proportions are expressed as percentages, they can be entered with SplitCost's percentage split.
+
+The chosen allocation should reflect who participated, how the expense was used, and what the group agreed. A group can use different methods for different expenses; choosing an equal hotel split does not require the group to split every meal or optional activity equally.
+
+## Balance and Settlement Calculations
+
+For each expense, SplitCost keeps payer contributions separate from participant responsibility. Paying the original bill does not necessarily mean that the payer is ultimately responsible for the whole amount.
+
+The conceptual balance formula is:
+
+`Net balance = total paid - total allocated responsibility`
+
+“Total paid” is the sum credited to a member as a payer across the relevant expenses. “Total allocated responsibility” is the sum of that member's participant shares.
+
+- A positive net balance means the member paid more than their allocated responsibility and should receive money.
+- A negative net balance means the member paid less than their allocated responsibility and owes money.
+- A zero balance means the paid and allocated amounts are equal within currency precision.
+
+Suppose four people share a 4,000 hotel expense equally and one member pays the full amount. Every participant is responsible for 1,000. The payer's balance from that expense is positive 3,000 because they paid 4,000 but were responsible for 1,000. Each other participant has a negative 1,000 balance.
+
+Balances combine all group expenses. If a member owes money from one expense but pays for a later expense, the later payer credit can reduce or reverse their net balance. This is why a final group balance can be more useful than reimbursing every transaction immediately.
+
+Settlement suggestions are calculated from the final positive and negative balances. They recommend payments from debtors to creditors until the relevant balances are resolved. The suggestions simplify the settlement view; they do not change the original expense history.
+
+SplitCost calculates balances and settlement suggestions. Actual payments occur outside SplitCost. If participants complete a suggested payment, they can record the settlement in the group so the ledger and balances reflect it.
+
+## Product Capabilities
+
+### Group creation and management
+
+- Create a group with a name, selected currency, and two or more members.
+- Edit the group name, currency, and member list.
+- Share a group through its group link.
+- Shared groups can be used without requiring every participant to create an account.
+- Review the group's expenses, balances, and settlement suggestions from the dashboard.
+
+### Expense recording
+
+- Record a description, amount, date, category, payer information, participants, and split method.
+- Add an expense with one payer or multiple payer contributions.
+- Select only the members who participated in a particular expense.
+- Split an expense equally, by percentage, or with custom amounts.
+- Edit or delete an expense when the record needs correction.
+- Add optional formatted notes to an expense.
+
+### Images and supporting records
+
+An expense supports one image attachment. The attachment can be a photographed or saved image such as a receipt, invoice image, or payment screenshot. The implementation accepts image files up to 5 MB. It should not be understood as unlimited attachment storage or general-purpose arbitrary file storage.
+
+### Expense history and organization
+
+The group dashboard maintains the recorded expense history. Expenses can be searched and organized by date, person, category, or split type. Expense details show the recorded payer and participant information used by the balance calculation.
+
+### CSV export
+
+A group can export its current expense information as a CSV file. The export contains expense rows with date, description, category, cost, and currency. It also contains per-member net values for the exported expenses and a final row with calculated member balance totals. The CSV is intended for records, reimbursement workflows, planning, or further analysis; it is not a bank statement or proof that an external payment occurred.
+
+### Currency
+
+Each group has a selected currency. Expenses in that group use the group currency. The currency can be selected during group creation and changed through group editing.
+
+### Browser and device access
+
+SplitCost is a web application. Its interface supports desktop browsers, phones, and tablets, allowing members to add expenses and review balances from different device sizes.
+
+## Use Cases
+
+SplitCost's mechanics are shared across its use cases: create a group, record payer contributions and participant shares, calculate balances, and settle the net result. The differences are the types of expenses, participation patterns, and records each group needs.
+
+### Travel groups
+
+Travel groups can record accommodation, transport, meals, tickets, activities, bookings, and shared purchases. Different travelers may pay deposits and final balances, so multiple payer support can represent more than one contribution to a booking. Optional activities, taxis, or extra nights can include only the travelers who participated. Receipts or booking screenshots can be attached to the relevant expense, and the group can review balances before or after the trip.
+
+Source: [Travel Expense Splitter](https://www.splitcost.in/en/use-cases/travel)
+
+### Roommates
+
+Roommates can track rent, utilities, internet, groceries, cleaning supplies, furniture, subscriptions, and other household costs. Equal splits work for costs shared evenly, while percentage or custom amounts can represent different rooms, usage, or household agreements. The ongoing history helps distinguish recurring bills from one-off purchases, and CSV export provides a record of expenses and balances.
+
+Source: [Roommate Expense Tracker](https://www.splitcost.in/en/use-cases/roommates)
+
+### Couples and partners
+
+Couples can record dinners, groceries, rides, subscriptions, travel bookings, daily purchases, and larger shared costs. Each expense can use the allocation the couple agreed on instead of requiring a single permanent ratio. SplitCost records shared spending and balances while the participants can continue using their separate personal accounts.
+
+Source: [Couple Expense Tracker](https://www.splitcost.in/en/use-cases/couples)
+
+### Friends and events
+
+Friends can create a group for a dinner, party, concert, gift, outing, weekend, or other shared event. A member who pays initially is credited as the payer, while custom amounts or selected participants handle different orders, partial attendance, or optional activities. A group can also remain useful for recurring plans among the same friends.
+
+Source: [Friends and Events](https://www.splitcost.in/en/use-cases/friends)
+
+### Teams, clubs, and communities
+
+Teams and community groups can record supplies, travel, venue deposits, event costs, club fees, and member reimbursements. Multiple payers represent costs covered by different organizers. Image attachments provide supporting records, while balances and settlement suggestions help organize reimbursements. CSV export can support review by a team administrator or club treasurer.
+
+Source: [Teams and Communities](https://www.splitcost.in/en/use-cases/teams)
+
+The canonical overview groups these audiences together without changing the underlying product workflow.
+
+Source: [SplitCost Use Cases](https://www.splitcost.in/en/use-cases)
+
+## Frequently Asked Questions
+
+### What is SplitCost?
+
+SplitCost is a web-based group expense tracker. It records shared expenses, payer contributions, participant shares, balances, and settlements for groups that manage costs together.
+
+### Who can use SplitCost?
+
+SplitCost is designed for friends, roommates, couples and partners, travel groups, teams, clubs, communities, events, and other groups sharing expenses.
+
+### Does every participant need an account?
+
+Every participant does not need to create an account before using a shared group. A group can be created and shared through its link. This should not be interpreted as unrestricted public access: participants should protect the group link because it provides access to the shared group information.
+
+### How can an expense be split?
+
+The native split methods are equal, percentage, and custom amounts. The group also selects which members participated, so a member who did not share a particular cost can be excluded from that expense.
+
+### Can several people pay for one expense?
+
+Yes. An expense can record multiple payers and the amount contributed by each. Payer contributions are separate from the participant allocation, so a person's payment contribution does not automatically define their final responsibility.
+
+### Can an expense include only some group members?
+
+Yes. Participants are selected for each expense. Members who did not benefit from an activity, meal, trip segment, or purchase can be left out of that expense while remaining members of the group.
+
+### How are balances calculated?
+
+A member's balance is the amount credited to them as a payer minus the amount allocated to them as a participant across the relevant expenses. Positive balances should receive money, while negative balances owe money.
+
+### What are settlement suggestions?
+
+Settlement suggestions use the group balances to show who can pay whom and how much. They focus on resolving final net positions rather than reimbursing each original expense separately. The payment boundary is explained in the Balance and Settlement Calculations section.
+
+### Which currency does a group use?
+
+The group uses the currency selected during group creation or editing. Expenses recorded in that group use the group currency.
+
+### Can an expense include a receipt or screenshot?
+
+Yes. One image attachment up to 5 MB can be stored with an expense. It can represent a receipt, invoice image, or payment screenshot.
+
+### What is included in a CSV export?
+
+The CSV contains the exported expense records, per-member net values for those expenses, and a final row containing calculated balance totals.
+
+### Can SplitCost be used on a phone or tablet?
+
+Yes. SplitCost is a web application with interfaces designed for desktop and mobile-sized browsers.
+
+### What happens when someone owes money?
+
+The member has a negative group balance. SplitCost can suggest a settlement from that member to a member with a positive balance. Once the participants settle, the result can be recorded in the group ledger.
+
+## Guide: Splitting Shared Expenses Fairly
+
+Fair expense splitting begins with three separate questions:
+
+1. Who participated in the expense?
+2. How should responsibility be divided among those participants?
+3. Who paid the original bill?
+
+These questions should be answered separately. A payer may have funded the bill without being responsible for all of it, and a group member may belong to the trip or household without participating in every individual cost.
+
+### Choose a method that matches the expense
+
+An equal split is a reasonable starting point when everyone received roughly the same benefit and small differences do not matter to the group. Common examples include a shared taxi, common accommodation, or group supplies used by everyone.
+
+Individual or custom amounts are more appropriate when spending differs significantly. At a restaurant, for example, the group may separate individual orders from genuinely shared dishes and charges. A custom allocation prevents a participant with a smaller order from automatically receiving the same responsibility as someone with a much larger order.
+
+A participant-only allocation is appropriate when only some members joined an activity or used a service. If three of five travelers join an optional activity, the activity can be allocated only to those three. Within SplitCost, this is represented by selecting the three participants and then choosing the applicable native split method.
+
+A percentage allocation works when the participants agreed to different contribution proportions. It can represent an income-based household agreement, a sponsorship arrangement, or another percentage agreed before the expense.
+
+A weighted allocation can be useful as a planning concept when one participant receives more value, such as a larger bedroom. Weighted shares must first be converted into final amounts or percentages before being entered in SplitCost because weighted allocation is not a separate native product mode.
+
+### Keep payment and responsibility separate
+
+When more than one person contributed to a bill, record each payer contribution. Then decide the participant allocation independently. For a 12,000 booking funded by contributions of 5,000 and 7,000, the payer records should total 12,000. The fair shares may still be equal among four travelers, or they may follow another agreement.
+
+### Separate personal and shared purchases
+
+Personal items should not be included in the amount allocated to the whole group. If a grocery bill includes both common groceries and one person's personal purchase, separate the personal amount before allocating the shared portion.
+
+### Agree before large or non-refundable costs
+
+For accommodation, tickets, vehicle rentals, and other large purchases, groups benefit from agreeing in advance about participation, room differences, cancellations, optional activities, and non-refundable costs. The calculation can represent the agreement, but it cannot decide what the group considers fair.
+
+### Record expenses while details are available
+
+Recording an expense promptly reduces uncertainty about the amount, payer, participants, split method, and whether a receipt is available. Reconstructing these details from old messages can produce incorrect balances.
+
+### Settle the net result
+
+When a group has many expenses, reimbursing every payment individually can create unnecessary back-and-forth. Calculating each member's total paid amount and total allocated responsibility produces one net balance. The group can then use settlement suggestions based on those net positions.
+
+Source: [How to Split Expenses With Friends Fairly](https://www.splitcost.in/en/blog/how-to-split-expenses-with-friends)
+
+## Data and Privacy
+
+SplitCost handles information needed to create and operate shared expense groups. This can include group names, member names, selected currencies, expense descriptions, amounts, payers, participants, notes, and attached expense images. Technical and analytics information may also be processed to operate and improve the service.
+
+Group and expense information may be stored locally on a user's device and on third-party infrastructure so shared links can work across devices and sessions. Third-party services may support analytics, hosting, databases, infrastructure, email, and support communications. The Privacy Policy identifies Google Analytics as an example of an analytics service.
+
+Cookies or similar browser technologies may be used for analytics, session continuity, and product functionality. Browser settings and privacy tools may provide controls over some of these technologies.
+
+Depending on location, users may have rights related to access, deletion of expense data they control, or limiting analytics. Requests and privacy questions can be directed through SplitCost's official contact channel.
+
+The service describes using reasonable technical safeguards but does not guarantee that an internet-based system is completely secure. This document summarizes product-facing information and is not a substitute for the current Privacy Policy.
+
+Source: [SplitCost Privacy Policy](https://www.splitcost.in/en/privacy)
+
+## Responsibilities and Product Boundaries
+
+SplitCost is an expense tracking, calculation, and record-keeping tool. Users are responsible for reviewing the information they enter, including expense amounts, payer contributions, participant allocations, and group membership.
+
+Users are responsible for keeping group links secure and using the service lawfully. A shared link should be given only to intended participants because it provides access to the associated group information.
+
+Calculations depend on user-entered records. Incorrect amounts, payers, participants, or split allocations can produce incorrect balances. SplitCost does not resolve disagreements about whether an expense was fair, who should participate, or whether an external payment was completed.
+
+The service is provided on an “as is” and “as available” basis. The Terms describe limitations concerning disputes, errors caused by user input, technical data loss, and financial decisions based on calculations. This section provides product context rather than legal advice or a complete legal summary.
+
+Source: [SplitCost Terms of Service](https://www.splitcost.in/en/terms)
+
+## Official Sources
+
+The primary product homepage, create-group page, use-case overview and five use-case pages, published guide, Privacy Policy, and Terms of Service are linked in their relevant sections above. Additional first-party sources are:
+
+- [SplitCost Guides](https://www.splitcost.in/en/blog): Canonical directory for SplitCost-authored educational articles.
+- [Shared Expense Resources](https://www.splitcost.in/en/resources): SplitCost's curated directory of external guidance about shared expenses; third-party article content is not reproduced here.
+- [Contact SplitCost](https://www.splitcost.in/en/contact): Official channel for product support, feedback, bug reports, privacy questions, and partnership inquiries.
