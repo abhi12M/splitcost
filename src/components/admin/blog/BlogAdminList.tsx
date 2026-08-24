@@ -6,7 +6,7 @@ import { Edit, Plus, Trash2 } from "lucide-react";
 import { type MouseEvent, useEffect, useState } from "react";
 
 import type { BlogAdminListItem } from "@/lib/blog/types";
-import { formatBlogDate } from "@/lib/blog/utils";
+import { formatBlogDateTime } from "@/lib/blog/utils";
 import { ADMIN_BASE_PATH } from "@/lib/constants";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
@@ -144,7 +144,7 @@ export function BlogAdminList({ blogs }: { blogs: BlogAdminListItem[] }) {
                   <TableCell><BlogStatusBadges blog={blog} /></TableCell>
                   <TableCell>{blog.category ?? "—"}</TableCell>
                   <TableCell className="text-right tabular-nums">{formatViewCount(blog.views)}</TableCell>
-                  <TableCell>{formatBlogDate(blog.created_at)}</TableCell>
+                  <TableCell className="whitespace-nowrap tabular-nums">{formatBlogDateTime(blog.created_at)}</TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-2">
                       <Button asChild size="icon" variant="outline" aria-label="Edit blog">

@@ -36,6 +36,17 @@ export function formatBlogDate(value: string | null) {
   }).format(new Date(value));
 }
 
+export function formatBlogDateTime(value: string | null) {
+  if (!value) return "Unpublished";
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
 export function getExcerpt(content: string, fallback = "") {
   const text = stripHtml(content || fallback);
   if (text.length <= 160) return text;
