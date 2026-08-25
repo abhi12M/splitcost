@@ -7,17 +7,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
-  ADMIN_LOGIN_ID,
-  ADMIN_LOGIN_PASSWORD,
   ADMIN_SESSION_KEY,
 } from "@/lib/constants";
 import { getEncryptedItem, setEncryptedItem } from "@/lib/localStorage";
 
 type AdminGateProps = {
   children: ReactNode;
+  /** The standalone login route must always render the form. */
+  forceLogin?: boolean;
 };
 
-export function AdminGate({ children }: AdminGateProps) {
+export function AdminGate({ children, forceLogin = false }: AdminGateProps) {
   const [isReady, setIsReady] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loginId, setLoginId] = useState("");
@@ -25,25 +25,34 @@ export function AdminGate({ children }: AdminGateProps) {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const hasSession = getEncryptedItem<boolean>(ADMIN_SESSION_KEY, false);
+    const hasSession = forceLogin
+      ? false
+      : getEncryptedItem<boolean>(ADMIN_SESSION_KEY, false);
     setIsAuthenticated(hasSession);
     setIsReady(true);
-  }, []);
+  }, [forceLogin]);
 
-  const handleLogin = (event: FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
-    if (
-      loginId.trim() !== ADMIN_LOGIN_ID ||
-      password !== ADMIN_LOGIN_PASSWORD
-    ) {
-      setError("Invalid admin credentials");
-      return;
+    try {
+      const response = await fetch("/api/admin/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ loginId: loginId.trim(), password }),
+      });
+      if (!response.ok) {
+        setError("Invalid admin credentials");
+        return;
+      }
+      // The HTTP-only cookie is the real credential; this is UI state only.
+      setEncryptedItem(ADMIN_SESSION_KEY, true);
+      setError("");
+      setIsAuthenticated(true);
+      window.location.assign("/portal/x7k2p9");
+    } catch {
+      setError("Unable to sign in. Please try again.");
     }
-
-    setEncryptedItem(ADMIN_SESSION_KEY, true);
-    setError("");
-    setIsAuthenticated(true);
   };
 
   if (!isReady) {
