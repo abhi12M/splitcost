@@ -33,7 +33,17 @@ async function resolvePublishedBlogRedirect(oldSlug: string) {
 }
 
 export default async function middleware(request: NextRequest) {
-  const match = request.nextUrl.pathname.match(publishedBlogPath);
+  const { pathname } = request.nextUrl;
+
+  // API routes and the admin portal intentionally live outside the locale
+  // tree. Sending either through next-intl prefixes the URL with `/en`; the
+  // portal redirect in next.config then removes that prefix, creating an
+  // endless /portal <-> /en/portal redirect loop.
+  if (pathname.startsWith("/api/") || pathname === "/portal" || pathname.startsWith("/portal/")) {
+    return NextResponse.next();
+  }
+
+  const match = pathname.match(publishedBlogPath);
   if (match && canonicalBlogSlug.test(match[1])) {
     const targetSlug = await resolvePublishedBlogRedirect(match[1]);
     if (targetSlug) {
