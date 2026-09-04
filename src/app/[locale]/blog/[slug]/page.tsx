@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 
 import { BlogViewTracker } from "@/components/blog/BlogViewTracker";
@@ -12,8 +12,15 @@ import { RelatedBlogs } from "@/components/blog/RelatedBlogs";
 import { Layout } from "@/components/layout/Layout";
 import { resolveLocaleParam } from "@/i18n/params";
 import type { AppLocale } from "@/i18n/routing";
-import { getBlogBySlug, getRelatedBlogs } from "@/lib/blog/queries";
-import { buildBlogStructuredData } from "@/lib/blog/schema";
+import {
+  getBlogBySlug,
+  getPublishedBlogRedirectSlug,
+  getRelatedBlogs,
+} from "@/lib/blog/queries";
+import {
+  buildPublicBlogStructuredData,
+  serializeStructuredDataForHtml,
+} from "@/lib/blog/schema";
 import {
   DEFAULT_OG_IMAGE,
   SITE_NAME,
@@ -29,7 +36,15 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale, slug } = await params;
   const blog = await getBlogBySlug(slug);
-  if (!blog) return {};
+  if (!blog) {
+    if (locale === "en") {
+      const redirectSlug = await getPublishedBlogRedirectSlug(slug);
+      if (redirectSlug) {
+        redirect(`/en/blog/${encodeURIComponent(redirectSlug)}`);
+      }
+    }
+    return {};
+  }
 
   const canonicalUrl = getCanonicalUrl(`/${locale}/blog/${blog.slug}`);
   const image = blog.cover_image || DEFAULT_OG_IMAGE;
@@ -74,20 +89,28 @@ export default async function BlogDetailPage({ params }: PageProps) {
   setRequestLocale(locale);
 
   const blog = await getBlogBySlug(resolved.slug);
-  if (!blog) notFound();
+  if (!blog) {
+    const redirectSlug = await getPublishedBlogRedirectSlug(resolved.slug);
+    if (redirectSlug) {
+      redirect(`/en/blog/${encodeURIComponent(redirectSlug)}`);
+    }
+    notFound();
+  }
 
   const relatedBlogs = await getRelatedBlogs(blog, 4);
 
-  const jsonLd = buildBlogStructuredData(blog);
+  const jsonLd = buildPublicBlogStructuredData(blog);
   return (
     <Layout>
       <BlogViewTracker blogId={blog.id} />
       <BlogReadingProgress />
       <BlogScrollToTop />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      {jsonLd ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: serializeStructuredDataForHtml(jsonLd) }}
+        />
+      ) : null}
       <article data-blog-article className="blog-detail-page bg-background text-foreground">
         <BlogArticleHeader blog={blog} showBreadcrumb />
         <section className="pb-8 md:pb-10">

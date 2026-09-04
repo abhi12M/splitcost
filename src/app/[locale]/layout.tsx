@@ -2,7 +2,7 @@ import "../globals.css";
 
 import type { Metadata, Viewport } from "next";
 import { NextIntlClientProvider } from "next-intl";
-import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
+import { getMessages, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { hasLocale } from "next-intl";
 import { Suspense, type ReactNode } from "react";
@@ -10,6 +10,7 @@ import { Suspense, type ReactNode } from "react";
 import { GoogleAnalyticsPageTracker } from "@/components/analytics/GoogleAnalyticsPageTracker";
 import AppProviders from "@/components/providers/AppProviders";
 import { plusJakarta } from "@/app/fonts";
+import { serializeStructuredDataForHtml } from "@/lib/blog/schema";
 import {
   GA_MEASUREMENT_ID,
   isGoogleAnalyticsEnabled,
@@ -25,6 +26,7 @@ import {
   getSiteUrl,
 } from "@/lib/seo";
 import { getSiteRootAlternates, getLocalizedCanonicalUrl } from "@/lib/seo-i18n";
+import { getOrganizationId, getWebsiteId } from "@/lib/schema-identity";
 
 const siteUrl = getSiteUrl();
 
@@ -112,15 +114,12 @@ export default async function LocaleLayout({
 
   const messages = await getMessages();
   const { htmlLang } = localeDefinitions[locale as AppLocale];
-  const tFeatures = await getTranslations({ locale, namespace: "metadata.softwareApplication.features" });
-  const featureList = ["one", "two", "three", "four", "five", "six", "seven"].map((key) =>
-    tFeatures(key as "one")
-  );
-
   const jsonLd = [
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
+      "@id": getWebsiteId(),
+      publisher: { "@id": getOrganizationId() },
       name: SITE_NAME,
       url: siteUrl,
       description: SITE_DESCRIPTION,
@@ -129,6 +128,7 @@ export default async function LocaleLayout({
     {
       "@context": "https://schema.org",
       "@type": "Organization",
+      "@id": getOrganizationId(),
       name: SITE_NAME,
       url: siteUrl,
       logo: `${siteUrl}/android-chrome-512x512.png`,
@@ -137,22 +137,6 @@ export default async function LocaleLayout({
         contactType: "customer support",
         email: "contact@splitcost.in",
         url: getLocalizedCanonicalUrl(locale as AppLocale, "/contact"),
-      },
-    },
-    {
-      "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      name: SITE_NAME,
-      url: siteUrl,
-      applicationCategory: "FinanceApplication",
-      operatingSystem: "Web",
-      description: SITE_DESCRIPTION,
-      inLanguage: htmlLang,
-      featureList,
-      offers: {
-        "@type": "Offer",
-        price: "0",
-        priceCurrency: "USD",
       },
     },
   ];
@@ -190,7 +174,7 @@ export default async function LocaleLayout({
           ) : null}
           <script
             type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            dangerouslySetInnerHTML={{ __html: serializeStructuredDataForHtml(jsonLd) }}
           />
           <AppProviders>{children}</AppProviders>
         </NextIntlClientProvider>

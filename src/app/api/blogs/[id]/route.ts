@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 
+import { isAuthorizedAdminRequest } from "@/lib/admin-auth";
+import { normalizeBlogInput } from "@/lib/blog/input";
 import { deleteBlog, getBlogById, updateBlog } from "@/lib/blog/queries";
-import { estimateReadingTime, slugify } from "@/lib/blog/utils";
-import type { BlogInput } from "@/lib/blog/types";
 
 type RouteContext = {
   params: { id: string };
@@ -17,21 +17,12 @@ function getErrorMessage(error: unknown, fallback: string) {
   return fallback;
 }
 
-function normalizePayload(body: BlogInput): BlogInput {
-  return {
-    ...body,
-    title: body.title?.trim() || null,
-    slug: slugify(body.slug || body.title || "") || null,
-    excerpt: body.excerpt?.trim() || null,
-    category: body.category?.trim() || null,
-    author: body.author?.trim() || "SplitCost Team",
-    reading_time: body.reading_time ?? estimateReadingTime(body.content ?? ""),
-    no_index: body.no_index ?? false,
-    is_featured: body.is_featured ?? false,
-  };
+function unauthorized() {
+  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 }
 
-export async function GET(_req: Request, { params }: RouteContext) {
+export async function GET(request: Request, { params }: RouteContext) {
+  if (!isAuthorizedAdminRequest(request)) return unauthorized();
   const blog = await getBlogById(params.id);
   if (!blog) {
     return NextResponse.json({ error: "Blog not found" }, { status: 404 });
@@ -40,8 +31,9 @@ export async function GET(_req: Request, { params }: RouteContext) {
 }
 
 export async function PUT(req: Request, { params }: RouteContext) {
+  if (!isAuthorizedAdminRequest(req)) return unauthorized();
   try {
-    const payload = normalizePayload(await req.json());
+    const payload = normalizeBlogInput(await req.json());
     if (
       payload.status === "published" &&
       (!payload.title || !payload.slug || !payload.excerpt)
@@ -60,7 +52,8 @@ export async function PUT(req: Request, { params }: RouteContext) {
   }
 }
 
-export async function DELETE(_req: Request, { params }: RouteContext) {
+export async function DELETE(request: Request, { params }: RouteContext) {
+  if (!isAuthorizedAdminRequest(request)) return unauthorized();
   try {
     await deleteBlog(params.id);
     revalidatePath("/portal/x7k2p9/blogs");

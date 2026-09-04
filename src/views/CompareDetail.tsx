@@ -28,6 +28,8 @@ import {
   type CompareSlug,
 } from "@/lib/compare";
 import { getLocalizedCanonicalUrl } from "@/lib/seo-i18n";
+import { getBreadcrumbId, getWebPageId, getWebsiteId } from "@/lib/schema-identity";
+import { serializeStructuredDataForHtml } from "@/lib/blog/schema";
 import { cn } from "@/lib/utils";
 
 type CompareDetailPageProps = {
@@ -94,16 +96,14 @@ export default async function CompareDetailPage({ locale, slug }: CompareDetailP
     "@graph": [
       {
         "@type": "WebPage",
+        "@id": getWebPageId(pageUrl),
         name: t("jsonLdName", translationValues),
         description: t("jsonLdDescription", translationValues),
         url: pageUrl,
-        isPartOf: {
-          "@type": "WebSite",
-          name: APP_NAME,
-          url: getLocalizedCanonicalUrl(locale, "/"),
-        },
+        isPartOf: { "@id": getWebsiteId() },
         breadcrumb: {
           "@type": "BreadcrumbList",
+          "@id": getBreadcrumbId(pageUrl),
           itemListElement: [
             {
               "@type": "ListItem",
@@ -128,6 +128,8 @@ export default async function CompareDetailPage({ locale, slug }: CompareDetailP
       },
       {
         "@type": "FAQPage",
+        "@id": `${pageUrl}#faq`,
+        url: pageUrl,
         mainEntity: faqItems.map((faq) => ({
           "@type": "Question",
           name: faq.question,
@@ -146,7 +148,7 @@ export default async function CompareDetailPage({ locale, slug }: CompareDetailP
     <Layout>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeStructuredDataForHtml(jsonLd) }}
       />
 
       <article className="overflow-x-clip">

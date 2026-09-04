@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import sharp from "sharp";
 
+import { isAuthorizedAdminRequest } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import {
   buildAttachmentPayload,
@@ -181,7 +182,10 @@ async function listExpenseAttachments(): Promise<ExpenseAttachmentMediaItem[]> {
   return media.filter((item): item is ExpenseAttachmentMediaItem => Boolean(item));
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  if (!isAuthorizedAdminRequest(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const media: (AdminMediaItem | ExpenseAttachmentMediaItem)[] = [
       ...(await listAdminUploads()),
@@ -204,6 +208,9 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  if (!isAuthorizedAdminRequest(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   const formData = await req.formData();
   const file = formData.get("file");
 
@@ -298,6 +305,9 @@ async function updateBlogImageReferences(oldUrl: string, newUrl: string) {
 }
 
 export async function PATCH(req: Request) {
+  if (!isAuthorizedAdminRequest(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   const { path, name } = (await req.json().catch(() => ({}))) as {
     path?: string;
     name?: string;
@@ -356,6 +366,9 @@ export async function PATCH(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+  if (!isAuthorizedAdminRequest(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   const { path, paths } = (await req.json().catch(() => ({}))) as {
     path?: string;
     paths?: string[];

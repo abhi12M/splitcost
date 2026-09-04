@@ -33,6 +33,10 @@ export function getCanonicalUrl(path: string): string {
   return `${getSiteUrl()}${normalizePath(path)}`;
 }
 
+export function getCanonicalBlogUrl(slug: string): string {
+  return getCanonicalUrl(`/en/blog/${encodeURIComponent(slug)}`);
+}
+
 type BuildMetadataArgs = {
   title: string;
   description: string;

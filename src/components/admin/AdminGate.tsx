@@ -6,12 +6,6 @@ import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  ADMIN_LOGIN_ID,
-  ADMIN_LOGIN_PASSWORD,
-  ADMIN_SESSION_KEY,
-} from "@/lib/constants";
-import { getEncryptedItem, setEncryptedItem } from "@/lib/localStorage";
 
 type AdminGateProps = {
   children: ReactNode;
@@ -25,23 +19,28 @@ export function AdminGate({ children }: AdminGateProps) {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const hasSession = getEncryptedItem<boolean>(ADMIN_SESSION_KEY, false);
-    setIsAuthenticated(hasSession);
-    setIsReady(true);
+    const controller = new AbortController();
+    fetch("/api/admin-session", { cache: "no-store", signal: controller.signal })
+      .then((response) => response.json())
+      .then((session) => setIsAuthenticated(session.authenticated === true))
+      .catch(() => setIsAuthenticated(false))
+      .finally(() => setIsReady(true));
+    return () => controller.abort();
   }, []);
 
-  const handleLogin = (event: FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
-    if (
-      loginId.trim() !== ADMIN_LOGIN_ID ||
-      password !== ADMIN_LOGIN_PASSWORD
-    ) {
-      setError("Invalid admin credentials");
+    const response = await fetch("/api/admin-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ loginId, password }),
+    });
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      setError(body?.error ?? "Unable to sign in");
       return;
     }
-
-    setEncryptedItem(ADMIN_SESSION_KEY, true);
+    setPassword("");
     setError("");
     setIsAuthenticated(true);
   };

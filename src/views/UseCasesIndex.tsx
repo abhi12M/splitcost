@@ -18,6 +18,8 @@ import type { AppLocale } from "@/i18n/routing";
 import { brandStyles, landingSection } from "@/lib/brand-styles";
 import { APP_NAME } from "@/lib/constants";
 import { getLocalizedCanonicalUrl } from "@/lib/seo-i18n";
+import { getBreadcrumbId, getWebPageId, getWebsiteId } from "@/lib/schema-identity";
+import { serializeStructuredDataForHtml } from "@/lib/blog/schema";
 import {
   USE_CASE_INDEX_PATH,
   USE_CASE_LIST,
@@ -47,16 +49,14 @@ export default async function UseCasesIndexPage({ locale }: UseCasesIndexPagePro
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
+    "@id": getWebPageId(pageUrl),
     name: t("jsonLdName", { appName: APP_NAME }),
     description: t("jsonLdDescription", { appName: APP_NAME }),
     url: pageUrl,
-    isPartOf: {
-      "@type": "WebSite",
-      name: APP_NAME,
-      url: getLocalizedCanonicalUrl(locale, "/"),
-    },
+    isPartOf: { "@id": getWebsiteId() },
     breadcrumb: {
       "@type": "BreadcrumbList",
+      "@id": getBreadcrumbId(pageUrl),
       itemListElement: [
         {
           "@type": "ListItem",
@@ -74,6 +74,7 @@ export default async function UseCasesIndexPage({ locale }: UseCasesIndexPagePro
     },
     hasPart: USE_CASE_LIST.map((item) => ({
       "@type": "WebPage",
+      "@id": getWebPageId(getLocalizedCanonicalUrl(locale, getUseCasePath(item.slug))),
       name: tItems(`${item.slug}.title`),
       url: getLocalizedCanonicalUrl(locale, getUseCasePath(item.slug)),
     })),
@@ -83,7 +84,7 @@ export default async function UseCasesIndexPage({ locale }: UseCasesIndexPagePro
     <Layout>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeStructuredDataForHtml(jsonLd) }}
       />
 
       <section className={cn(landingSection.default, landingSection.padding)}>

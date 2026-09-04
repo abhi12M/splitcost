@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { isAuthorizedAdminRequest } from "@/lib/admin-auth";
 import {
   createBlogCategory,
   listBlogCategoriesWithCounts,
@@ -14,7 +15,10 @@ function getErrorMessage(error: unknown) {
   return "Failed to manage blog category";
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  if (!isAuthorizedAdminRequest(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const categories = await listBlogCategoriesWithCounts();
     return NextResponse.json(categories);
@@ -25,6 +29,9 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  if (!isAuthorizedAdminRequest(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const body = (await req.json()) as BlogCategoryInput;
     if (!body.name?.trim()) {

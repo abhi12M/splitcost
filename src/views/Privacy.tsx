@@ -4,6 +4,8 @@ import { Layout } from "@/components/layout/Layout";
 import type { AppLocale } from "@/i18n/routing";
 import { APP_NAME } from "@/lib/constants";
 import { getLocalizedCanonicalUrl } from "@/lib/seo-i18n";
+import { getBreadcrumbId, getWebPageId, getWebsiteId } from "@/lib/schema-identity";
+import { serializeStructuredDataForHtml } from "@/lib/blog/schema";
 
 type PrivacyPageProps = {
   locale: AppLocale;
@@ -17,15 +19,13 @@ export default async function PrivacyPage({ locale }: PrivacyPageProps) {
   const privacyJsonLd = {
     "@context": "https://schema.org",
     "@type": "WebPage",
+    "@id": getWebPageId(pageUrl),
     name: t("jsonLdName", { appName: APP_NAME }),
     url: pageUrl,
-    isPartOf: {
-      "@type": "WebSite",
-      name: APP_NAME,
-      url: homeUrl,
-    },
+    isPartOf: { "@id": getWebsiteId() },
     breadcrumb: {
       "@type": "BreadcrumbList",
+      "@id": getBreadcrumbId(pageUrl),
       itemListElement: [
         {
           "@type": "ListItem",
@@ -48,7 +48,7 @@ export default async function PrivacyPage({ locale }: PrivacyPageProps) {
       <div className="container py-12 md:py-[3rem] max-w-3xl">
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(privacyJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: serializeStructuredDataForHtml(privacyJsonLd) }}
         />
 
         <div>
