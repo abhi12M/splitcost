@@ -8,15 +8,11 @@ const publishedBlogPath = /^\/en\/blog\/([^/]+)\/?$/;
 const canonicalBlogSlug = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const BLOG_REDIRECT_CACHE_CONTROL = "private, no-store, max-age=0, must-revalidate";
 
-type BlogRedirectRow = {
-  blogs: { slug?: string | null; status?: string | null } | null;
-};
+type BlogRedirectRow = { blogs: { slug?: string | null; status?: string | null } | null };
 
 async function resolvePublishedBlogRedirect(oldSlug: string) {
   const supabaseUrl = process.env.SUPABASE_URL ?? process.env.NEXT_SUPABASE_URL;
-  const supabaseKey =
-    process.env.SUPABASE_PUBLISHABLE_KEY ??
-    process.env.NEXT_SUPABASE_PUBLISHABLE_KEY;
+  const supabaseKey = process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_SUPABASE_PUBLISHABLE_KEY;
   if (!supabaseUrl || !supabaseKey) return null;
 
   const endpoint = new URL("/rest/v1/blog_slug_redirects", supabaseUrl);
@@ -26,20 +22,11 @@ async function resolvePublishedBlogRedirect(oldSlug: string) {
   endpoint.searchParams.set("limit", "1");
 
   try {
-    const response = await fetch(endpoint, {
-      headers: {
-        apikey: supabaseKey,
-        Authorization: `Bearer ${supabaseKey}`,
-      },
-      cache: "no-store",
-    });
+    const response = await fetch(endpoint, { headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` }, cache: "no-store" });
     if (!response.ok) return null;
-
     const rows = (await response.json()) as BlogRedirectRow[];
     const targetSlug = rows[0]?.blogs?.slug;
-    return targetSlug && targetSlug !== oldSlug && canonicalBlogSlug.test(targetSlug)
-      ? targetSlug
-      : null;
+    return targetSlug && targetSlug !== oldSlug && canonicalBlogSlug.test(targetSlug) ? targetSlug : null;
   } catch {
     return null;
   }
@@ -50,22 +37,14 @@ export default async function middleware(request: NextRequest) {
   if (match && canonicalBlogSlug.test(match[1])) {
     const targetSlug = await resolvePublishedBlogRedirect(match[1]);
     if (targetSlug) {
-      const response = NextResponse.redirect(
-        new URL(`/en/blog/${encodeURIComponent(targetSlug)}`, request.url),
-        307
-      );
+      const response = NextResponse.redirect(new URL(`/en/blog/${encodeURIComponent(targetSlug)}`, request.url), 307);
       response.headers.set("Cache-Control", BLOG_REDIRECT_CACHE_CONTROL);
       return response;
     }
   }
-
   return handleI18nRouting(request);
 }
 
 export const config = {
-  matcher: [
-    "/",
-    "/(en|es|pt|hi)/:path*",
-    "/((?!api|_next|_vercel|portal|.*\\..*).*)",
-  ],
+  matcher: ["/", "/(en|es|pt|hi)/:path*", "/((?!api|_next|_vercel|portal|.*\\..*).*)", "/api/:path*", "/portal/:path*"],
 };

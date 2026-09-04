@@ -8,9 +8,10 @@
 # production build
 /build
 
-# # env files
-# # .env*
-
+# Local machine environment files
+.env
+.env.local
+.env.*.local
 
 # logs
 npm-debug.log*
