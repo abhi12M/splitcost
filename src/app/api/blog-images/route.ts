@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import sharp from "sharp";
 
+import { isAuthorizedAdminRequest } from "@/lib/admin-auth";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { buildBlogImagePath } from "@/lib/supabase/storagePaths";
 
@@ -8,6 +9,9 @@ const BLOG_IMAGE_BUCKET = "blog-images";
 const MAX_BLOG_IMAGE_SIZE = 10 * 1024 * 1024;
 
 export async function POST(req: Request) {
+  if (!isAuthorizedAdminRequest(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   const formData = await req.formData();
   const file = formData.get("file");
   const blogId = String(formData.get("blogId") ?? "").trim();

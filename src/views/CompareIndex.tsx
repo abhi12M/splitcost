@@ -14,6 +14,8 @@ import {
   getComparePath,
 } from "@/lib/compare";
 import { getLocalizedCanonicalUrl } from "@/lib/seo-i18n";
+import { getBreadcrumbId, getWebPageId, getWebsiteId } from "@/lib/schema-identity";
+import { serializeStructuredDataForHtml } from "@/lib/blog/schema";
 import { cn } from "@/lib/utils";
 
 type CompareIndexPageProps = {
@@ -28,16 +30,14 @@ export default async function CompareIndexPage({ locale }: CompareIndexPageProps
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
+    "@id": getWebPageId(pageUrl),
     name: t("jsonLdName", { appName: APP_NAME }),
     description: t("jsonLdDescription", { appName: APP_NAME }),
     url: pageUrl,
-    isPartOf: {
-      "@type": "WebSite",
-      name: APP_NAME,
-      url: getLocalizedCanonicalUrl(locale, "/"),
-    },
+    isPartOf: { "@id": getWebsiteId() },
     breadcrumb: {
       "@type": "BreadcrumbList",
+      "@id": getBreadcrumbId(pageUrl),
       itemListElement: [
         {
           "@type": "ListItem",
@@ -55,6 +55,7 @@ export default async function CompareIndexPage({ locale }: CompareIndexPageProps
     },
     hasPart: COMPARE_LIST.map((item) => ({
       "@type": "WebPage",
+      "@id": getWebPageId(getLocalizedCanonicalUrl(locale, getComparePath(item.slug))),
       name: t("cards." + item.slug + ".title", {
         appName: APP_NAME,
         competitor: item.competitorName,
@@ -67,7 +68,7 @@ export default async function CompareIndexPage({ locale }: CompareIndexPageProps
     <Layout>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeStructuredDataForHtml(jsonLd) }}
       />
 
       <section className={cn(landingSection.default, landingSection.padding)}>

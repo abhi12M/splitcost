@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
+import { isAuthorizedAdminRequest } from "@/lib/admin-auth";
 import { recordBlogView } from "@/lib/blog/queries";
 import {
   addBlogViewEntry,
@@ -18,7 +19,11 @@ type RouteContext = {
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-export async function POST(_req: Request, { params }: RouteContext) {
+export async function POST(request: Request, { params }: RouteContext) {
+  if (isAuthorizedAdminRequest(request)) {
+    return new NextResponse(null, { status: 204 });
+  }
+
   const blogId = params.id;
 
   if (!UUID_PATTERN.test(blogId)) {

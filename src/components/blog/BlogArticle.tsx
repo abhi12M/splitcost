@@ -20,11 +20,12 @@ type HeadingProps = {
   id?: string;
 };
 
-function BlogMarkdown({ content, headingOffset = 0 }: { content: string; headingOffset?: number }) {
+export function BlogMarkdown({ content, headingOffset = 0 }: { content: string; headingOffset?: number }) {
   let renderedHeadingIndex = headingOffset;
   const renderHeading = (
     Tag: "h1" | "h2" | "h3" | "h4" | "h5" | "h6",
-    { children, id, ...props }: HeadingProps & ComponentPropsWithoutRef<"h1">
+    { children, id, node: _node, ...props }: HeadingProps &
+      ComponentPropsWithoutRef<"h1"> & { node?: unknown }
   ) => {
     renderedHeadingIndex += 1;
     return (
@@ -39,7 +40,9 @@ function BlogMarkdown({ content, headingOffset = 0 }: { content: string; heading
       remarkPlugins={[remarkGfm, remarkDirective, remarkInsight, remarkQuote]}
       rehypePlugins={[rehypeRaw]}
       components={{
-        h1: (props) => renderHeading("h1", props),
+        // The article title owns the page's only H1. React Markdown routes both
+        // Markdown and parsed raw-HTML headings through this component map.
+        h1: (props) => renderHeading("h2", props),
         h2: (props) => renderHeading("h2", props),
         h3: (props) => renderHeading("h3", props),
         h4: (props) => renderHeading("h4", props),

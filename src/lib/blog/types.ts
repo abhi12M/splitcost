@@ -32,7 +32,6 @@ export type BlogInput = {
   category: string | null;
   author: string | null;
   status: BlogStatus;
-  published_at?: string | null;
   reading_time?: number;
   no_index?: boolean;
   is_featured?: boolean;

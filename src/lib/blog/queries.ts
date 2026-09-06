@@ -189,6 +189,34 @@ export async function getBlogBySlug(slug: string): Promise<Blog | null> {
   return (data as Blog | null) ?? null;
 }
 
+export async function getPublishedBlogRedirectSlug(slug: string): Promise<string | null> {
+  const { data: redirect, error: redirectError } = await supabaseAdmin
+    .from("blog_slug_redirects")
+    .select("blog_id")
+    .eq("old_slug", slug)
+    .maybeSingle();
+
+  if (redirectError) {
+    console.error("getPublishedBlogRedirectSlug redirect error:", redirectError);
+    return null;
+  }
+  if (!redirect?.blog_id) return null;
+
+  const { data: blog, error: blogError } = await supabaseAdmin
+    .from("blogs")
+    .select("slug")
+    .eq("id", redirect.blog_id)
+    .eq("status", "published")
+    .maybeSingle();
+
+  if (blogError) {
+    console.error("getPublishedBlogRedirectSlug blog error:", blogError);
+    return null;
+  }
+
+  return blog?.slug && blog.slug !== slug ? blog.slug : null;
+}
+
 export async function getBlogById(id: string): Promise<Blog | null> {
   const { data: blog, error } = await supabaseAdmin
     .from("blogs")
@@ -225,10 +253,7 @@ export async function getBlogById(id: string): Promise<Blog | null> {
 export async function createBlog(input: BlogInput): Promise<Blog> {
   const payload = {
     ...input,
-    published_at:
-      input.status === "published"
-        ? input.published_at ?? new Date().toISOString()
-        : input.published_at ?? null,
+    published_at: input.status === "published" ? new Date().toISOString() : null,
   };
   const { data, error } = await supabaseAdmin
     .from("blogs")
@@ -273,8 +298,8 @@ export async function updateBlog(id: string, input: BlogInput): Promise<Blog> {
     ...input,
     published_at:
       input.status === "published"
-        ? existing.published_at ?? input.published_at ?? new Date().toISOString()
-        : input.published_at ?? null,
+        ? existing.published_at ?? new Date().toISOString()
+        : existing.published_at,
   };
   const { data, error } = await supabaseAdmin
     .from("blogs")
@@ -358,6 +383,7 @@ export async function getPublishedBlogPaths() {
     .from("blogs")
     .select("slug,updated_at,published_at")
     .eq("status", "published")
+    .eq("no_index", false)
     .order("published_at", { ascending: false });
 
   if (error) return [];

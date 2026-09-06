@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { isAuthorizedAdminRequest } from "@/lib/admin-auth";
 import {
   deleteBlogCategory,
   getBlogCategoryById,
@@ -19,7 +20,10 @@ function getErrorMessage(error: unknown) {
   return "Failed to manage blog category";
 }
 
-export async function GET(_req: Request, { params }: RouteContext) {
+export async function GET(request: Request, { params }: RouteContext) {
+  if (!isAuthorizedAdminRequest(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const category = await getBlogCategoryById(params.id);
     if (!category) {
@@ -33,6 +37,9 @@ export async function GET(_req: Request, { params }: RouteContext) {
 }
 
 export async function PUT(req: Request, { params }: RouteContext) {
+  if (!isAuthorizedAdminRequest(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const body = (await req.json()) as Partial<BlogCategoryInput>;
     const category = await updateBlogCategory(params.id, body);
@@ -43,7 +50,10 @@ export async function PUT(req: Request, { params }: RouteContext) {
   }
 }
 
-export async function DELETE(_req: Request, { params }: RouteContext) {
+export async function DELETE(request: Request, { params }: RouteContext) {
+  if (!isAuthorizedAdminRequest(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     await deleteBlogCategory(params.id);
     return NextResponse.json({ ok: true });

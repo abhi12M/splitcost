@@ -1,11 +1,21 @@
 import type { Json } from "@/integrations/supabase/types";
-import { DEFAULT_OG_IMAGE, SITE_NAME, getCanonicalUrl, getSiteUrl } from "@/lib/seo";
+import { DEFAULT_OG_IMAGE, getCanonicalUrl, getSiteUrl } from "@/lib/seo";
+import {
+  getBlogPostingId,
+  getBreadcrumbId,
+  getImageObjectId,
+  getOrganizationId,
+  getWebPageId,
+  getWebsiteId,
+} from "@/lib/schema-identity";
+import { buildBlogAuthorStructuredData } from "./author-schema";
+import { extractBlogContentHeading } from "./content-heading";
 import { parseBlogFaq } from "./faq";
-import type { BlogInput } from "./types";
+import type { Blog } from "./types";
 import { stripHtml } from "./utils";
 
 type BlogSchemaInput = Pick<
-  BlogInput,
+  Blog,
   "title" | "slug" | "excerpt" | "content" | "cover_image" | "cover_alt" | "category" | "author" | "published_at" | "reading_time"
 > & {
   updated_at?: string | null;
@@ -19,10 +29,12 @@ export function buildBlogStructuredData(blog: BlogSchemaInput): Json {
   const canonicalUrl = getCanonicalUrl(`/en/blog/${blog.slug}`);
   const blogIndexUrl = getCanonicalUrl("/en/blog");
   const imageUrl = absoluteImageUrl(blog.cover_image || DEFAULT_OG_IMAGE);
-  const imageId = `${canonicalUrl}#primaryimage`;
-  const breadcrumbId = `${canonicalUrl}#breadcrumb`;
-  const text = stripHtml(blog.content);
-  const faq = parseBlogFaq(blog.content);
+  const imageId = blog.cover_image ? getImageObjectId(imageUrl) : undefined;
+  const breadcrumbId = getBreadcrumbId(canonicalUrl);
+  const author = buildBlogAuthorStructuredData(blog.author);
+  const { content: articleContent } = extractBlogContentHeading(blog.content);
+  const text = stripHtml(articleContent);
+  const faq = parseBlogFaq(articleContent);
   const breadcrumbItems: Json[] = [
     {
       "@type": "ListItem",
@@ -38,15 +50,6 @@ export function buildBlogStructuredData(blog: BlogSchemaInput): Json {
     },
   ];
 
-  if (blog.category) {
-    breadcrumbItems.push({
-      "@type": "ListItem",
-      position: breadcrumbItems.length + 1,
-      name: blog.category,
-      item: `${blogIndexUrl}?category=${encodeURIComponent(blog.category)}`,
-    });
-  }
-
   breadcrumbItems.push({
     "@type": "ListItem",
     position: breadcrumbItems.length + 1,
@@ -57,41 +60,38 @@ export function buildBlogStructuredData(blog: BlogSchemaInput): Json {
   const graph: Json[] = [
     {
       "@type": "BlogPosting",
-      "@id": `${canonicalUrl}#blog-posting`,
+      "@id": getBlogPostingId(canonicalUrl),
       headline: blog.title,
       description: blog.excerpt,
-      image: { "@id": imageId },
+      image: imageId ? { "@id": imageId } : imageUrl,
       thumbnailUrl: imageUrl,
       datePublished: blog.published_at ?? undefined,
       dateModified: blog.updated_at ?? blog.published_at ?? undefined,
-      author: {
-        "@type": "Person",
-        name: blog.author,
-      },
-      publisher: {
-        "@type": "Organization",
-        name: SITE_NAME,
-        logo: {
-          "@type": "ImageObject",
-          url: `${getSiteUrl()}/android-chrome-512x512.png`,
-        },
-      },
-      mainEntityOfPage: {
-        "@type": "WebPage",
-        "@id": canonicalUrl,
-      },
-      breadcrumb: { "@id": breadcrumbId },
+      ...(author ? { author } : {}),
+      publisher: { "@id": getOrganizationId() },
+      mainEntityOfPage: { "@id": getWebPageId(canonicalUrl) },
       wordCount: text ? text.split(/\s+/).filter(Boolean).length : undefined,
       timeRequired: blog.reading_time ? `PT${blog.reading_time}M` : undefined,
       articleBody: text || undefined,
     },
+    ...(imageId
+      ? [
+          {
+            "@type": "ImageObject",
+            "@id": imageId,
+            url: imageUrl,
+            contentUrl: imageUrl,
+            caption: blog.cover_alt || blog.title,
+            representativeOfPage: true,
+          },
+        ]
+      : []),
     {
-      "@type": "ImageObject",
-      "@id": imageId,
-      url: imageUrl,
-      contentUrl: imageUrl,
-      caption: blog.cover_alt || blog.title,
-      representativeOfPage: true,
+      "@type": "WebPage",
+      "@id": getWebPageId(canonicalUrl),
+      url: canonicalUrl,
+      isPartOf: { "@id": getWebsiteId() },
+      breadcrumb: { "@id": breadcrumbId },
     },
     {
       "@type": "BreadcrumbList",
@@ -122,6 +122,20 @@ export function buildBlogStructuredData(blog: BlogSchemaInput): Json {
   };
 }
 
+export function buildPublicBlogStructuredData(blog: Blog): Json | null {
+  return blog.no_index ? null : buildBlogStructuredData(blog);
+}
+
 export function formatStructuredData(schema: Json | null | undefined) {
   return schema ? JSON.stringify(schema, null, 2) : "";
+}
+
+/** Serialize JSON-LD for an inline HTML script without changing its data. */
+export function serializeStructuredDataForHtml(schema: Json) {
+  return JSON.stringify(schema)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
 }

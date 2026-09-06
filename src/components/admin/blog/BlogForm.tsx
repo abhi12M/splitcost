@@ -51,6 +51,7 @@ import { buildBlogStructuredData, formatStructuredData } from "@/lib/blog/schema
 import { buildBlogTableOfContents } from "@/lib/blog/toc";
 import type { Blog, BlogInput, BlogStatus } from "@/lib/blog/types";
 import { estimateReadingTime, getExcerpt, slugify } from "@/lib/blog/utils";
+import { getCanonicalBlogUrl, getSiteUrl } from "@/lib/seo";
 import { ADMIN_BASE_PATH } from "@/lib/constants";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -73,7 +74,7 @@ function CharacterCounter({ value, max }: { value: string; max: number }) {
 
 function getFilenameFromUrl(url: string) {
   try {
-    const pathname = new URL(url, "https://splitcost.app").pathname;
+    const pathname = new URL(url, getSiteUrl()).pathname;
     return decodeURIComponent(pathname.split("/").pop() || "cover-image");
   } catch {
     return url.split("/").pop() || "cover-image";
@@ -294,7 +295,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
     const postSlug = slugify(slug || title);
     if (!postSlug) return;
     try {
-      await navigator.clipboard.writeText(`https://splitcost.app/blog/${postSlug}`);
+      await navigator.clipboard.writeText(getCanonicalBlogUrl(postSlug));
       setSlugCopied(true);
       window.setTimeout(() => setSlugCopied(false), 2000);
     } catch {
@@ -313,17 +314,12 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
       category: category || null,
       author: author.trim() || "SplitCost Team",
       status: nextStatus,
-      published_at:
-        nextStatus === "published"
-          ? blog?.published_at ?? new Date().toISOString()
-          : blog?.published_at ?? null,
       reading_time: readingTime,
       no_index: noIndex,
       is_featured: isFeatured,
     }),
     [
       author,
-      blog?.published_at,
       category,
       content,
       coverAlt,
@@ -828,7 +824,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
                     />
                     <div className="flex min-w-0 items-center gap-1 text-[11px] text-muted-foreground">
                       <span className="min-w-0 truncate">
-                        https://splitcost.app/blog/{slugify(slug || title)}
+                        {getCanonicalBlogUrl(slugify(slug || title))}
                       </span>
                       <button
                         type="button"
