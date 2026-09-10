@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { MEMBERS_MAX, MEMBERS_MIN, MEMBER_NAME_MAX, GROUP_NAME_MAX } from "@/lib/validations/group.schema";
 import { createGroupSchemas } from "@/lib/validations/group.schema.i18n";
+import { isMemberNameAlreadyAdded } from "@/lib/validations/group-members";
 import { CURRENCIES } from "@/constants";
 
 interface GroupFormProps {
@@ -104,7 +105,7 @@ export function GroupForm({ initialData, onSubmit, submitLabel, isSubmitting }: 
     setErrors(prev => ({
       ...prev,
       memberName: memberResult.success ? undefined : memberResult.error.issues[0]?.message,
-      memberExists: members.includes(trimmedMember) ? t("memberAlreadyAdded") : undefined,
+      memberExists: isMemberNameAlreadyAdded(members, trimmedMember) ? t("memberAlreadyAdded") : undefined,
     }));
   }, [newMember, members]);
 
@@ -114,7 +115,7 @@ export function GroupForm({ initialData, onSubmit, submitLabel, isSubmitting }: 
       setErrors(prev => ({ ...prev, memberName: result.error.issues[0].message }));
       return;
     }
-    if (members.includes(newMember.trim())) {
+    if (isMemberNameAlreadyAdded(members, newMember)) {
       setErrors(prev => ({ ...prev, memberExists: t("memberAlreadyAdded") }));
       return;
     }

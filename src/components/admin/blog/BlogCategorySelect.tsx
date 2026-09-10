@@ -77,7 +77,7 @@ export function BlogCategorySelect({
     const trimmedName = name.trim();
     if (!trimmedName) {
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Category name is required",
       });
       return;
@@ -109,6 +109,7 @@ export function BlogCategorySelect({
       toast({
         title: "Category created",
         description: created.name,
+        variant:'success',
       });
     } catch (error) {
       toast({

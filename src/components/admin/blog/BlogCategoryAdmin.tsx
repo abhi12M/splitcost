@@ -108,7 +108,7 @@ export function BlogCategoryAdmin() {
 
     if (!payload.name) {
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Category name is required",
       });
       return;
@@ -145,6 +145,7 @@ export function BlogCategoryAdmin() {
       toast({
         title: editingId ? "Category updated" : "Category created",
         description: saved.name,
+        variant:'success',
       });
     } catch (error) {
       toast({
@@ -172,6 +173,7 @@ export function BlogCategoryAdmin() {
       toast({
         title: "Category deleted",
         description: deleteTarget.name,
+        variant:'success',
       });
       setDeleteTarget(null);
     } catch (error) {

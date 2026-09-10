@@ -113,11 +113,6 @@ export default function AddExpensePage({ groupId }: { groupId: string }) {
       invalidateGroupDashboard(queryClient, groupId);
       router.push(`/group/${groupId}`);
     } catch (error) {
-      // toast({
-      //   title: "Error",
-      //   description: "Failed to add expense",
-      //   variant: "destructive",
-      // });
       setIsSubmitting(false);
     }
   };

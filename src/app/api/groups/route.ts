@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { validateGroupInput } from "@/lib/validations/group.schema";
 
 export async function GET() {
   const { data, error } = await (supabaseAdmin as any).rpc("load_group_summaries", {
@@ -15,31 +16,25 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const body = await req.json();
-
-  const { name, currency, memberNames } = body;
-
-  // 🔐 Basic validation / abuse protection
-  if (!name || !currency || !Array.isArray(memberNames)) {
-    return NextResponse.json(
-      { error: "Invalid payload" },
-      { status: 400 }
-    );
+  const body: unknown = await req.json();
+  if (!body || typeof body !== "object") {
+    return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  if (memberNames.length === 0 || memberNames.length > 20) {
-    return NextResponse.json(
-      { error: "Invalid number of members" },
-      { status: 400 }
-    );
+  const { name, currency, memberNames } = body as Record<string, unknown>;
+  const normalizedCurrency = typeof currency === "string" ? currency.trim() : "";
+  const validation = validateGroupInput(name, memberNames);
+
+  if (!normalizedCurrency || !validation.success) {
+    return NextResponse.json({ error: validation.success ? "Invalid currency" : validation.error }, { status: 400 });
   }
 
   const { data, error } = await supabaseAdmin.rpc(
     "create_group_with_members",
     {
-      group_name: name,
-      group_currency: currency,
-      member_names: memberNames,
+      group_name: validation.data.groupName,
+      group_currency: normalizedCurrency,
+      member_names: validation.data.memberNames,
     }
   );
 

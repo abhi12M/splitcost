@@ -544,9 +544,10 @@ export default function SplitScreen(props: SplitScreenProps) {
                     title: tCommon("whoops"),
                     description: t("selectOneToSplit"),
                     position: "center",
-                    hideClose: true,
+                    dismissible: false,
                     duration: Infinity,
                     action: <ToastAction altText={tCommon("ok")}>{tCommon("ok")}</ToastAction>,
+                    variant:'error',
                 });
                 return;
             }
@@ -578,9 +579,10 @@ export default function SplitScreen(props: SplitScreenProps) {
                     title: tCommon("whoops"),
                     description: errMsg,
                     position: "center",
-                    hideClose: true,
+                    dismissible: false,
                     duration: Infinity,
                     action: <ToastAction altText={tCommon("ok")}>{tCommon("ok")}</ToastAction>,
+                    variant:'error',
                 });
                 return;
             }
@@ -601,9 +603,10 @@ export default function SplitScreen(props: SplitScreenProps) {
                 title: tCommon("whoops"),
                 description: errMsg,
                 position: "center",
-                hideClose: true,
+                dismissible: false,
                 duration: Infinity,
                 action: <ToastAction altText={tCommon("ok")}>{tCommon("ok")}</ToastAction>,
+                variant:'error',
             });
             return;
         }

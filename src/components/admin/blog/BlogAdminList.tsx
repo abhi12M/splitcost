@@ -93,7 +93,7 @@ export function BlogAdminList({ blogs }: { blogs: BlogAdminListItem[] }) {
         throw new Error(result?.error ?? "Failed to delete blog post");
       }
 
-      toast({ title: "Blog post deleted" });
+      toast({ title: "Blog post deleted", variant: "success" });
       setVisibleBlogs((currentBlogs) => currentBlogs.filter((blog) => blog.id !== id));
       router.refresh();
     } catch (error) {

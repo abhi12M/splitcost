@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
@@ -93,6 +93,9 @@ interface EditGroupMobileProps {
   isDeleting?: boolean;
 }
 
+const truncateMemberName = (name: string, maxLength = 24) =>
+  name.length > maxLength ? `${name.slice(0, maxLength - 1)}…` : name;
+
 export function EditGroupMobile({
   groupId,
   groupName,
@@ -113,6 +116,20 @@ export function EditGroupMobile({
   const t = useTranslations("group");
   const tCommon = useTranslations("common");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [pendingMemberConfirmation, setPendingMemberConfirmation] = useState<string | null>(null);
+  const memberInputRef = useRef<HTMLInputElement>(null);
+  const displayedPendingMember = pendingMemberConfirmation
+    ? truncateMemberName(pendingMemberConfirmation)
+    : null;
+
+  const handleSaveRequest = () => {
+    const pendingMember = newMemberName.trim();
+    if (pendingMember) {
+      setPendingMemberConfirmation(pendingMember);
+      return;
+    }
+    onSaveGroup();
+  };
 
   return (
     <>
@@ -126,7 +143,7 @@ export function EditGroupMobile({
               <span className="font-medium">{t("editGroup")}</span>
               <button
                 type="button"
-                onClick={onSaveGroup}
+                onClick={handleSaveRequest}
                 disabled={isSubmitting}
                 aria-label={t("saveGroup")}
               >
@@ -181,12 +198,9 @@ export function EditGroupMobile({
               aria-invalid={!!errors.groupName}
             />
           </GroupFormFieldBox>
-          {errors.groupName ? (
-            <p className="-mt-3 text-xs text-destructive">{errors.groupName}</p>
-          ) : null}
-
           <div className="space-y-3">
             <AddMemberInputBox
+              inputRef={memberInputRef}
               value={newMemberName}
               onChange={onNewMemberNameChange}
               onAdd={onAddMember}
@@ -198,13 +212,6 @@ export function EditGroupMobile({
                   : t("addMember")
               }
             />
-
-            {errors.memberName ? (
-              <p className="text-xs text-destructive">{errors.memberName}</p>
-            ) : null}
-            {errors.memberExists ? (
-              <p className="text-xs text-destructive">{errors.memberExists}</p>
-            ) : null}
 
             <div className="space-y-2">
               {memberCards.map((member) => (
@@ -275,6 +282,35 @@ export function EditGroupMobile({
           </div>
         </div>
       </MobileGroupFormLayout>
+
+      <AlertDialog
+        open={pendingMemberConfirmation !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingMemberConfirmation(null);
+        }}
+      >
+        <AlertDialogContent className="max-w-[min(100vw-2rem,22rem)] rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("pendingMemberTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {displayedPendingMember
+                ? t("pendingMemberDescription", { name: displayedPendingMember })
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-4 gap-2">
+            <AlertDialogCancel
+              className="mt-0 w-full rounded-xl"
+              onClick={() => requestAnimationFrame(() => memberInputRef.current?.focus())}
+            >
+              {t("keepEditing")}
+            </AlertDialogCancel>
+            <AlertDialogAction className="w-full rounded-xl" onClick={onSaveGroup}>
+              {t("saveWithoutMember")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent className="max-w-[320px] rounded-2xl">

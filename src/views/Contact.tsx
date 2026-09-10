@@ -63,6 +63,7 @@ export default function ContactPage() {
       toast({
         title: t("toastSuccessTitle"),
         description: t("toastSuccessDescription"),
+        variant:'success',
       });
 
       setForm({
@@ -75,6 +76,7 @@ export default function ContactPage() {
       toast({
         title: t("toastErrorTitle"),
         description: t("toastErrorDescription"),
+        variant:'error',
       });
     }
 

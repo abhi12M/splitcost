@@ -1,17 +1,37 @@
 import * as React from "react";
 
-import type { ToastActionElement, ToastProps } from "@/components/ui/toast";
+import type {
+  ToastActionElement,
+  ToastCustomColor,
+  ToastProps,
+} from "@/components/ui/toast";
+import { type ToastIconName, type ToastVariant, toastVariantConfig } from "@/components/ui/toast-config";
 
-const TOAST_LIMIT = 1;
-const TOAST_REMOVE_DELAY = 1000000;
+// Toast state manager: `toast({ ... })` adds data here; <Toaster /> reads and displays it.
+const TOAST_LIMIT = 3;
+const TOAST_REMOVE_DELAY = 1_000;
 
-type ToasterToast = ToastProps & {
+const TOAST_DEFAULT_DURATIONS: Record<ToastVariant, number> = Object.fromEntries(
+  Object.entries(toastVariantConfig).map(([variant, config]) => [variant, config.duration]),
+) as Record<ToastVariant, number>;
+
+export type ToastCallbackAction = {
+  label: string;
+  callback: () => void;
+};
+
+type ToasterToast = Omit<ToastProps, "variant"> & {
   id: string;
+  /** Preferred single-line API. `title` and `description` remain supported for existing call sites. */
+  message?: React.ReactNode;
+  variant?: ToastVariant;
   title?: React.ReactNode;
   description?: React.ReactNode;
-  action?: ToastActionElement;
-  hideClose?: boolean
+  action?: ToastActionElement | ToastCallbackAction;
+  dismissible?: boolean;
   position?: "center" | "top-right" | "bottom-right" | "top-center" | "bottom-center"
+  customColor?: ToastCustomColor;
+  icon?: React.ReactNode | React.ElementType | ToastIconName;
 };
 
 const actionTypes = {
@@ -134,12 +154,14 @@ function dispatch(action: Action) {
   });
 }
 
-type Toast = Omit<ToasterToast, "id">;
+/** The options accepted by `toast({ ... })`. */
+export type ToastOptions = Omit<ToasterToast, "id">;
 
-function toast({ ...props }: Toast) {
+function toast({ ...props }: ToastOptions) {
   const id = genId();
+  const variant = props.variant ?? "info";
 
-  const update = (props: ToasterToast) =>
+  const update = (props: Partial<ToasterToast>) =>
     dispatch({
       type: "UPDATE_TOAST",
       toast: { ...props, id },
@@ -150,6 +172,8 @@ function toast({ ...props }: Toast) {
     type: "ADD_TOAST",
     toast: {
       ...props,
+      variant,
+      duration: props.duration ?? TOAST_DEFAULT_DURATIONS[variant],
       id,
       open: true,
       onOpenChange: (open) => {
@@ -176,7 +200,7 @@ function useToast() {
         listeners.splice(index, 1);
       }
     };
-  }, [state]);
+  }, []);
 
   return {
     ...state,
@@ -185,4 +209,4 @@ function useToast() {
   };
 }
 
-export { useToast, toast };
+export { TOAST_DEFAULT_DURATIONS, useToast, toast };

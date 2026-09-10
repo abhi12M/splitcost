@@ -413,7 +413,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
         throw new Error(data?.error ?? "Unable to delete blog post");
       }
 
-      toast({ title: "Blog post deleted" });
+      toast({ title: "Blog post deleted", variant:'success',});
       router.replace(`${ADMIN_BASE_PATH}/blogs?updated=${Date.now()}`);
     } catch (deleteError) {
       toast({

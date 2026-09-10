@@ -165,26 +165,6 @@ export default function ExpenseFormMobile({
     const validation = validate();
     if (!validation.valid) {
       showValidationToast(validation.errors);
-
-      /*
-      toast({
-        title: tCommon("missingRequired"),
-        description: (
-          <div className="space-y-1">
-            {errorMessages.map((msg, idx) => (
-              <div key={idx}>
-                {errorMessages.length > 1 && "• "}
-                {msg}
-              </div>
-            ))}
-          </div>
-        ),
-        position: "center",
-        hideClose: true,
-        duration: Infinity,
-        action: <ToastAction altText={tCommon("ok")}>{tCommon("ok")}</ToastAction>,
-      });
-      */
       return;
     };
 
@@ -231,7 +211,8 @@ export default function ExpenseFormMobile({
         </div>
       ),
       position: "center",
-      hideClose: true,
+      variant:'error',
+      dismissible: false,
       duration: Infinity,
       action: <ToastAction altText="OK">OK</ToastAction>,
     });
@@ -352,23 +333,6 @@ export default function ExpenseFormMobile({
     const validation = validate("split-screen");
     if (!validation.valid) {
       showValidationToast(validation.errors);
-
-      /*
-      toast({
-        title: tCommon("missingRequired"),
-        description: (
-          <div className="space-y-1">
-            {errorMessages.map((msg, idx) => (
-              <div key={idx}>• {msg}</div>
-            ))}
-          </div>
-        ),
-        position: "center",
-        hideClose: true,
-        duration: Infinity,
-        action: <ToastAction altText={tCommon("ok")}>{tCommon("ok")}</ToastAction>,
-      });
-      */
       return;
     };
     setShowSplit(true);

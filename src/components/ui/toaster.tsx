@@ -1,7 +1,20 @@
 import * as React from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useBackButtonClose } from "@/hooks/useBackButtonClose";
-import { Toast, ToastClose, ToastDescription, ToastProvider, ToastTitle, ToastViewport } from "@/components/ui/toast";
+import {
+  toastIconNames,
+  Toast,
+  ToastAction,
+  ToastClose,
+  ToastDescription,
+  ToastProvider,
+  ToastTitle,
+  ToastViewport,
+} from "@/components/ui/toast";
+import { toastVariantConfig } from "@/components/ui/toast-config";
+import { cn } from "@/lib/utils";
+
+// Display manager: reads active toast data, combines it with UI pieces, and renders it on screen.
 const positionClasses = {
   "top-right": "top-4 left-1/2 -translate-x-1/2 sm:left-auto sm:right-4 sm:translate-x-0",
   "bottom-right": "bottom-4 left-1/2 -translate-x-1/2 sm:left-auto sm:right-4 sm:translate-x-0",
@@ -13,9 +26,11 @@ const positionClasses = {
 export function Toaster() {
   const { toasts, dismiss } = useToast();
   const openToast = toasts.find((toast) => toast.open);
+  // Persistent toasts behave like overlays: Back closes them before navigating away.
+  const persistentToast = toasts.find((toast) => toast.open && toast.duration === Infinity);
 
-  useBackButtonClose(Boolean(openToast), () => {
-    if (openToast) dismiss(openToast.id);
+  useBackButtonClose(Boolean(persistentToast), () => {
+    if (persistentToast) dismiss(persistentToast.id);
   });
 
   React.useEffect(() => {
@@ -49,17 +64,46 @@ export function Toaster() {
     <ToastProvider>
       {Object.entries(grouped).map(([pos, items]) => (
         <ToastViewport key={pos} className={`${positionClasses[pos]} z-[100]`}>
-          {items.map(({ id, title, description, action, hideClose, ...props }) => (
-            <Toast key={id} data-app-toast="" {...props}>
-              <div className="grid min-w-0 gap-1">
-                {title && <ToastTitle>{title}</ToastTitle>}
-                {description && <ToastDescription>{description}</ToastDescription>}
-              </div>
+          {items.map(({ id, title, description, message, action, dismissible, icon, customColor, variant = "info", ...props }) => {
+            // Combine the stored toast data with the variant's shared visual rules.
+            const config = toastVariantConfig[variant];
+            const Icon = typeof icon === "string" ? toastIconNames[icon] : typeof icon === "function" ? icon : config.icon;
+            const customStyle = {
+              "--toast-accent": variant === "custom"
+                ? (customColor?.accent ?? config.accent)
+                : config.accent,
+              ...(variant === "custom" ? {
+                "--toast-background": customColor?.background ?? config.background,
+              } : {}),
+            } as React.CSSProperties;
+            const shouldShowClose = dismissible ?? true;
+            const callbackAction = action && !React.isValidElement(action) ? action : undefined;
+            const legacyAction = React.isValidElement(action) ? action : null;
 
-              {action}
-              {!hideClose && <ToastClose />}
-            </Toast>
-          ))}
+            return (
+              <Toast key={id} data-app-toast="" variant={variant} style={customStyle} {...props}>
+                {React.isValidElement(icon) ? <span className="shrink-0 text-[color:var(--toast-accent)]">{icon}</span> : Icon ? (
+                  <Icon className={cn("h-5 w-5 shrink-0", config.iconClassName)} aria-hidden="true" />
+                ) : null}
+
+                <div className="min-w-0 flex-1">
+                  {message ? <ToastDescription className="text-foreground">{message}</ToastDescription> : (
+                    <div className="grid min-w-0 gap-1">
+                      {title && <ToastTitle>{title}</ToastTitle>}
+                      {description && <ToastDescription>{description}</ToastDescription>}
+                    </div>
+                  )}
+                </div>
+
+                {callbackAction ? (
+                  <ToastAction altText={callbackAction.label} onClick={() => callbackAction.callback()}>
+                    {callbackAction.label}
+                  </ToastAction>
+                ) : legacyAction}
+                {shouldShowClose && <ToastClose aria-label="Dismiss notification" />}
+              </Toast>
+            );
+          })}
         </ToastViewport>
       ))}
     </ToastProvider>

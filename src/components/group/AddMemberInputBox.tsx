@@ -5,7 +5,8 @@ import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-interface AddMemberInputBoxProps {
+interface AddMemberInputBoxProps {
+  inputRef?: React.Ref<HTMLInputElement>;
   value: string;
   onChange: (value: string) => void;
   onAdd: () => void;
@@ -15,7 +16,8 @@ interface AddMemberInputBoxProps {
   invalid?: boolean;
 }
 
-export function AddMemberInputBox({
+export function AddMemberInputBox({
+  inputRef,
   value,
   onChange,
   onAdd,
@@ -37,7 +39,8 @@ export function AddMemberInputBox({
         className
       )}
     >
-      <Input
+        <Input
+          ref={inputRef}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={resolvedPlaceholder}

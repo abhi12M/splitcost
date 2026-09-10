@@ -6,7 +6,6 @@ import { ReactNode, useState } from "react";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
 import { DATA_STALE_TIME_MS } from "@/lib/queryConfig";
 
 export default function AppProviders({ children }: { children: ReactNode }) {
@@ -34,7 +33,6 @@ export default function AppProviders({ children }: { children: ReactNode }) {
       <ThemeProvider>
         <TooltipProvider>
           <Toaster />
-          <Sonner />
           {children}
         </TooltipProvider>
       </ThemeProvider>

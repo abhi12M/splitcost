@@ -681,6 +681,7 @@ export default function GroupResponsesPage({
       toast({
         title: t("nothingToShare"),
         description: t("nothingToShareHint"),
+        variant:'info',
       });
       return;
     }
@@ -708,6 +709,7 @@ export default function GroupResponsesPage({
           type === "link"
             ? t("copiedLinkHint")
             : t("copiedSettlementHint"),
+        variant:'info',
       });
     } else if (outcome === "failed") {
       toast({
@@ -747,6 +749,7 @@ export default function GroupResponsesPage({
       toast({
         title: t("nothingToExport"),
         description: search ? t("noSearchExport") : t("addBeforeExport"),
+        variant:'info',
       });
       return;
     }
@@ -778,6 +781,7 @@ export default function GroupResponsesPage({
     toast({
       title: t("exportReady"),
       description: t("exportReadyDescription", { count: exportExpenses.length }),
+      variant:'info',
     });
   };
 

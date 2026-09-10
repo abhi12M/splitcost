@@ -47,7 +47,14 @@ import {
   useGroupDashboardQuery,
 } from "@/lib/queries";
 import { cn } from "@/lib/utils";
-import { GroupSchema, MemberNameSchema, MEMBERS_MAX } from "@/lib/validations/group.schema";
+import {
+  GROUP_NAME_MAX,
+  MEMBER_NAME_MAX,
+  MEMBERS_MAX,
+  MEMBERS_MIN,
+} from "@/lib/validations/group.schema";
+import { createGroupSchemas } from "@/lib/validations/group.schema.i18n";
+import { hasDuplicateMemberNames, isMemberNameAlreadyAdded } from "@/lib/validations/group-members";
 
 type RemovalState = {
   canRemove: boolean;
@@ -200,6 +207,19 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
   const tDetails = useTranslations("groupDetails");
   const tGroup = useTranslations("group");
   const tCommon = useTranslations("common");
+  const tVal = useTranslations("group.validation");
+  const { GroupSchema, MemberNameSchema } = useMemo(
+    () =>
+      createGroupSchemas({
+        memberNameRequired: tVal("memberNameRequired"),
+        memberNameMax: tVal("memberNameMax", { max: MEMBER_NAME_MAX }),
+        groupNameRequired: tVal("groupNameRequired"),
+        groupNameMax: tVal("groupNameMax", { max: GROUP_NAME_MAX }),
+        membersMin: tVal("membersMin", { min: MEMBERS_MIN }),
+        membersMax: tVal("membersMax", { max: MEMBERS_MAX }),
+      }),
+    [tVal]
+  );
   const balanceLabels = useMemo(
     () => ({
       getsBack: t("getsBack"),
@@ -233,6 +253,18 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
     memberExists?: string;
   }>({});
   const [memberRenameError, setMemberRenameError] = useState<string | undefined>();
+
+  const showValidationToast = (message: string) => {
+    toast({
+      title: tCommon("missingRequired"),
+      description: message,
+      position: "center",
+      dismissible: false,
+      duration: Infinity,
+      action: <ToastAction altText={tCommon("ok")}>{tCommon("ok")}</ToastAction>,
+      variant: "error",
+    });
+  };
 
   useEffect(() => {
     formInitializedForGroupId.current = null;
@@ -275,10 +307,10 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
     const memberResult = MemberNameSchema.safeParse(newMemberName);
     setErrors((prev) => ({
       ...prev,
+      // The user is adding a member, so the previous minimum-member error is being corrected.
+      members: undefined,
       memberName: memberResult.success ? undefined : memberResult.error.issues[0]?.message,
-      memberExists: members.some(
-        (member) => member.name.trim().toLowerCase() === trimmed.toLowerCase()
-      )
+      memberExists: isMemberNameAlreadyAdded(members.map((member) => member.name), trimmed)
         ? tGroup("memberAlreadyAdded")
         : undefined,
     }));
@@ -390,7 +422,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
       }
     }
 
-    if (new Set(names).size !== names.length) {
+    if (hasDuplicateMemberNames(names)) {
       setErrors((current) => ({
         ...current,
         memberExists: t("uniqueNamesRequired"),
@@ -404,28 +436,34 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
 
   const handleAddMember = () => {
     if (members.length >= MEMBERS_MAX) {
+      const message = `Maximum ${MEMBERS_MAX} members allowed.`;
       setErrors((current) => ({
         ...current,
-        members: `Maximum ${MEMBERS_MAX} members allowed.`,
+        members: message,
       }));
+      if (!isMdUp) showValidationToast(message);
       return;
     }
 
     const memberResult = MemberNameSchema.safeParse(newMemberName);
     if (!memberResult.success) {
+      const message = memberResult.error.issues[0].message;
       setErrors((current) => ({
         ...current,
-        memberName: memberResult.error.issues[0].message,
+        memberName: message,
       }));
+      if (!isMdUp) showValidationToast(message);
       return;
     }
 
     const trimmedName = newMemberName.trim();
-    if (members.some((member) => member.name.trim().toLowerCase() === trimmedName.toLowerCase())) {
+    if (isMemberNameAlreadyAdded(members.map((member) => member.name), trimmedName)) {
+      const message = tGroup("memberAlreadyAdded");
       setErrors((current) => ({
         ...current,
-        memberExists: tGroup("memberAlreadyAdded"),
+        memberExists: message,
       }));
+      if (!isMdUp) showValidationToast(message);
       return;
     }
 
@@ -463,10 +501,9 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
       }
 
       const trimmedName = value.trim();
-      const hasDuplicate = members.some(
-        (entry) =>
-          entry !== member &&
-          entry.name.trim().toLowerCase() === trimmedName.toLowerCase()
+      const hasDuplicate = isMemberNameAlreadyAdded(
+        members.filter((entry) => entry !== member).map((entry) => entry.name),
+        trimmedName
       );
 
       if (hasDuplicate) {
@@ -579,9 +616,10 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
               </div>
             ),
             position: "center",
-            hideClose: true,
+            dismissible: false,
             duration: Infinity,
             action: <ToastAction altText={tCommon("ok")}>{tCommon("ok")}</ToastAction>,
+            variant:'error',
           });
         }
       }
@@ -603,6 +641,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
       toast({
         title: t("groupUpdated"),
         description: t("groupUpdatedDescription"),
+        variant:'success',
       });
 
       router.push(`/group/${groupId}`);

@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { validateGroupInput } from "@/lib/validations/group.schema";
 
 type ActiveMemberRow = {
   user_id: string;
@@ -116,41 +117,27 @@ export async function PUT(
   { params }: { params: { groupId: string } }
 ) {
   const groupId = params.groupId;
-  const body = await req.json();
-  const { name, currency, members } = body;
-  const trimmedName = String(name ?? "").trim();
+  const body: unknown = await req.json();
+  if (!body || typeof body !== "object") {
+    return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+  }
+  const { name, currency, members } = body as Record<string, unknown>;
+  const normalizedCurrency = typeof currency === "string" ? currency.trim() : "";
 
-  if (!groupId || !trimmedName || !currency || !Array.isArray(members)) {
+  if (!groupId || !normalizedCurrency || !Array.isArray(members) || !members.every((member) => member && typeof member === "object")) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  if (members.length < 2 || members.length > 50) {
-    return NextResponse.json(
-      { error: "A group must have between 2 and 50 members." },
-      { status: 400 }
-    );
+  const submittedMembers = members as SubmittedMember[];
+  const validation = validateGroupInput(name, submittedMembers.map((member) => member.name));
+  if (!validation.success) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
   }
 
-  const normalizedMembers = (members as SubmittedMember[]).map((member) => ({
+  const normalizedMembers = submittedMembers.map((member, index) => ({
     id: member.id ? String(member.id).trim() : undefined,
-    name: String(member.name ?? "").trim(),
+    name: validation.data.memberNames[index],
   }));
-
-  if (normalizedMembers.some((member) => !member.name)) {
-    return NextResponse.json(
-      { error: "Member names cannot be empty." },
-      { status: 400 }
-    );
-  }
-
-  const normalizedNames = normalizedMembers.map((member) => member.name);
-
-  if (new Set(normalizedNames).size !== normalizedNames.length) {
-    return NextResponse.json(
-      { error: "Member names must be unique." },
-      { status: 400 }
-    );
-  }
 
   try {
     const currentMembers = await getActiveGroupMembers(groupId);
@@ -208,8 +195,8 @@ export async function PUT(
     const { error: groupError } = await supabaseAdmin
       .from("groups")
       .update({
-        name: trimmedName,
-        currency,
+        name: validation.data.groupName,
+        currency: normalizedCurrency,
         updated_at: new Date().toISOString(),
       })
       .eq("id", groupId);
@@ -291,8 +278,8 @@ export async function PUT(
 
     return NextResponse.json({
       id: groupId,
-      name: trimmedName,
-      currency,
+      name: validation.data.groupName,
+      currency: normalizedCurrency,
       members: updatedMembers.map((member) => ({
         id: member.userId,
         name: member.name,
