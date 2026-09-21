@@ -4,7 +4,6 @@ import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { Link, useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
-import { useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
   ArrowLeft,
@@ -56,13 +55,7 @@ import {
   saveExpenseAttachment,
   validateAttachmentFile,
 } from "@/lib/expenseAttachments";
-import {
-  evictExpense,
-  invalidateGroupDashboard,
-  patchExpenseAttachmentInDashboard,
-  queryKeys,
-  useExpenseQuery,
-} from "@/lib/queries";
+import { useExpense } from "@/lib/groupExpenseData";
 import { getGroupViewerMemberId } from "@/lib/groupViewer";
 import { memberNameForViewer } from "@/lib/groupExpenseLabels";
 import { formatSummaryName } from "@/components/ui/formatters";
@@ -73,7 +66,6 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { SingleSelect } from "@/components/ui/single-select";
 import { hasExpenseNotesContent, sanitizeExpenseNotes } from "@/lib/expenseNotes";
-import { clearCachedExpense } from "@/lib/expenseCache";
 import { useBackButtonClose } from "@/hooks/useBackButtonClose";
 
 function memberName(
@@ -250,38 +242,18 @@ export default function ExpenseDetailsPage({
   expenseId: string;
 }) {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const t = useTranslations("expense");
   const tCommon = useTranslations("common");
   const attachmentGalleryInputRef = useRef<HTMLInputElement>(null);
   const attachmentCameraInputRef = useRef<HTMLInputElement>(null);
 
-  // React Query owns expense fetching. With initialData hydrated from the
-  // session cache and a 30s staleTime, navigating view -> edit (or vice
-  // versa) inside that window reuses the cached data and fires zero new
-  // requests. After a save we invalidate the key so the next mount refetches.
-  const expenseQuery = useExpenseQuery(expenseId);
-  const details = expenseQuery.data ?? null;
-  const loading = expenseQuery.isPending;
+  const { data: details, loading, setData: setDetails } = useExpense(expenseId);
 
   const [viewerMemberId, setViewerMemberId] = useState<string | null>(null);
   useEffect(() => {
     setViewerMemberId(getGroupViewerMemberId(groupId));
   }, [groupId]);
 
-  // `removeQueries` while `useExpenseQuery` is still subscribed triggers an
-  // automatic refetch → GET /api/expenses/:id → 404 after delete. Defer
-  // eviction until this component unmounts so no observer asks for data.
-  const evictExpenseAfterUnmountRef = useRef<string | null>(null);
-  useEffect(() => {
-    return () => {
-      const id = evictExpenseAfterUnmountRef.current;
-      if (id && id === expenseId) {
-        evictExpense(queryClient, id);
-        evictExpenseAfterUnmountRef.current = null;
-      }
-    };
-  }, [expenseId, queryClient]);
   const [attachmentOverride, setAttachmentOverride] =
     useState<ExpenseAttachment | null | undefined>(undefined);
   // Tracks any attachment save kicked off in the background by the Add /
@@ -305,13 +277,9 @@ export default function ExpenseDetailsPage({
     ? pendingUpload.intent
     : cachedAttachment;
 
-  // Mutating the attachment also has to update the React Query cache,
-  // otherwise the next page that reads the same query (e.g. the edit page)
-  // would render with the stale attachment value.
   const setAttachment = (next: ExpenseAttachment | null) => {
     setAttachmentOverride(next);
-    queryClient.setQueryData<EditExpenseInterface | null>(
-      queryKeys.expense(expenseId),
+    setDetails(
       (current) =>
         current
           ? {
@@ -326,13 +294,6 @@ export default function ExpenseDetailsPage({
             }
           : current
     );
-    patchExpenseAttachmentInDashboard(
-      queryClient,
-      groupId,
-      expenseId,
-      Boolean(next)
-    );
-    void invalidateGroupDashboard(queryClient, groupId);
   };
 
   const [isDeletingExpense, setIsDeletingExpense] = useState(false);
@@ -360,8 +321,8 @@ export default function ExpenseDetailsPage({
       dismissAttachmentUpload(expenseId);
 
       // Only call delete-attachment if the SERVER actually has one.
-      // `cachedAttachment` reflects the React Query cache (i.e. server
-      // state), whereas `attachment` may be a local pending preview.
+      // `cachedAttachment` reflects server state, whereas `attachment` may
+      // be a local pending preview.
       if (cachedAttachment) {
         try {
           await deleteExpenseAttachment(expenseId);
@@ -372,8 +333,6 @@ export default function ExpenseDetailsPage({
         }
       }
       await deleteExpense(expenseId);
-      evictExpenseAfterUnmountRef.current = expenseId;
-      invalidateGroupDashboard(queryClient, groupId);
       router.push(`/group/${groupId}`);
     } finally {
       setIsDeletingExpense(false);
@@ -449,11 +408,8 @@ export default function ExpenseDetailsPage({
     );
 
     if (updatedExpense) {
-      // Update the React Query cache in place so the page reflects the new
-      // category/subcategory immediately and the dashboard refetch (kicked
-      // off below) is the only network call this action makes.
-      queryClient.setQueryData<EditExpenseInterface | null>(
-        queryKeys.expense(expenseId),
+      // Keep the category selection in the currently displayed detail data.
+      setDetails(
         (current) =>
           current
             ? {
@@ -467,8 +423,6 @@ export default function ExpenseDetailsPage({
               }
             : current
       );
-      clearCachedExpense(expenseId);
-      invalidateGroupDashboard(queryClient, groupId);
     }
 
     setIsUpdatingCategory(false);

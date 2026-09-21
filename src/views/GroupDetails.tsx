@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
 import NextLink from "next/link";
 import { Link } from "@/i18n/navigation";
-import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Plus,
@@ -57,10 +56,8 @@ import {
   GroupDashboardInterface,
   UserInterface,
 } from "@/lib/storage";
-import {
-  invalidateGroupDashboard,
-  useGroupDashboardQuery,
-} from "@/lib/queries";
+import { useGroupDashboard } from "@/lib/groupExpenseData";
+import { useAttachmentUploadCompletion } from "@/lib/attachmentUploads";
 import { SingleSelect } from "@/components/ui/single-select";
 import { formatExpenseGroupHeaderTitle, toTitleCase } from "@/components/ui/formatters";
 import { resolveCategoryDisplayLabel } from "@/lib/category-labels";
@@ -457,8 +454,12 @@ export default function GroupResponsesPage({
     [tCategories]
   );
   const youLabel = tGroup("you");
-  const queryClient = useQueryClient();
-  const dashboardQuery = useGroupDashboardQuery(groupId);
+  const { data: dashboard, loading, refresh } = useGroupDashboard(groupId);
+  const attachmentUploadVersion = useAttachmentUploadCompletion(groupId);
+
+  useEffect(() => {
+    if (attachmentUploadVersion > 0) void refresh();
+  }, [attachmentUploadVersion, refresh]);
 
   const groupByOptions = useMemo(
     () => [
@@ -479,9 +480,8 @@ export default function GroupResponsesPage({
     [t]
   );
 
-  const group = dashboardQuery.data?.group ?? null;
-  const expenses = dashboardQuery.data?.expenses ?? [];
-  const loading = dashboardQuery.isPending;
+  const group = dashboard?.group ?? null;
+  const expenses = dashboard?.expenses ?? [];
 
   const [viewerMemberId, setViewerMemberId] = useState<string | null>(null);
 
@@ -529,15 +529,13 @@ export default function GroupResponsesPage({
 
   const device = useDeviceType();
 
-  // Track this group in the user's local "recent groups" list whenever the
-  // dashboard loads it. Independent from data fetching now that React Query
-  // owns the request lifecycle.
+  // Track this group in the user's local "recent groups" list once it loads.
   useEffect(() => {
-    if (!groupId || isAdminView || !dashboardQuery.data) return;
+    if (!groupId || isAdminView || !dashboard) return;
     const existingGroups = getEncryptedItem<string[]>(LOCAL_GROUPS_KEY, []);
     const updatedGroups = Array.from(new Set([groupId, ...existingGroups]));
     setEncryptedItem(LOCAL_GROUPS_KEY, updatedGroups);
-  }, [groupId, isAdminView, dashboardQuery.data]);
+  }, [groupId, isAdminView, dashboard]);
 
   /* ======================================================
      FILTER / SORT / GROUP
@@ -803,7 +801,7 @@ export default function GroupResponsesPage({
         ]
       }
       await addExpense(groupId!, data);
-      await invalidateGroupDashboard(queryClient, groupId!);
+      await refresh();
     } catch (error) {
       // toast.error("Failed to delete expense");
     } finally {

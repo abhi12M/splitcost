@@ -3,7 +3,6 @@
 import { Link, useRouter } from "@/i18n/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
   AlertTriangle,
@@ -42,11 +41,7 @@ import {
   GroupFormMember,
   updateGroup,
 } from "@/lib/storage";
-import {
-  applyGroupResponseToCache,
-  refreshGroupData,
-  useGroupDashboardQuery,
-} from "@/lib/queries";
+import { useGroupDashboard } from "@/lib/groupExpenseData";
 import { cn } from "@/lib/utils";
 import {
   GROUP_NAME_MAX,
@@ -234,12 +229,9 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
     [t]
   );
   const router = useRouter();
-  const queryClient = useQueryClient();
   const { toast } = useToast();
   const isMdUp = useMdUp();
-  const dashboardQuery = useGroupDashboardQuery(groupId);
-  const dashboard = dashboardQuery.data ?? null;
-  const loading = dashboardQuery.isPending && dashboard === null;
+  const { data: dashboard, loading } = useGroupDashboard(groupId);
   const formInitializedForGroupId = useRef<string | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -615,14 +607,11 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
     setIsSubmitting(true);
 
     try {
-      const updated = await updateGroup(groupId, {
+      await updateGroup(groupId, {
         name: trimmedGroupName,
         currency,
         members: normalizedMembers.map(({ id, name }) => ({ id, name })),
       });
-
-      applyGroupResponseToCache(queryClient, groupId, updated);
-      await refreshGroupData(queryClient, groupId);
 
       toast({
         title: t("groupUpdated"),
@@ -631,7 +620,6 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
       });
 
       router.push(`/group/${groupId}`);
-      router.refresh();
     } catch (error) {
       const message =
         error instanceof Error ? error.message : t("failedUpdate");

@@ -3,7 +3,6 @@
 import { Link, useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
@@ -15,24 +14,16 @@ import { ExpenseFormSkeleton } from "@/components/expense/ExpenseFormSkeleton";
 import { Spinner } from "@/components/ui/Spinner";
 import { ExpenseAttachment } from "@/lib/expenseAttachments";
 import { startAttachmentUpload } from "@/lib/attachmentUploads";
-import {
-  invalidateExpense,
-  invalidateGroupDashboard,
-  useExpenseQuery,
-} from "@/lib/queries";
+import { useExpense } from "@/lib/groupExpenseData";
 import { getGroupViewerMemberId } from "@/lib/groupViewer";
 
 export default function EditExpensePage({ groupId, expenseId }: { groupId: string; expenseId: string }) {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const t = useTranslations("expense");
   const tCommon = useTranslations("common");
-  // React Query backs the expense fetch. Hydrating from sessionStorage means
-  // navigating view -> edit within the staleTime window (30s) renders the
-  // form instantly with zero new network requests.
-  const expenseQuery = useExpenseQuery(expenseId);
-  const group = expenseQuery.data?.group;
-  const expense = expenseQuery.data?.expense;
+  const { data: expenseData, loading } = useExpense(expenseId);
+  const group = expenseData?.group;
+  const expense = expenseData?.expense;
   // Local override so successful save flows can swap the saved attachment in
   // before we navigate away from the page.
   const [attachmentOverride, setAttachmentOverride] =
@@ -41,7 +32,6 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
     attachmentOverride !== undefined
       ? attachmentOverride
       : expense?.attachment ?? null;
-  const loading = expenseQuery.isPending;
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (loading) {
@@ -83,7 +73,7 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
       const isNewFile = Boolean(data.attachment?.file);
       const isRemoval = data.attachment === null && Boolean(attachment);
       if (isNewFile || isRemoval) {
-        startAttachmentUpload(queryClient, expenseId!, data.attachment ?? null);
+        startAttachmentUpload(groupId, expenseId!, data.attachment ?? null);
         // Reflect the user's intent locally for the brief moment before we
         // navigate away. (The view page reads the upload store directly.)
         setAttachmentOverride(data.attachment ?? null);
@@ -92,8 +82,6 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
       // Invalidate so the next mount of view/edit and the dashboard refetch
       // fresh data, but the user-perceived hop back is instant (cached
       // dashboard renders immediately, refetch happens in the background).
-      invalidateExpense(queryClient, expenseId);
-      invalidateGroupDashboard(queryClient, groupId);
       router.push(`/group/${groupId}`);
     } catch (error) {
       setIsSubmitting(false);
