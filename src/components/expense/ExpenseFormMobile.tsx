@@ -25,8 +25,7 @@ import SplitScreen from "./SplitScreen"
 import PaidBySheet from "./PaidBySheet"
 import { useKeyboardLayout } from "@/hooks/useKeyboardOffset"
 import { useBackButtonClose } from "@/hooks/useBackButtonClose"
-import { toast } from "@/hooks/use-toast"
-import { ToastAction } from "../ui/toast"
+import { GenericAlertDialog } from "../ui/generic-alert-dialog"
 import { AvatarGroup } from "../ui/UserAvatar"
 import { fieldErrorStyles } from "@/lib/brand-styles"
 import { cn } from "@/lib/utils"
@@ -128,6 +127,7 @@ export default function ExpenseFormMobile({
   };
 
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [validationDialog, setValidationDialog] = useState<{ title: string; messages: string[] } | null>(null);
   const isFirstRender = useRef(true);
 
 
@@ -164,7 +164,7 @@ export default function ExpenseFormMobile({
     setHasSubmitted(true);
     const validation = validate();
     if (!validation.valid) {
-      showValidationToast(validation.errors);
+      showValidationDialog(validation.errors);
       return;
     };
 
@@ -194,27 +194,11 @@ export default function ExpenseFormMobile({
     split?: string;
   }>({});
 
-  const showValidationToast = (validationErrors: typeof errors) => {
+  const showValidationDialog = (validationErrors: typeof errors) => {
     const errorMessages = Object.values(validationErrors).filter(Boolean);
-    const hasCustomTotalsError = Boolean(validationErrors.split || validationErrors.payers);
-
-    toast({
-      title: hasCustomTotalsError ? tCommon("whoops") : tCommon("missingRequired"),
-      description: (
-        <div className="space-y-1">
-          {errorMessages.map((msg, idx) => (
-            <div key={idx}>
-              {errorMessages.length > 1 && "\u2022 "}
-              {msg}
-            </div>
-          ))}
-        </div>
-      ),
-      position: "center",
-      variant:'error',
-      dismissible: false,
-      duration: Infinity,
-      action: <ToastAction altText="OK">OK</ToastAction>,
+    setValidationDialog({
+      title: tCommon("cannotSaveExpense"),
+      messages: errorMessages as string[],
     });
   };
 
@@ -332,7 +316,7 @@ export default function ExpenseFormMobile({
   const handleOpenSlitScreen = () => {
     const validation = validate("split-screen");
     if (!validation.valid) {
-      showValidationToast(validation.errors);
+      showValidationDialog(validation.errors);
       return;
     };
     setShowSplit(true);
@@ -640,6 +624,13 @@ export default function ExpenseFormMobile({
         payers={payers}
         onSelectSingle={handleSelectSinglePayer}
         onConfirmMultiple={handleConfirmMultiplePayers}
+      />
+      <GenericAlertDialog
+        open={validationDialog !== null}
+        onOpenChange={(open) => !open && setValidationDialog(null)}
+        title={validationDialog?.title ?? tCommon("cannotSaveExpense")}
+        messages={validationDialog?.messages ?? []}
+        actions={[{ label: tCommon("gotIt"), onClick: () => setValidationDialog(null) }]}
       />
     </>
   )

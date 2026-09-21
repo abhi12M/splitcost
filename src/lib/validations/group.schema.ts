@@ -5,7 +5,7 @@ import { hasDuplicateMemberNames } from "@/lib/validations/group-members";
 export const GROUP_NAME_MAX = 50;
 export const MEMBER_NAME_MAX = 30;
 export const MEMBERS_MIN = 2;
-export const MEMBERS_MAX = 50;
+export const MEMBERS_MAX = 4;
 
 export const MemberNameSchema = z
   .string()

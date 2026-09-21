@@ -4,16 +4,7 @@ import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Camera, Images, ImagePlus, Loader2, Pencil, Trash2, X } from "lucide-react";
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { GenericAlertDialog } from "@/components/ui/generic-alert-dialog";
 import {
   Drawer,
   DrawerContent,
@@ -302,31 +293,16 @@ export function ExpenseAttachmentControl({
         </DrawerContent>
       </Drawer>
 
-      <AlertDialog
+      <GenericAlertDialog
         open={isDeleteConfirmOpen}
         onOpenChange={setIsDeleteConfirmOpen}
-      >
-        <AlertDialogContent className="max-w-[290px] rounded-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-lg">{t("deleteImageTitle")}</AlertDialogTitle>
-            <AlertDialogDescription className="text-xs">
-              {t("deleteImageDescription")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="mt-4 flex-row gap-2">
-            <AlertDialogCancel className="mt-0 flex-1 rounded-xl border-none bg-muted hover:bg-muted/80">
-              {tCommon("cancel")}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={clearAttachment}
-              disabled={isReadingFile}
-              className="flex-1 rounded-xl bg-destructive text-white hover:bg-destructive/90"
-            >
-              {tCommon("delete")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        title={t("deleteImageTitle")}
+        description={t("deleteImageDescription")}
+        actions={[
+          { label: tCommon("cancel"), type: "cancel", className: "mt-0 flex-1 border-none bg-muted hover:bg-muted/80" },
+          { label: tCommon("delete"), onClick: clearAttachment, disabled: isReadingFile, className: "flex-1 bg-destructive text-white hover:bg-destructive/90" },
+        ]}
+      />
     </div>
   );
 }

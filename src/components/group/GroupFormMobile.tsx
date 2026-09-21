@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { ArrowLeft, Check, ChevronDown, Users, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Check, ChevronDown, Users, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { SingleSelect } from "@/components/ui/single-select";
 import { AddMemberInputBox } from "@/components/group/AddMemberInputBox";
@@ -19,18 +19,7 @@ import {
 } from "@/lib/validations/group.schema";
 import { createGroupSchemas } from "@/lib/validations/group.schema.i18n";
 import { isMemberNameAlreadyAdded } from "@/lib/validations/group-members";
-import { toast } from "@/hooks/use-toast";
-import { ToastAction } from "@/components/ui/toast";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { GenericAlertDialog } from "@/components/ui/generic-alert-dialog";
 
 interface GroupFormMobileProps {
   backHref?: string;
@@ -68,6 +57,8 @@ export function GroupFormMobile({
   const [newMember, setNewMember] = useState("");
   const [pendingMemberConfirmation, setPendingMemberConfirmation] = useState<string | null>(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [validationMessages, setValidationMessages] = useState<string[]>([]);
+  const [isDuplicateMemberDialog, setIsDuplicateMemberDialog] = useState(false);
   const memberInputRef = useRef<HTMLInputElement>(null);
   const [errors, setErrors] = useState<{
     groupName?: string;
@@ -79,6 +70,10 @@ export function GroupFormMobile({
   const displayedPendingMember = pendingMemberConfirmation
     ? truncateMemberName(pendingMemberConfirmation)
     : null;
+  const isPendingMemberAlreadyAdded = pendingMemberConfirmation
+    ? isMemberNameAlreadyAdded(members, pendingMemberConfirmation)
+    : false;
+  const hasReachedMemberLimit = members.length >= MEMBERS_MAX;
 
   const validate = useCallback(() => {
     const result = GroupSchema.safeParse({ groupName, members });
@@ -125,11 +120,13 @@ export function GroupFormMobile({
       // The user is adding a member, so the previous minimum-member error is being corrected.
       members: undefined,
       memberName: memberResult.success ? undefined : memberResult.error.issues[0]?.message,
-      memberExists: isMemberNameAlreadyAdded(members, trimmed) ? t("memberAlreadyAdded") : undefined,
+      memberExists: isMemberNameAlreadyAdded(members, trimmed)
+        ? t("memberAlreadyAdded", { name: truncateMemberName(trimmed) })
+        : undefined,
     }));
   }, [newMember, members]);
 
-  function showValidationToast(validationErrors: typeof errors) {
+  function showValidationDialog(validationErrors: typeof errors) {
     const messages = [
       validationErrors.groupName,
       validationErrors.members,
@@ -139,45 +136,32 @@ export function GroupFormMobile({
 
     if (messages.length === 0) return;
 
-    toast({
-      title: tCommon("missingRequired"),
-      description: (
-        <div className="space-y-1">
-          {messages.map((msg, idx) => (
-            <div key={idx}>
-              {messages.length > 1 && "\u2022 "}
-              {msg}
-            </div>
-          ))}
-        </div>
-      ),
-      position: "center",
-      dismissible: false,
-      duration: Infinity,
-      action: <ToastAction altText={tCommon("ok")}>{tCommon("ok")}</ToastAction>,
-      variant:'error',
-    });
+    memberInputRef.current?.blur();
+    setIsDuplicateMemberDialog(Boolean(validationErrors.memberExists));
+    setValidationMessages(messages);
   }
 
   const handleAddMember = () => {
+    const trimmed = newMember.trim();
+    if (!trimmed) return;
+
     if (members.length >= MEMBERS_MAX) {
       const message = tVal("membersMax", { max: MEMBERS_MAX });
       setErrors((prev) => ({ ...prev, members: message }));
-      showValidationToast({ members: message });
+      showValidationDialog({ members: message });
       return;
     }
     const result = MemberNameSchema.safeParse(newMember);
     if (!result.success) {
       const message = result.error.issues[0].message;
       setErrors((prev) => ({ ...prev, memberName: message }));
-      showValidationToast({ memberName: message });
+      showValidationDialog({ memberName: message });
       return;
     }
-    const trimmed = newMember.trim();
     if (isMemberNameAlreadyAdded(members, trimmed)) {
-      const message = t("memberAlreadyAdded");
+      const message = t("memberAlreadyAdded", { name: truncateMemberName(trimmed) });
       setErrors((prev) => ({ ...prev, memberExists: message }));
-      showValidationToast({ memberExists: message });
+      showValidationDialog({ memberExists: message });
       return;
     }
     setMembers([...members, trimmed]);
@@ -198,7 +182,7 @@ export function GroupFormMobile({
     setHasSubmitted(true);
     const validation = validate();
     if (!validation.valid) {
-      showValidationToast(validation.errors);
+      showValidationDialog(validation.errors);
       return;
     }
 
@@ -282,17 +266,27 @@ export function GroupFormMobile({
             />
 
           <div className="space-y-3">
-            <AddMemberInputBox
-              inputRef={memberInputRef}
-              value={newMember}
-              onChange={setNewMember}
-              onAdd={handleAddMember}
-              disabled={members.length >= MEMBERS_MAX}
-              invalid={Boolean(errors.members || errors.memberName || errors.memberExists)}
-              placeholder={
-                members.length >= MEMBERS_MAX ? t("maximumMembersReached") : t("addMember")
-              }
-            />
+            {hasReachedMemberLimit ? (
+              <div
+                role="status"
+                className="flex items-center gap-3 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-amber-950 dark:text-amber-100"
+              >
+                <AlertTriangle className="h-6 w-6 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden />
+                <p className="text-sm leading-5">
+                  <span className="font-semibold">{t("memberLimitReached", { max: MEMBERS_MAX })}</span>{" "}
+                  {t("removeMemberToAdd")}
+                </p>
+              </div>
+            ) : (
+              <AddMemberInputBox
+                inputRef={memberInputRef}
+                value={newMember}
+                onChange={setNewMember}
+                onAdd={handleAddMember}
+                invalid={Boolean(errors.members || errors.memberName || errors.memberExists)}
+                placeholder={t("addMember")}
+              />
+            )}
 
             {members.length > 0 ? (
               <div className="space-y-2">
@@ -317,37 +311,49 @@ export function GroupFormMobile({
             ) : null}
           </div>
       </div>
-      <AlertDialog
+      <GenericAlertDialog
         open={pendingMemberConfirmation !== null}
         onOpenChange={(open) => {
           if (!open) setPendingMemberConfirmation(null);
         }}
-      >
-        <AlertDialogContent className="max-w-[min(100vw-2rem,22rem)] rounded-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("pendingMemberTitle")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {displayedPendingMember
-                ? t("pendingMemberDescription", { name: displayedPendingMember })
-                : ""}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="mt-4 gap-2">
-            <AlertDialogCancel
-              className="mt-0 w-full rounded-xl"
-              onClick={() => requestAnimationFrame(() => memberInputRef.current?.focus())}
-            >
-              {t("keepEditing")}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              className="w-full rounded-xl"
-              onClick={() => void submitGroup()}
-            >
-              {t("saveWithoutMember")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        title={isPendingMemberAlreadyAdded ? t("memberAlreadyInGroupTitle") : t("pendingMemberTitle")}
+        description={
+          <span>
+            {displayedPendingMember
+              ? isPendingMemberAlreadyAdded
+                ? t("memberAlreadyInGroupDescription", { name: displayedPendingMember })
+                : t("pendingMemberDescription", { name: displayedPendingMember })
+              : ""}
+          </span>
+        }
+        actions={[
+          {
+            label: t("keepEditing"),
+            type: "cancel",
+            className: "mt-0",
+            onClick: () => requestAnimationFrame(() => memberInputRef.current?.focus()),
+          },
+          { label: t("saveWithoutMember"), onClick: () => void submitGroup() },
+        ]}
+      />
+      <GenericAlertDialog
+        open={validationMessages.length > 0}
+        onOpenChange={(open) => {
+          if (!open) {
+            setValidationMessages([]);
+            setIsDuplicateMemberDialog(false);
+          }
+        }}
+        title={isDuplicateMemberDialog ? t("memberAlreadyAddedTitle") : tCommon("cannotSaveGroup")}
+        messages={validationMessages}
+        actions={[{
+          label: tCommon("gotIt"),
+          onClick: () => {
+            setValidationMessages([]);
+            setIsDuplicateMemberDialog(false);
+          },
+        }]}
+      />
     </MobileGroupFormLayout>
   );
 }

@@ -3,16 +3,7 @@
 import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { GenericAlertDialog } from "@/components/ui/generic-alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -319,30 +310,23 @@ export function BlogCategoryAdmin() {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete category?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {deleteTarget
-                ? `Delete "${deleteTarget.name}". This only works if no blog posts use this category.`
-                : null}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={deleting}
-              onClick={(event) => {
+      <GenericAlertDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Delete category?"
+        description={deleteTarget ? `Delete "${deleteTarget.name}". This only works if no blog posts use this category.` : undefined}
+        actions={[
+          { label: "Cancel", type: "cancel", disabled: deleting },
+          {
+            label: deleting ? "Deleting..." : "Delete",
+            disabled: deleting,
+            onClick: (event) => {
                 event.preventDefault();
                 void confirmDelete();
-              }}
-            >
-              {deleting ? "Deleting..." : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            },
+          },
+        ]}
+      />
     </div>
   );
 }

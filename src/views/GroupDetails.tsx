@@ -72,16 +72,7 @@ import { ADMIN_BASE_PATH, LOCAL_GROUPS_KEY } from "@/lib/constants";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { SmartTooltip } from "@/components/ui/smartTooltip";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { GenericAlertDialog } from "@/components/ui/generic-alert-dialog";
 
 function ChartLoadingPlaceholder() {
   const tCommon = useTranslations("common");
@@ -1420,19 +1411,15 @@ export default function GroupResponsesPage({
               </CardContent>
             </Card>
 
-            <AlertDialog
+            <GenericAlertDialog
               open={settleConfirmation !== null}
               onOpenChange={(open) => {
                 if (!open) setSettleConfirmation(null);
               }}
-            >
-              <AlertDialogContent className="max-w-[310px] rounded-2xl">
-                <AlertDialogHeader>
-                  <AlertDialogTitle className="text-lg">
-                    {t("recordSettlementTitle")}
-                  </AlertDialogTitle>
-                  <AlertDialogDescription className="text-xs">
-                    {settleConfirmation
+              title={t("recordSettlementTitle")}
+              titleClassName="text-lg"
+              descriptionClassName="text-xs"
+              description={<span>{settleConfirmation
                       ? t("recordSettlementDescriptionDesktop", {
                           from: memberDisplayNameForViewer(
                             settleConfirmation.settlement.fromId,
@@ -1449,33 +1436,25 @@ export default function GroupResponsesPage({
                             group.currency
                           ),
                         })
-                      : ""}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter className="flex-row gap-2 mt-4">
-                  <AlertDialogCancel className="flex-1 mt-0 rounded-xl border-none bg-muted hover:bg-muted/80">
-                    {tCommon("cancel")}
-                  </AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => {
+                      : ""}</span>}
+              contentClassName="max-w-[310px] rounded-2xl"
+              footerClassName="flex-row gap-2 mt-4"
+              actions={[
+                { label: tCommon("cancel"), type: "cancel", className: "flex-1 mt-0 border-none bg-muted hover:bg-muted/80" },
+                {
+                  label: tCommon("yesSettleUp"),
+                  className: "flex-1",
+                  onClick: () => {
                       if (!settleConfirmation) return;
                       handleSettle(
                         settleConfirmation.settlement,
                         settleConfirmation.index
                       );
-                    }}
-                    disabled={
-                      settleConfirmation
-                        ? settlingIndex === settleConfirmation.index
-                        : false
-                    }
-                    className="flex-1 rounded-xl"
-                  >
-                    {tCommon("yesSettleUp")}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+                  },
+                  disabled: settleConfirmation ? settlingIndex === settleConfirmation.index : false,
+                },
+              ]}
+            />
 
           </div>
         </div>

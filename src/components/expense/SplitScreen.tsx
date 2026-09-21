@@ -10,8 +10,7 @@ import { ExpenseParticipantsRequest, SplitType, UserInterface } from "@/lib/stor
 import { formatAmount, getCurrencyDifference, getRoundedDifference } from "../ui/formatters";
 import { useKeyboardLayout } from "@/hooks/useKeyboardOffset";
 import { useSwipeable } from "react-swipeable";
-import { toast } from "@/hooks/use-toast";
-import { ToastAction } from "@radix-ui/react-toast";
+import { GenericAlertDialog } from "../ui/generic-alert-dialog";
 import { InfoSheetButton } from "../ui/InfoSheetButton";
 import { getSplitInfoText } from "./expenseInfo";
 import { memberNameForViewer } from "@/lib/groupExpenseLabels";
@@ -304,6 +303,7 @@ export default function SplitScreen(props: SplitScreenProps) {
     const { onClose, amount, currency, members, viewerMemberId, initialParticipants, splitType, onConfirm } = props;
     const t = useTranslations("expense");
     const tCommon = useTranslations("common");
+    const [validationMessage, setValidationMessage] = useState<string | null>(null);
     const youLabel = useTranslations("group")("you");
     const { keyboardOffset } = useKeyboardLayout();
     const swipeHandlers = useSwipeable({
@@ -540,15 +540,7 @@ export default function SplitScreen(props: SplitScreenProps) {
                     .map((m) => ({ userId: m.id, amount: m.calculatedAmount, percent: null })),
             };
             if (!data?.participants?.length) {
-                toast({
-                    title: tCommon("whoops"),
-                    description: t("selectOneToSplit"),
-                    position: "center",
-                    dismissible: false,
-                    duration: Infinity,
-                    action: <ToastAction altText={tCommon("ok")}>{tCommon("ok")}</ToastAction>,
-                    variant:'error',
-                });
+                setValidationMessage(t("selectOneToSplit"));
                 return;
             }
             return data;
@@ -575,15 +567,7 @@ export default function SplitScreen(props: SplitScreenProps) {
                     errMsg = t("splitCustomOver", { total: totalFormatted, diff: diffFormatted });
                 }
 
-                toast({
-                    title: tCommon("whoops"),
-                    description: errMsg,
-                    position: "center",
-                    dismissible: false,
-                    duration: Infinity,
-                    action: <ToastAction altText={tCommon("ok")}>{tCommon("ok")}</ToastAction>,
-                    variant:'error',
-                });
+                if (errMsg) setValidationMessage(errMsg);
                 return;
             }
             return data;
@@ -599,15 +583,7 @@ export default function SplitScreen(props: SplitScreenProps) {
                 errMsg = t("splitPercentOver", { diff: Math.abs(diff) });
             }
 
-            toast({
-                title: tCommon("whoops"),
-                description: errMsg,
-                position: "center",
-                dismissible: false,
-                duration: Infinity,
-                action: <ToastAction altText={tCommon("ok")}>{tCommon("ok")}</ToastAction>,
-                variant:'error',
-            });
+            if (errMsg) setValidationMessage(errMsg);
             return;
         }
         const data:SplitResult = {
@@ -620,6 +596,7 @@ export default function SplitScreen(props: SplitScreenProps) {
     }
 
     return (
+        <>
         <div {...swipeHandlers} className="fixed inset-0 bg-background z-[60] flex flex-col">
 
             {/* Header */}
@@ -886,5 +863,13 @@ export default function SplitScreen(props: SplitScreenProps) {
                 })()}
             </div>
         </div>
+        <GenericAlertDialog
+            open={validationMessage !== null}
+            onOpenChange={(open) => !open && setValidationMessage(null)}
+            title={tCommon("whoops")}
+            messages={validationMessage ? [validationMessage] : []}
+            actions={[{ label: tCommon("gotIt"), onClick: () => setValidationMessage(null) }]}
+          />
+        </>
     );
 }

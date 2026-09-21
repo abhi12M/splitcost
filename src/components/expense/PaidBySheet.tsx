@@ -9,8 +9,7 @@ import { Input } from "../ui/input";
 import { formatAmount, getCurrencyDifference } from "../ui/formatters";
 import { createPortal } from "react-dom";
 import { useKeyboardLayout } from "@/hooks/useKeyboardOffset";
-import { toast } from "@/hooks/use-toast";
-import { ToastAction } from "../ui/toast";
+import { GenericAlertDialog } from "../ui/generic-alert-dialog";
 import { InfoSheetButton } from "../ui/InfoSheetButton";
 import { getPaidByInfoContent } from "./expenseInfo";
 import { useSwipeable } from "react-swipeable";
@@ -52,6 +51,7 @@ export default function PaidBySheet({
 }: PaidBySheetProps) {
   const t = useTranslations("expense");
   const tCommon = useTranslations("common");
+  const [validationMessage, setValidationMessage] = useState<string | null>(null);
   const youLabel = useTranslations("group")("you");
   const [activeTab, setActiveTab] = useState<TabMode>(
     isMultiplePayers ? "multiple" : "single"
@@ -114,6 +114,7 @@ export default function PaidBySheet({
   const paidByInfo = getPaidByInfoContent(activeTab, t);
 
   return createPortal(
+    <>
     <div className="fixed inset-0 z-[60] bg-background flex flex-col !mt-0 sm:bg-black/30 sm:backdrop-blur-[2px] sm:block">
       <button
         type="button"
@@ -165,28 +166,12 @@ export default function PaidBySheet({
                       });
                     }
 
-                    toast({
-                      title: tCommon("whoops"),
-                      description: errMsg,
-                      position: "center",
-                      dismissible: false,
-                      duration: Infinity,
-                      action: <ToastAction altText={tCommon("ok")}>{tCommon("ok")}</ToastAction>,
-                      variant:'error',
-                    });
+                    setValidationMessage(errMsg);
                     return;
                   }
 
                   if (validPayers.length === 0) {
-                    toast({
-                      title: tCommon("whoops"),
-                      description: t("enterAmountForOne"),
-                      position: "center",
-                      dismissible: false,
-                      duration: Infinity,
-                      action: <ToastAction altText={tCommon("ok")}>{tCommon("ok")}</ToastAction>,
-                      variant:'error',
-                    });
+                    setValidationMessage(t("enterAmountForOne"));
                     return;
                   }
 
@@ -353,7 +338,15 @@ export default function PaidBySheet({
         </>
       )}
       </div>
-    </div>,
+    </div>
+    <GenericAlertDialog
+      open={validationMessage !== null}
+      onOpenChange={(open) => !open && setValidationMessage(null)}
+      title={tCommon("whoops")}
+      messages={validationMessage ? [validationMessage] : []}
+      actions={[{ label: tCommon("gotIt"), onClick: () => setValidationMessage(null) }]}
+    />
+    </>,
     document.body
   );
 }

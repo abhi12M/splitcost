@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
   ArrowLeft,
+  AlertTriangle,
   Check,
   ChevronRight,
   Loader2,
@@ -17,21 +18,13 @@ import { AddMemberInputBox } from "@/components/group/AddMemberInputBox";
 import { GroupFormFieldBox } from "@/components/group/GroupFormFieldBox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { GenericAlertDialog } from "@/components/ui/generic-alert-dialog";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { MobileGroupFormLayout } from "@/components/group/MobileGroupFormLayout";
 import { balanceStyles } from "@/lib/brand-styles";
 import { formatCurrency } from "@/lib/avatar-utils";
 import { MEMBERS_MAX } from "@/lib/validations/group.schema";
+import { isMemberNameAlreadyAdded } from "@/lib/validations/group-members";
 import { cn } from "@/lib/utils";
 
 function StatChip({
@@ -121,6 +114,13 @@ export function EditGroupMobile({
   const displayedPendingMember = pendingMemberConfirmation
     ? truncateMemberName(pendingMemberConfirmation)
     : null;
+  const isPendingMemberAlreadyAdded = pendingMemberConfirmation
+    ? isMemberNameAlreadyAdded(
+        memberCards.map((member) => member.name),
+        pendingMemberConfirmation
+      )
+    : false;
+  const hasReachedMemberLimit = memberCards.length >= MEMBERS_MAX;
 
   const handleSaveRequest = () => {
     const pendingMember = newMemberName.trim();
@@ -129,6 +129,13 @@ export function EditGroupMobile({
       return;
     }
     onSaveGroup();
+  };
+
+  const handleAddMember = () => {
+    // Keep the soft keyboard from remaining active if validation opens an
+    // alert (for example, when this member has already been added).
+    memberInputRef.current?.blur();
+    onAddMember();
   };
 
   return (
@@ -199,19 +206,27 @@ export function EditGroupMobile({
             />
           </GroupFormFieldBox>
           <div className="space-y-3">
-            <AddMemberInputBox
-              inputRef={memberInputRef}
-              value={newMemberName}
-              onChange={onNewMemberNameChange}
-              onAdd={onAddMember}
-              disabled={memberCards.length >= MEMBERS_MAX}
-              invalid={Boolean(errors.members || errors.memberName || errors.memberExists)}
-              placeholder={
-                memberCards.length >= MEMBERS_MAX
-                  ? t("maximumMembers", { max: MEMBERS_MAX })
-                  : t("addMember")
-              }
-            />
+            {hasReachedMemberLimit ? (
+              <div
+                role="status"
+                className="flex items-center gap-3 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-amber-950 dark:text-amber-100"
+              >
+                <AlertTriangle className="h-6 w-6 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden />
+                <p className="text-sm leading-5">
+                  <span className="font-semibold">{t("memberLimitReached", { max: MEMBERS_MAX })}</span>{" "}
+                  {t("removeMemberToAdd")}
+                </p>
+              </div>
+            ) : (
+              <AddMemberInputBox
+                inputRef={memberInputRef}
+                value={newMemberName}
+                onChange={onNewMemberNameChange}
+                onAdd={handleAddMember}
+                invalid={Boolean(errors.members || errors.memberName || errors.memberExists)}
+                placeholder={t("addMember")}
+              />
+            )}
 
             <div className="space-y-2">
               {memberCards.map((member) => (
@@ -283,63 +298,56 @@ export function EditGroupMobile({
         </div>
       </MobileGroupFormLayout>
 
-      <AlertDialog
+      <GenericAlertDialog
         open={pendingMemberConfirmation !== null}
         onOpenChange={(open) => {
           if (!open) setPendingMemberConfirmation(null);
         }}
-      >
-        <AlertDialogContent className="max-w-[min(100vw-2rem,22rem)] rounded-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("pendingMemberTitle")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {displayedPendingMember
-                ? t("pendingMemberDescription", { name: displayedPendingMember })
-                : ""}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="mt-4 gap-2">
-            <AlertDialogCancel
-              className="mt-0 w-full rounded-xl"
-              onClick={() => requestAnimationFrame(() => memberInputRef.current?.focus())}
-            >
-              {t("keepEditing")}
-            </AlertDialogCancel>
-            <AlertDialogAction className="w-full rounded-xl" onClick={onSaveGroup}>
-              {t("saveWithoutMember")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent className="max-w-[320px] rounded-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("deleteGroupTitle")}</AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2">
+        title={isPendingMemberAlreadyAdded ? t("memberAlreadyInGroupTitle") : t("pendingMemberTitle")}
+        description={
+          <span>
+            {displayedPendingMember
+              ? isPendingMemberAlreadyAdded
+                ? t("memberAlreadyInGroupDescription", { name: displayedPendingMember })
+                : t("pendingMemberDescription", { name: displayedPendingMember })
+              : ""}
+          </span>
+        }
+        actions={[
+          {
+            label: t("keepEditing"),
+            type: "cancel",
+            className: "mt-0",
+            onClick: () => requestAnimationFrame(() => memberInputRef.current?.focus()),
+          },
+          { label: t("saveWithoutMember"), onClick: onSaveGroup },
+        ]}
+      />
+      <GenericAlertDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title={t("deleteGroupTitle")}
+        description={<div>
               <span className="block">
                 {t("deleteGroupConfirm")}
               </span>
               <span className="block">
                 {t("deleteGroupWarning")}
               </span>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>{tCommon("cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              disabled={isDeleting}
-              onClick={(e) => {
+            </div>}
+        actions={[
+          { label: tCommon("cancel"), type: "cancel", disabled: isDeleting },
+          {
+            label: isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : tCommon("delete"),
+            className: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+            disabled: isDeleting,
+            onClick: (e) => {
                 e.preventDefault();
                 void onDeleteGroup();
-              }}
-            >
-              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : tCommon("delete")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            },
+          },
+        ]}
+      />
     </>
   );
 }

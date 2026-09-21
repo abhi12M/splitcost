@@ -23,16 +23,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { GenericAlertDialog } from "@/components/ui/generic-alert-dialog";
 import {
   Drawer,
   DrawerContent,
@@ -914,56 +905,26 @@ export default function ExpenseDetailsPage({
           onOpenChange={setIsViewerOpen}
           actions={attachmentActions}
         />
-        <AlertDialog
+        <GenericAlertDialog
           open={isAttachmentDeleteConfirmOpen}
           onOpenChange={setIsAttachmentDeleteConfirmOpen}
-        >
-          <AlertDialogContent className="max-w-[290px] rounded-2xl">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="text-lg">{t("deleteImageTitle")}</AlertDialogTitle>
-              <AlertDialogDescription className="text-xs">
-                {t("deleteImageDescription")}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter className="mt-4 flex-row gap-2">
-              <AlertDialogCancel className="mt-0 flex-1 rounded-xl border-none bg-muted hover:bg-muted/80">
-                {tCommon("cancel")}
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDeleteAttachment}
-                disabled={Boolean(attachmentSpinnerMessage)}
-                className="flex-1 rounded-xl bg-destructive text-white hover:bg-destructive/90"
-              >
-                {tCommon("delete")}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-        <AlertDialog
+          title={t("deleteImageTitle")}
+          description={t("deleteImageDescription")}
+          actions={[
+            { label: tCommon("cancel"), type: "cancel", className: "mt-0 flex-1 border-none bg-muted hover:bg-muted/80" },
+            { label: tCommon("delete"), onClick: handleDeleteAttachment, disabled: Boolean(attachmentSpinnerMessage), className: "flex-1 bg-destructive text-white hover:bg-destructive/90" },
+          ]}
+        />
+        <GenericAlertDialog
           open={isExpenseDeleteConfirmOpen}
           onOpenChange={setIsExpenseDeleteConfirmOpen}
-        >
-          <AlertDialogContent className="max-w-[290px] rounded-2xl">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="text-lg">{t("deleteExpenseTitle")}</AlertDialogTitle>
-              <AlertDialogDescription className="text-xs">
-                {t("deleteExpenseDescription")}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter className="mt-4 flex-row gap-2">
-              <AlertDialogCancel className="mt-0 flex-1 rounded-xl border-none bg-muted hover:bg-muted/80">
-                {tCommon("cancel")}
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDeleteExpense}
-                disabled={isDeletingExpense}
-                className="flex-1 rounded-xl bg-destructive text-white hover:bg-destructive/90"
-              >
-                {isDeletingExpense ? tCommon("deleting") : tCommon("delete")}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+          title={t("deleteExpenseTitle")}
+          description={t("deleteExpenseDescription")}
+          actions={[
+            { label: tCommon("cancel"), type: "cancel", className: "mt-0 flex-1 border-none bg-muted hover:bg-muted/80" },
+            { label: isDeletingExpense ? tCommon("deleting") : tCommon("delete"), onClick: handleDeleteExpense, disabled: isDeletingExpense, className: "flex-1 bg-destructive text-white hover:bg-destructive/90" },
+          ]}
+        />
       </div>
       <Spinner
         show={Boolean(attachmentSpinnerMessage)}

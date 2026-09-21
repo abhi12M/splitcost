@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
+  AlertTriangle,
   ArrowLeft,
   ChevronRight,
   CircleDollarSign,
@@ -29,7 +30,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMdUp } from "@/hooks/useDeviceType";
 import { useToast } from "@/hooks/use-toast";
-import { ToastAction } from "@/components/ui/toast";
+import { GenericAlertDialog } from "@/components/ui/generic-alert-dialog";
 import { balanceStyles } from "@/lib/brand-styles";
 import { formatCurrency } from "@/lib/avatar-utils";
 import { LOCAL_GROUPS_KEY } from "@/lib/constants";
@@ -54,7 +55,11 @@ import {
   MEMBERS_MIN,
 } from "@/lib/validations/group.schema";
 import { createGroupSchemas } from "@/lib/validations/group.schema.i18n";
-import { hasDuplicateMemberNames, isMemberNameAlreadyAdded } from "@/lib/validations/group-members";
+import {
+  hasDuplicateMemberNames,
+  isMemberNameAlreadyAdded,
+  truncateMemberName,
+} from "@/lib/validations/group-members";
 
 type RemovalState = {
   canRemove: boolean;
@@ -252,18 +257,14 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
     memberName?: string;
     memberExists?: string;
   }>({});
+  const hasReachedMemberLimit = members.length >= MEMBERS_MAX;
   const [memberRenameError, setMemberRenameError] = useState<string | undefined>();
+  const [validationMessages, setValidationMessages] = useState<string[]>([]);
+  const [isDuplicateMemberDialog, setIsDuplicateMemberDialog] = useState(false);
 
-  const showValidationToast = (message: string) => {
-    toast({
-      title: tCommon("missingRequired"),
-      description: message,
-      position: "center",
-      dismissible: false,
-      duration: Infinity,
-      action: <ToastAction altText={tCommon("ok")}>{tCommon("ok")}</ToastAction>,
-      variant: "error",
-    });
+  const showValidationDialog = (messages: string | string[], isDuplicateMember = false) => {
+    setIsDuplicateMemberDialog(isDuplicateMember);
+    setValidationMessages(Array.isArray(messages) ? messages : [messages]);
   };
 
   useEffect(() => {
@@ -311,7 +312,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
       members: undefined,
       memberName: memberResult.success ? undefined : memberResult.error.issues[0]?.message,
       memberExists: isMemberNameAlreadyAdded(members.map((member) => member.name), trimmed)
-        ? tGroup("memberAlreadyAdded")
+        ? tGroup("memberAlreadyAdded", { name: truncateMemberName(trimmed) })
         : undefined,
     }));
   }, [newMemberName, members]);
@@ -435,13 +436,16 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
   };
 
   const handleAddMember = () => {
+    const trimmedName = newMemberName.trim();
+    if (!trimmedName) return;
+
     if (members.length >= MEMBERS_MAX) {
       const message = `Maximum ${MEMBERS_MAX} members allowed.`;
       setErrors((current) => ({
         ...current,
         members: message,
       }));
-      if (!isMdUp) showValidationToast(message);
+      showValidationDialog(message);
       return;
     }
 
@@ -452,18 +456,17 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
         ...current,
         memberName: message,
       }));
-      if (!isMdUp) showValidationToast(message);
+      showValidationDialog(message);
       return;
     }
 
-    const trimmedName = newMemberName.trim();
     if (isMemberNameAlreadyAdded(members.map((member) => member.name), trimmedName)) {
-      const message = tGroup("memberAlreadyAdded");
+      const message = tGroup("memberAlreadyAdded", { name: truncateMemberName(trimmedName) });
       setErrors((current) => ({
         ...current,
         memberExists: message,
       }));
-      if (!isMdUp) showValidationToast(message);
+      showValidationDialog(message, true);
       return;
     }
 
@@ -603,24 +606,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
           formatted.members?._errors[0],
         ].filter(Boolean) as string[];
         if (messages.length > 0) {
-          toast({
-            title: tCommon("missingRequired"),
-            description: (
-              <div className="space-y-1">
-                {messages.map((msg, idx) => (
-                  <div key={idx}>
-                    {messages.length > 1 && "\u2022 "}
-                    {msg}
-                  </div>
-                ))}
-              </div>
-            ),
-            position: "center",
-            dismissible: false,
-            duration: Infinity,
-            action: <ToastAction altText={tCommon("ok")}>{tCommon("ok")}</ToastAction>,
-            variant:'error',
-          });
+          showValidationDialog(messages);
         }
       }
       return;
@@ -780,33 +766,41 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex gap-2">
-                    <Input
-                      value={newMemberName}
-                      onChange={(event) => setNewMemberName(event.target.value)}
-                      aria-invalid={Boolean(errors.memberName || errors.memberExists)}
-                      placeholder={
-                        members.length >= MEMBERS_MAX
-                          ? tGroup("maximumMembers", { max: MEMBERS_MAX })
-                          : t("addNewMember")
-                      }
-                      disabled={members.length >= MEMBERS_MAX}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" && newMemberName.trim()) {
-                          event.preventDefault();
-                          handleAddMember();
-                        }
-                      }}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleAddMember}
-                      disabled={members.length >= MEMBERS_MAX || !newMemberName.trim()}
+                  {hasReachedMemberLimit ? (
+                    <div
+                      role="status"
+                      className="flex items-center gap-3 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-amber-950 dark:text-amber-100"
                     >
-                      {tCommon("add")}
-                    </Button>
-                  </div>
+                      <AlertTriangle className="h-6 w-6 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden />
+                      <p className="text-sm leading-5">
+                        <span className="font-semibold">{tGroup("memberLimitReached", { max: MEMBERS_MAX })}</span>{" "}
+                        {tGroup("removeMemberToAdd")}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Input
+                        value={newMemberName}
+                        onChange={(event) => setNewMemberName(event.target.value)}
+                        aria-invalid={Boolean(errors.memberName || errors.memberExists)}
+                        placeholder={t("addNewMember")}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" && newMemberName.trim()) {
+                            event.preventDefault();
+                            handleAddMember();
+                          }
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleAddMember}
+                        disabled={!newMemberName.trim()}
+                      >
+                        {tCommon("add")}
+                      </Button>
+                    </div>
+                  )}
 
                   <div className="rounded-2xl border border-dashed bg-muted/25 p-3">
                     <div className="flex items-start gap-3">
@@ -929,6 +923,24 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
         removalState={removalState}
         onRemoveMember={handleRemoveSelectedMember}
         enableBackButtonClose={!isMdUp}
+      />
+      <GenericAlertDialog
+        open={validationMessages.length > 0}
+        onOpenChange={(open) => {
+          if (!open) {
+            setValidationMessages([]);
+            setIsDuplicateMemberDialog(false);
+          }
+        }}
+        title={isDuplicateMemberDialog ? tGroup("memberAlreadyAddedTitle") : tCommon("cannotSaveGroup")}
+        messages={validationMessages}
+        actions={[{
+          label: tCommon("gotIt"),
+          onClick: () => {
+            setValidationMessages([]);
+            setIsDuplicateMemberDialog(false);
+          },
+        }]}
       />
     </>
   );

@@ -74,16 +74,7 @@ import { resolveCategoryDisplayLabel } from "@/lib/category-labels";
 import { cn } from "@/lib/utils";
 import { ADMIN_BASE_PATH } from "@/lib/constants";
 import { useBackButtonClose } from "@/hooks/useBackButtonClose";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { GenericAlertDialog } from "@/components/ui/generic-alert-dialog";
 
 const ExpenseChart = dynamic(() => import("@/components/group/ExpenseChart"), {
   ssr: false,
@@ -445,6 +436,7 @@ export function MobileGroupDashboard({
                 placeholder={t("searchExpenses")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                onBlur={(event) => setSearch(event.target.value.trim())}
                 aria-label={t("searchExpenses")}
               />
             </div>
@@ -830,17 +822,13 @@ export function MobileGroupDashboard({
         <Plus className="h-7 w-7" strokeWidth={2.25} />
       </Link>
 
-      <AlertDialog
+      <GenericAlertDialog
         open={settleConfirmation !== null}
         onOpenChange={(open) => {
           if (!open) setSettleConfirmation(null);
         }}
-      >
-        <AlertDialogContent className="max-w-[min(100vw-2rem,22rem)] rounded-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-lg">{t("recordSettlementTitle")}</AlertDialogTitle>
-            <AlertDialogDescription className="text-sm">
-              {settleConfirmation
+        title={t("recordSettlementTitle")}
+        description={<span>{settleConfirmation
                 ? t("recordSettlementDescription", {
                     from: memberDisplayNameForViewer(
                       settleConfirmation.settlement.fromId,
@@ -859,25 +847,21 @@ export function MobileGroupDashboard({
                       group.currency
                     ),
                   })
-                : ""}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="mt-4 flex-row gap-2">
-            <AlertDialogCancel className="mt-0 flex-1 rounded-xl">{tCommon("cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              className="flex-1 rounded-xl"
-              disabled={settleConfirmation ? settlingIndex === settleConfirmation.index : false}
-              onClick={async () => {
+                : ""}</span>}
+        actions={[
+          { label: tCommon("cancel"), type: "cancel", className: "mt-0 flex-1" },
+          {
+            label: tCommon("confirm"),
+            className: "flex-1",
+            disabled: settleConfirmation ? settlingIndex === settleConfirmation.index : false,
+            onClick: async () => {
                 if (!settleConfirmation) return;
                 await handleSettle(settleConfirmation.settlement, settleConfirmation.index);
                 setSettleConfirmation(null);
-              }}
-            >
-              {tCommon("confirm")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            },
+          },
+        ]}
+      />
     </div>
   );
 }

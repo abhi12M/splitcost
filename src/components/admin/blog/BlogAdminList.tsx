@@ -12,16 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { GenericAlertDialog } from "@/components/ui/generic-alert-dialog";
 import {
   Table,
   TableBody,
@@ -181,33 +172,23 @@ export function BlogAdminList({ blogs }: { blogs: BlogAdminListItem[] }) {
         )}
       </CardContent>
 
-      <AlertDialog
+      <GenericAlertDialog
         open={Boolean(deleteTarget)}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete blog post?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {deleteTarget
-                ? `Delete "${deleteTarget.title}". This permanently deletes the blog post.`
-                : null}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={Boolean(deletingId)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(event) => {
+        title="Delete blog post?"
+        description={deleteTarget ? `Delete "${deleteTarget.title}". This permanently deletes the blog post.` : undefined}
+        actions={[
+          { label: "Cancel", type: "cancel", disabled: Boolean(deletingId) },
+          {
+            label: deletingId ? "Deleting..." : "Delete",
+            disabled: Boolean(deletingId),
+            onClick: (event) => {
                 event.preventDefault();
                 if (deleteTarget) void handleDelete(deleteTarget.id);
-              }}
-              disabled={Boolean(deletingId)}
-            >
-              {deletingId ? "Deleting..." : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            },
+          },
+        ]}
+      />
     </Card>
   );
 }

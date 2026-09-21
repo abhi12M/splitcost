@@ -43,6 +43,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     ref,
   ) => {
     const isNumeric = inputMode === "decimal" && minValue !== undefined;
+    const isTrimmableTextInput =
+      !isNumeric && (type === undefined || ["text", "search", "email", "url", "tel"].includes(type));
     const [isFocused, setIsFocused] = React.useState(false);
     const [draftValue, setDraftValue] = React.useState<string | null>(null);
 
@@ -76,6 +78,17 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             maxValue !== undefined ? ` and ${formatAmount(maxValue, currency)}` : ""
           }`
         : null;
+
+    const trimTextValueOnBlur = (event: React.FocusEvent<HTMLInputElement>) => {
+      if (!isTrimmableTextInput) return;
+
+      const trimmedValue = event.currentTarget.value.trim();
+      if (trimmedValue === event.currentTarget.value) return;
+
+      const valueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+      valueSetter?.call(event.currentTarget, trimmedValue);
+      onChange?.(event as unknown as React.ChangeEvent<HTMLInputElement>);
+    };
 
     const embedClassName = cn(
       "min-w-0 w-full bg-transparent text-sm leading-normal text-foreground",
@@ -111,6 +124,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           onBlur={(e) => {
             setIsFocused(false);
             setDraftValue(null);
+            trimTextValueOnBlur(e);
             onBlur?.(e);
           }}
           onChange={(e) => {
@@ -175,6 +189,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             onBlur={(e) => {
               setIsFocused(false);
               setDraftValue(null);
+              trimTextValueOnBlur(e);
               onBlur?.(e);
             }}
             onChange={(e) => {

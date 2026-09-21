@@ -6,16 +6,7 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Loader2, MoreVertical, Pencil, Trash2 } from "lucide-react";
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { GenericAlertDialog } from "@/components/ui/generic-alert-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -77,8 +68,10 @@ export function ActionMenu({
   };
 
   return (
-    <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-      <DropdownMenu modal={false}>
+    <GenericAlertDialog
+      open={confirmOpen}
+      onOpenChange={setConfirmOpen}
+      trigger={<DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <button
             type="button"
@@ -122,31 +115,23 @@ export function ActionMenu({
             </DropdownMenuItem>
           ) : null}
         </DropdownMenuContent>
-      </DropdownMenu>
-
-      <AlertDialogContent
-        onClick={stopPropagation ? (event) => event.stopPropagation() : undefined}
-        className="max-w-[290px] rounded-2xl"
-      >
-        <AlertDialogHeader>
-          <AlertDialogTitle className="text-lg">{deleteTitle}</AlertDialogTitle>
-          <AlertDialogDescription className="text-xs">
-            {deleteDescription}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter className="flex-row gap-2 mt-4">
-          <AlertDialogCancel className="flex-1 mt-0 rounded-xl border-none bg-muted hover:bg-muted/80">
-            {t("cancel")}
-          </AlertDialogCancel>
-          <AlertDialogAction
-            onClick={handleConfirmDelete}
-            disabled={isDeleting}
-            className="flex-1 rounded-xl bg-destructive hover:bg-destructive/90 text-white"
-          >
-            {isDeleting ? t("deleting") : resolvedDeleteLabel}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+      </DropdownMenu>}
+      onContentClick={stopPropagation ? (event) => event.stopPropagation() : undefined}
+      title={deleteTitle}
+      description={deleteDescription}
+      contentClassName="max-w-[290px] rounded-2xl"
+      titleClassName="text-lg"
+      descriptionClassName="text-xs"
+      footerClassName="flex-row gap-2 mt-4"
+      actions={[
+        { label: t("cancel"), type: "cancel", className: "flex-1 mt-0 border-none bg-muted hover:bg-muted/80" },
+        {
+          label: isDeleting ? t("deleting") : resolvedDeleteLabel,
+          onClick: handleConfirmDelete,
+          disabled: isDeleting,
+          className: "flex-1 bg-destructive hover:bg-destructive/90 text-white",
+        },
+      ]}
+    />
   );
 }
