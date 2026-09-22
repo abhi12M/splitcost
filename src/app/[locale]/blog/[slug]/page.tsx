@@ -11,6 +11,7 @@ import { BlogScrollToTop } from "@/components/blog/BlogScrollToTop";
 import { RelatedBlogs } from "@/components/blog/RelatedBlogs";
 import { Layout } from "@/components/layout/Layout";
 import { resolveLocaleParam } from "@/i18n/params";
+import { localeDefinitions } from "@/i18n/config";
 import type { AppLocale } from "@/i18n/routing";
 import {
   getBlogBySlug,
@@ -34,7 +35,15 @@ type PageProps = {
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { locale, slug } = await params;
+  const { locale: localeParam, slug } = await params;
+  const locale = await resolveLocaleParam({ locale: localeParam });
+
+  // Articles are only available in English. Do not expose indexable metadata
+  // for locale variants that render a 404 in the page component.
+  if (locale !== "en") {
+    return { robots: { index: false, follow: false } };
+  }
+
   const blog = await getBlogBySlug(slug);
   if (!blog) {
     if (locale === "en") {
@@ -52,7 +61,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: { absolute: blog.title },
     description: blog.excerpt,
-    alternates: { canonical: canonicalUrl },
+    alternates: {
+      canonical: canonicalUrl,
+      languages: {
+        [localeDefinitions.en.hreflang]: canonicalUrl,
+        "x-default": canonicalUrl,
+      },
+    },
     robots: blog.no_index
       ? {
           index: false,

@@ -66,6 +66,22 @@ const nextConfig = {
       permanent: true,
     }));
 
+    // Blog posts are currently published in English only. Keep the old,
+    // unprefixed URLs from competing with their locale-prefixed canonicals in
+    // search results by redirecting them before the locale middleware runs.
+    const legacyBlogRedirects = [
+      {
+        source: "/blog",
+        destination: "/en/blog",
+        permanent: true,
+      },
+      {
+        source: "/blog/:slug*",
+        destination: "/en/blog/:slug*",
+        permanent: true,
+      },
+    ];
+
     // Admin portal lives outside [locale]; next-intl may prefix links with /en/ etc.
     const portalRedirects = locales.map((locale) => ({
       source: `/${locale}/portal/:path*`,
@@ -73,7 +89,7 @@ const nextConfig = {
       permanent: false,
     }));
 
-    return [...localeRedirects, ...rootRedirects, ...portalRedirects];
+    return [...localeRedirects, ...rootRedirects, ...legacyBlogRedirects, ...portalRedirects];
   },
   async headers() {
     return [
