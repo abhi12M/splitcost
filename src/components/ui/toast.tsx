@@ -15,7 +15,7 @@ const ToastViewport = React.forwardRef<
   <ToastPrimitives.Viewport
     ref={ref}
     className={cn(
-      "pointer-events-none fixed z-[100] flex max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-[360px] flex-col gap-2 p-0 sm:max-w-[380px]",
+      "pointer-events-none fixed z-[105] flex max-h-[calc(100dvh-6rem)] w-[calc(100vw-2rem)] max-w-[360px] flex-col gap-2 p-0 sm:max-w-[380px]",
       className,
     )}
     {...props}
@@ -23,7 +23,10 @@ const ToastViewport = React.forwardRef<
 ));
 ToastViewport.displayName = ToastPrimitives.Viewport.displayName;
 
-const toastBaseClassName = "group pointer-events-auto relative flex w-full items-center gap-3 overflow-hidden rounded-xl border px-4 py-3.5 text-foreground shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-top-2 data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-top-2";
+// Swipe: a finished swipe keeps sliding right as it fades. With only the
+// normal close animation it was pulled back toward its start while sliding up.
+// (Radix already sets touch-action: none on toasts, so drags reach the swipe.)
+const toastBaseClassName ="group pointer-events-auto relative flex w-full flex-wrap items-center gap-x-3 gap-y-1 sm:flex-nowrap sm:gap-y-0 overflow-hidden rounded-xl border px-4 py-3.5 text-foreground shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[swipe=move]:select-none data-[swipe=end]:slide-out-to-right-full data-[swipe=end]:slide-out-to-top-0 data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-top-2 data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-top-2 motion-reduce:transition-none motion-reduce:data-[state=open]:animate-none motion-reduce:data-[state=closed]:animate-none motion-reduce:data-[swipe=end]:animate-none";
 
 const Toast = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Root>,
@@ -33,16 +36,15 @@ const Toast = React.forwardRef<
 });
 Toast.displayName = ToastPrimitives.Root.displayName;
 
+const toastActionClassName = "inline-flex h-9 shrink-0 items-center justify-center rounded-md px-2.5 text-sm sm:h-8 font-semibold text-[color:var(--toast-accent)] transition-colors hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
+
 const ToastAction = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Action>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Action>
 >(({ className, ...props }, ref) => (
   <ToastPrimitives.Action
     ref={ref}
-    className={cn(
-      "inline-flex h-8 shrink-0 items-center justify-center rounded-md px-1 text-sm font-semibold text-[color:var(--toast-accent)] transition-colors hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
-      className,
-    )}
+    className={cn(toastActionClassName, className)}
     {...props}
   />
 ));
@@ -55,7 +57,7 @@ const ToastClose = React.forwardRef<
   <ToastPrimitives.Close
     ref={ref}
     className={cn(
-      "shrink-0 rounded-md p-1 text-slate-600 transition-colors hover:bg-black/5 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-ring dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white",
+      "-m-1 shrink-0 rounded-md p-2 text-slate-600 transition-colors hover:bg-black/5 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-ring dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white",
 
       className
     )}
@@ -103,6 +105,7 @@ export {
   type ToastIconName,
   type ToastCustomColor,
   toastIconNames,
+  toastActionClassName,
   ToastProvider,
   ToastViewport,
   Toast,

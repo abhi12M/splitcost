@@ -82,6 +82,8 @@ interface EditGroupMobileProps {
   onOpenMember: (memberKey: string) => void;
   onSaveGroup: () => void;
   onDeleteGroup: () => void | Promise<void>;
+  /** e.g. "₹4,450 is still unsettled between members."; shown in the delete confirmation. */
+  unsettledWarning?: string | null;
   isSubmitting?: boolean;
   isDeleting?: boolean;
 }
@@ -103,6 +105,7 @@ export function EditGroupMobile({
   onOpenMember,
   onSaveGroup,
   onDeleteGroup,
+  unsettledWarning = null,
   isSubmitting = false,
   isDeleting = false,
 }: EditGroupMobileProps) {
@@ -334,12 +337,15 @@ export function EditGroupMobile({
               <span className="block">
                 {t("deleteGroupWarning")}
               </span>
+              {unsettledWarning && (
+                <span className="mt-2 block font-medium text-destructive">{unsettledWarning}</span>
+              )}
             </div>}
         actions={[
           { label: tCommon("cancel"), type: "cancel", disabled: isDeleting },
           {
             label: isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : tCommon("delete"),
-            className: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+            variant: "destructive",
             disabled: isDeleting,
             onClick: (e) => {
                 e.preventDefault();

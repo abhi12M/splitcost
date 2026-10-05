@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react"
+import { useState, useEffect, useMemo, useRef, forwardRef, useImperativeHandle } from "react"
 import { useTranslations } from "next-intl"
 import { ArrowLeft, CalendarIcon, Check, NotebookPen, Settings } from "lucide-react"
 import { Input } from "@/components/ui/input"
@@ -33,6 +33,7 @@ import { ExpenseAttachmentControl } from "./ExpenseAttachmentControl"
 import type { ExpenseAttachment } from "@/lib/expenseAttachments"
 import { ExpenseNotesScreen } from "./ExpenseNotesScreen"
 import { hasExpenseNotesContent, normalizeExpenseNotes } from "@/lib/expenseNotes"
+import { buildExpenseFormSnapshot } from "@/lib/expenseFormDirty"
 
 interface Props {
   members: any[]
@@ -46,7 +47,14 @@ interface Props {
   onSubmit: (data: ExpenseRequest) => void
 }
 
-export default function ExpenseFormMobile({
+export type ExpenseFormMobileHandle = {
+  /** Runs the form's normal validate-then-submit flow, as if the checkmark button were tapped. */
+  submit: () => void;
+  /** Compares current field values against the initial ones, so an edit that's since been undone reports false. */
+  isDirty: () => boolean;
+};
+
+const ExpenseFormMobile = forwardRef<ExpenseFormMobileHandle, Props>(function ExpenseFormMobile({
   members,
   defaultCurrency = "USD",
   defaultPaidByUserId,
@@ -55,7 +63,7 @@ export default function ExpenseFormMobile({
   groupId,
   initialAttachment = null,
   onSubmit
-}: Props) {
+}, ref) {
   const t = useTranslations("expense");
   const tCommon = useTranslations("common");
   const tCategories = useTranslations("categories");
@@ -114,6 +122,27 @@ export default function ExpenseFormMobile({
   useBackButtonClose(showSplit, () => setShowSplit(false));
   useBackButtonClose(showCalendar, () => setShowCalendar(false));
 
+  // Captured once, from the same values the state above was seeded with, so
+  // isDirty() can tell "edited" apart from "edited, then undone".
+  const initialSnapshotRef = useRef<string>();
+  if (initialSnapshotRef.current === undefined) {
+    initialSnapshotRef.current = buildExpenseFormSnapshot({
+      description,
+      amount,
+      currency,
+      paidByUserId,
+      category,
+      subcategory,
+      splitType,
+      participants,
+      date: formatDateForDB(date),
+      isMultiplePayers,
+      payers,
+      attachment,
+      notes,
+    });
+  }
+
   const handleSelectSinglePayer = (userId: string) => {
     setIsMultiplePayers(false);
     setPaidBy(userId);
@@ -128,15 +157,19 @@ export default function ExpenseFormMobile({
 
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [validationDialog, setValidationDialog] = useState<{ title: string; messages: string[] } | null>(null);
-  const isFirstRender = useRef(true);
+  // Preserve the category received with an existing expense. In development,
+  // Strict Mode runs effects twice, so this guards both initial runs and only
+  // auto-detects after the description actually changes.
+  const previousDescriptionRef = useRef(description);
 
 
   // Auto-detect category from description
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
+    if (description === previousDescriptionRef.current) {
       return;
     }
+
+    previousDescriptionRef.current = description;
     if (description) {
       const detected = detectCategoryFromDescription(description);
       if (detected) {
@@ -153,14 +186,30 @@ export default function ExpenseFormMobile({
 
   useEffect(() => {
     if (hasSubmitted) validate();
-  }, [description, paidByUserId, amount, isMultiplePayers, payers]);
+  }, [description, paidByUserId, amount, isMultiplePayers, payers, participants, splitType]);
 
   useEffect(() => {
     calculateParticipants();
   }, [amount]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  // A member removed from the group in another session can no longer pay or
+  // share this expense. Members who are added are left out of the split.
+  useEffect(() => {
+    const memberIds = new Set(members.map((m: UserInterface) => m.id));
+    if (paidByUserId && !memberIds.has(paidByUserId)) setPaidBy("");
+    if (payers.some((p) => !memberIds.has(p.userId))) {
+      const keptPayers = payers.filter((p) => memberIds.has(p.userId));
+      setPayers(keptPayers);
+      if (!keptPayers.length) setIsMultiplePayers(false);
+    }
+    if (participants.some((p) => !memberIds.has(p.userId))) {
+      const kept = participants.filter((p) => memberIds.has(p.userId));
+      setParticipants(kept);
+      calculateParticipants(kept);
+    }
+  }, [members]);
+
+  const submitForm = () => {
     setHasSubmitted(true);
     const validation = validate();
     if (!validation.valid) {
@@ -186,6 +235,30 @@ export default function ExpenseFormMobile({
     });
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    submitForm();
+  };
+
+  const isDirty = () =>
+    buildExpenseFormSnapshot({
+      description,
+      amount,
+      currency,
+      paidByUserId,
+      category,
+      subcategory,
+      splitType,
+      participants,
+      date: formatDateForDB(date),
+      isMultiplePayers,
+      payers,
+      attachment,
+      notes,
+    }) !== initialSnapshotRef.current;
+
+  useImperativeHandle(ref, () => ({ submit: submitForm, isDirty }));
+
   const [errors, setErrors] = useState<{
     description?: string;
     amount?: string;
@@ -202,109 +275,59 @@ export default function ExpenseFormMobile({
     });
   };
 
+  // Collects every error at once, so a missing payer doesn't hide a split
+  // that no longer adds up (e.g. after a member is removed in another session).
   const validate = (from?: string) => {
     const result = ExpenseSchema.safeParse({ description, paidByUserId, amount, isMultiplePayers });
+    const e = result.success ? null : result.error.format();
     const paidByError =
       !isMultiplePayers && !paidByUserId?.trim() ? t("validation.paidByRequired") : "";
 
-    // ---------- Zod validation ----------
-    if (!result.success) {
-      const e = result.error.format();
-
-      const newErrors = {
-        description: e.description?._errors?.[0] ?? "",
-        amount: e.amount?._errors?.[0] ?? "",
-        paidByUserId: e.paidByUserId?._errors?.[0] ?? paidByError,
-        payers: "",
-        split: "",
-      };
-
-      setHasSubmitted(true);
-      setErrors(newErrors);
-
-      return { valid: false, errors: newErrors };
-    }
-
-    if (paidByError) {
-      const newErrors = {
-        description: "",
-        amount: "",
-        paidByUserId: paidByError,
-        payers: "",
-        split: "",
-      };
-
-      setHasSubmitted(true);
-      setErrors(newErrors);
-
-      return { valid: false, errors: newErrors };
-    }
-
-    const cleared = {
-      description: "",
-      amount: "",
-      paidByUserId: "",
+    const newErrors = {
+      description: e?.description?._errors?.[0] ?? "",
+      amount: e?.amount?._errors?.[0] ?? "",
+      paidByUserId: e?.paidByUserId?._errors?.[0] ?? paidByError,
       payers: "",
       split: "",
     };
 
-    if (isMultiplePayers) {
-      const totalPaidBy = payers.reduce(
-        (sum, payer) => sum + Number(payer.amount || 0),
-        0
-      );
-      const expenseTotal = Number(amount || 0);
+    // Totals are only compared once the amount itself is valid.
+    const expenseTotal = Number(amount || 0);
+    if (!newErrors.amount) {
+      if (isMultiplePayers) {
+        const totalPaidBy = payers.reduce(
+          (sum, payer) => sum + Number(payer.amount || 0),
+          0
+        );
 
-      if (getCurrencyDifference(expenseTotal, totalPaidBy) !== 0) {
-        const payersError = t("paidByTotalMismatch", {
-          paid: formatAmount(totalPaidBy, currency),
-          total: formatAmount(expenseTotal, currency),
-        });
+        if (getCurrencyDifference(expenseTotal, totalPaidBy) !== 0) {
+          newErrors.payers = t("paidByTotalMismatch", {
+            paid: formatAmount(totalPaidBy, currency),
+            total: formatAmount(expenseTotal, currency),
+          });
+        }
+      }
 
-        const newErrors = {
-          ...cleared,
-          payers: payersError,
-        };
+      // ---------- Custom split validation ----------
+      if (from !== "split-screen" && splitType === "custom") {
+        const totalCustomValue = participants.reduce(
+          (sum, p) => sum + Number(p.amount || 0),
+          0
+        );
 
-        setHasSubmitted(true);
-        setErrors(newErrors);
-
-        return { valid: false, errors: newErrors };
+        if (getCurrencyDifference(expenseTotal, totalCustomValue) !== 0) {
+          newErrors.split = t("splitTotalMismatch", {
+            split: formatAmount(totalCustomValue, currency),
+            total: formatAmount(expenseTotal, currency),
+          });
+        }
       }
     }
 
-    // ---------- Custom split validation ----------
-    const shouldValidateSplit = from !== "split-screen";
-
-    if (shouldValidateSplit && splitType === "custom") {
-      const totalCustomValue = participants.reduce(
-        (sum, p) => sum + Number(p.amount || 0),
-        0
-      );
-
-      const expenseTotal = Number(amount || 0);
-
-      if (getCurrencyDifference(expenseTotal, totalCustomValue) !== 0) {
-        const splitError = t("splitTotalMismatch", {
-          split: formatAmount(totalCustomValue, currency),
-          total: formatAmount(expenseTotal, currency),
-        });
-
-        const newErrors = {
-          ...cleared,
-          split: splitError,
-        };
-
-        setHasSubmitted(true);
-        setErrors(newErrors);
-
-        return { valid: false, errors: newErrors };
-      }
-    }
-
-    // ---------- Success ----------
-    setErrors(cleared);
-    return { valid: true, errors: cleared };
+    const valid = !Object.values(newErrors).some(Boolean);
+    if (!valid) setHasSubmitted(true);
+    setErrors(newErrors);
+    return { valid, errors: newErrors };
   };
 
   const handleSplitSubmit = (data) => {
@@ -322,17 +345,17 @@ export default function ExpenseFormMobile({
     setShowSplit(true);
   };
 
-  const calculateParticipants = () => {
+  const calculateParticipants = (list: ExpenseParticipantsRequest[] = participants) => {
     const totalAmount = Number(amount || 0);
     if (splitType === "equal") {
-      const count = participants.length;
+      const count = list.length;
 
       const base = Math.round((totalAmount / count) * 100) / 100;
 
       const distributed = base * count;
       const remainder = Math.round((totalAmount - distributed) * 100) / 100;
 
-      const finalParticipants = participants.map((m, index) => ({
+      const finalParticipants = list.map((m, index) => ({
         userId: m.userId,
         percent: null,
         amount:
@@ -345,7 +368,7 @@ export default function ExpenseFormMobile({
     }
 
     if (splitType === "percentage") {
-      const finalParticipants = participants.map((p) => ({
+      const finalParticipants = list.map((p) => ({
         ...p,
         amount: Number(((totalAmount * Number(p.percent)) / 100).toFixed(2)),
       }));
@@ -634,4 +657,6 @@ export default function ExpenseFormMobile({
       />
     </>
   )
-}
+});
+
+export default ExpenseFormMobile;

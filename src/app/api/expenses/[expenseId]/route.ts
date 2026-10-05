@@ -51,12 +51,14 @@ type ExpenseDetailsRow = {
   date: string;
   created_at: string;
   updated_at: string | null;
+  revision: number;
   attachment_data_url: string | null;
   expense_participants: ExpenseParticipantRow[];
   groups: {
     id: string;
     name: string;
     currency: string;
+    revision: number;
     group_members: GroupMemberRow[];
   };
 };
@@ -82,10 +84,12 @@ export async function PUT(
     date,
     participants,
     attachmentDataUrl,
+    expectedRevision,
+    originSessionId,
   } = body;
 
   // 🔐 Basic validation / abuse protection
-  if (!groupId || !expenseId || !description || !amount) {
+  if (!groupId || !expenseId || !description || !amount || !Number.isSafeInteger(expectedRevision)) {
     return NextResponse.json(
       { error: "Invalid payload" },
       { status: 400 }
@@ -123,11 +127,32 @@ export async function PUT(
       })),
       p_payers: payers || null,
       p_notes: typeof notes === "string" ? normalizeExpenseNotes(notes) || null : null,
+      p_expected_revision: expectedRevision,
+      p_origin_session_id: typeof originSessionId === "string" ? originSessionId.slice(0, 128) : null,
     }
   );
 
   if (error || !data) {
     console.error("updateExpense error:", error);
+    if (error?.message === "EXPENSE_DELETED") {
+      return NextResponse.json({ code: "EXPENSE_DELETED", expenseId }, { status: 404 });
+    }
+    if (error?.message?.startsWith("EXPENSE_VERSION_CONFLICT:")) {
+      const latest = await supabaseAdmin
+        .from("expenses")
+        .select("revision")
+        .eq("id", expenseId)
+        .maybeSingle();
+      return NextResponse.json(
+        {
+          code: "EXPENSE_VERSION_CONFLICT",
+          expenseId,
+          expectedRevision,
+          currentRevision: latest.data?.revision ?? null,
+        },
+        { status: 409 }
+      );
+    }
     return NextResponse.json(
       { error: "Failed to update expense" },
       { status: 400 }
@@ -155,11 +180,12 @@ export async function PUT(
     attachmentDataUrl,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    revision: row.revision,
   });
 }
 
 export async function DELETE(
-  _req: Request,
+  req: Request,
   { params }: { params: { expenseId: string } }
 ) {
   const expenseId = params.expenseId;
@@ -171,16 +197,19 @@ export async function DELETE(
     );
   }
 
-  const { error } = await supabaseAdmin
-    .from("expenses")
-    .delete()
-    .eq("id", expenseId);
+  const body = await req.json().catch(() => ({}));
+  const { data, error } = await supabaseAdmin.rpc("delete_expense", {
+    p_expense_id: expenseId,
+    p_origin_session_id: typeof body?.originSessionId === "string"
+      ? body.originSessionId.slice(0, 128)
+      : null,
+  });
 
-  if (error) {
+  if (error || !data) {
     console.error("deleteExpense error:", error);
     return NextResponse.json(
       { error: "Failed to delete expense" },
-      { status: 400 }
+      { status: error ? 400 : 404 }
     );
   }
 
@@ -203,6 +232,8 @@ export async function PATCH(
   const body = await req.json();
   const category = body?.category as CategoryKey | undefined;
   const subcategory = body?.subcategory as SubcategoryId | undefined;
+  const originSessionId =
+    typeof body?.originSessionId === "string" ? body.originSessionId.slice(0, 128) : null;
 
   if (!category || !subcategory) {
     return NextResponse.json(
@@ -223,37 +254,37 @@ export async function PATCH(
     );
   }
 
-  const { data, error } = await supabaseAdmin
-    .from("expenses")
-    .update({
-      category,
-      subcategory,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", expenseId)
-    .select(`
-      id,
-      group_id,
-      category,
-      subcategory,
-      updated_at
-    `)
-    .single();
+  const { data, error } = await supabaseAdmin.rpc("set_expense_category", {
+    p_expense_id: expenseId,
+    p_category: category,
+    p_subcategory: subcategory,
+    p_origin_session_id: originSessionId,
+  });
 
-  if (error || !data) {
+  const row = data?.[0];
+
+  if (error || !row) {
     console.error("patchExpenseCategory error:", error);
+    const isProduction = process.env.NODE_ENV === "production";
     return NextResponse.json(
-      { error: "Failed to update expense category" },
+      {
+        error: isProduction
+          ? "We could not update the expense category. Please try again. If the problem persists, contact support."
+          : error?.message || "Failed to update expense category",
+        code: error?.code,
+        details: isProduction ? undefined : error?.details,
+      },
       { status: 400 }
     );
   }
 
   return NextResponse.json({
-    id: data.id,
-    groupId: data.group_id,
-    category: data.category,
-    subcategory: data.subcategory,
-    updatedAt: data.updated_at,
+    id: row.id,
+    groupId: row.group_id,
+    category: row.category,
+    subcategory: row.subcategory,
+    updatedAt: row.updated_at,
+    revision: row.revision,
   });
 }
 
@@ -282,6 +313,7 @@ export async function GET(
       date,
       created_at,
       updated_at,
+      revision,
       attachment_data_url,
       expense_participants (
         user_id,
@@ -292,6 +324,7 @@ export async function GET(
         id,
         name,
         currency,
+        revision,
         group_members (
           users (
             id,
@@ -340,6 +373,9 @@ export async function GET(
       id: expenseRow.groups.id,
       name: expenseRow.groups.name,
       currency: expenseRow.groups.currency,
+      // Lets the screen tell which realtime group changes this snapshot
+      // already includes (read in the same query as the members).
+      revision: expenseRow.groups.revision,
       members: expenseRow.groups.group_members.map((gm) => ({
         id: gm.users.id,
         name: gm.users.name,
@@ -362,6 +398,7 @@ export async function GET(
       date: expenseRow.date,
       createdAt: expenseRow.created_at,
       updatedAt: expenseRow.updated_at,
+      revision: expenseRow.revision,
       attachmentDataUrl,
       attachment: attachmentResolution.attachment,
       participants: expenseRow.expense_participants.map((p: ExpenseParticipantRow) => ({

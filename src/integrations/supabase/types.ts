@@ -312,6 +312,8 @@ export type Database = {
           group_id: string
           id: string
           paid_by_user_id: string | null
+          origin_session_id: string | null
+          revision: number
           split_type: Database["public"]["Enums"]["split_type"]
           subcategory: string
           updated_at: string
@@ -328,6 +330,8 @@ export type Database = {
           group_id: string
           id?: string
           paid_by_user_id?: string | null
+          origin_session_id?: string | null
+          revision?: number
           split_type: Database["public"]["Enums"]["split_type"]
           subcategory: string
           updated_at?: string
@@ -345,6 +349,8 @@ export type Database = {
           group_id?: string
           id?: string
           paid_by_user_id?: string | null
+          origin_session_id?: string | null
+          revision?: number
           split_type?: Database["public"]["Enums"]["split_type"]
           subcategory?: string
           updated_at?: string
@@ -428,6 +434,7 @@ export type Database = {
           currency: string
           id: string
           name: string
+          revision: number
           updated_at: string | null
         }
         Insert: {
@@ -436,6 +443,7 @@ export type Database = {
           currency: string
           id?: string
           name: string
+          revision?: number
           updated_at?: string | null
         }
         Update: {
@@ -444,6 +452,7 @@ export type Database = {
           currency?: string
           id?: string
           name?: string
+          revision?: number
           updated_at?: string | null
         }
         Relationships: [
@@ -505,6 +514,13 @@ export type Database = {
         }
         Returns: GroupResponse
       },
+      bump_group_revision: {
+        Args: {
+          p_group_id: string
+          p_expected_revision?: number | null
+        }
+        Returns: number
+      },
       cleanup_orphan_users: {
         Args: {
           p_user_ids: string[]
@@ -541,6 +557,10 @@ export type Database = {
         }
         Returns: ExpenseResponse
       },
+      delete_expense: {
+        Args: { p_expense_id: string; p_origin_session_id?: string | null }
+        Returns: boolean
+      },
       edit_expense: {
         Args: {
           p_expense_id: string
@@ -563,6 +583,8 @@ export type Database = {
             amount: number
           }[] | null
           p_notes?: string | null
+          p_expected_revision?: number | null
+          p_origin_session_id?: string | null
         }
         Returns: ExpenseResponse
       },
@@ -577,6 +599,22 @@ export type Database = {
           group_id: string
         }
         Returns: GroupDashboardInterface
+      },
+      set_expense_category: {
+        Args: {
+          p_expense_id: string
+          p_category: string
+          p_subcategory: string
+          p_origin_session_id?: string | null
+        }
+        Returns: {
+          id: string
+          group_id: string
+          category: string
+          subcategory: string
+          updated_at: string
+          revision: number
+        }[]
       },
     }
     Enums: {

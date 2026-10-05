@@ -9,7 +9,6 @@ import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { HeaderDesktopNav } from "@/components/layout/HeaderDesktopNav";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Button } from "@/components/ui/button";
-import { useDeviceType } from "@/hooks/useDeviceType";
 import { useMyGroupsCount } from "@/hooks/useMyGroupsCount";
 import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
@@ -45,8 +44,6 @@ function MyGroupsCountBadge({
 export function Header() {
   const t = useTranslations("layout");
   const groupsCount = useMyGroupsCount();
-  const deviceType = useDeviceType();
-  const isMobile = deviceType === "mobile";
   const [headerVisible, setHeaderVisible] = useState(true);
   const scrollIdleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -85,16 +82,15 @@ export function Header() {
       <header className="w-full rounded-xl border border-border/60 bg-card shadow-card">
         <div
           className={cn(
-            "relative flex items-center gap-3 px-4 py-3",
-            isMobile ? "justify-center" : "justify-between sm:h-16 sm:py-0"
+            "relative flex items-center justify-center gap-3 px-4 py-3",
+            "sm:h-16 sm:justify-between sm:py-0"
           )}
         >
           <Link
             href="/"
             className={cn(
-              "flex min-w-0 items-center gap-2 sm:gap-3",
+              "flex min-w-0 flex-1 items-center justify-center gap-2 sm:flex-none sm:justify-start sm:gap-3",
               "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg",
-              isMobile && "flex-1 justify-center"
             )}
           >
             <BrandIcon className="h-8 w-auto sm:h-9" height={36} />

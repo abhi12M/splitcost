@@ -381,7 +381,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
         publishedWindow?.close();
         setSaveStatus("error");
         toast({
-          variant: "destructive",
+          variant: "error",
           title: nextStatus === "published" ? "Unable to publish blog" : "Unable to save draft",
           description: saveError instanceof Error ? saveError.message : "Unable to save blog",
         });
@@ -408,7 +408,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
       router.replace(`${ADMIN_BASE_PATH}/blogs?updated=${Date.now()}`);
     } catch (deleteError) {
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Unable to delete blog post",
         description: deleteError instanceof Error ? deleteError.message : "Unable to delete blog post",
       });
@@ -461,7 +461,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
         markDirty();
       } catch (uploadError) {
         toast({
-          variant: "destructive",
+          variant: "error",
           title: "Unable to upload cover image",
           description: uploadError instanceof Error ? uploadError.message : "Unable to upload cover image",
         });

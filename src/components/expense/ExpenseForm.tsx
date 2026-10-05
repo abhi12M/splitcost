@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, forwardRef, useImperativeHandle } from "react";
 import { useTranslations } from "next-intl";
 import { Check, Percent, Equal, Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ import {
   normalizeExpenseNotes,
   sanitizeExpenseNotes,
 } from "@/lib/expenseNotes";
+import { buildExpenseFormSnapshot } from "@/lib/expenseFormDirty";
 
 interface ExpenseFormProps {
   members: UserInterface[];
@@ -44,12 +45,19 @@ interface ExpenseFormProps {
   submitLabel: string;
 }
 
+export type ExpenseFormHandle = {
+  /** Runs the form's normal validate-then-submit flow, as if the submit button were clicked. */
+  submit: () => void;
+  /** Compares current field values against the initial ones, so an edit that's since been undone reports false. */
+  isDirty: () => boolean;
+};
+
 type EditablePayer = {
   userId: string;
   amount: number | null;
 };
 
-export function ExpenseForm({
+export const ExpenseForm = forwardRef<ExpenseFormHandle, ExpenseFormProps>(function ExpenseForm({
   members,
   defaultCurrency = "USD",
   defaultPaidByUserId,
@@ -58,7 +66,7 @@ export function ExpenseForm({
   initialAttachment = null,
   onSubmit,
   submitLabel,
-}: ExpenseFormProps) {
+}, ref) {
   const t = useTranslations("expense");
   const tCategories = useTranslations("categories");
   const categoryGroups = useMemo(() => buildCategorySelectGroups(tCategories), [tCategories]);
@@ -107,7 +115,30 @@ export function ExpenseForm({
   const [notes, setNotes] = useState(initialData?.notes || "");
   const totalAmount = parseFloat(amount) || 0;
   const [hasSubmitted, setHasSubmitted] = useState(false);
-  const isFirstRender = useRef(true);
+  // Keep the initial category from the server intact. React Strict Mode runs
+  // effects twice in development, so an "is first render" flag alone lets the
+  // second run re-classify the initial description and overwrite it.
+  const previousDescriptionRef = useRef(description);
+  // Captured once, from the same values the state above was seeded with, so
+  // isDirty() can tell "edited" apart from "edited, then undone".
+  const initialSnapshotRef = useRef<string>();
+  if (initialSnapshotRef.current === undefined) {
+    initialSnapshotRef.current = buildExpenseFormSnapshot({
+      description,
+      amount,
+      currency,
+      paidByUserId,
+      category,
+      subcategory,
+      splitType,
+      participants,
+      date: formatDateForDB(date),
+      isMultiplePayers,
+      payers,
+      attachment,
+      notes,
+    });
+  }
   const validationState = useMemo(() => {
     if (splitType === "equal") return { isValid: true, diff: 0, currentTotal: totalAmount };
 
@@ -189,10 +220,11 @@ export function ExpenseForm({
 
   // Auto-detect category from description
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
+    if (description === previousDescriptionRef.current) {
       return;
     }
+
+    previousDescriptionRef.current = description;
     if (description) {
       const detected = detectCategoryFromDescription(description);
       if (detected) {
@@ -242,6 +274,22 @@ export function ExpenseForm({
       )
     );
   }, [amount, splitType]);
+
+  // A member removed from the group in another session can no longer pay or
+  // share this expense. Members who are added are left out of the split.
+  useEffect(() => {
+    const memberIds = new Set(members.map((m) => m.id));
+    if (paidByUserId && !memberIds.has(paidByUserId)) setPaidBy("");
+    if (payers.some((p) => !memberIds.has(p.userId))) {
+      const keptPayers = payers.filter((p) => memberIds.has(p.userId));
+      setPayers(keptPayers);
+      if (!keptPayers.length) setIsMultiplePayers(false);
+    }
+    if (participants.some((p) => !memberIds.has(p.userId))) {
+      const kept = participants.filter((p) => memberIds.has(p.userId));
+      setParticipants(calculateParticipants(splitType, kept.map((p) => p.userId), kept, parseFloat(amount) || 0));
+    }
+  }, [members]);
 
   const toggleParticipant = (userId: string) => {
     setParticipants((prev) => {
@@ -298,8 +346,7 @@ export function ExpenseForm({
     (p) => Number(p.amount || 0) > 0
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const submitForm = () => {
     setHasSubmitted(true);
     const isValid = validate();
     if (!isValid) return; // STOP submit
@@ -323,6 +370,30 @@ export function ExpenseForm({
       notes: normalizeExpenseNotes(notes) || null,
     });
   };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    submitForm();
+  };
+
+  const isDirty = () =>
+    buildExpenseFormSnapshot({
+      description,
+      amount,
+      currency,
+      paidByUserId,
+      category,
+      subcategory,
+      splitType,
+      participants,
+      date: formatDateForDB(date),
+      isMultiplePayers,
+      payers,
+      attachment,
+      notes,
+    }) !== initialSnapshotRef.current;
+
+  useImperativeHandle(ref, () => ({ submit: submitForm, isDirty }));
   const [errors, setErrors] = useState<{
     paidByUserId?: string;
     description?: string;
@@ -757,4 +828,4 @@ export function ExpenseForm({
       />
     </form>
   );
-}
+});

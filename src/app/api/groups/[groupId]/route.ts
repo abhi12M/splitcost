@@ -1,6 +1,13 @@
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { validateGroupInput } from "@/lib/validations/group.schema";
+import {
+  GROUP_CHANGES_EVENT,
+  GROUP_DELETED_EVENT,
+  groupChangesChannel,
+  type GroupChanges,
+  type GroupDeleted,
+} from "@/lib/realtime/groupChanges";
 
 type ActiveMemberRow = {
   user_id: string;
@@ -41,6 +48,30 @@ async function getActiveGroupMembers(groupId: string) {
     userId: member.user_id,
     name: member.users.name,
   }));
+}
+
+// Best effort: a failed broadcast must not fail a group change that has
+// already been saved.
+async function broadcastToGroup(groupId: string, event: string, payload: unknown) {
+  const channel = supabaseAdmin.channel(groupChangesChannel(groupId));
+  try {
+    const result = await channel.httpSend(event, payload);
+    if (!result.success) {
+      console.error(`broadcast ${event} error:`, result.error);
+    }
+  } catch (error) {
+    console.error(`broadcast ${event} error:`, error);
+  } finally {
+    void supabaseAdmin.removeChannel(channel);
+  }
+}
+
+function broadcastGroupChanges(groupId: string, changes: GroupChanges) {
+  return broadcastToGroup(groupId, GROUP_CHANGES_EVENT, changes);
+}
+
+function broadcastGroupDeleted(groupId: string, payload: GroupDeleted) {
+  return broadcastToGroup(groupId, GROUP_DELETED_EVENT, payload);
 }
 
 async function isMemberInvolvedInGroupExpenses(groupId: string, userId: string) {
@@ -112,6 +143,13 @@ type UpdateGroupError = {
   message?: string;
 };
 
+function groupVersionConflict(groupId: string, expectedRevision: number, currentRevision: number | null) {
+  return NextResponse.json(
+    { code: "GROUP_VERSION_CONFLICT", groupId, expectedRevision, currentRevision },
+    { status: 409 }
+  );
+}
+
 export async function PUT(
   req: Request,
   { params }: { params: { groupId: string } }
@@ -121,7 +159,13 @@ export async function PUT(
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
-  const { name, currency, members } = body as Record<string, unknown>;
+  const { name, currency, members, originSessionId, expectedRevision: rawExpectedRevision } =
+    body as Record<string, unknown>;
+  // The revision the editor started from. Without it the save is not checked.
+  const expectedRevision =
+    typeof rawExpectedRevision === "number" && Number.isInteger(rawExpectedRevision)
+      ? rawExpectedRevision
+      : null;
   const normalizedCurrency = typeof currency === "string" ? currency.trim() : "";
 
   if (!groupId || !normalizedCurrency || !Array.isArray(members) || !members.every((member) => member && typeof member === "object")) {
@@ -140,7 +184,25 @@ export async function PUT(
   }));
 
   try {
-    const currentMembers = await getActiveGroupMembers(groupId);
+    const [currentMembers, { data: currentGroup, error: currentGroupError }] = await Promise.all([
+      getActiveGroupMembers(groupId),
+      supabaseAdmin.from("groups").select("name, currency, revision").eq("id", groupId).maybeSingle(),
+    ]);
+
+    if (currentGroupError) {
+      throw currentGroupError;
+    }
+
+    if (!currentGroup) {
+      return NextResponse.json({ code: "GROUP_NOT_FOUND" }, { status: 404 });
+    }
+
+    // Checked before validation, so an editor holding a stale member list gets
+    // a conflict rather than a confusing "member does not belong" error.
+    if (expectedRevision !== null && currentGroup.revision !== expectedRevision) {
+      return groupVersionConflict(groupId, expectedRevision, currentGroup.revision);
+    }
+
     const currentMembersById = new Map(
       currentMembers.map((member) => [member.userId, member])
     );
@@ -192,17 +254,43 @@ export async function PUT(
       }
     }
 
-    const { error: groupError } = await supabaseAdmin
-      .from("groups")
-      .update({
-        name: validation.data.groupName,
-        currency: normalizedCurrency,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", groupId);
+    const nameChanged = currentGroup.name !== validation.data.groupName;
+    const currencyChanged = currentGroup.currency !== normalizedCurrency;
 
-    if (groupError) {
-      throw groupError;
+    // Nothing to save: leave the revision alone, so other open editors are not
+    // pushed into a conflict by a save that changed nothing.
+    if (
+      !membersToAdd.length &&
+      !membersToRemove.length &&
+      !membersToRename.length &&
+      !nameChanged &&
+      !currencyChanged
+    ) {
+      return NextResponse.json({
+        id: groupId,
+        name: currentGroup.name,
+        currency: currentGroup.currency,
+        revision: currentGroup.revision,
+        members: currentMembers.map((member) => ({ id: member.userId, name: member.name })),
+      });
+    }
+
+    // Claim the next revision before the first write. The check above can race
+    // with another save; this compare-and-swap cannot.
+    const { data: nextRevision, error: revisionError } = await supabaseAdmin.rpc("bump_group_revision", {
+      p_group_id: groupId,
+      p_expected_revision: expectedRevision,
+    });
+
+    if (revisionError) {
+      if (revisionError.message === "GROUP_NOT_FOUND") {
+        return NextResponse.json({ code: "GROUP_NOT_FOUND" }, { status: 404 });
+      }
+      if (revisionError.message?.startsWith("GROUP_VERSION_CONFLICT:") && expectedRevision !== null) {
+        const currentRevision = Number(revisionError.message.split(":")[1]);
+        return groupVersionConflict(groupId, expectedRevision, Number.isFinite(currentRevision) ? currentRevision : null);
+      }
+      throw revisionError;
     }
 
     if (membersToRename.length > 0) {
@@ -223,17 +311,17 @@ export async function PUT(
     }
 
     if (membersToRemove.length > 0) {
-      const { error: deactivateError } = await supabaseAdmin
+      const { error: removeMembersError } = await supabaseAdmin
         .from("group_members")
-        .update({ is_active: false })
+        .delete()
         .eq("group_id", groupId)
         .in(
           "user_id",
           membersToRemove.map((member) => member.userId)
         );
 
-      if (deactivateError) {
-        throw deactivateError;
+      if (removeMembersError) {
+        throw removeMembersError;
       }
 
       const { error: cleanupError } = await supabaseAdmin.rpc(
@@ -247,6 +335,8 @@ export async function PUT(
         throw cleanupError;
       }
     }
+
+    let addedMembers: { id: string; name: string }[] = [];
 
     if (membersToAdd.length > 0) {
       const { data: insertedUsers, error: usersError } = await supabaseAdmin
@@ -272,7 +362,43 @@ export async function PUT(
       if (membersError) {
         throw membersError;
       }
+
+      addedMembers = insertedUsers ?? [];
     }
+
+    const { error: groupError } = await supabaseAdmin
+      .from("groups")
+      .update({
+        name: validation.data.groupName,
+        currency: normalizedCurrency,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", groupId);
+
+    if (groupError) {
+      throw groupError;
+    }
+
+    const changes: GroupChanges = {
+      added: addedMembers,
+      removed: membersToRemove.map((member) => ({ id: member.userId, name: member.name })),
+      renamed: membersToRename.map((member) => ({
+        id: member.id,
+        from: currentMembersById.get(member.id)?.name ?? member.name,
+        to: member.name,
+      })),
+      revision: nextRevision,
+      originSessionId: typeof originSessionId === "string" ? originSessionId.slice(0, 128) : null,
+    };
+    if (nameChanged) {
+      changes.name = { from: currentGroup.name, to: validation.data.groupName };
+    }
+    if (currencyChanged) {
+      changes.currency = { from: currentGroup.currency, to: normalizedCurrency };
+    }
+
+    // Every bumped revision is broadcast, so open editors stay on the latest one.
+    await broadcastGroupChanges(groupId, changes);
 
     const updatedMembers = await getActiveGroupMembers(groupId);
 
@@ -280,6 +406,7 @@ export async function PUT(
       id: groupId,
       name: validation.data.groupName,
       currency: normalizedCurrency,
+      revision: nextRevision,
       members: updatedMembers.map((member) => ({
         id: member.userId,
         name: member.name,
@@ -295,9 +422,11 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _req: Request,
+  req: Request,
   { params }: { params: { groupId: string } }
 ) {
+  const body = (await req.json().catch(() => null)) as { originSessionId?: unknown } | null;
+
   const { error } = await supabaseAdmin.rpc(
     "delete_group_and_cleanup_users",
     {
@@ -308,6 +437,12 @@ export async function DELETE(
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
+
+  // Tell open screens of this group (other tabs and devices) that it's gone.
+  await broadcastGroupDeleted(params.groupId, {
+    originSessionId:
+      typeof body?.originSessionId === "string" ? body.originSessionId.slice(0, 128) : null,
+  });
 
   return NextResponse.json({ success: true });
 }

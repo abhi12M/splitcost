@@ -1,5 +1,6 @@
 import { EXPENSE_CATEGORIES, type CategoryKey, type SubcategoryId } from "@/components/icons/CategoryIcons";
 import type { ExpenseAttachment } from "@/lib/expenseAttachments";
+import { getRealtimeOriginSessionId } from "@/lib/realtime/originSession";
 
 export type SplitType = "equal" | "percentage" | "custom";
 
@@ -27,6 +28,8 @@ export interface GroupResponse {
   currency: string;
   members: UserInterface[];
   createdAt?: string;
+  /** Present where an editor needs it (dashboard payload, group update). */
+  revision?: number;
 }
 export interface GroupFormMember {
   id?: string;
@@ -36,6 +39,8 @@ export interface GroupFormRequest {
   name: string;
   currency: string;
   members: GroupFormMember[];
+  /** Revision the edit started from; a newer one on the server is a conflict. */
+  revision?: number;
 }
 export interface MemberRemovalCheckResponse {
   canRemove: boolean;
@@ -92,8 +97,11 @@ export interface ExpenseResponse {
   attachment_data_url?: string | null;
   createdAt: string;
   updatedAt?: string;
+  revision?: number;
 }
 export interface ExpenseRequest {
+  /** Required for edits; omitted for new expenses. */
+  revision?: number;
   amount: number;
   description: string;
   notes?: string | null;
@@ -126,6 +134,7 @@ export interface ExpenseFormInterface {
   attachment?: ExpenseAttachment | null;
   createdAt?: string;
   updatedAt?: string;
+  revision?: number;
 }
 export interface ExpenseCategoryPatchResponse {
   id: string;
@@ -209,13 +218,19 @@ export async function updateGroup(
       name: data.name,
       currency: data.currency,
       members: data.members,
+      expectedRevision: data.revision,
+      originSessionId: getRealtimeOriginSessionId(),
     }),
   });
 
   const payload = await res.json().catch(() => null);
 
   if (!res.ok) {
-    throw new Error(payload?.error || "Failed to update group");
+    // `code` lets the editor tell a version conflict apart from other failures.
+    const error = new Error(payload?.error || "Failed to update group") as Error & { code?: string; payload?: unknown };
+    error.code = payload?.code;
+    error.payload = payload;
+    throw error;
   }
 
   return payload;
@@ -256,9 +271,22 @@ export async function loadGroupsByIds(
   return res.json();
 }
 
+/**
+ * True when the server no longer has this group. Used to tell "this expense
+ * was deleted" apart from "its whole group was deleted" (which also deletes
+ * every expense in it).
+ */
+export async function isGroupDeleted(groupId: string): Promise<boolean> {
+  const res = await fetch(`/api/groups/${groupId}`, { cache: "no-store" }).catch(() => null);
+  return res?.status === 404;
+}
+
 export async function deleteGroup(groupId: string): Promise<boolean> {
   const res = await fetch(`/api/groups/${groupId}`, {
     method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    // Lets this tab ignore its own "group deleted" broadcast.
+    body: JSON.stringify({ originSessionId: getRealtimeOriginSessionId() }),
   });
 
   if (!res.ok) {
@@ -286,9 +314,14 @@ export async function addExpense(
     }),
   });
 
+  // Throw rather than return nothing, so callers can't mistake a failed save
+  // for a successful one.
   if (!res.ok) {
-    console.error("Failed to add expense");
-    return undefined;
+    const payload = await res.json().catch(() => null);
+    // `code` lets callers tell e.g. GROUP_NOT_FOUND apart from other failures.
+    const error = new Error(payload?.error || "Failed to add expense") as Error & { code?: string };
+    error.code = payload?.code;
+    throw error;
   }
 
   return res.json();
@@ -315,7 +348,9 @@ export async function updateExpense(
   expenseId: string,
   data: ExpenseRequest
 ): Promise<ExpenseResponse | undefined> {
-  const { attachment: _attachment, ...expensePayload } = data;
+  // `revision` is sent as `expectedRevision` below; drop it here so it isn't
+  // also duplicated into the payload by the spread.
+  const { attachment: _attachment, revision: _revision, ...expensePayload } = data;
 
   const res = await fetch(`/api/expenses/${expenseId}`, {
     method: "PUT",
@@ -324,13 +359,18 @@ export async function updateExpense(
     },
     body: JSON.stringify({
       groupId,
+      expectedRevision: data.revision,
+      originSessionId: getRealtimeOriginSessionId(),
       ...expensePayload,
     }),
   });
 
   if (!res.ok) {
-    console.error("Failed to update expense");
-    return undefined;
+    const payload = await res.json().catch(() => null);
+    const error = new Error(payload?.code || "Failed to update expense") as Error & { code?: string; payload?: unknown };
+    error.code = payload?.code;
+    error.payload = payload;
+    throw error;
   }
 
   // Cached read may now be stale (description / amount / split changed).
@@ -350,12 +390,19 @@ export async function patchExpenseCategory(
     body: JSON.stringify({
       category,
       subcategory,
+      originSessionId: getRealtimeOriginSessionId(),
     }),
   });
 
   if (!res.ok) {
-    console.error("Failed to patch expense category");
-    return undefined;
+    const payload = await res.json().catch(() => null);
+    const error = new Error(payload?.error || "Failed to update expense category") as Error & {
+      code?: string;
+      details?: string;
+    };
+    error.code = payload?.code;
+    error.details = payload?.details;
+    throw error;
   }
 
   return res.json();
@@ -366,6 +413,8 @@ export async function deleteExpense(
 ): Promise<boolean> {
   const res = await fetch(`/api/expenses/${expenseId}`, {
     method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ originSessionId: getRealtimeOriginSessionId() }),
   });
 
   if (!res.ok) {

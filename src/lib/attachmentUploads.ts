@@ -19,6 +19,22 @@ const states = new Map<string, AttachmentUploadState>();
 const listeners = new Set<() => void>();
 const completedGroupVersions = new Map<string, number>();
 
+/** What a failed background upload needs for a retry. */
+export type AttachmentUploadFailure = {
+  groupId: string;
+  expenseId: string;
+  attachment: ExpenseAttachment | null;
+};
+const failureListeners = new Set<(failure: AttachmentUploadFailure) => void>();
+
+/** Notifies about background uploads that failed, e.g. to offer a retry. */
+export function onAttachmentUploadFailure(listener: (failure: AttachmentUploadFailure) => void) {
+  failureListeners.add(listener);
+  return () => {
+    failureListeners.delete(listener);
+  };
+}
+
 function emit() {
   for (const listener of listeners) listener();
 }
@@ -60,6 +76,7 @@ export function startAttachmentUpload(
       });
       emit();
       console.error("background attachment save failed:", error);
+      for (const listener of failureListeners) listener({ groupId, expenseId, attachment });
     }
   })();
 }

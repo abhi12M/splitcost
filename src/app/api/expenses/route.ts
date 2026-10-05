@@ -60,6 +60,12 @@ export async function POST(req: Request) {
 
   if (error) {
     console.error("addExpense error:", error);
+    // A deleted group is a specific, permanent failure; say so, so the
+    // client can explain it instead of suggesting a retry.
+    const { data: group } = await supabaseAdmin.from("groups").select("id").eq("id", groupId).maybeSingle();
+    if (!group) {
+      return NextResponse.json({ code: "GROUP_NOT_FOUND", error: "Group not found" }, { status: 404 });
+    }
     return NextResponse.json(
       { error: "Failed to add expense" },
       { status: 400 }

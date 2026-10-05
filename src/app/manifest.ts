@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-import { SITE_DESCRIPTION, SITE_NAME, getSiteUrl } from "@/lib/seo";
+import { SITE_DESCRIPTION, SITE_NAME } from "@/lib/seo";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -13,7 +13,6 @@ export default function manifest(): MetadataRoute.Manifest {
     background_color: "#F1F5F9",
     theme_color: "#2563FF",
     orientation: "portrait",
-    id: getSiteUrl(),
     categories: ["finance", "productivity"],
     icons: [
       {

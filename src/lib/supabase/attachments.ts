@@ -99,15 +99,14 @@ export async function getExpenseAttachmentPath(expenseId: string) {
 
 export async function setExpenseAttachmentPath(
   expenseId: string,
-  attachmentPath: string | null
+  attachmentPath: string | null,
+  originSessionId?: string | null
 ) {
-  const { error } = await supabaseAdmin
-    .from("expenses")
-    .update({
-      attachment_data_url: attachmentPath,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", expenseId);
+  const { error } = await (supabaseAdmin as any).rpc("set_expense_attachment_path", {
+    p_expense_id: expenseId,
+    p_attachment_path: attachmentPath,
+    p_origin_session_id: originSessionId || null,
+  });
 
   if (error) {
     throw error;

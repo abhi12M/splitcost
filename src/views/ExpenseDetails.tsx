@@ -39,9 +39,12 @@ import {
 import {
   deleteExpense,
   EditExpenseInterface,
+  isGroupDeleted,
   patchExpenseCategory,
   ExpenseParticipantsRequest,
 } from "@/lib/storage";
+import { GroupDeletedDialog } from "@/components/group/GroupDeletedDialog";
+import { ExpenseNotFound } from "@/components/expense/ExpenseNotFound";
 import {
   formatAmount,
   formatDisplayDate,
@@ -50,12 +53,16 @@ import {
 import {
   deleteExpenseAttachment,
   ExpenseAttachment,
+  MAX_ATTACHMENT_SIZE_LABEL,
   readExpenseAttachmentFile,
   revokeAttachmentObjectUrl,
   saveExpenseAttachment,
   validateAttachmentFile,
 } from "@/lib/expenseAttachments";
 import { useExpense } from "@/lib/groupExpenseData";
+import { useExpenseRealtime, useGroupChanges } from "@/hooks/useGroupRealtime";
+import { useGroupChangeNotices } from "@/components/group/GroupChangeNotices";
+import { applyGroupChangesToGroup } from "@/lib/realtime/groupChanges";
 import { getGroupViewerMemberId } from "@/lib/groupViewer";
 import { memberNameForViewer } from "@/lib/groupExpenseLabels";
 import { formatSummaryName } from "@/components/ui/formatters";
@@ -67,6 +74,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SingleSelect } from "@/components/ui/single-select";
 import { hasExpenseNotesContent, sanitizeExpenseNotes } from "@/lib/expenseNotes";
 import { useBackButtonClose } from "@/hooks/useBackButtonClose";
+import { toast } from "@/hooks/use-toast";
+import { ResourceNotFound } from "@/components/ResourceNotFound";
 
 function memberName(
   members: EditExpenseInterface["group"]["members"],
@@ -243,11 +252,12 @@ export default function ExpenseDetailsPage({
 }) {
   const router = useRouter();
   const t = useTranslations("expense");
+  const tToasts = useTranslations("toasts");
   const tCommon = useTranslations("common");
   const attachmentGalleryInputRef = useRef<HTMLInputElement>(null);
   const attachmentCameraInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: details, loading, setData: setDetails } = useExpense(expenseId);
+  const { data: details, loading, refresh, setData: setDetails, applyChange } = useExpense(expenseId);
 
   const [viewerMemberId, setViewerMemberId] = useState<string | null>(null);
   useEffect(() => {
@@ -303,9 +313,42 @@ export default function ExpenseDetailsPage({
   const [isExpenseDeleteConfirmOpen, setIsExpenseDeleteConfirmOpen] = useState(false);
   const [isAttachmentDeleteConfirmOpen, setIsAttachmentDeleteConfirmOpen] = useState(false);
   const [attachmentSpinnerMessage, setAttachmentSpinnerMessage] = useState("");
+  const [deletedOpen, setDeletedOpen] = useState(false);
 
   useBackButtonClose(isAttachmentSourceOpen, () =>
     setIsAttachmentSourceOpen(false)
+  );
+
+  // The whole group was deleted; replaces the expense-level "deleted" dialog.
+  const [groupDeleted, setGroupDeleted] = useState(false);
+  const showGroupDeleted = () => {
+    setGroupDeleted(true);
+    setDeletedOpen(false);
+  };
+
+  useExpenseRealtime(expenseId, (event) => {
+    if (event === "DELETE") {
+      // Deleting a group deletes its expenses too; check which one happened.
+      void isGroupDeleted(groupId).then((gone) => (gone ? showGroupDeleted() : setDeletedOpen(true)));
+      return;
+    }
+    // Drop any locally-set attachment override so a remote change (e.g. the
+    // image being deleted from another tab) isn't masked by a stale local
+    // value once the refetch below lands.
+    setAttachmentOverride(undefined);
+    void refresh();
+  });
+
+  // Names on this screen come from the group's member list, so a member or
+  // group edit is applied to it in place instead of refetching.
+  const changeNotices = useGroupChangeNotices();
+  useGroupChanges(
+    groupId,
+    (changes) => {
+      applyChange((prev) => ({ ...prev, group: applyGroupChangesToGroup(prev.group, changes) }), changes.revision);
+      changeNotices.notify(changes);
+    },
+    showGroupDeleted
   );
 
   const headerIconButtonClass =
@@ -332,8 +375,19 @@ export default function ExpenseDetailsPage({
           console.error("delete attachment failed during expense delete:", error);
         }
       }
-      await deleteExpense(expenseId);
+      // deleteExpense reports failure as `false`; a failed delete must not
+      // navigate away as if it had worked.
+      if (!(await deleteExpense(expenseId))) throw new Error("Failed to delete expense");
+      toast({ message: tToasts("expenseDeleted"), variant: "destructive" });
       router.push(`/group/${groupId}`);
+    } catch (error) {
+      console.error("delete expense failed:", error);
+      toast({
+        title: tToasts("couldNotDeleteExpense"),
+        description: tToasts("tryAgainHint"),
+        variant: "error",
+        action: { label: tToasts("retry"), callback: () => void handleDeleteExpense() },
+      });
     } finally {
       setIsDeletingExpense(false);
       setIsExpenseDeleteConfirmOpen(false);
@@ -349,9 +403,21 @@ export default function ExpenseDetailsPage({
 
     const validationError = validateAttachmentFile(file);
     if (validationError) {
+      // Say why nothing happened instead of silently ignoring the pick.
+      toast({
+        message: file.type.startsWith("image/")
+          ? t("attachMaxSize", { max: MAX_ATTACHMENT_SIZE_LABEL })
+          : t("attachImageOnly"),
+        variant: "error",
+      });
       return;
     }
 
+    await uploadAttachmentFile(file);
+  };
+
+  /** Uploads a picked image; kept separate so a failed upload can retry the same file. */
+  const uploadAttachmentFile = async (file: File) => {
     setAttachmentSpinnerMessage(
       attachment ? t("updatingAttachment") : t("uploadingAttachment")
     );
@@ -367,6 +433,12 @@ export default function ExpenseDetailsPage({
       setIsViewerOpen(false);
     } catch (error) {
       console.error("save attachment failed:", error);
+      toast({
+        title: tToasts("couldNotUploadImage"),
+        description: tToasts("tryAgainHint"),
+        variant: "error",
+        action: { label: tToasts("retry"), callback: () => void uploadAttachmentFile(file) },
+      });
     } finally {
       // The server returns its own signed URL, so the local blob URL is no
       // longer needed and must be released to avoid leaking the underlying
@@ -386,6 +458,7 @@ export default function ExpenseDetailsPage({
       setIsViewerOpen(false);
     } catch (error) {
       console.error("delete attachment failed:", error);
+      toast({ title: tToasts("couldNotRemoveImage"), description: tToasts("tryAgainHint"), variant: "error" });
     } finally {
       setAttachmentSpinnerMessage("");
     }
@@ -401,31 +474,43 @@ export default function ExpenseDetailsPage({
 
     setIsUpdatingCategory(true);
 
-    const updatedExpense = await patchExpenseCategory(
-      expenseId,
-      category,
-      subcategory
-    );
-
-    if (updatedExpense) {
-      // Keep the category selection in the currently displayed detail data.
-      setDetails(
-        (current) =>
-          current
-            ? {
-                ...current,
-                expense: {
-                  ...current.expense,
-                  category: updatedExpense.category,
-                  subcategory: updatedExpense.subcategory,
-                  updatedAt: updatedExpense.updatedAt,
-                },
-              }
-            : current
+    try {
+      const updatedExpense = await patchExpenseCategory(
+        expenseId,
+        category,
+        subcategory
       );
-    }
 
-    setIsUpdatingCategory(false);
+      if (updatedExpense) {
+        // Keep the category selection in the currently displayed detail data.
+        setDetails(
+          (current) =>
+            current
+              ? {
+                  ...current,
+                  expense: {
+                    ...current.expense,
+                    category: updatedExpense.category,
+                    subcategory: updatedExpense.subcategory,
+                    updatedAt: updatedExpense.updatedAt,
+                  },
+                }
+              : current
+        );
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to update expense category";
+      const isProduction = process.env.NODE_ENV === "production";
+      toast({
+        title: isProduction ? "Could not update category" : "Category update failed",
+        description: isProduction
+          ? "Please try again. If the problem persists, contact support."
+          : message,
+        variant: "error",
+      });
+    } finally {
+      setIsUpdatingCategory(false);
+    }
   };
 
   const participantRows = useMemo(() => {
@@ -442,13 +527,16 @@ export default function ExpenseDetailsPage({
   }
 
   if (!details) {
+    return <ExpenseNotFound groupId={groupId} loading={<ExpenseDetailsSkeleton />} />;
+  }
+
+  if (details.group.id !== groupId) {
     return (
-      <div className="flex h-dvh flex-col items-center justify-center gap-3 bg-background">
-        <p className="text-sm text-muted-foreground">{tCommon("expenseNotFound")}</p>
-        <Button asChild>
-          <Link href={`/group/${groupId}`}>{t("backToGroup")}</Link>
-        </Button>
-      </div>
+      <ResourceNotFound
+        message={tCommon("groupNotFound")}
+        actionLabel={tCommon("goHome")}
+        actionHref="/"
+      />
     );
   }
 
@@ -866,7 +954,7 @@ export default function ExpenseDetailsPage({
           description={t("deleteImageDescription")}
           actions={[
             { label: tCommon("cancel"), type: "cancel", className: "mt-0 flex-1 border-none bg-muted hover:bg-muted/80" },
-            { label: tCommon("delete"), onClick: handleDeleteAttachment, disabled: Boolean(attachmentSpinnerMessage), className: "flex-1 bg-destructive text-white hover:bg-destructive/90" },
+            { label: tCommon("delete"), onClick: handleDeleteAttachment, disabled: Boolean(attachmentSpinnerMessage), variant: "destructive", className: "flex-1" },
           ]}
         />
         <GenericAlertDialog
@@ -876,8 +964,21 @@ export default function ExpenseDetailsPage({
           description={t("deleteExpenseDescription")}
           actions={[
             { label: tCommon("cancel"), type: "cancel", className: "mt-0 flex-1 border-none bg-muted hover:bg-muted/80" },
-            { label: isDeletingExpense ? tCommon("deleting") : tCommon("delete"), onClick: handleDeleteExpense, disabled: isDeletingExpense, className: "flex-1 bg-destructive text-white hover:bg-destructive/90" },
+            { label: isDeletingExpense ? tCommon("deleting") : tCommon("delete"), onClick: handleDeleteExpense, disabled: isDeletingExpense, variant: "destructive", className: "flex-1" },
           ]}
+        />
+        <GenericAlertDialog
+          open={deletedOpen}
+          aboveOverlays
+          onOpenChange={setDeletedOpen}
+          title="Expense deleted"
+          description="This expense was deleted in another session and is no longer available."
+          actions={[]}
+          footer={
+            <Button asChild variant="outline" className="w-full rounded-xl">
+              <Link href={`/group/${groupId}`}>Back to expenses</Link>
+            </Button>
+          }
         />
       </div>
       <Spinner
@@ -885,6 +986,8 @@ export default function ExpenseDetailsPage({
         className="z-[100]"
         message={attachmentSpinnerMessage}
       />
+      {changeNotices.sheet}
+      <GroupDeletedDialog open={groupDeleted} />
     </div>
   );
 }

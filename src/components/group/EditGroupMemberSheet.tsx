@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import {
   Drawer,
   DrawerContent,
+  DrawerDescription,
   DrawerFooter,
+  DrawerTitle,
 } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { useBackButtonClose } from "@/hooks/useBackButtonClose";
@@ -72,6 +74,10 @@ export function EditGroupMemberSheet({
           maxHeight: drawerMaxHeight,
         }}
       >
+        <DrawerTitle className="sr-only">{t("memberName")}</DrawerTitle>
+        <DrawerDescription className="sr-only">
+          {t("renameHint")}
+        </DrawerDescription>
         {selectedMember ? (
           <>
             <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 pb-2 pt-5">

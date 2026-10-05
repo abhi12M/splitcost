@@ -20,6 +20,8 @@ type GenericAlertDialogAction = {
   className?: string;
   /** Use a cancel action when the action should simply dismiss the dialog. */
   type?: "action" | "cancel";
+  /** "destructive" renders a red action (e.g. Delete). */
+  variant?: "default" | "destructive";
 };
 
 type GenericAlertDialogProps = {
@@ -32,12 +34,24 @@ type GenericAlertDialogProps = {
   body?: ReactNode;
   trigger?: ReactNode;
   actions: GenericAlertDialogAction[];
+  /** Optional custom footer content for links or other non-dialog actions. */
+  footer?: ReactNode;
   contentClassName?: string;
   titleClassName?: string;
   descriptionClassName?: string;
   footerClassName?: string;
   onContentClick?: MouseEventHandler<HTMLDivElement>;
+  /**
+   * Lift the dialog (overlay included) above the app's full-screen layers,
+   * such as the mobile Paid by, Split, category and notes screens. Use it for
+   * dialogs that can open on their own (e.g. from realtime events) while one
+   * of those screens is showing.
+   */
+  aboveOverlays?: boolean;
 };
+
+// Above the full-screen layers (up to z-[100]) and the toasts.
+const ABOVE_OVERLAYS = "z-[110]";
 
 /** A configurable confirmation or informational alert dialog for standard text-and-action flows. */
 export function GenericAlertDialog({
@@ -49,11 +63,13 @@ export function GenericAlertDialog({
   body,
   trigger,
   actions,
+  footer,
   contentClassName,
   titleClassName,
   descriptionClassName,
   footerClassName,
   onContentClick,
+  aboveOverlays = false,
 }: GenericAlertDialogProps) {
   const dialogDescription =
     messages !== undefined
@@ -72,7 +88,8 @@ export function GenericAlertDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       {trigger}
       <AlertDialogContent
-        className={cn("max-w-[min(100vw-2rem,26rem)] rounded-sm", contentClassName)}
+        className={cn("max-w-[min(100vw-2rem,26rem)] rounded-sm", aboveOverlays && ABOVE_OVERLAYS, contentClassName)}
+        overlayClassName={aboveOverlays ? ABOVE_OVERLAYS : undefined}
         onClick={onContentClick}
       >
         <AlertDialogHeader>
@@ -89,7 +106,7 @@ export function GenericAlertDialog({
         </AlertDialogHeader>
         {body}
         <AlertDialogFooter className={cn("mt-2 gap-2", footerClassName)}>
-          {actions.map(({ label, onClick, disabled, className, type = "action" }, index) => {
+          {footer ?? actions.map(({ label, onClick, disabled, className, type = "action", variant }, index) => {
             const actionClassName = cn("w-full rounded-xl", className);
 
             return type === "cancel" ? (
@@ -105,6 +122,7 @@ export function GenericAlertDialog({
               <AlertDialogAction
                 key={index}
                 disabled={disabled}
+                variant={variant}
                 className={actionClassName}
                 onClick={onClick}
               >

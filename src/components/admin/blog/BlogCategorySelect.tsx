@@ -58,7 +58,7 @@ export function BlogCategorySelect({
       setCategories(data);
     } catch (error) {
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Unable to load categories",
         description: error instanceof Error ? error.message : "Unable to load categories",
       });
@@ -113,7 +113,7 @@ export function BlogCategorySelect({
       });
     } catch (error) {
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Unable to create category",
         description: error instanceof Error ? error.message : "Unable to create category",
       });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
 import NextLink from "next/link";
@@ -32,6 +32,7 @@ import {
 import { MobileGroupDashboard } from "@/components/group/MobileGroupDashboard";
 import { MobileGroupDashboardSkeleton } from "@/components/group/MobileGroupDashboardSkeleton";
 import { Layout } from "@/components/layout/Layout";
+import { ResourceNotFound } from "@/components/ResourceNotFound";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserAvatar, AvatarGroup } from "@/components/ui/UserAvatar";
@@ -57,16 +58,19 @@ import {
   UserInterface,
 } from "@/lib/storage";
 import { useGroupDashboard } from "@/lib/groupExpenseData";
+import { useGroupChanges, useGroupRealtime } from "@/hooks/useGroupRealtime";
+import { useGroupChangeNotices } from "@/components/group/GroupChangeNotices";
+import { GroupDeletedDialog } from "@/components/group/GroupDeletedDialog";
+import { applyGroupChangesToDashboard } from "@/lib/realtime/groupChanges";
 import { useAttachmentUploadCompletion } from "@/lib/attachmentUploads";
 import { SingleSelect } from "@/components/ui/single-select";
 import { formatExpenseGroupHeaderTitle, toTitleCase } from "@/components/ui/formatters";
 import { resolveCategoryDisplayLabel } from "@/lib/category-labels";
 import { shareOrCopy } from "@/lib/shareContent";
-import { isMobileViewportWidth, useDeviceType } from "@/hooks/useDeviceType";
+import { useDeviceType } from "@/hooks/useDeviceType";
 import { toast } from "@/hooks/use-toast";
 import { getEncryptedItem, setEncryptedItem } from "@/lib/localStorage";
 import { ADMIN_BASE_PATH, LOCAL_GROUPS_KEY } from "@/lib/constants";
-import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { SmartTooltip } from "@/components/ui/smartTooltip";
 import { GenericAlertDialog } from "@/components/ui/generic-alert-dialog";
@@ -342,99 +346,6 @@ function buildExpensesCsv(
     .join("\r\n");
 }
 
-function GroupResponsesSkeleton() {
-  return (
-    <Layout>
-      <div className="container space-y-5 py-5 sm:space-y-6 sm:py-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="flex flex-1 items-center gap-3">
-            <Skeleton className="h-9 w-9 shrink-0 rounded-md" />
-            <div className="min-w-0 flex-1 space-y-2">
-              <Skeleton className="h-7 w-48 max-w-full sm:h-8" />
-              <Skeleton className="h-4 w-36" />
-            </div>
-          </div>
-          <div className="flex justify-end gap-2">
-            <Skeleton className="h-9 w-20 rounded-md" />
-            <Skeleton className="h-9 w-20 rounded-md" />
-            <Skeleton className="hidden h-9 w-28 rounded-md sm:block" />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-[4.5rem] rounded-xl sm:h-[4.75rem]" />
-          ))}
-        </div>
-
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {/* LEFT COLUMN */}
-          <div className="lg:col-span-2 space-y-4">
-            {/* Filters */}
-            <div className="border rounded-lg p-4 space-y-3">
-              <Skeleton className="h-10 w-full" />
-              <div className="grid grid-cols-2 gap-3">
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-            </div>
-
-            {/* Expense list */}
-            <div className="border rounded-lg">
-              <div className="p-4 flex justify-between">
-                <Skeleton className="h-5 w-32" />
-                <Skeleton className="h-9 w-20" />
-              </div>
-
-              {Array.from({ length: 2 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="flex gap-3 p-4 border-t items-center"
-                >
-                  <Skeleton className="w-10 h-10 rounded-xl" />
-
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-3 w-1/3" />
-                    <Skeleton className="h-5 w-32" />
-                  </div>
-
-                  <Skeleton className="h-4 w-16" />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* RIGHT COLUMN */}
-          <div className="space-y-4">
-            {/* Balances */}
-            <div className="border rounded-lg p-4 space-y-3">
-              <Skeleton className="h-5 w-32" />
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="flex justify-between items-center">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-4 w-16" />
-                </div>
-              ))}
-            </div>
-
-            {/* Settlements */}
-            <div className="border rounded-lg p-4 space-y-3">
-              <Skeleton className="h-5 w-40" />
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="flex justify-between">
-                  <Skeleton className="h-4 w-40" />
-                  <Skeleton className="h-4 w-16" />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </Layout>
-  );
-}
-
 /* ======================================================
    COMPONENT
 ====================================================== */
@@ -446,6 +357,7 @@ export default function GroupResponsesPage({
   isAdminView?: boolean;
 }) {
   const t = useTranslations("groupDetails");
+  const tToasts = useTranslations("toasts");
   const tGroup = useTranslations("group");
   const tCommon = useTranslations("common");
   const tCategories = useTranslations("categories");
@@ -454,8 +366,32 @@ export default function GroupResponsesPage({
     [tCategories]
   );
   const youLabel = tGroup("you");
-  const { data: dashboard, loading, refresh } = useGroupDashboard(groupId);
+  const { data: dashboard, loading, refresh, applyChange } = useGroupDashboard(groupId);
   const attachmentUploadVersion = useAttachmentUploadCompletion(groupId);
+
+  // Deleted in another session: block the screen with an explanation. Both
+  // the broadcast and the database delete event can report it.
+  const [groupDeleted, setGroupDeleted] = useState(false);
+
+  useGroupRealtime({
+    groupId,
+    onExpenseChange: () => {
+      void refresh();
+    },
+    onGroupDeleted: () => setGroupDeleted(true),
+  });
+
+  // Member and group edits arrive with their full change, so apply them to the
+  // loaded dashboard (balances are derived from it) instead of refetching.
+  const changeNotices = useGroupChangeNotices();
+  useGroupChanges(
+    groupId,
+    (changes) => {
+      applyChange((prev) => applyGroupChangesToDashboard(prev, changes), changes.revision);
+      changeNotices.notify(changes);
+    },
+    () => setGroupDeleted(true)
+  );
 
   useEffect(() => {
     if (attachmentUploadVersion > 0) void refresh();
@@ -483,11 +419,26 @@ export default function GroupResponsesPage({
   const group = dashboard?.group ?? null;
   const expenses = dashboard?.expenses ?? [];
 
+  // The tab title is rendered on the server with the name at load time; keep
+  // it in step when the group is renamed in another session.
+  const tMetadata = useTranslations("metadata.group");
+  const groupName = group?.name;
+  useEffect(() => {
+    if (isAdminView || !groupName) return;
+    document.title = tMetadata("titleWithName", { name: groupName });
+  }, [isAdminView, groupName, tMetadata]);
+
   const [viewerMemberId, setViewerMemberId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!groupId) return;
     let id = getGroupViewerMemberId(groupId);
+    // The chosen member may have been removed (e.g. in another session):
+    // forget them so the picker asks again instead of holding a stale id.
+    if (group && id && !group.members.some((member) => member.id === id)) {
+      clearGroupViewerMemberId(groupId);
+      id = null;
+    }
     if (group && !id && group.members.length === 1) {
       id = group.members[0].id;
       setGroupViewerMemberId(groupId, id);
@@ -617,6 +568,32 @@ export default function GroupResponsesPage({
     [balances, members]
   );
 
+  // An open settle confirmation holds the amount from when it was opened. If
+  // an expense change in another session alters that debt, confirming would
+  // record the old amount, so close it and say why. An unchanged debt keeps
+  // it open with the fresh row (new names after a rename, new position).
+  // Skipped while this screen is settling: its own reload removes the debt.
+  const settleStateRef = useRef({ settleConfirmation, settlingIndex, groupDeleted });
+  settleStateRef.current = { settleConfirmation, settlingIndex, groupDeleted };
+  useEffect(() => {
+    const { settleConfirmation: open, settlingIndex: settling, groupDeleted: deleted } = settleStateRef.current;
+    if (!open || settling !== null || deleted || !members) return;
+    const index = settlements.findIndex(
+      (s) => s.fromId === open.settlement.fromId && s.toId === open.settlement.toId
+    );
+    const current = settlements[index];
+    if (current && Math.abs(current.amount - open.settlement.amount) < 0.005) {
+      if (current !== open.settlement) setSettleConfirmation({ settlement: current, index });
+      return;
+    }
+    setSettleConfirmation(null);
+    toast({
+      title: tToasts("settlementChanged"),
+      description: tToasts("settlementChangedHint"),
+      variant: "warning",
+    });
+  }, [settlements, members, tToasts]);
+
   const totalExpenses = useMemo(
     () => expenses.reduce((s, e) => s + e.amount, 0),
     [expenses]
@@ -631,31 +608,26 @@ export default function GroupResponsesPage({
     [groupedExpenses]
   );
 
-  const isMobileGroupLoading = device === "mobile" || isMobileViewportWidth();
-
   if (loading) {
-    // SSR defaults to desktop in useDeviceType — use minimal skeleton so phones
-    // never flash the full-site GroupResponsesSkeleton (header + footer).
-    if (typeof window === "undefined" || isMobileGroupLoading) {
-      return (
-        <Layout variant="minimal">
-          <MobileGroupDashboardSkeleton />
-        </Layout>
-      );
-    }
-    return <GroupResponsesSkeleton />;
+    return (
+      <Layout variant="minimal">
+        <MobileGroupDashboardSkeleton />
+      </Layout>
+    );
   }
 
   if (!group) {
     return (
-      <Layout>
-        <div className="container py-12 text-center">
-          <p className="text-muted-foreground">{tCommon("groupNotFound")}</p>
-          <Button asChild className="mt-4">
-            <Link href="/">{tCommon("goHome")}</Link>
-          </Button>
-        </div>
-      </Layout>
+      <>
+        <ResourceNotFound
+          message={tCommon("groupNotFound")}
+          actionLabel={tCommon("goHome")}
+          actionHref="/"
+        />
+        {/* A deletion's cascading expense events can reload this screen to
+            "not found" before the explanation arrives; still show it. */}
+        <GroupDeletedDialog open={groupDeleted} />
+      </>
     );
   }
 
@@ -698,13 +670,13 @@ export default function GroupResponsesPage({
           type === "link"
             ? t("copiedLinkHint")
             : t("copiedSettlementHint"),
-        variant:'info',
+        variant: "success",
       });
     } else if (outcome === "failed") {
       toast({
         title: t("shareFailedTitle"),
         description: t("shareFailedHint"),
-        variant: "destructive",
+        variant: "error",
       });
     }
   };
@@ -770,7 +742,7 @@ export default function GroupResponsesPage({
     toast({
       title: t("exportReady"),
       description: t("exportReadyDescription", { count: exportExpenses.length }),
-      variant:'info',
+      variant: "success",
     });
   };
 
@@ -802,8 +774,14 @@ export default function GroupResponsesPage({
       }
       await addExpense(groupId!, data);
       await refresh();
+      toast({ message: tToasts("settled"), variant: "success" });
     } catch (error) {
-      // toast.error("Failed to delete expense");
+      toast({
+        title: tToasts("couldNotSettle"),
+        description: tToasts("tryAgainHint"),
+        variant: "error",
+        action: { label: tToasts("retry"), callback: () => void handleSettle(setlementData, index) },
+      });
     } finally {
       setSettlingIndex(null);
     }
@@ -1465,6 +1443,8 @@ export default function GroupResponsesPage({
           <Plus className="h-7 w-7" strokeWidth={2.25} />
         </Link>
       </div>
+      {changeNotices.sheet}
+      <GroupDeletedDialog open={groupDeleted} />
     </Layout>
   );
 }

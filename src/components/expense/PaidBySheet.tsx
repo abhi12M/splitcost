@@ -78,6 +78,17 @@ export default function PaidBySheet({
     }
   }, [open]);
 
+  // While the sheet is open, keep one payer row per current member: removed
+  // members (and any amount entered for them) drop out, added ones get an
+  // empty row. Names are read from `members` at render, so renames show as is.
+  useEffect(() => {
+    if (!open) return;
+    setLocalPayers((prev) => {
+      const byId = new Map(prev.map((p) => [p.userId, p]));
+      return members.map((m) => byId.get(m.id) ?? { userId: m.id, amount: null });
+    });
+  }, [members]);
+
   const { keyboardOffset } = useKeyboardLayout();
   const swipeHandlers = useSwipeable({
     onSwipedDown: ({ initial, deltaY }) => {

@@ -51,7 +51,7 @@ export function BlogCategoryAdmin() {
       setCategories(data);
     } catch (error) {
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Unable to load categories",
         description: error instanceof Error ? error.message : "Unable to load categories",
       });
@@ -140,7 +140,7 @@ export function BlogCategoryAdmin() {
       });
     } catch (error) {
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Unable to save category",
         description: error instanceof Error ? error.message : "Unable to save category",
       });
@@ -169,7 +169,7 @@ export function BlogCategoryAdmin() {
       setDeleteTarget(null);
     } catch (error) {
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Unable to delete category",
         description: error instanceof Error ? error.message : "Unable to delete category",
       });

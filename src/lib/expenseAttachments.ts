@@ -1,3 +1,5 @@
+import { getRealtimeOriginSessionId } from "@/lib/realtime/originSession";
+
 export const MAX_ATTACHMENT_SIZE_BYTES = 5 * 1024 * 1024;
 export const MAX_ATTACHMENT_SIZE_LABEL = "5 MB";
 export const EXPENSE_ATTACHMENT_BUCKET = "expense-attachments";
@@ -96,6 +98,7 @@ export async function saveExpenseAttachment(
 
   const formData = new FormData();
   formData.append("file", attachment.file);
+  formData.append("originSessionId", getRealtimeOriginSessionId());
 
   const res = await fetch(`/api/expenses/${expenseId}/attachment`, {
     method: "POST",
@@ -114,6 +117,8 @@ export async function saveExpenseAttachment(
 export async function deleteExpenseAttachment(expenseId: string) {
   const res = await fetch(`/api/expenses/${expenseId}/attachment`, {
     method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ originSessionId: getRealtimeOriginSessionId() }),
   });
 
   if (!res.ok) {

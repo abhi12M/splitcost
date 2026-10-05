@@ -67,6 +67,9 @@ export async function POST(
   try {
     const formData = await req.formData();
     const file = formData.get("file");
+    const originSessionIdField = formData.get("originSessionId");
+    const originSessionId =
+      typeof originSessionIdField === "string" ? originSessionIdField.slice(0, 128) : null;
 
     if (!(file instanceof File)) {
       return NextResponse.json(
@@ -104,7 +107,7 @@ export async function POST(
     }
 
     try {
-      await setExpenseAttachmentPath(expenseId, path);
+      await setExpenseAttachmentPath(expenseId, path, originSessionId);
     } catch (error) {
       await supabaseAdmin.storage
         .from(EXPENSE_ATTACHMENT_BUCKET)
@@ -133,7 +136,7 @@ export async function POST(
 }
 
 export async function DELETE(
-  _req: Request,
+  req: Request,
   { params }: { params: { expenseId: string } }
 ) {
   const expenseId = params.expenseId;
@@ -146,6 +149,10 @@ export async function DELETE(
   }
 
   try {
+    const body = await req.json().catch(() => ({}));
+    const originSessionId =
+      typeof body?.originSessionId === "string" ? body.originSessionId.slice(0, 128) : null;
+
     const existingPath = await getExpenseAttachmentPath(expenseId);
 
     if (existingPath) {
@@ -165,7 +172,7 @@ export async function DELETE(
       }
     }
 
-    await setExpenseAttachmentPath(expenseId, null);
+    await setExpenseAttachmentPath(expenseId, null, originSessionId);
 
     return NextResponse.json({ success: true });
   } catch (error) {

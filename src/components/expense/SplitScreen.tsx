@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ArrowLeft, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -432,6 +432,64 @@ export default function SplitScreen(props: SplitScreenProps) {
                 : t
         );
     }
+
+    // Keep the open screen in step with members changed in another session:
+    // removed members drop out, renamed ones show their new name, and added
+    // ones appear unselected. Values already entered for others are kept.
+    const syncedMembersRef = useRef(members);
+    useEffect(() => {
+        if (syncedMembersRef.current === members) return;
+        syncedMembersRef.current = members;
+
+        updateVM((prev) => {
+            const sync = <T extends BaseTabMember>(list: T[], blank: (m: UserInterface) => T): T[] => {
+                const byId = new Map(list.map((m) => [m.id, m]));
+                return members.map((m) => {
+                    const existing = byId.get(m.id);
+                    return existing ? { ...existing, name: m.name } : blank(m);
+                });
+            };
+
+            const equalTab = prev.tabs.find((t) => t.id === "equal") as EqualTabVM;
+            const equalMembers = sync(equalTab.members, (m) => ({
+                id: m.id,
+                name: m.name,
+                isSelected: false,
+                calculatedAmount: 0,
+            }));
+
+            const tabs = recalcEqualTab(prev, equalMembers).map((t): SplitTabVM => {
+                if (t.id === "custom") {
+                    const customMembers = sync(t.members, (m) => ({ id: m.id, name: m.name, value: null }));
+                    const total = customMembers.reduce((s, m) => s + (m.value || 0), 0);
+                    return {
+                        ...t,
+                        members: customMembers,
+                        footer: { selected: { totalValue: total, difference: getCurrencyDifference(amount || 0, total) } },
+                    };
+                }
+
+                if (t.id === "percentage") {
+                    const percentMembers = sync(t.members, (m) => ({
+                        id: m.id,
+                        name: m.name,
+                        value: null,
+                        calculatedAmount: 0,
+                    }));
+                    const total = percentMembers.reduce((s, m) => s + (m.value || 0), 0);
+                    return {
+                        ...t,
+                        members: percentMembers,
+                        footer: { selected: { totalValue: total, difference: getRoundedDifference(100, total) } },
+                    };
+                }
+
+                return t;
+            });
+
+            return { ...prev, tabs };
+        });
+    }, [members]);
 
     function toggleEqualMember(id: string) {
         updateVM((prev) => {

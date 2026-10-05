@@ -91,7 +91,7 @@ export function BlogAdminList({ blogs }: { blogs: BlogAdminListItem[] }) {
       toast({
         title: "Unable to delete blog post",
         description: error instanceof Error ? error.message : "Please try again.",
-        variant: "destructive",
+        variant: "error",
       });
     } finally {
       setDeletingId(null);

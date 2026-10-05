@@ -546,7 +546,8 @@
     "morePages": "और पृष्ठ",
     "previousSlide": "पिछली स्लाइड",
     "nextSlide": "अगली स्लाइड",
-    "breadcrumbMore": "और"
+    "breadcrumbMore": "और",
+    "dismissNotification": "सूचना बंद करें"
   },
   "groups": {
     "titleYour": "आपके समूह",
@@ -759,8 +760,9 @@
     "memberName": "सदस्य का नाम",
     "renameHint": "नाम परिवर्तन समूह सहेजने पर सहेजे जाते हैं।",
     "removeMember": "सदस्य हटाएं",
-    "removeMemberHint": "केवल यदि किसी खर्च से जुड़ा न हो।",
+    "removeMemberHint": "यह सदस्य किसी भी खर्च से जुड़ा नहीं है और इसे हटाया जा सकता है।",
     "removeMemberBlocked": "यह सदस्य किसी खर्च में है और हटाया नहीं जा सकता।",
+    "removeMemberMinimum": "इस समूह में कम से कम {min} सदस्य होने चाहिए। किसी सदस्य को हटाने से पहले एक और सदस्य जोड़ें।",
     "validation": {
       "memberNameRequired": "सदस्य का नाम आवश्यक है।",
       "memberNameMax": "नाम {max} अक्षरों से अधिक नहीं हो सकता।",
@@ -768,7 +770,8 @@
       "groupNameMax": "समूह का नाम {max} अक्षरों से अधिक नहीं हो सकता।",
       "membersMin": "कम से कम {min} सदस्य आवश्यक हैं।",
       "membersMax": "अधिकतम {max} सदस्य अनुमत हैं।"
-    }
+    },
+    "deleteGroupUnsettled": "सदस्यों के बीच {amount} अभी भी सेटल नहीं हुआ है।"
   },
   "groupDetails": {
     "backToGroup": "समूह पर वापस",
@@ -2009,5 +2012,59 @@
         "general": "सामान्य"
       }
     }
+  },
+  "groupChanges": {
+    "addedOne": "{name} को दूसरे सेशन में ग्रुप में जोड़ा गया।",
+    "addedTwo": "{first} और {second} को दूसरे सेशन में ग्रुप में जोड़ा गया।",
+    "addedMany": "{first}, {second} और {count} अन्य को दूसरे सेशन में ग्रुप में जोड़ा गया।",
+    "removedOne": "{name} को दूसरे सेशन में ग्रुप से हटाया गया।",
+    "removedTwo": "{first} और {second} को दूसरे सेशन में ग्रुप से हटाया गया।",
+    "removedMany": "{first}, {second} और {count} अन्य को दूसरे सेशन में ग्रुप से हटाया गया।",
+    "renamedOne": "दूसरे सेशन में {from} का नाम बदलकर {to} किया गया।",
+    "renamedTwo": "दूसरे सेशन में {from1} का नाम बदलकर {to1} और {from2} का नाम बदलकर {to2} किया गया।",
+    "renamedMany": "दूसरे सेशन में {first}, {second} और {count} अन्य के नाम बदले गए।",
+    "view": "देखें",
+    "addedTitle": "नए सदस्य",
+    "addedDescription": "इन सदस्यों को दूसरे सेशन में ग्रुप में जोड़ा गया।",
+    "removedTitle": "हटाए गए सदस्य",
+    "removedDescription": "इन सदस्यों को दूसरे सेशन में ग्रुप से हटाया गया।",
+    "renamedTitle": "सदस्यों के नाम बदले गए",
+    "renamedDescription": "दूसरे सेशन में इन सदस्यों के नाम बदले गए।",
+    "groupRenamed": "दूसरे सेशन में ग्रुप का नाम {from} से बदलकर {to} किया गया।",
+    "deletedTitle": "यह ग्रुप हटा दिया गया",
+    "deletedDescription": "इसे दूसरे सेशन में हटा दिया गया, इसलिए इसके खर्च अब देखे या बदले नहीं जा सकते।",
+    "goToMyGroups": "मेरे ग्रुप पर जाएं"
+  },
+  "editConflict": {
+    "groupRealtimeTitle": "एडिट करते समय ग्रुप बदल गया",
+    "groupRealtimeDescription": "किसी ने दूसरे सेशन में यह ग्रुप अपडेट किया। एडिट जारी रखने के लिए अपने बदलाव रखें, या नया वर्ज़न इस्तेमाल करें।",
+    "groupSaveTitle": "आपके बदलाव सेव नहीं हुए",
+    "groupSaveDescription": "आपके सेव करने से पहले यह ग्रुप दूसरे सेशन में अपडेट हो गया। अपने बदलाव उसके ऊपर सेव करें, या उन्हें हटाकर नया वर्ज़न लोड करें।",
+    "expenseRealtimeTitle": "एडिट करते समय खर्च बदल गया",
+    "expenseRealtimeDescription": "किसी ने दूसरे सेशन में यह खर्च अपडेट किया। एडिट जारी रखने के लिए अपने बदलाव रखें, या नया वर्ज़न इस्तेमाल करें।",
+    "expenseSaveTitle": "आपके बदलाव सेव नहीं हुए",
+    "expenseSaveDescription": "आपके सेव करने से पहले यह खर्च दूसरे सेशन में अपडेट हो गया। अपने बदलाव उसके ऊपर सेव करें, या उन्हें हटाकर नया वर्ज़न लोड करें।",
+    "keepMine": "मेरे बदलाव रखें",
+    "useLatest": "नया वर्ज़न इस्तेमाल करें",
+    "saveMine": "मेरे बदलाव सेव करें",
+    "loadLatest": "हटाएं और नया लोड करें"
+  },
+  "toasts": {
+    "expenseAdded": "खर्च जोड़ा गया",
+    "expenseUpdated": "खर्च अपडेट हुआ",
+    "expenseDeleted": "खर्च हटाया गया",
+    "groupDeleted": "ग्रुप हटाया गया",
+    "settled": "सेटल के रूप में दर्ज",
+    "couldNotAddExpense": "खर्च नहीं जोड़ा जा सका",
+    "couldNotSaveExpense": "खर्च सेव नहीं हो सका",
+    "couldNotDeleteExpense": "खर्च नहीं हटाया जा सका",
+    "couldNotCreateGroup": "ग्रुप नहीं बनाया जा सका",
+    "couldNotSettle": "सेटलमेंट दर्ज नहीं हो सका",
+    "settlementChanged": "दूसरे सेशन में बैलेंस बदल गया",
+    "settlementChangedHint": "नई राशि देखें और फिर से सेटल करें।",
+    "couldNotUploadImage": "इमेज अपलोड नहीं हो सकी",
+    "couldNotRemoveImage": "इमेज नहीं हटाई जा सकी",
+    "tryAgainHint": "अपना कनेक्शन जांचें और फिर से कोशिश करें।",
+    "retry": "फिर से कोशिश करें"
   }
 }

@@ -546,7 +546,8 @@
     "morePages": "Más páginas",
     "previousSlide": "Diapositiva anterior",
     "nextSlide": "Diapositiva siguiente",
-    "breadcrumbMore": "Más"
+    "breadcrumbMore": "Más",
+    "dismissNotification": "Cerrar notificación"
   },
   "groups": {
     "titleYour": "Tus grupos",
@@ -759,8 +760,9 @@
     "memberName": "Nombre del miembro",
     "renameHint": "Los cambios de nombre se guardan al guardar el grupo.",
     "removeMember": "Eliminar miembro",
-    "removeMemberHint": "Solo si no está vinculado a ningún gasto.",
+    "removeMemberHint": "Este miembro no está vinculado a ningún gasto y se puede eliminar.",
     "removeMemberBlocked": "Este miembro está en un gasto y no se puede eliminar.",
+    "removeMemberMinimum": "Este grupo necesita al menos {min} miembros. Agrega otro miembro antes de eliminar a alguien.",
     "validation": {
       "memberNameRequired": "El nombre del miembro es obligatorio.",
       "memberNameMax": "El nombre no puede superar {max} caracteres.",
@@ -768,7 +770,8 @@
       "groupNameMax": "El nombre del grupo no puede superar {max} caracteres.",
       "membersMin": "Se requieren al menos {min} miembros.",
       "membersMax": "Máximo {max} miembros permitidos."
-    }
+    },
+    "deleteGroupUnsettled": "{amount} aún está pendiente de saldar entre los miembros."
   },
   "groupDetails": {
     "backToGroup": "Volver al grupo",
@@ -2009,5 +2012,59 @@
         "general": "General"
       }
     }
+  },
+  "groupChanges": {
+    "addedOne": "{name} se añadió al grupo en otra sesión.",
+    "addedTwo": "{first} y {second} se añadieron al grupo en otra sesión.",
+    "addedMany": "{first}, {second} y {count, plural, one {# más} other {# más}} se añadieron al grupo en otra sesión.",
+    "removedOne": "{name} se eliminó del grupo en otra sesión.",
+    "removedTwo": "{first} y {second} se eliminaron del grupo en otra sesión.",
+    "removedMany": "{first}, {second} y {count, plural, one {# más} other {# más}} se eliminaron del grupo en otra sesión.",
+    "renamedOne": "{from} ahora se llama {to} (cambiado en otra sesión).",
+    "renamedTwo": "{from1} ahora se llama {to1} y {from2} ahora se llama {to2} (cambiado en otra sesión).",
+    "renamedMany": "{first}, {second} y {count, plural, one {# más} other {# más}} cambiaron de nombre en otra sesión.",
+    "view": "Ver",
+    "addedTitle": "Nuevos miembros",
+    "addedDescription": "Estos miembros se añadieron al grupo en otra sesión.",
+    "removedTitle": "Miembros eliminados",
+    "removedDescription": "Estos miembros se eliminaron del grupo en otra sesión.",
+    "renamedTitle": "Nombres actualizados",
+    "renamedDescription": "Estos miembros cambiaron de nombre en otra sesión.",
+    "groupRenamed": "El grupo se renombró de {from} a {to} en otra sesión.",
+    "deletedTitle": "Este grupo fue eliminado",
+    "deletedDescription": "Se eliminó en otra sesión, así que sus gastos ya no se pueden ver ni modificar.",
+    "goToMyGroups": "Ir a mis grupos"
+  },
+  "editConflict": {
+    "groupRealtimeTitle": "El grupo cambió mientras lo editabas",
+    "groupRealtimeDescription": "Alguien actualizó este grupo en otra sesión. Conserva tus cambios para seguir editando o cambia a la versión más reciente.",
+    "groupSaveTitle": "Tus cambios no se guardaron",
+    "groupSaveDescription": "Este grupo se actualizó en otra sesión antes de que guardaras. Guarda tus cambios encima o descártalos y carga la versión más reciente.",
+    "expenseRealtimeTitle": "El gasto cambió mientras lo editabas",
+    "expenseRealtimeDescription": "Alguien actualizó este gasto en otra sesión. Conserva tus cambios para seguir editando o cambia a la versión más reciente.",
+    "expenseSaveTitle": "Tus cambios no se guardaron",
+    "expenseSaveDescription": "Este gasto se actualizó en otra sesión antes de que guardaras. Guarda tus cambios encima o descártalos y carga la versión más reciente.",
+    "keepMine": "Conservar mis cambios",
+    "useLatest": "Usar la versión más reciente",
+    "saveMine": "Guardar mis cambios",
+    "loadLatest": "Descartar y cargar la más reciente"
+  },
+  "toasts": {
+    "expenseAdded": "Gasto añadido",
+    "expenseUpdated": "Gasto actualizado",
+    "expenseDeleted": "Gasto eliminado",
+    "groupDeleted": "Grupo eliminado",
+    "settled": "Marcado como saldado",
+    "couldNotAddExpense": "No se pudo añadir el gasto",
+    "couldNotSaveExpense": "No se pudo guardar el gasto",
+    "couldNotDeleteExpense": "No se pudo eliminar el gasto",
+    "couldNotCreateGroup": "No se pudo crear el grupo",
+    "couldNotSettle": "No se pudo registrar el pago",
+    "settlementChanged": "Los saldos cambiaron en otra sesión",
+    "settlementChangedHint": "Revisa el nuevo importe y vuelve a saldar.",
+    "couldNotUploadImage": "No se pudo subir la imagen",
+    "couldNotRemoveImage": "No se pudo quitar la imagen",
+    "tryAgainHint": "Revisa tu conexión e inténtalo de nuevo.",
+    "retry": "Reintentar"
   }
 }

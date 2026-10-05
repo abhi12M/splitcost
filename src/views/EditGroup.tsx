@@ -19,6 +19,7 @@ import {
 import { EditGroupMobile } from "@/components/group/EditGroupMobile";
 import { EditGroupMemberSheet } from "@/components/group/EditGroupMemberSheet";
 import { Layout } from "@/components/layout/Layout";
+import { ResourceNotFound } from "@/components/ResourceNotFound";
 import { Spinner } from "@/components/ui/Spinner";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { Badge } from "@/components/ui/badge";
@@ -39,9 +40,14 @@ import {
   deleteGroup,
   GroupDashboardInterface,
   GroupFormMember,
+  GroupResponse,
   updateGroup,
 } from "@/lib/storage";
 import { useGroupDashboard } from "@/lib/groupExpenseData";
+import { useGroupChanges, useGroupRealtime } from "@/hooks/useGroupRealtime";
+import { useGroupChangeNotices } from "@/components/group/GroupChangeNotices";
+import { GroupDeletedDialog } from "@/components/group/GroupDeletedDialog";
+import { applyGroupChangesToDashboard } from "@/lib/realtime/groupChanges";
 import { cn } from "@/lib/utils";
 import {
   GROUP_NAME_MAX,
@@ -207,6 +213,8 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
   const tDetails = useTranslations("groupDetails");
   const tGroup = useTranslations("group");
   const tCommon = useTranslations("common");
+  const tConflict = useTranslations("editConflict");
+  const tToasts = useTranslations("toasts");
   const tVal = useTranslations("group.validation");
   const { GroupSchema, MemberNameSchema } = useMemo(
     () =>
@@ -231,11 +239,23 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
   const router = useRouter();
   const { toast } = useToast();
   const isMdUp = useMdUp();
-  const { data: dashboard, loading } = useGroupDashboard(groupId);
+  const { data: dashboard, loading, refresh, applyChange } = useGroupDashboard(groupId);
   const formInitializedForGroupId = useRef<string | null>(null);
+  // The revision this form's edits are based on, sent with the save. It only
+  // moves forward when a change merged cleanly or the user resolved a
+  // conflict, so dismissing the conflict dialog (Esc) and saving still hits
+  // the server's conflict check, as on Edit Expense.
+  const [baseRevision, setBaseRevision] = useState<number | undefined>();
+  const unresolvedConflictRef = useRef(false);
+  const [conflict, setConflict] = useState<{ source: "realtime" | "save"; currentRevision?: number } | null>(null);
+  // Keeps the dialog's wording steady while it animates closed.
+  const conflictSourceRef = useRef<"realtime" | "save">("realtime");
+  if (conflict) conflictSourceRef.current = conflict.source;
+  const isSaveConflict = conflictSourceRef.current === "save";
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [groupName, setGroupName] = useState("");
   const [currency, setCurrency] = useState("INR");
   const [members, setMembers] = useState<EditableMember[]>([]);
@@ -263,21 +283,171 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
     formInitializedForGroupId.current = null;
   }, [groupId]);
 
-  useEffect(() => {
-    if (!groupId || !dashboard?.group) return;
-    if (formInitializedForGroupId.current === groupId) return;
-
-    setGroupName(dashboard.group.name);
-    setCurrency(dashboard.group.currency);
+  const resetForm = (group: GroupResponse) => {
+    setGroupName(group.name);
+    setCurrency(group.currency);
     setMembers(
-      dashboard.group.members.map((member) => ({
+      group.members.map((member) => ({
         key: member.id,
         id: member.id,
         name: member.name,
       }))
     );
+    setIsMemberSheetOpen(false);
+    setSelectedMemberKey(null);
+    setErrors({});
+    setBaseRevision(group.revision);
+    unresolvedConflictRef.current = false;
+  };
+
+  useEffect(() => {
+    if (!groupId || !dashboard?.group) return;
+    if (formInitializedForGroupId.current === groupId) return;
+
+    resetForm(dashboard.group);
     formInitializedForGroupId.current = groupId;
   }, [groupId, dashboard]);
+
+  // Another session's edit arrives with its full change, so merge it here
+  // without refetching. Fields this user hasn't touched take the new values
+  // and their own edits stay. When both changed the same thing, ask which
+  // version to keep. The loaded group (`dashboard.group`) is the base the
+  // user's edits are measured against, so it moves forward too.
+  // Expenses decide who can be removed and the balances on each member card,
+  // so reload them in the background when one changes elsewhere. The form
+  // isn't touched (it's only initialised once), and a reload that brings
+  // missed group changes is still caught by the save's revision check.
+  // Deletion comes from the broadcast below instead: the database event can't
+  // tell tabs apart, and this is the screen that deletes groups.
+  // Set while this screen deletes the group. The delete cascades to every
+  // expense, and reloading on those events would swap the screen to "not
+  // found" and unmount the confirmation dialog mid-navigation; its Back-button
+  // cleanup (history.back()) would then cancel the navigation home.
+  const isDeletingRef = useRef(false);
+  useGroupRealtime({
+    groupId,
+    onExpenseChange: () => {
+      if (!isDeletingRef.current) void refresh();
+    },
+    onGroupDeleted: () => {},
+  });
+
+  const changeNotices = useGroupChangeNotices();
+  // Deleted in another session: nothing here can be saved, so block the
+  // screen with an explanation (and drop any conflict dialog).
+  const [groupDeleted, setGroupDeleted] = useState(false);
+  const showGroupDeleted = () => {
+    setGroupDeleted(true);
+    setConflict(null);
+    setIsMemberSheetOpen(false);
+  };
+  useGroupChanges(groupId, (changes) => {
+    const base = dashboard?.group;
+    if (!base) {
+      // Still loading: there is no form to merge into yet. Queue the change
+      // so it is replayed onto the first load, which then fills the form.
+      applyChange((prev) => applyGroupChangesToDashboard(prev, changes), changes.revision);
+      changeNotices.notify(changes);
+      return;
+    }
+
+    const baseNames = new Map(base.members.map((member) => [member.id, member.name]));
+    const formById = new Map(
+      members.filter((member) => member.id).map((member) => [member.id as string, member])
+    );
+    const isRenamedHere = (id: string) => {
+      const entry = formById.get(id);
+      return Boolean(entry && entry.name.trim() !== baseNames.get(id));
+    };
+    const isRemovedHere = (id: string) => baseNames.has(id) && !formById.has(id);
+    const newNamesHere = members.filter((member) => !member.id).map((member) => member.name);
+    const clashesWithNewHere = (name: string) => isMemberNameAlreadyAdded(newNamesHere, name);
+
+    const removedIds = new Set(changes.removed.map((member) => member.id));
+    const renames = new Map(changes.renamed.map((rename) => [rename.id, rename.to]));
+    const nameEdited = groupName.trim() !== base.name;
+    const currencyEdited = currency !== base.currency;
+
+    // The member sheet holds an uncommitted rename until it is saved.
+    const sheetMember = isMemberSheetOpen ? selectedMember : null;
+    const sheetRenaming = Boolean(sheetMember && renameValue.trim() !== sheetMember.name);
+
+    const hasConflict =
+      Boolean(changes.name && nameEdited && groupName.trim() !== changes.name.to) ||
+      Boolean(changes.currency && currencyEdited && currency !== changes.currency.to) ||
+      changes.removed.some(
+        (member) => isRenamedHere(member.id) || (sheetRenaming && sheetMember?.id === member.id)
+      ) ||
+      changes.renamed.some(
+        (rename) =>
+          isRemovedHere(rename.id) ||
+          (isRenamedHere(rename.id) && formById.get(rename.id)?.name.trim() !== rename.to) ||
+          (sheetRenaming && sheetMember?.id === rename.id && renameValue.trim() !== rename.to) ||
+          clashesWithNewHere(rename.to)
+      ) ||
+      changes.added.some((member) => clashesWithNewHere(member.name));
+
+    if (changes.name && !nameEdited) setGroupName(changes.name.to);
+    if (changes.currency && !currencyEdited) setCurrency(changes.currency.to);
+    setMembers((current) => {
+      // A member removed elsewhere is gone, so it leaves the form even when
+      // this user had renamed it; the conflict dialog says so.
+      const next = current
+        .filter((member) => !member.id || !removedIds.has(member.id))
+        .map((member) =>
+          member.id && renames.has(member.id) && !isRenamedHere(member.id)
+            ? { ...member, name: renames.get(member.id)! }
+            : member
+        );
+      for (const added of changes.added) {
+        if (!next.some((member) => member.id === added.id)) {
+          next.push({ key: added.id, id: added.id, name: added.name });
+        }
+      }
+      return next;
+    });
+
+    if (sheetMember?.id && removedIds.has(sheetMember.id)) {
+      setIsMemberSheetOpen(false);
+      setSelectedMemberKey(null);
+    } else if (sheetMember?.id && renames.has(sheetMember.id) && !sheetRenaming) {
+      setRenameValue(renames.get(sheetMember.id)!);
+    }
+
+    applyChange((prev) => applyGroupChangesToDashboard(prev, changes), changes.revision);
+    changeNotices.notify(changes);
+    if (hasConflict) {
+      unresolvedConflictRef.current = true;
+      setConflict({ source: "realtime" });
+    } else if (!unresolvedConflictRef.current && changes.revision !== undefined) {
+      setBaseRevision(changes.revision);
+    }
+  }, showGroupDeleted);
+
+  const handleKeepMine = () => {
+    // Deliberately go over the other version: base the next save on it. After
+    // a blocked save the user already chose to save, so save right away;
+    // while editing, just let them carry on.
+    const latestRevision = conflict?.currentRevision ?? dashboard?.group.revision;
+    const source = conflict?.source;
+    setBaseRevision(latestRevision);
+    unresolvedConflictRef.current = false;
+    setConflict(null);
+    if (source === "save") void handleSaveGroup(latestRevision);
+  };
+
+  const handleUseLatest = async () => {
+    const source = conflict?.source;
+    setConflict(null);
+    if (source === "save") {
+      // The save found a newer version this screen never received, so load it.
+      const latest = await refresh();
+      if (latest?.group) resetForm(latest.group);
+    } else if (dashboard?.group) {
+      // Realtime changes are already applied to the loaded group.
+      resetForm(dashboard.group);
+    }
+  };
 
   useEffect(() => {
     if (!groupName.trim()) {
@@ -352,13 +522,25 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
     );
   }, [memberCards]);
 
+  // What is still owed in the group, counted once: the sum of what members get
+  // back (which always equals the sum of what the others owe). Adding both
+  // sides would count every debt twice.
   const unsettledTotal = useMemo(
     () =>
-      memberCards.reduce((total, member) => {
-        if (member.balanceInfo.tone === "neutral") return total;
-        return total + member.balanceInfo.value;
-      }, 0),
+      memberCards.reduce(
+        (total, member) => (member.balanceInfo.tone === "positive" ? total + member.balanceInfo.value : total),
+        0
+      ),
     [memberCards]
+  );
+
+  // Shown as a warning when deleting a group that hasn't settled up.
+  const unsettledWarning = useMemo(
+    () =>
+      unsettledTotal > 0.01
+        ? tGroup("deleteGroupUnsettled", { amount: formatCurrency(unsettledTotal, dashboard?.group.currency ?? currency) })
+        : null,
+    [unsettledTotal, dashboard?.group.currency, currency, tGroup]
   );
 
   const hasChanges = useMemo(() => {
@@ -383,12 +565,19 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
       return { canRemove: true, message: "" };
     }
 
+    if (members.length <= MEMBERS_MIN) {
+      return {
+        canRemove: false,
+        message: tGroup("removeMemberMinimum", { min: MEMBERS_MIN }),
+      };
+    }
+
     const result = canRemoveGroupMember(dashboard?.expenses ?? [], selectedMember);
     return {
       canRemove: result.canRemove,
       message: result.message || t("memberCanBeRemoved"),
     };
-  }, [dashboard?.expenses, isMemberSheetOpen, selectedMember]);
+  }, [dashboard?.expenses, isMemberSheetOpen, members.length, selectedMember, t, tGroup]);
 
   const validateMembers = (nextMembers: EditableMember[]) => {
     const names = nextMembers.map((member) => member.name.trim());
@@ -533,15 +722,17 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
 
   const handleDeleteGroup = async () => {
     setIsDeleting(true);
+    isDeletingRef.current = true;
     try {
       const deleted = await deleteGroup(groupId);
       if (!deleted) {
         toast({
           title: t("couldNotDelete"),
           description: t("pleaseTryAgain"),
-          variant: "destructive",
+          variant: "error",
         });
         setIsDeleting(false);
+        isDeletingRef.current = false;
         return;
       }
 
@@ -550,6 +741,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
         LOCAL_GROUPS_KEY,
         existing.filter((id) => id !== groupId)
       );
+      toast({ message: tToasts("groupDeleted"), variant: "destructive" });
       router.push("/");
     } catch (error) {
       const message =
@@ -557,14 +749,15 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
       toast({
         title: t("couldNotDelete"),
         description: message,
-        variant: "destructive",
+        variant: "error",
       });
       setIsDeleting(false);
+      isDeletingRef.current = false;
     }
   };
 
   const handleRemoveSelectedMember = () => {
-    if (!selectedMember || !removalState.canRemove) return;
+    if (!selectedMember || members.length <= MEMBERS_MIN || !removalState.canRemove) return;
 
     setMembers((currentMembers) =>
       currentMembers.filter((member) => member !== selectedMember)
@@ -577,7 +770,8 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
     }));
   };
 
-  const handleSaveGroup = async () => {
+  /** `revision` overrides the form's base, for "Save my changes" after a conflict. */
+  const handleSaveGroup = async (revision: number | undefined = baseRevision) => {
     const trimmedGroupName = groupName.trim();
     const normalizedMembers = members.map((member) => ({
       name: member.name.trim(),
@@ -611,6 +805,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
         name: trimmedGroupName,
         currency,
         members: normalizedMembers.map(({ id, name }) => ({ id, name })),
+        revision,
       });
 
       toast({
@@ -621,13 +816,32 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
 
       router.push(`/group/${groupId}`);
     } catch (error) {
+      const failure = error as { code?: string; payload?: { currentRevision?: number | null } };
+      if (failure.code === "GROUP_NOT_FOUND") {
+        // Deleted while this screen missed the broadcast.
+        setIsSubmitting(false);
+        showGroupDeleted();
+        return;
+      }
+      if (failure.code === "GROUP_VERSION_CONFLICT") {
+        // Changed elsewhere since this form's base: either this screen missed
+        // the update, or a conflict dialog was dismissed without a choice.
+        const currentRevision = failure.payload?.currentRevision;
+        setConflict({
+          source: "save",
+          currentRevision: typeof currentRevision === "number" ? currentRevision : undefined,
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
       const message =
         error instanceof Error ? error.message : t("failedUpdate");
 
       toast({
         title: t("couldNotSave"),
         description: message,
-        variant: "destructive",
+        variant: "error",
       });
       setIsSubmitting(false);
     }
@@ -639,14 +853,11 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
 
   if (!dashboard?.group) {
     return (
-      <Layout>
-        <div className="container py-12 text-center">
-          <p className="text-muted-foreground">{tCommon("groupNotFound")}</p>
-          <Button asChild className="mt-4">
-            <Link href="/">{tCommon("goHome")}</Link>
-          </Button>
-        </div>
-      </Layout>
+      <ResourceNotFound
+        message={tCommon("groupNotFound")}
+        actionLabel={tCommon("goHome")}
+        actionHref="/"
+      />
     );
   }
 
@@ -663,7 +874,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
               </Link>
             </Button>
 
-            <Button onClick={handleSaveGroup} disabled={isSubmitting || !hasChanges}>
+            <Button onClick={() => void handleSaveGroup()} disabled={isSubmitting || !hasChanges}>
               {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               {hasChanges ? t("saveChanges") : t("upToDate")}
             </Button>
@@ -872,6 +1083,22 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
               </Card>
             </div>
           </div>
+
+          {/* Danger zone, matching the mobile layout. */}
+          <div className="mt-6 flex flex-col gap-4 rounded-3xl border border-destructive/30 bg-card p-6 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-medium">{tGroup("deleteGroup")}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{tGroup("deleteGroupHint")}</p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              className="shrink-0 border-destructive text-destructive hover:bg-destructive/5 hover:text-destructive"
+              onClick={() => setDeleteDialogOpen(true)}
+            >
+              {tGroup("deleteGroup")}
+            </Button>
+          </div>
         </div>
       </Layout>
       ) : (
@@ -887,8 +1114,9 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
           errors={errors}
           summary={summary}
           onOpenMember={openMemberSheet}
-          onSaveGroup={handleSaveGroup}
+          onSaveGroup={() => handleSaveGroup()}
           onDeleteGroup={handleDeleteGroup}
+          unsettledWarning={unsettledWarning}
           isSubmitting={isSubmitting}
           isDeleting={isDeleting}
         />
@@ -929,6 +1157,56 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
             setIsDuplicateMemberDialog(false);
           },
         }]}
+      />
+      <GenericAlertDialog
+        open={Boolean(conflict)}
+        // Realtime can open it while the member sheet is up.
+        aboveOverlays
+        onOpenChange={(open) => {
+          if (!open) setConflict(null);
+        }}
+        title={isSaveConflict ? tConflict("groupSaveTitle") : tConflict("groupRealtimeTitle")}
+        description={isSaveConflict ? tConflict("groupSaveDescription") : tConflict("groupRealtimeDescription")}
+        actions={[
+          {
+            label: isSaveConflict ? tConflict("loadLatest") : tConflict("useLatest"),
+            type: "cancel",
+            onClick: () => void handleUseLatest(),
+          },
+          {
+            label: isSaveConflict ? tConflict("saveMine") : tConflict("keepMine"),
+            onClick: handleKeepMine,
+          },
+        ]}
+      />
+      {changeNotices.sheet}
+      <GroupDeletedDialog open={groupDeleted} />
+      {/* Desktop confirmation; the mobile layout has its own. */}
+      <GenericAlertDialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          if (!isDeleting) setDeleteDialogOpen(open);
+        }}
+        title={tGroup("deleteGroupTitle")}
+        description={
+          <div>
+            <span className="block">{tGroup("deleteGroupConfirm")}</span>
+            <span className="block">{tGroup("deleteGroupWarning")}</span>
+            {unsettledWarning && <span className="mt-2 block font-medium text-destructive">{unsettledWarning}</span>}
+          </div>
+        }
+        actions={[
+          { label: tCommon("cancel"), type: "cancel", disabled: isDeleting },
+          {
+            label: isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : tCommon("delete"),
+            variant: "destructive",
+            disabled: isDeleting,
+            onClick: (event) => {
+              event.preventDefault();
+              void handleDeleteGroup();
+            },
+          },
+        ]}
       />
     </>
   );

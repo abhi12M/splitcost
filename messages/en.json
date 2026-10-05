@@ -548,7 +548,8 @@
     "morePages": "More pages",
     "previousSlide": "Previous slide",
     "nextSlide": "Next slide",
-    "breadcrumbMore": "More"
+    "breadcrumbMore": "More",
+    "dismissNotification": "Dismiss notification"
   },
   "groups": {
     "titleYour": "Your Groups",
@@ -1658,8 +1659,9 @@
     "memberName": "Member name",
     "renameHint": "Name changes are saved when you save the group.",
     "removeMember": "Remove member",
-    "removeMemberHint": "Only if not linked to any expense.",
+    "removeMemberHint": "This member isn’t linked to any expenses and can be removed.",
     "removeMemberBlocked": "This member is in an expense and cannot be removed.",
+    "removeMemberMinimum": "This group needs at least {min} members. Add another member before removing someone.",
     "validation": {
       "memberNameRequired": "Member name is required.",
       "memberNameMax": "Member name can't exceed {max} characters.",
@@ -1667,7 +1669,8 @@
       "groupNameMax": "Group name can't exceed {max} characters.",
       "membersMin": "At least {min} members are required.",
       "membersMax": "Maximum {max} members allowed."
-    }
+    },
+    "deleteGroupUnsettled": "{amount} is still unsettled between members."
   },
   "groupDetails": {
     "backToGroup": "Back to group",
@@ -2011,5 +2014,59 @@
         "general": "General"
       }
     }
+  },
+  "groupChanges": {
+    "addedOne": "{name} was added to the group in another session.",
+    "addedTwo": "{first} and {second} were added to the group in another session.",
+    "addedMany": "{first}, {second} and {count, plural, one {# other} other {# others}} were added to the group in another session.",
+    "removedOne": "{name} was removed from the group in another session.",
+    "removedTwo": "{first} and {second} were removed from the group in another session.",
+    "removedMany": "{first}, {second} and {count, plural, one {# other} other {# others}} were removed from the group in another session.",
+    "renamedOne": "{from} was renamed to {to} in another session.",
+    "renamedTwo": "{from1} was renamed to {to1} and {from2} was renamed to {to2} in another session.",
+    "renamedMany": "{first}, {second} and {count, plural, one {# other} other {# others}} were renamed in another session.",
+    "view": "View",
+    "addedTitle": "New members",
+    "addedDescription": "These members were added to the group in another session.",
+    "removedTitle": "Removed members",
+    "removedDescription": "These members were removed from the group in another session.",
+    "renamedTitle": "Member names updated",
+    "renamedDescription": "These members were renamed in another session.",
+    "groupRenamed": "Group renamed from {from} to {to} in another session.",
+    "deletedTitle": "This group was deleted",
+    "deletedDescription": "It was deleted in another session, so its expenses can't be viewed or changed any more.",
+    "goToMyGroups": "Go to my groups"
+  },
+  "editConflict": {
+    "groupRealtimeTitle": "Group changed while you were editing",
+    "groupRealtimeDescription": "Someone updated this group in another session. Keep your changes to carry on editing, or switch to the latest version.",
+    "groupSaveTitle": "Your changes weren't saved",
+    "groupSaveDescription": "This group was updated in another session before you saved. Save your changes over it, or discard them and load the latest version.",
+    "expenseRealtimeTitle": "Expense changed while you were editing",
+    "expenseRealtimeDescription": "Someone updated this expense in another session. Keep your changes to carry on editing, or switch to the latest version.",
+    "expenseSaveTitle": "Your changes weren't saved",
+    "expenseSaveDescription": "This expense was updated in another session before you saved. Save your changes over it, or discard them and load the latest version.",
+    "keepMine": "Keep my changes",
+    "useLatest": "Use latest version",
+    "saveMine": "Save my changes",
+    "loadLatest": "Discard and load latest"
+  },
+  "toasts": {
+    "expenseAdded": "Expense added",
+    "expenseUpdated": "Expense updated",
+    "expenseDeleted": "Expense deleted",
+    "groupDeleted": "Group deleted",
+    "settled": "Marked as settled",
+    "couldNotAddExpense": "Couldn't add the expense",
+    "couldNotSaveExpense": "Couldn't save the expense",
+    "couldNotDeleteExpense": "Couldn't delete the expense",
+    "couldNotCreateGroup": "Couldn't create the group",
+    "couldNotSettle": "Couldn't record the settlement",
+    "settlementChanged": "Balances changed in another session",
+    "settlementChangedHint": "Check the new amount and settle again.",
+    "couldNotUploadImage": "Couldn't upload the image",
+    "couldNotRemoveImage": "Couldn't remove the image",
+    "tryAgainHint": "Check your connection and try again.",
+    "retry": "Retry"
   }
 }

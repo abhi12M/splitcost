@@ -1,7 +1,7 @@
 "use client";
 
 import { Link, useRouter } from "@/i18n/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
 import { Spinner } from "@/components/ui/Spinner";
@@ -15,14 +15,37 @@ import { ExpenseFormSkeleton } from "@/components/expense/ExpenseFormSkeleton";
 import { startAttachmentUpload } from "@/lib/attachmentUploads";
 import { useGroup } from "@/lib/groupExpenseData";
 import { getGroupViewerMemberId } from "@/lib/groupViewer";
+import { ResourceNotFound } from "@/components/ResourceNotFound";
+import { useGroupChanges } from "@/hooks/useGroupRealtime";
+import { useGroupChangeNotices } from "@/components/group/GroupChangeNotices";
+import { GroupDeletedDialog } from "@/components/group/GroupDeletedDialog";
+import { applyGroupChangesToGroup } from "@/lib/realtime/groupChanges";
+import { useToast } from "@/hooks/use-toast";
 
 export default function AddExpensePage({ groupId }: { groupId: string }) {
   const t = useTranslations("expense");
   const tCommon = useTranslations("common");
+  const tToasts = useTranslations("toasts");
+  const { toast } = useToast();
   const router = useRouter();
-  const { data: groupData, loading } = useGroup(groupId);
+  const { data: groupData, loading, applyChange } = useGroup(groupId);
   const group = groupData ?? undefined;
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Closes the last "couldn't add" toast once a retry succeeds.
+  const saveErrorToastRef = useRef<(() => void) | null>(null);
+  const changeNotices = useGroupChangeNotices();
+  const [groupDeleted, setGroupDeleted] = useState(false);
+
+  // Apply the broadcast diff in place: the forms are not remounted, so what
+  // the user has entered stays, and new members start out of the split.
+  useGroupChanges(
+    groupId,
+    (changes) => {
+      applyChange((prev) => applyGroupChangesToGroup(prev, changes), changes.revision);
+      changeNotices.notify(changes);
+    },
+    () => setGroupDeleted(true)
+  );
 
   if (loading) {
     return (
@@ -32,14 +55,11 @@ export default function AddExpensePage({ groupId }: { groupId: string }) {
 
   if (!group) {
     return (
-      <Layout variant="minimal">
-        <div className="container py-12 text-center">
-          <p className="text-muted-foreground">{tCommon("groupNotFound")}</p>
-          <Button asChild className="mt-4">
-            <Link href="/">{tCommon("goHome")}</Link>
-          </Button>
-        </div>
-      </Layout>
+      <ResourceNotFound
+        message={tCommon("groupNotFound")}
+        actionLabel={tCommon("goHome")}
+        actionHref="/"
+      />
     );
   }
 
@@ -55,9 +75,22 @@ export default function AddExpensePage({ groupId }: { groupId: string }) {
       if (expense?.id && data.attachment?.file) {
         startAttachmentUpload(groupId, expense.id, data.attachment);
       }
+      saveErrorToastRef.current?.();
+      toast({ message: tToasts("expenseAdded"), variant: "success" });
       router.push(`/group/${groupId}`);
     } catch (error) {
       setIsSubmitting(false);
+      // Deleted while this screen missed the broadcast: explain, don't offer a retry.
+      if ((error as { code?: string }).code === "GROUP_NOT_FOUND") {
+        setGroupDeleted(true);
+        return;
+      }
+      // Stay on the filled form so the user can tap Add again.
+      saveErrorToastRef.current = toast({
+        title: tToasts("couldNotAddExpense"),
+        description: tToasts("tryAgainHint"),
+        variant: "error",
+      }).dismiss;
     }
   };
 
@@ -85,7 +118,7 @@ export default function AddExpensePage({ groupId }: { groupId: string }) {
 
                 <CardContent>
                   <ExpenseForm
-                    members={group.members}
+                              members={group.members}
                     defaultCurrency={group.currency}
                     defaultPaidByUserId={defaultPaidByUserId}
                     viewerMemberId={defaultPaidByUserId ?? null}
@@ -111,6 +144,8 @@ export default function AddExpensePage({ groupId }: { groupId: string }) {
         />
       </div>
       <Spinner show={isSubmitting} message={tCommon("creating")} />
+      {changeNotices.sheet}
+      <GroupDeletedDialog open={groupDeleted} />
     </>
   );
 }

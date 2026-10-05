@@ -8,7 +8,9 @@ import type {
 import { type ToastIconName, type ToastVariant, toastVariantConfig } from "@/components/ui/toast-config";
 
 // Toast state manager: `toast({ ... })` adds data here; <Toaster /> reads and displays it.
-const TOAST_LIMIT = 3;
+// 4 fits one realtime group save, which can show up to four notices at once
+// (members added, removed, renamed, and the group renamed).
+const TOAST_LIMIT = 4;
 const TOAST_REMOVE_DELAY = 1_000;
 
 const TOAST_DEFAULT_DURATIONS: Record<ToastVariant, number> = Object.fromEntries(
@@ -18,6 +20,8 @@ const TOAST_DEFAULT_DURATIONS: Record<ToastVariant, number> = Object.fromEntries
 export type ToastCallbackAction = {
   label: string;
   callback: () => void;
+  /** Leave the toast open after the action runs, e.g. when it opens a sheet. */
+  keepOpen?: boolean;
 };
 
 type ToasterToast = Omit<ToastProps, "variant"> & {
@@ -29,6 +33,12 @@ type ToasterToast = Omit<ToastProps, "variant"> & {
   description?: React.ReactNode;
   action?: ToastActionElement | ToastCallbackAction;
   dismissible?: boolean;
+  /** When false, tapping elsewhere on the page leaves the toast open. Defaults per variant. */
+  closeOnOutsideClick?: boolean;
+  /** Same variant and text as another open toast; used to refresh it instead of stacking a copy. */
+  dedupeKey?: string;
+  /** Bumped when a duplicate refreshes this toast; remounting restarts its timer. */
+  renewKey?: number;
   position?: "center" | "top-right" | "bottom-right" | "top-center" | "bottom-center"
   customColor?: ToastCustomColor;
   icon?: React.ReactNode | React.ElementType | ToastIconName;
@@ -157,9 +167,25 @@ function dispatch(action: Action) {
 /** The options accepted by `toast({ ... })`. */
 export type ToastOptions = Omit<ToasterToast, "id">;
 
+/** Identifies toasts whose content is plain text, so repeats can be spotted. */
+function getDedupeKey(variant: ToastVariant, props: ToastOptions): string | undefined {
+  const parts = [props.title, props.description, props.message];
+  if (parts.every((part) => part === undefined)) return undefined;
+  if (!parts.every((part) => part === undefined || typeof part === "string")) return undefined;
+  return JSON.stringify([variant, ...parts]);
+}
+
 function toast({ ...props }: ToastOptions) {
-  const id = genId();
   const variant = props.variant ?? "info";
+  const config = toastVariantConfig[variant];
+  const dedupeKey = getDedupeKey(variant, props);
+
+  // The same message is already showing (e.g. a double tap, or the same
+  // failure again): refresh that toast and restart its timer, don't stack.
+  const existing = dedupeKey
+    ? memoryState.toasts.find((item) => item.open && item.dedupeKey === dedupeKey)
+    : undefined;
+  const id = existing?.id ?? genId();
 
   const update = (props: Partial<ToasterToast>) =>
     dispatch({
@@ -168,12 +194,20 @@ function toast({ ...props }: ToastOptions) {
     });
   const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id });
 
+  if (existing) {
+    update({ ...props, renewKey: (existing.renewKey ?? 0) + 1 });
+    return { id, dismiss, update };
+  }
+
   dispatch({
     type: "ADD_TOAST",
     toast: {
       ...props,
       variant,
       duration: props.duration ?? TOAST_DEFAULT_DURATIONS[variant],
+      closeOnOutsideClick: props.closeOnOutsideClick ?? config.closeOnOutsideClick,
+      type: props.type ?? config.announce,
+      dedupeKey,
       id,
       open: true,
       onOpenChange: (open) => {
