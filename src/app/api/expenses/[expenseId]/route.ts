@@ -5,6 +5,7 @@ import {
 } from "@/lib/activity/server/recordExpenseActivity";
 import { loadExpenseSnapshot } from "@/lib/activity/server/expenseSnapshots";
 import { isSettlement, SETTLEMENT_CATEGORY } from "@/lib/activity/expenseSnapshot";
+import { readJsonObject } from "@/lib/api/request";
 import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import {
@@ -76,7 +77,9 @@ export async function PUT(
   { params }: { params: { expenseId: string } }
 ) {
   const expenseId = params.expenseId;
-  const body = await req.json();
+  const parsed = await readJsonObject(req);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
 
   const {
     groupId,
@@ -253,7 +256,9 @@ export async function PATCH(
     );
   }
 
-  const body = await req.json();
+  const parsed = await readJsonObject(req);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
   const category = body?.category as CategoryKey | undefined;
   const subcategory = body?.subcategory as SubcategoryId | undefined;
   const originSessionId =

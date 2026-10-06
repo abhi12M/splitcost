@@ -1,6 +1,7 @@
 import { recordExpenseAdded } from "@/lib/activity/server/recordExpenseActivity";
 import { loadExpenseSnapshot } from "@/lib/activity/server/expenseSnapshots";
 import { SETTLEMENT_CATEGORY } from "@/lib/activity/expenseSnapshot";
+import { readJsonObject } from "@/lib/api/request";
 import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
@@ -10,7 +11,9 @@ import {
 } from "@/lib/expenseNotes";
 
 export async function POST(req: Request) {
-  const body = await req.json();
+  const parsed = await readJsonObject(req);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
 
   const {
     groupId,

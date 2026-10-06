@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { recordGroupCreated } from "@/lib/activity/server/recordGroupActivity";
+import { readJsonObject } from "@/lib/api/request";
 import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { validateGroupInput } from "@/lib/validations/group.schema";
@@ -18,12 +19,10 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const body: unknown = await req.json();
-  if (!body || typeof body !== "object") {
-    return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
-  }
+  const parsed = await readJsonObject(req);
+  if (!parsed.ok) return parsed.response;
 
-  const { name, currency, memberNames } = body as Record<string, unknown>;
+  const { name, currency, memberNames } = parsed.data as Record<string, unknown>;
   const normalizedCurrency = typeof currency === "string" ? currency.trim() : "";
   const validation = validateGroupInput(name, memberNames);
 

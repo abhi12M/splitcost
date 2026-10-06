@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import sharp from "sharp";
 
 import { isAuthorizedAdminRequest } from "@/lib/admin-auth";
+import { readFormData } from "@/lib/api/request";
 import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import {
@@ -212,7 +213,9 @@ export async function POST(req: Request) {
   if (!isAuthorizedAdminRequest(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const formData = await req.formData();
+  const form = await readFormData(req);
+  if (!form.ok) return form.response;
+  const formData = form.data;
   const file = formData.get("file");
 
   if (!(file instanceof File)) {

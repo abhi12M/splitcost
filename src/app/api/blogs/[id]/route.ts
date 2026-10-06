@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 
 import { isAuthorizedAdminRequest } from "@/lib/admin-auth";
+import { readJsonObject } from "@/lib/api/request";
 import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import { normalizeBlogInput } from "@/lib/blog/input";
 import { deleteBlog, getBlogById, updateBlog } from "@/lib/blog/queries";
@@ -33,8 +34,10 @@ export async function GET(request: Request, { params }: RouteContext) {
 
 export async function PUT(req: Request, { params }: RouteContext) {
   if (!isAuthorizedAdminRequest(req)) return unauthorized();
+  const parsed = await readJsonObject(req);
+  if (!parsed.ok) return parsed.response;
   try {
-    const payload = normalizeBlogInput(await req.json());
+    const payload = normalizeBlogInput(parsed.data);
     if (
       payload.status === "published" &&
       (!payload.title || !payload.slug || !payload.excerpt)

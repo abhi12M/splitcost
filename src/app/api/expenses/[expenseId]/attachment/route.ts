@@ -1,5 +1,6 @@
 import { recordExpenseChanges } from "@/lib/activity/server/recordExpenseActivity";
 import { loadExpenseSnapshot } from "@/lib/activity/server/expenseSnapshots";
+import { readFormData } from "@/lib/api/request";
 import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import { NextResponse } from "next/server";
 import sharp from "sharp";
@@ -76,8 +77,11 @@ export async function POST(
     );
   }
 
+  const form = await readFormData(req);
+  if (!form.ok) return form.response;
+
   try {
-    const formData = await req.formData();
+    const formData = form.data;
     const file = formData.get("file");
     const originSessionIdField = formData.get("originSessionId");
     const originSessionId =

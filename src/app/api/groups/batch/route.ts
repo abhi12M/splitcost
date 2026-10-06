@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
+import { readJsonObject } from "@/lib/api/request";
 import { supabaseAdmin } from "@/lib/supabase/server";
 
 export async function POST(req: Request) {
-  const { groupIds } = await req.json();
+  const parsed = await readJsonObject(req);
+  if (!parsed.ok) return parsed.response;
+  const { groupIds } = parsed.data;
 
   // 🔐 Basic abuse protection
   if (!Array.isArray(groupIds) || groupIds.length === 0) {

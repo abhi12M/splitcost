@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { isAuthorizedAdminRequest } from "@/lib/admin-auth";
+import { readJsonObject } from "@/lib/api/request";
 import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import {
   createBlogCategory,
@@ -33,8 +34,10 @@ export async function POST(req: Request) {
   if (!isAuthorizedAdminRequest(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const parsed = await readJsonObject(req);
+  if (!parsed.ok) return parsed.response;
   try {
-    const body = (await req.json()) as BlogCategoryInput;
+    const body = parsed.data as BlogCategoryInput;
     if (!body.name?.trim()) {
       return NextResponse.json({ error: "Category name is required" }, { status: 400 });
     }

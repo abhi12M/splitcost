@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { isAuthorizedAdminRequest } from "@/lib/admin-auth";
+import { readJsonObject } from "@/lib/api/request";
 import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import {
   deleteBlogCategory,
@@ -41,8 +42,10 @@ export async function PUT(req: Request, { params }: RouteContext) {
   if (!isAuthorizedAdminRequest(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const parsed = await readJsonObject(req);
+  if (!parsed.ok) return parsed.response;
   try {
-    const body = (await req.json()) as Partial<BlogCategoryInput>;
+    const body = parsed.data as Partial<BlogCategoryInput>;
     const category = await updateBlogCategory(params.id, body);
     return successJson(category, SUCCESS_MESSAGES.blogCategoryUpdated);
   } catch (error: unknown) {

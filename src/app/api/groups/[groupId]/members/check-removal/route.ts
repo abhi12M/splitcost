@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { readJsonObject } from "@/lib/api/request";
 import { supabaseAdmin } from "@/lib/supabase/server";
 
 async function isMemberInvolvedInGroupExpenses(groupId: string, userId: string) {
@@ -38,7 +39,9 @@ export async function POST(
   { params }: { params: { groupId: string } }
 ) {
   const groupId = params.groupId;
-  const body = await req.json();
+  const parsed = await readJsonObject(req);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
   const memberId = String(body?.memberId ?? "").trim();
   const memberName = String(body?.memberName ?? "").trim();
 

@@ -1,12 +1,15 @@
 import { Resend } from "resend";
+import { readJsonObject } from "@/lib/api/request";
 import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: Request) {
-    try {
-        const { name, email, subject, message } = await req.json();
+    const parsed = await readJsonObject(req);
+    if (!parsed.ok) return parsed.response;
+    const { name, email, subject, message } = parsed.data;
 
+    try {
         const data = await resend.emails.send({
             from: 'onboarding@resend.dev',
             to: 'contact@splitcost.in',

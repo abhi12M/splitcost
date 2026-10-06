@@ -1,4 +1,5 @@
 import { recordGroupChanges } from "@/lib/activity/server/recordGroupActivity";
+import { readJsonObject } from "@/lib/api/request";
 import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
@@ -157,12 +158,10 @@ export async function PUT(
   { params }: { params: { groupId: string } }
 ) {
   const groupId = params.groupId;
-  const body: unknown = await req.json();
-  if (!body || typeof body !== "object") {
-    return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
-  }
+  const parsed = await readJsonObject(req);
+  if (!parsed.ok) return parsed.response;
   const { name, currency, members, originSessionId, expectedRevision: rawExpectedRevision } =
-    body as Record<string, unknown>;
+    parsed.data as Record<string, unknown>;
   // The revision the editor started from. Without it the save is not checked.
   const expectedRevision =
     typeof rawExpectedRevision === "number" && Number.isInteger(rawExpectedRevision)
