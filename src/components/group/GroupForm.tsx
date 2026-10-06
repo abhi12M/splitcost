@@ -12,6 +12,7 @@ import { UserAvatar } from "@/components/ui/UserAvatar";
 import { MEMBERS_MAX, MEMBERS_MIN, MEMBER_NAME_MAX, GROUP_NAME_MAX } from "@/lib/validations/group.schema";
 import { createGroupSchemas } from "@/lib/validations/group.schema.i18n";
 import { isMemberNameAlreadyAdded, truncateMemberName } from "@/lib/validations/group-members";
+import { cleanName, isBlankName } from "@/lib/validations/names";
 import { CURRENCIES } from "@/constants";
 
 interface GroupFormProps {
@@ -82,7 +83,7 @@ export function GroupForm({ initialData, onSubmit, submitLabel, isSubmitting }: 
     setErrors(prev => ({
       ...prev,
       groupName:
-        !groupName.trim() && !hasSubmitted
+        isBlankName(groupName) && !hasSubmitted
           ? undefined
           : result.success
             ? undefined
@@ -91,9 +92,9 @@ export function GroupForm({ initialData, onSubmit, submitLabel, isSubmitting }: 
   }, [groupName, hasSubmitted]);
 
   useEffect(() => {
-    const trimmedMember = newMember.trim();
+    const cleanedMember = cleanName(newMember);
 
-    if (!trimmedMember) {
+    if (isBlankName(newMember)) {
       setErrors(prev => ({
         ...prev,
         memberName: undefined,
@@ -106,29 +107,29 @@ export function GroupForm({ initialData, onSubmit, submitLabel, isSubmitting }: 
     setErrors(prev => ({
       ...prev,
       memberName: memberResult.success ? undefined : memberResult.error.issues[0]?.message,
-      memberExists: isMemberNameAlreadyAdded(members, trimmedMember)
-        ? t("memberAlreadyAdded", { name: truncateMemberName(trimmedMember) })
+      memberExists: isMemberNameAlreadyAdded(members, cleanedMember)
+        ? t("memberAlreadyAdded", { name: truncateMemberName(cleanedMember) })
         : undefined,
     }));
   }, [newMember, members]);
 
   const handleAddMember = () => {
-    const trimmedMember = newMember.trim();
-    if (!trimmedMember || hasReachedMemberLimit) return;
+    const cleanedMember = cleanName(newMember);
+    if (isBlankName(newMember) || hasReachedMemberLimit) return;
 
     const result = MemberNameSchema.safeParse(newMember);
     if (!result.success) {
       setErrors(prev => ({ ...prev, memberName: result.error.issues[0].message }));
       return;
     }
-    if (isMemberNameAlreadyAdded(members, trimmedMember)) {
+    if (isMemberNameAlreadyAdded(members, cleanedMember)) {
       setErrors(prev => ({
         ...prev,
-        memberExists: t("memberAlreadyAdded", { name: truncateMemberName(trimmedMember) }),
+        memberExists: t("memberAlreadyAdded", { name: truncateMemberName(cleanedMember) }),
       }));
       return;
     }
-    setMembers([...members, trimmedMember]);
+    setMembers([...members, cleanedMember]);
     setNewMember("");
     setErrors(prev => ({ ...prev, memberName: undefined, memberExists: undefined }));
   };
@@ -137,7 +138,7 @@ export function GroupForm({ initialData, onSubmit, submitLabel, isSubmitting }: 
     e.preventDefault();
     setHasSubmitted(true);
     if (!validate()) return;
-    await onSubmit({ name: groupName, currency, members });
+    await onSubmit({ name: cleanName(groupName), currency, members });
   };
 
   return (
@@ -193,14 +194,14 @@ export function GroupForm({ initialData, onSubmit, submitLabel, isSubmitting }: 
                   onChange={(e) => setNewMember(e.target.value)}
                   aria-invalid={Boolean(errors.memberName || errors.memberExists)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" && newMember.trim()) {
+                    if (e.key === "Enter" && !isBlankName(newMember)) {
                       e.preventDefault();
                       handleAddMember();
                     }
                   }}
                 />
               </div>
-              <Button type="button" variant="outline" size="icon" onClick={handleAddMember} disabled={!newMember.trim()}>
+              <Button type="button" variant="outline" size="icon" onClick={handleAddMember} disabled={isBlankName(newMember)}>
                 <Plus className="h-4 w-4" />
               </Button>
             </div>

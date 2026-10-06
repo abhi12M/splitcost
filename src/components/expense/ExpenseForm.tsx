@@ -18,6 +18,7 @@ import { detectCategoryFromDescription, ExpenseFormInterface, ExpenseParticipant
 import { memberNameForViewer } from "@/lib/groupExpenseLabels";
 import { Users } from "lucide-react";
 import { EXPENSE_DESCRIPTION_MAX } from "@/lib/validations/expense.schema";
+import { cleanName } from "@/lib/validations/names";
 import { createExpenseSchema } from "@/lib/validations/expense.schema.i18n";
 import { formatAmount, formatDateForDB, getCurrencyDifference, getRoundedDifference } from "../ui/formatters";
 import { Textarea } from "../ui/textarea";
@@ -355,7 +356,7 @@ export const ExpenseForm = forwardRef<ExpenseFormHandle, ExpenseFormProps>(funct
     if (!isValid) return; // STOP submit
     if ((splitType == 'custom' || splitType == 'percentage') && !validationState.isValid) return;
     onSubmit({
-      description,
+      description: cleanName(description),
       amount: parseFloat(amount),
       currency,
       paidByUserId: isMultiplePayers ? null : paidByUserId,

@@ -61,6 +61,7 @@ import {
   isMemberNameAlreadyAdded,
   truncateMemberName,
 } from "@/lib/validations/group-members";
+import { cleanName, isBlankName } from "@/lib/validations/names";
 
 type RemovalState = {
   canRemove: boolean;
@@ -357,7 +358,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
     );
     const isRenamedHere = (id: string) => {
       const entry = formById.get(id);
-      return Boolean(entry && entry.name.trim() !== baseNames.get(id));
+      return Boolean(entry && cleanName(entry.name) !== baseNames.get(id));
     };
     const isRemovedHere = (id: string) => baseNames.has(id) && !formById.has(id);
     const newNamesHere = members.filter((member) => !member.id).map((member) => member.name);
@@ -365,15 +366,15 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
 
     const removedIds = new Set(changes.removed.map((member) => member.id));
     const renames = new Map(changes.renamed.map((rename) => [rename.id, rename.to]));
-    const nameEdited = groupName.trim() !== base.name;
+    const nameEdited = cleanName(groupName) !== base.name;
     const currencyEdited = currency !== base.currency;
 
     // The member sheet holds an uncommitted rename until it is saved.
     const sheetMember = isMemberSheetOpen ? selectedMember : null;
-    const sheetRenaming = Boolean(sheetMember && renameValue.trim() !== sheetMember.name);
+    const sheetRenaming = Boolean(sheetMember && cleanName(renameValue) !== sheetMember.name);
 
     const hasConflict =
-      Boolean(changes.name && nameEdited && groupName.trim() !== changes.name.to) ||
+      Boolean(changes.name && nameEdited && cleanName(groupName) !== changes.name.to) ||
       Boolean(changes.currency && currencyEdited && currency !== changes.currency.to) ||
       changes.removed.some(
         (member) => isRenamedHere(member.id) || (sheetRenaming && sheetMember?.id === member.id)
@@ -381,8 +382,8 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
       changes.renamed.some(
         (rename) =>
           isRemovedHere(rename.id) ||
-          (isRenamedHere(rename.id) && formById.get(rename.id)?.name.trim() !== rename.to) ||
-          (sheetRenaming && sheetMember?.id === rename.id && renameValue.trim() !== rename.to) ||
+          (isRenamedHere(rename.id) && cleanName(formById.get(rename.id)?.name ?? "") !== rename.to) ||
+          (sheetRenaming && sheetMember?.id === rename.id && cleanName(renameValue) !== rename.to) ||
           clashesWithNewHere(rename.to)
       ) ||
       changes.added.some((member) => clashesWithNewHere(member.name));
@@ -450,7 +451,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
   };
 
   useEffect(() => {
-    if (!groupName.trim()) {
+    if (isBlankName(groupName)) {
       setErrors((prev) => ({ ...prev, groupName: undefined }));
       return;
     }
@@ -462,8 +463,8 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
   }, [groupName]);
 
   useEffect(() => {
-    const trimmed = newMemberName.trim();
-    if (!trimmed) {
+    const cleaned = cleanName(newMemberName);
+    if (isBlankName(newMemberName)) {
       setErrors((prev) => ({ ...prev, memberName: undefined, memberExists: undefined }));
       return;
     }
@@ -473,8 +474,8 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
       // The user is adding a member, so the previous minimum-member error is being corrected.
       members: undefined,
       memberName: memberResult.success ? undefined : memberResult.error.issues[0]?.message,
-      memberExists: isMemberNameAlreadyAdded(members.map((member) => member.name), trimmed)
-        ? tGroup("memberAlreadyAdded", { name: truncateMemberName(trimmed) })
+      memberExists: isMemberNameAlreadyAdded(members.map((member) => member.name), cleaned)
+        ? tGroup("memberAlreadyAdded", { name: truncateMemberName(cleaned) })
         : undefined,
     }));
   }, [newMemberName, members]);
@@ -547,14 +548,14 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
     if (!dashboard?.group) return false;
 
     const originalMembers = dashboard.group.members
-      .map((member) => `${member.id}:${member.name.trim()}`)
+      .map((member) => `${member.id}:${cleanName(member.name)}`)
       .sort();
     const currentMembers = members
-      .map((member) => `${member.id ?? member.key}:${member.name.trim()}`)
+      .map((member) => `${member.id ?? member.key}:${cleanName(member.name)}`)
       .sort();
 
     return (
-      dashboard.group.name !== groupName.trim() ||
+      dashboard.group.name !== cleanName(groupName) ||
       dashboard.group.currency !== currency ||
       JSON.stringify(originalMembers) !== JSON.stringify(currentMembers)
     );
@@ -580,7 +581,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
   }, [dashboard?.expenses, isMemberSheetOpen, members.length, selectedMember, t, tGroup]);
 
   const validateMembers = (nextMembers: EditableMember[]) => {
-    const names = nextMembers.map((member) => member.name.trim());
+    const names = nextMembers.map((member) => cleanName(member.name));
     const result = GroupSchema.safeParse({ groupName, members: names });
 
     if (!result.success) {
@@ -617,8 +618,8 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
   };
 
   const handleAddMember = () => {
-    const trimmedName = newMemberName.trim();
-    if (!trimmedName) return;
+    const cleanedName = cleanName(newMemberName);
+    if (isBlankName(newMemberName)) return;
 
     if (members.length >= MEMBERS_MAX) {
       const message = `Maximum ${MEMBERS_MAX} members allowed.`;
@@ -641,8 +642,8 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
       return;
     }
 
-    if (isMemberNameAlreadyAdded(members.map((member) => member.name), trimmedName)) {
-      const message = tGroup("memberAlreadyAdded", { name: truncateMemberName(trimmedName) });
+    if (isMemberNameAlreadyAdded(members.map((member) => member.name), cleanedName)) {
+      const message = tGroup("memberAlreadyAdded", { name: truncateMemberName(cleanedName) });
       setErrors((current) => ({
         ...current,
         memberExists: message,
@@ -653,7 +654,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
 
     const nextMembers = [
       ...members,
-      { key: crypto.randomUUID(), name: trimmedName },
+      { key: crypto.randomUUID(), name: cleanedName },
     ];
     setMembers(nextMembers);
     setNewMemberName("");
@@ -684,10 +685,9 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
         return nameResult.error.issues[0].message;
       }
 
-      const trimmedName = value.trim();
       const hasDuplicate = isMemberNameAlreadyAdded(
         members.filter((entry) => entry !== member).map((entry) => entry.name),
-        trimmedName
+        value
       );
 
       if (hasDuplicate) {
@@ -708,12 +708,12 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
       return false;
     }
 
-    const trimmedName = renameValue.trim();
+    const cleanedName = cleanName(renameValue);
     setMemberRenameError(undefined);
     setMembers((currentMembers) =>
       currentMembers.map((member) =>
         member === selectedMember
-          ? { ...member, name: trimmedName }
+          ? { ...member, name: cleanedName }
           : member
       )
     );
@@ -772,19 +772,19 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
 
   /** `revision` overrides the form's base, for "Save my changes" after a conflict. */
   const handleSaveGroup = async (revision: number | undefined = baseRevision) => {
-    const trimmedGroupName = groupName.trim();
+    const cleanedGroupName = cleanName(groupName);
     const normalizedMembers = members.map((member) => ({
-      name: member.name.trim(),
+      name: cleanName(member.name),
       id: member.id,
       key: member.key,
     }));
 
-    setGroupName(trimmedGroupName);
+    setGroupName(cleanedGroupName);
     setMembers(normalizedMembers);
 
     if (!validateMembers(normalizedMembers)) {
-      const names = normalizedMembers.map((member) => member.name.trim());
-      const result = GroupSchema.safeParse({ groupName: trimmedGroupName, members: names });
+      const names = normalizedMembers.map((member) => member.name);
+      const result = GroupSchema.safeParse({ groupName: cleanedGroupName, members: names });
       if (!result.success) {
         const formatted = result.error.format();
         const messages = [
@@ -802,7 +802,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
 
     try {
       await updateGroup(groupId, {
-        name: trimmedGroupName,
+        name: cleanedGroupName,
         currency,
         members: normalizedMembers.map(({ id, name }) => ({ id, name })),
         revision,
@@ -984,7 +984,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                         aria-invalid={Boolean(errors.memberName || errors.memberExists)}
                         placeholder={t("addNewMember")}
                         onKeyDown={(event) => {
-                          if (event.key === "Enter" && newMemberName.trim()) {
+                          if (event.key === "Enter" && !isBlankName(newMemberName)) {
                             event.preventDefault();
                             handleAddMember();
                           }
@@ -994,7 +994,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                         type="button"
                         variant="outline"
                         onClick={handleAddMember}
-                        disabled={!newMemberName.trim()}
+                        disabled={isBlankName(newMemberName)}
                       >
                         {tCommon("add")}
                       </Button>

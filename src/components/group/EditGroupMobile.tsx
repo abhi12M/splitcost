@@ -25,6 +25,7 @@ import { balanceStyles } from "@/lib/brand-styles";
 import { formatCurrency } from "@/lib/avatar-utils";
 import { MEMBERS_MAX } from "@/lib/validations/group.schema";
 import { isMemberNameAlreadyAdded } from "@/lib/validations/group-members";
+import { cleanName, isBlankName } from "@/lib/validations/names";
 import { cn } from "@/lib/utils";
 
 function StatChip({
@@ -126,8 +127,8 @@ export function EditGroupMobile({
   const hasReachedMemberLimit = memberCards.length >= MEMBERS_MAX;
 
   const handleSaveRequest = () => {
-    const pendingMember = newMemberName.trim();
-    if (pendingMember) {
+    const pendingMember = cleanName(newMemberName);
+    if (!isBlankName(pendingMember)) {
       setPendingMemberConfirmation(pendingMember);
       return;
     }

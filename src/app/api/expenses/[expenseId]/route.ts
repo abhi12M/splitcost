@@ -22,6 +22,7 @@ import {
   EXPENSE_NOTES_STORAGE_MAX,
   normalizeExpenseNotes,
 } from "@/lib/expenseNotes";
+import { validateExpenseDescription } from "@/lib/validations/expense.schema";
 
 type ParticipantPayload = {
   userId: string;
@@ -107,6 +108,11 @@ export async function PUT(
     );
   }
 
+  const descriptionResult = validateExpenseDescription(description);
+  if (!descriptionResult.success) {
+    return NextResponse.json({ error: descriptionResult.error }, { status: 400 });
+  }
+
   if (participants?.length > 50) {
     return NextResponse.json(
       { error: "Too many participants" },
@@ -128,7 +134,7 @@ export async function PUT(
     {
       p_group_id: groupId,
       p_expense_id: expenseId,
-      p_description: description,
+      p_description: descriptionResult.data,
       p_amount: amount,
       p_currency: currency,
       p_paid_by_user_id: paidByUserId || null,

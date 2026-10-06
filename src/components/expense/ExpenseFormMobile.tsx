@@ -13,6 +13,7 @@ import {
 } from "@/lib/storage"
 import { memberNameForViewer } from "@/lib/groupExpenseLabels"
 import { EXPENSE_DESCRIPTION_MAX } from "@/lib/validations/expense.schema"
+import { cleanName } from "@/lib/validations/names"
 import { createExpenseSchema } from "@/lib/validations/expense.schema.i18n"
 import { CategoryKey, EXPENSE_CATEGORIES, SubcategoryId } from "../icons/CategoryIcons"
 import { buildCategorySelectGroups } from "@/lib/category-labels"
@@ -218,7 +219,7 @@ const ExpenseFormMobile = forwardRef<ExpenseFormMobileHandle, Props>(function Ex
     };
 
     onSubmit({
-      description,
+      description: cleanName(description),
       amount: parseFloat(amount),
       currency,
       paidByUserId: isMultiplePayers ? null : paidByUserId,

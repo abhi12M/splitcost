@@ -19,6 +19,7 @@ import {
 } from "@/lib/validations/group.schema";
 import { createGroupSchemas } from "@/lib/validations/group.schema.i18n";
 import { isMemberNameAlreadyAdded } from "@/lib/validations/group-members";
+import { cleanName, isBlankName } from "@/lib/validations/names";
 import { GenericAlertDialog } from "@/components/ui/generic-alert-dialog";
 
 interface GroupFormMobileProps {
@@ -97,7 +98,7 @@ export function GroupFormMobile({
   }, [groupName, members, hasSubmitted, validate]);
 
   useEffect(() => {
-    if (!groupName.trim()) {
+    if (isBlankName(groupName)) {
       setErrors((prev) => ({ ...prev, groupName: undefined }));
       return;
     }
@@ -109,8 +110,8 @@ export function GroupFormMobile({
   }, [groupName]);
 
   useEffect(() => {
-    const trimmed = newMember.trim();
-    if (!trimmed) {
+    const cleaned = cleanName(newMember);
+    if (isBlankName(newMember)) {
       setErrors((prev) => ({ ...prev, memberName: undefined, memberExists: undefined }));
       return;
     }
@@ -120,8 +121,8 @@ export function GroupFormMobile({
       // The user is adding a member, so the previous minimum-member error is being corrected.
       members: undefined,
       memberName: memberResult.success ? undefined : memberResult.error.issues[0]?.message,
-      memberExists: isMemberNameAlreadyAdded(members, trimmed)
-        ? t("memberAlreadyAdded", { name: truncateMemberName(trimmed) })
+      memberExists: isMemberNameAlreadyAdded(members, cleaned)
+        ? t("memberAlreadyAdded", { name: truncateMemberName(cleaned) })
         : undefined,
     }));
   }, [newMember, members]);
@@ -142,8 +143,8 @@ export function GroupFormMobile({
   }
 
   const handleAddMember = () => {
-    const trimmed = newMember.trim();
-    if (!trimmed) return;
+    const cleaned = cleanName(newMember);
+    if (isBlankName(newMember)) return;
 
     if (members.length >= MEMBERS_MAX) {
       const message = tVal("membersMax", { max: MEMBERS_MAX });
@@ -158,13 +159,13 @@ export function GroupFormMobile({
       showValidationDialog({ memberName: message });
       return;
     }
-    if (isMemberNameAlreadyAdded(members, trimmed)) {
-      const message = t("memberAlreadyAdded", { name: truncateMemberName(trimmed) });
+    if (isMemberNameAlreadyAdded(members, cleaned)) {
+      const message = t("memberAlreadyAdded", { name: truncateMemberName(cleaned) });
       setErrors((prev) => ({ ...prev, memberExists: message }));
       showValidationDialog({ memberExists: message });
       return;
     }
-    setMembers([...members, trimmed]);
+    setMembers([...members, cleaned]);
     setNewMember("");
     setErrors((prev) => ({
       ...prev,
@@ -175,7 +176,7 @@ export function GroupFormMobile({
   };
 
   const submitGroup = async () => {
-    await onSubmit({ name: groupName.trim(), currency, members });
+    await onSubmit({ name: cleanName(groupName), currency, members });
   };
 
   const handleSubmit = async () => {
@@ -186,8 +187,8 @@ export function GroupFormMobile({
       return;
     }
 
-    const pendingMember = newMember.trim();
-    if (pendingMember) {
+    const pendingMember = cleanName(newMember);
+    if (!isBlankName(pendingMember)) {
       setPendingMemberConfirmation(pendingMember);
       return;
     }

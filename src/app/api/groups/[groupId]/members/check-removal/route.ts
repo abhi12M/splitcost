@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { readJsonObject } from "@/lib/api/request";
+import { cleanName } from "@/lib/validations/names";
 import { supabaseAdmin } from "@/lib/supabase/server";
 
 async function isMemberInvolvedInGroupExpenses(groupId: string, userId: string) {
@@ -43,7 +44,7 @@ export async function POST(
   if (!parsed.ok) return parsed.response;
   const body = parsed.data;
   const memberId = String(body?.memberId ?? "").trim();
-  const memberName = String(body?.memberName ?? "").trim();
+  const memberName = cleanName(String(body?.memberName ?? ""));
 
   if (!groupId || (!memberId && !memberName)) {
     return NextResponse.json(

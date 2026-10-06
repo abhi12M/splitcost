@@ -1,6 +1,7 @@
 "use client";
 
 import { type FormEvent, useState } from "react";
+import { flushSync } from "react-dom";
 import { motion } from "framer-motion";
 import { Bug, Clock3, Handshake, Mail, Send } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -11,6 +12,14 @@ import { useToast } from "@/hooks/use-toast";
 import { brandStyles } from "@/lib/brand-styles";
 import { APP_NAME } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import {
+  cleanContactInput,
+  CONTACT_EMAIL_MAX,
+  CONTACT_MESSAGE_MAX,
+  CONTACT_NAME_MAX,
+  CONTACT_SUBJECT_MAX,
+} from "@/lib/validations/contact";
+import { isBlankText } from "@/lib/validations/names";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,8 +54,17 @@ export default function ContactPage() {
     },
   ];
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const formElement = e.currentTarget;
+    const cleaned = cleanContactInput(form);
+    // A field holding only spaces or invisible characters passes the browser's
+    // "required" check; show it cleaned (empty) so the browser asks for it.
+    if (isBlankText(cleaned.name) || isBlankText(cleaned.subject) || isBlankText(cleaned.message)) {
+      flushSync(() => setForm(cleaned));
+      formElement.reportValidity();
+      return;
+    }
     setIsSubmitting(true);
 
     try {
@@ -55,7 +73,7 @@ export default function ContactPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(form),
+        body: JSON.stringify(cleaned),
       });
 
       if (!res.ok) throw new Error();
@@ -164,6 +182,7 @@ export default function ContactPage() {
                           placeholder={t("namePlaceholder")}
                           value={form.name}
                           onChange={(e) => setForm({ ...form, name: e.target.value })}
+                          maxLength={CONTACT_NAME_MAX}
                           required
                         />
                       </div>
@@ -175,6 +194,7 @@ export default function ContactPage() {
                           placeholder={t("emailPlaceholder")}
                           value={form.email}
                           onChange={(e) => setForm({ ...form, email: e.target.value })}
+                          maxLength={CONTACT_EMAIL_MAX}
                           required
                         />
                       </div>
@@ -187,6 +207,7 @@ export default function ContactPage() {
                         placeholder={t("subjectPlaceholder")}
                         value={form.subject}
                         onChange={(e) => setForm({ ...form, subject: e.target.value })}
+                        maxLength={CONTACT_SUBJECT_MAX}
                         required
                       />
                     </div>
@@ -199,6 +220,7 @@ export default function ContactPage() {
                         rows={6}
                         value={form.message}
                         onChange={(e) => setForm({ ...form, message: e.target.value })}
+                        maxLength={CONTACT_MESSAGE_MAX}
                         required
                         className="min-h-[140px] h-auto sm:min-h-[180px] sm:h-auto resize-y"
                       />

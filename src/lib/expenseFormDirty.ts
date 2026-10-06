@@ -5,6 +5,8 @@
  * flag, which never resets once tripped.
  */
 
+import { cleanName } from "@/lib/validations/names";
+
 type SnapshotParticipant = { userId: string; percent: number | null; amount: number | null };
 type SnapshotPayer = { userId: string; amount: number | null };
 
@@ -31,7 +33,7 @@ function byUserId<T extends { userId: string }>(list: T[]): T[] {
 
 export function buildExpenseFormSnapshot(input: ExpenseFormSnapshotInput): string {
   return JSON.stringify({
-    description: input.description.trim(),
+    description: cleanName(input.description),
     amount: input.amount,
     currency: input.currency,
     paidByUserId: input.paidByUserId,
