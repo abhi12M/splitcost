@@ -41,6 +41,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_events: {
+        Row: {
+          actor_name: string | null
+          actor_user_id: string | null
+          created_at: string
+          data: Json
+          expense_id: string | null
+          group_id: string
+          id: string
+          kind: string
+          origin_session_id: string | null
+        }
+        Insert: {
+          actor_name?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          data?: Json
+          expense_id?: string | null
+          group_id: string
+          id?: string
+          kind: string
+          origin_session_id?: string | null
+        }
+        Update: {
+          actor_name?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          data?: Json
+          expense_id?: string | null
+          group_id?: string
+          id?: string
+          kind?: string
+          origin_session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_events_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_events_actor_user_id_fkey"
+            columns: ["actor_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blog_categories: {
         Row: {
           created_at: string
@@ -599,6 +650,14 @@ export type Database = {
           group_id: string
         }
         Returns: GroupDashboardInterface
+      },
+      set_expense_attachment_path: {
+        Args: {
+          p_expense_id: string
+          p_attachment_path: string | null
+          p_origin_session_id?: string | null
+        }
+        Returns: boolean
       },
       set_expense_category: {
         Args: {

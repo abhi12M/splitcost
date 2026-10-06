@@ -1,3 +1,4 @@
+import { recordGroupChanges } from "@/lib/activity/server/recordGroupActivity";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { validateGroupInput } from "@/lib/validations/group.schema";
@@ -398,7 +399,7 @@ export async function PUT(
     }
 
     // Every bumped revision is broadcast, so open editors stay on the latest one.
-    await broadcastGroupChanges(groupId, changes);
+    await Promise.all([broadcastGroupChanges(groupId, changes), recordGroupChanges(groupId, changes)]);
 
     const updatedMembers = await getActiveGroupMembers(groupId);
 

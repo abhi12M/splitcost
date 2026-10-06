@@ -16,6 +16,7 @@ import {
   ChevronRight,
   ChevronUp,
   Handshake,
+  History,
   Download,
   MoreHorizontal,
   Pencil,
@@ -75,6 +76,7 @@ import { cn } from "@/lib/utils";
 import { ADMIN_BASE_PATH } from "@/lib/constants";
 import { useBackButtonClose } from "@/hooks/useBackButtonClose";
 import { GenericAlertDialog } from "@/components/ui/generic-alert-dialog";
+import { ActivityFeed } from "@/components/activity/ActivityFeed";
 
 const ExpenseChart = dynamic(() => import("@/components/group/ExpenseChart"), {
   ssr: false,
@@ -136,6 +138,10 @@ export type MobileGroupDashboardProps = {
   chartData: { name: string; value: number }[];
   viewerMemberId: string | null;
   onViewerMemberIdChange: (memberId: string | null) => void;
+  /** Changes whenever group data changes, to reload activity in the background. */
+  activityRefreshKey: string;
+  /** Expenses the activity feed can still open. */
+  existingExpenseIds: ReadonlySet<string>;
 };
 
 function groupTotal(list: GroupDashboardInterface["expenses"]) {
@@ -174,11 +180,14 @@ export function MobileGroupDashboard({
   chartData,
   viewerMemberId,
   onViewerMemberIdChange,
+  activityRefreshKey,
+  existingExpenseIds,
 }: MobileGroupDashboardProps) {
   const t = useTranslations("groupDetails");
   const tGroup = useTranslations("group");
   const tCommon = useTranslations("common");
   const tCategories = useTranslations("categories");
+  const tActivity = useTranslations("activity");
   const resolveCategoryLabel = useCallback(
     (key: string) => resolveCategoryDisplayLabel(tCategories, key),
     [tCategories]
@@ -781,6 +790,10 @@ export function MobileGroupDashboard({
           )}
         </TabsContent>
 
+        <TabsContent value="activity" className="mt-0 flex-1 px-3 pb-32 pt-3 focus-visible:outline-none sm:px-4">
+          <ActivityFeed groupId={groupId} refreshKey={activityRefreshKey} existingExpenseIds={existingExpenseIds} />
+        </TabsContent>
+
         <nav
           aria-label={t("groupSections")}
           className="fixed bottom-[max(1rem,env(safe-area-inset-bottom,0px))] left-1/2 z-40 -translate-x-1/2 rounded-2xl border border-border/80 bg-background/95 p-1 shadow-lg shadow-black/15 backdrop-blur-md supports-[backdrop-filter]:bg-background/85"
@@ -809,6 +822,14 @@ export function MobileGroupDashboard({
             >
               <Handshake className="h-4 w-4 shrink-0" aria-hidden />
               <span className="whitespace-nowrap">{t("tabSettlements")}</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="activity"
+              aria-label={tActivity("title")}
+              className="flex min-w-[4.25rem] flex-col items-center justify-center gap-0.5 rounded-xl px-3 py-2 text-[10px] font-semibold leading-tight text-muted-foreground transition-all hover:text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
+            >
+              <History className="h-4 w-4 shrink-0" aria-hidden />
+              <span className="whitespace-nowrap">{tActivity("title")}</span>
             </TabsTrigger>
           </TabsList>
         </nav>

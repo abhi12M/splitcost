@@ -1,3 +1,9 @@
+import {
+  recordExpenseChanges,
+  recordExpenseDeleted,
+  recordExpenseEdited,
+} from "@/lib/activity/server/recordExpenseActivity";
+import { loadExpenseSnapshot } from "@/lib/activity/server/expenseSnapshots";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import {
   EXPENSE_CATEGORIES,
@@ -107,6 +113,11 @@ export async function PUT(
     return NextResponse.json({ error: "Notes are too long" }, { status: 400 });
   }
 
+  const session = typeof originSessionId === "string" ? originSessionId.slice(0, 128) : null;
+  // Read before saving: the save is revision-checked, so when it succeeds this
+  // is exactly the state it replaced.
+  const before = await loadExpenseSnapshot(expenseId);
+
   const { data, error } = await supabaseAdmin.rpc(
     "edit_expense",
     {
@@ -128,7 +139,7 @@ export async function PUT(
       p_payers: payers || null,
       p_notes: typeof notes === "string" ? normalizeExpenseNotes(notes) || null : null,
       p_expected_revision: expectedRevision,
-      p_origin_session_id: typeof originSessionId === "string" ? originSessionId.slice(0, 128) : null,
+      p_origin_session_id: session,
     }
   );
 
@@ -160,6 +171,9 @@ export async function PUT(
   }
 
   const row = data[0];
+
+  const after = await loadExpenseSnapshot(expenseId);
+  if (before && after) await recordExpenseEdited(before, after, session);
 
   return NextResponse.json({
     id: row.id,
@@ -198,11 +212,12 @@ export async function DELETE(
   }
 
   const body = await req.json().catch(() => ({}));
+  const session = typeof body?.originSessionId === "string" ? body.originSessionId.slice(0, 128) : null;
+  // The deleted expense's last state is what the activity entry shows.
+  const deleted = await loadExpenseSnapshot(expenseId);
   const { data, error } = await supabaseAdmin.rpc("delete_expense", {
     p_expense_id: expenseId,
-    p_origin_session_id: typeof body?.originSessionId === "string"
-      ? body.originSessionId.slice(0, 128)
-      : null,
+    p_origin_session_id: session,
   });
 
   if (error || !data) {
@@ -213,6 +228,7 @@ export async function DELETE(
     );
   }
 
+  if (deleted) await recordExpenseDeleted(deleted, session);
   return NextResponse.json({ success: true });
 }
 
@@ -254,6 +270,7 @@ export async function PATCH(
     );
   }
 
+  const before = await loadExpenseSnapshot(expenseId);
   const { data, error } = await supabaseAdmin.rpc("set_expense_category", {
     p_expense_id: expenseId,
     p_category: category,
@@ -275,6 +292,20 @@ export async function PATCH(
         details: isProduction ? undefined : error?.details,
       },
       { status: 400 }
+    );
+  }
+
+  if (before && (before.category !== row.category || before.subcategory !== row.subcategory)) {
+    await recordExpenseChanges(
+      { ...before, category: row.category, subcategory: row.subcategory },
+      [
+        {
+          field: "category",
+          from: { category: before.category, subcategory: before.subcategory },
+          to: { category: row.category, subcategory: row.subcategory },
+        },
+      ],
+      originSessionId
     );
   }
 

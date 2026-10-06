@@ -1,3 +1,5 @@
+import { recordExpenseChanges } from "@/lib/activity/server/recordExpenseActivity";
+import { loadExpenseSnapshot } from "@/lib/activity/server/expenseSnapshots";
 import { NextResponse } from "next/server";
 import sharp from "sharp";
 
@@ -25,6 +27,15 @@ function validateServerAttachment(file: File) {
   }
 
   return null;
+}
+
+async function recordAttachmentChange(
+  expenseId: string,
+  action: "added" | "replaced" | "removed",
+  originSessionId: string | null
+) {
+  const expense = await loadExpenseSnapshot(expenseId);
+  if (expense) await recordExpenseChanges(expense, [{ field: "attachment", action }], originSessionId);
 }
 
 export async function GET(
@@ -125,6 +136,7 @@ export async function POST(
       }
     }
 
+    await recordAttachmentChange(expenseId, existingPath ? "replaced" : "added", originSessionId);
     return NextResponse.json(await buildAttachmentPayload(path));
   } catch (error) {
     console.error("saveExpenseAttachment error:", error);
@@ -174,6 +186,7 @@ export async function DELETE(
 
     await setExpenseAttachmentPath(expenseId, null, originSessionId);
 
+    if (existingPath) await recordAttachmentChange(expenseId, "removed", originSessionId);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("deleteExpenseAttachment error:", error);

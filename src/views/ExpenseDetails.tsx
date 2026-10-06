@@ -60,6 +60,7 @@ import {
   validateAttachmentFile,
 } from "@/lib/expenseAttachments";
 import { useExpense } from "@/lib/groupExpenseData";
+import { ExpenseHistory } from "@/components/activity/ExpenseHistory";
 import { useExpenseRealtime, useGroupChanges } from "@/hooks/useGroupRealtime";
 import { useGroupChangeNotices } from "@/components/group/GroupChangeNotices";
 import { applyGroupChangesToGroup } from "@/lib/realtime/groupChanges";
@@ -938,6 +939,15 @@ export default function ExpenseDetailsPage({
               />
             </section>
           )}
+
+          <ExpenseHistory
+            expenseId={expenseId}
+            currency={expense.currency}
+            // Receipt changes don't bump revision/updatedAt, so key on the saved attachment too.
+            refreshKey={`${expense.revision ?? ""}|${expense.updatedAt ?? ""}|${
+              cachedAttachment?.updatedAt ?? "none"
+            }`}
+          />
 
         </main>
 

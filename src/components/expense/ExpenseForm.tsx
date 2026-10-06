@@ -1,5 +1,7 @@
 "use client";
 
+import { RichNotesEditable, RichNotesToolbar } from "@/components/expense/RichNotesEditor";
+import { useRichTextEditor } from "@/hooks/useRichTextEditor";
 import { useState, useEffect, useMemo, useRef, forwardRef, useImperativeHandle } from "react";
 import { useTranslations } from "next-intl";
 import { Check, Percent, Equal, Calculator } from "lucide-react";
@@ -113,6 +115,7 @@ export const ExpenseForm = forwardRef<ExpenseFormHandle, ExpenseFormProps>(funct
   const [showPaidBy, setShowPaidBy] = useState(false);
   const [attachment, setAttachment] = useState<ExpenseAttachment | null>(initialAttachment);
   const [notes, setNotes] = useState(initialData?.notes || "");
+  const notesEditor = useRichTextEditor({ value: notes, onChange: setNotes, maxLength: EXPENSE_NOTES_TEXT_MAX });
   const totalAmount = parseFloat(amount) || 0;
   const [hasSubmitted, setHasSubmitted] = useState(false);
   // Keep the initial category from the server intact. React Strict Mode runs
@@ -788,22 +791,18 @@ export const ExpenseForm = forwardRef<ExpenseFormHandle, ExpenseFormProps>(funct
 
       <div className="space-y-2">
         <Label htmlFor="expense-notes">{t("notesLabel")}</Label>
-        <div
-          id="expense-notes"
-          contentEditable
-          suppressContentEditableWarning
-          role="textbox"
-          aria-multiline="true"
-          data-placeholder={t("notesPlaceholder")}
-          dangerouslySetInnerHTML={{ __html: sanitizeExpenseNotes(notes) }}
-          onInput={(event) => {
-            const element = event.currentTarget;
-            if ((element.textContent?.length ?? 0) <= EXPENSE_NOTES_TEXT_MAX) {
-              setNotes(sanitizeExpenseNotes(element.innerHTML));
-            }
-          }}
-          className="min-h-28 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none empty:before:text-muted-foreground empty:before:content-[attr(data-placeholder)] focus-visible:ring-2 focus-visible:ring-ring [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5"
-        />
+        <div className="overflow-hidden rounded-md border border-input bg-background focus-within:ring-2 focus-within:ring-ring">
+          <RichNotesToolbar editor={notesEditor} size="sm" className="border-b border-input px-1.5 py-1" />
+          <div className="px-3 py-2 text-sm">
+            <RichNotesEditable
+              editor={notesEditor}
+              id="expense-notes"
+              label={t("notesLabel")}
+              placeholder={t("notesPlaceholder")}
+              className="min-h-24"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Submit */}

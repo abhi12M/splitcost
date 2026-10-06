@@ -62,6 +62,8 @@ import { useGroupChanges, useGroupRealtime } from "@/hooks/useGroupRealtime";
 import { useGroupChangeNotices } from "@/components/group/GroupChangeNotices";
 import { GroupDeletedDialog } from "@/components/group/GroupDeletedDialog";
 import { applyGroupChangesToDashboard } from "@/lib/realtime/groupChanges";
+import { useActivitySignals } from "@/hooks/useActivitySignals";
+import { RecentActivityCard } from "@/components/activity/RecentActivityCard";
 import { useAttachmentUploadCompletion } from "@/lib/attachmentUploads";
 import { SingleSelect } from "@/components/ui/single-select";
 import { formatExpenseGroupHeaderTitle, toTitleCase } from "@/components/ui/formatters";
@@ -568,6 +570,8 @@ export default function GroupResponsesPage({
     [balances, members]
   );
 
+  const activitySignals = useActivitySignals(dashboard);
+
   // An open settle confirmation holds the amount from when it was opened. If
   // an expense change in another session alters that debt, confirming would
   // record the old amount, so close it and say why. An unchanged debt keeps
@@ -821,6 +825,8 @@ export default function GroupResponsesPage({
           settlingIndex={settlingIndex}
           settleConfirmation={settleConfirmation}
           setSettleConfirmation={setSettleConfirmation}
+          activityRefreshKey={activitySignals.refreshKey}
+          existingExpenseIds={activitySignals.existingExpenseIds}
           handleSettle={handleSettle}
           viewMode={viewMode}
           setViewMode={setViewMode}
@@ -1386,6 +1392,12 @@ export default function GroupResponsesPage({
 
               </CardContent>
             </Card>
+
+            <RecentActivityCard
+              groupId={groupId}
+              refreshKey={activitySignals.refreshKey}
+              existingExpenseIds={activitySignals.existingExpenseIds}
+            />
 
             <GenericAlertDialog
               open={settleConfirmation !== null}

@@ -1,3 +1,5 @@
+import { recordExpenseAdded } from "@/lib/activity/server/recordExpenseActivity";
+import { loadExpenseSnapshot } from "@/lib/activity/server/expenseSnapshots";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import {
@@ -21,6 +23,7 @@ export async function POST(req: Request) {
     subcategory,
     date,
     participants,
+    originSessionId,
   } = body;
 
   // 🔐 Basic abuse protection
@@ -70,6 +73,11 @@ export async function POST(req: Request) {
       { error: "Failed to add expense" },
       { status: 400 }
     );
+  }
+  const createdId = (data as { id?: unknown } | null)?.id;
+  const created = typeof createdId === "string" ? await loadExpenseSnapshot(createdId) : null;
+  if (created) {
+    await recordExpenseAdded(created, typeof originSessionId === "string" ? originSessionId.slice(0, 128) : null);
   }
   return NextResponse.json(data);
 }

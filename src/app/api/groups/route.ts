@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { recordGroupCreated } from "@/lib/activity/server/recordGroupActivity";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { validateGroupInput } from "@/lib/validations/group.schema";
 
@@ -44,6 +45,15 @@ export async function POST(req: Request) {
       { error: "Failed to create group" },
       { status: 400 }
     );
+  }
+
+  const createdId = (data as { id?: unknown } | null)?.id;
+  if (typeof createdId === "string") {
+    await recordGroupCreated(createdId, {
+      name: validation.data.groupName,
+      currency: normalizedCurrency,
+      members: validation.data.memberNames,
+    });
   }
 
   return NextResponse.json(data);

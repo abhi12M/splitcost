@@ -102,7 +102,7 @@ export async function setExpenseAttachmentPath(
   attachmentPath: string | null,
   originSessionId?: string | null
 ) {
-  const { error } = await (supabaseAdmin as any).rpc("set_expense_attachment_path", {
+  const { error } = await supabaseAdmin.rpc("set_expense_attachment_path", {
     p_expense_id: expenseId,
     p_attachment_path: attachmentPath,
     p_origin_session_id: originSessionId || null,
