@@ -1,5 +1,7 @@
 import { recordExpenseAdded } from "@/lib/activity/server/recordExpenseActivity";
 import { loadExpenseSnapshot } from "@/lib/activity/server/expenseSnapshots";
+import { SETTLEMENT_CATEGORY } from "@/lib/activity/expenseSnapshot";
+import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import {
@@ -79,5 +81,8 @@ export async function POST(req: Request) {
   if (created) {
     await recordExpenseAdded(created, typeof originSessionId === "string" ? originSessionId.slice(0, 128) : null);
   }
-  return NextResponse.json(data);
+  return successJson(
+    data,
+    category === SETTLEMENT_CATEGORY ? SUCCESS_MESSAGES.settlementRecorded : SUCCESS_MESSAGES.expenseAdded
+  );
 }

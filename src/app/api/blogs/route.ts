@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 
 import { isAuthorizedAdminRequest } from "@/lib/admin-auth";
+import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import { createBlog, listAllBlogs } from "@/lib/blog/queries";
 import { normalizeBlogInput } from "@/lib/blog/input";
 
@@ -35,7 +36,7 @@ export async function POST(req: Request) {
     }
     const blog = await createBlog(payload);
     revalidatePath("/portal/x7k2p9/blogs");
-    return NextResponse.json(blog);
+    return successJson(blog, SUCCESS_MESSAGES.blogCreated);
   } catch (error: unknown) {
     console.error("createBlog error:", error);
     return NextResponse.json(

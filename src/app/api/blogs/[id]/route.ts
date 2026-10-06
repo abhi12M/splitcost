@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 
 import { isAuthorizedAdminRequest } from "@/lib/admin-auth";
+import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import { normalizeBlogInput } from "@/lib/blog/input";
 import { deleteBlog, getBlogById, updateBlog } from "@/lib/blog/queries";
 
@@ -42,7 +43,7 @@ export async function PUT(req: Request, { params }: RouteContext) {
     }
     const blog = await updateBlog(params.id, payload);
     revalidatePath("/portal/x7k2p9/blogs");
-    return NextResponse.json(blog);
+    return successJson(blog, SUCCESS_MESSAGES.blogUpdated);
   } catch (error: unknown) {
     console.error("updateBlog error:", error);
     return NextResponse.json(
@@ -57,7 +58,7 @@ export async function DELETE(request: Request, { params }: RouteContext) {
   try {
     await deleteBlog(params.id);
     revalidatePath("/portal/x7k2p9/blogs");
-    return NextResponse.json({ ok: true });
+    return successJson({ ok: true }, SUCCESS_MESSAGES.blogDeleted);
   } catch (error: unknown) {
     return NextResponse.json(
       { error: getErrorMessage(error, "Failed to delete blog") },

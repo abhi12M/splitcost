@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -20,7 +21,7 @@ export async function POST(req: Request) {
       `
         });
 
-        return Response.json({ success: true, data });
+        return successJson({ success: true, data }, SUCCESS_MESSAGES.contactSent);
 
     } catch (error) {
         return Response.json(

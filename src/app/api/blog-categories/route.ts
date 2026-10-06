@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { isAuthorizedAdminRequest } from "@/lib/admin-auth";
+import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import {
   createBlogCategory,
   listBlogCategoriesWithCounts,
@@ -38,7 +39,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Category name is required" }, { status: 400 });
     }
     const category = await createBlogCategory(body);
-    return NextResponse.json(category);
+    return successJson(category, SUCCESS_MESSAGES.blogCategoryCreated);
   } catch (error: unknown) {
     console.error("createBlogCategory error:", error);
     return NextResponse.json({ error: getErrorMessage(error) }, { status: 400 });

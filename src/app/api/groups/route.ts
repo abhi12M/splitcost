@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { recordGroupCreated } from "@/lib/activity/server/recordGroupActivity";
+import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { validateGroupInput } from "@/lib/validations/group.schema";
 
@@ -56,5 +57,5 @@ export async function POST(req: Request) {
     });
   }
 
-  return NextResponse.json(data);
+  return successJson(data, SUCCESS_MESSAGES.groupCreated);
 }

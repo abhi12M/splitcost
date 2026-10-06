@@ -1,5 +1,6 @@
 import { recordExpenseChanges } from "@/lib/activity/server/recordExpenseActivity";
 import { loadExpenseSnapshot } from "@/lib/activity/server/expenseSnapshots";
+import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import { NextResponse } from "next/server";
 import sharp from "sharp";
 
@@ -137,7 +138,7 @@ export async function POST(
     }
 
     await recordAttachmentChange(expenseId, existingPath ? "replaced" : "added", originSessionId);
-    return NextResponse.json(await buildAttachmentPayload(path));
+    return successJson(await buildAttachmentPayload(path), SUCCESS_MESSAGES.receiptUploaded);
   } catch (error) {
     console.error("saveExpenseAttachment error:", error);
     return NextResponse.json(
@@ -187,7 +188,7 @@ export async function DELETE(
     await setExpenseAttachmentPath(expenseId, null, originSessionId);
 
     if (existingPath) await recordAttachmentChange(expenseId, "removed", originSessionId);
-    return NextResponse.json({ success: true });
+    return successJson({ success: true }, SUCCESS_MESSAGES.receiptRemoved);
   } catch (error) {
     console.error("deleteExpenseAttachment error:", error);
     return NextResponse.json(

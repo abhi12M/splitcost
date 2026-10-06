@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import sharp from "sharp";
 
 import { isAuthorizedAdminRequest } from "@/lib/admin-auth";
+import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { buildBlogImagePath } from "@/lib/supabase/storagePaths";
 
@@ -69,7 +70,7 @@ export async function POST(req: Request) {
         ? `${data.publicUrl}?v=${Date.now()}`
         : data.publicUrl;
 
-    return NextResponse.json({ url });
+    return successJson({ url }, SUCCESS_MESSAGES.imageUploaded);
   } catch (error) {
     console.error("uploadBlogImage error:", error);
     return NextResponse.json(

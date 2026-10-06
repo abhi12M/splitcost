@@ -1,4 +1,5 @@
 import { recordGroupChanges } from "@/lib/activity/server/recordGroupActivity";
+import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { validateGroupInput } from "@/lib/validations/group.schema";
@@ -267,13 +268,16 @@ export async function PUT(
       !nameChanged &&
       !currencyChanged
     ) {
-      return NextResponse.json({
-        id: groupId,
-        name: currentGroup.name,
-        currency: currentGroup.currency,
-        revision: currentGroup.revision,
-        members: currentMembers.map((member) => ({ id: member.userId, name: member.name })),
-      });
+      return successJson(
+        {
+          id: groupId,
+          name: currentGroup.name,
+          currency: currentGroup.currency,
+          revision: currentGroup.revision,
+          members: currentMembers.map((member) => ({ id: member.userId, name: member.name })),
+        },
+        SUCCESS_MESSAGES.groupUnchanged
+      );
     }
 
     // Claim the next revision before the first write. The check above can race
@@ -403,16 +407,19 @@ export async function PUT(
 
     const updatedMembers = await getActiveGroupMembers(groupId);
 
-    return NextResponse.json({
-      id: groupId,
-      name: validation.data.groupName,
-      currency: normalizedCurrency,
-      revision: nextRevision,
-      members: updatedMembers.map((member) => ({
-        id: member.userId,
-        name: member.name,
-      })),
-    });
+    return successJson(
+      {
+        id: groupId,
+        name: validation.data.groupName,
+        currency: normalizedCurrency,
+        revision: nextRevision,
+        members: updatedMembers.map((member) => ({
+          id: member.userId,
+          name: member.name,
+        })),
+      },
+      SUCCESS_MESSAGES.groupUpdated
+    );
   } catch (error) {
     console.error("updateGroup error:", error);
     return NextResponse.json(
@@ -445,5 +452,5 @@ export async function DELETE(
       typeof body?.originSessionId === "string" ? body.originSessionId.slice(0, 128) : null,
   });
 
-  return NextResponse.json({ success: true });
+  return successJson({ success: true }, SUCCESS_MESSAGES.groupDeleted);
 }
