@@ -28,7 +28,6 @@ export default function GroupActivity({ groupId }: { groupId: string }) {
   useGroupRealtime({
     groupId,
     onExpenseChange: () => void refresh(),
-    onGroupDeleted: () => setGroupDeleted(true),
   });
   useGroupChanges(
     groupId,

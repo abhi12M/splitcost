@@ -1,6 +1,7 @@
 import { recordExpenseAdded } from "@/lib/activity/server/recordExpenseActivity";
 import { loadExpenseSnapshot } from "@/lib/activity/server/expenseSnapshots";
 import { SETTLEMENT_CATEGORY } from "@/lib/activity/expenseSnapshot";
+import { broadcastExpenseChange } from "@/lib/api/broadcastExpense";
 import { readJsonObject } from "@/lib/api/request";
 import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import { NextResponse } from "next/server";
@@ -90,9 +91,13 @@ export async function POST(req: Request) {
     );
   }
   const createdId = (data as { id?: unknown } | null)?.id;
+  const session = typeof originSessionId === "string" ? originSessionId.slice(0, 128) : null;
   const created = typeof createdId === "string" ? await loadExpenseSnapshot(createdId) : null;
   if (created) {
-    await recordExpenseAdded(created, typeof originSessionId === "string" ? originSessionId.slice(0, 128) : null);
+    await recordExpenseAdded(created, session);
+  }
+  if (typeof createdId === "string") {
+    broadcastExpenseChange({ event: "INSERT", expenseId: createdId, groupId, originSessionId: session });
   }
   return successJson(
     data,

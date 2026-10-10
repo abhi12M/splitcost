@@ -330,7 +330,6 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
     onExpenseChange: () => {
       if (!isDeletingRef.current) void refresh();
     },
-    onGroupDeleted: () => {},
   });
 
   const changeNotices = useGroupChangeNotices();

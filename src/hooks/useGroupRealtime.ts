@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 
 import { supabase } from "@/integrations/supabase/client";
 import { getRealtimeOriginSessionId } from "@/lib/realtime/originSession";
@@ -12,55 +11,45 @@ import {
   type GroupChanges,
   type GroupDeleted,
 } from "@/lib/realtime/groupChanges";
-
-type ExpenseRow = { id?: string; origin_session_id?: string | null; revision?: number };
+import {
+  EXPENSE_CHANGED_EVENT,
+  expenseChangesChannel,
+  singleExpenseChannel,
+  type ExpenseBroadcast,
+} from "@/lib/realtime/expenseChanges";
 
 type Options = {
   groupId: string;
   onExpenseChange: (event: "INSERT" | "UPDATE" | "DELETE", expenseId: string) => void;
-  onGroupDeleted: () => void;
 };
 
 /**
- * One narrowly-filtered subscription per mounted group screen. Expense events
+ * One broadcast subscription per mounted group screen. Expense events
  * are hints: callers reload their canonical API payload before updating UI.
- * Member and group edits arrive through useGroupChanges instead.
+ * Group deletion arrives through useGroupChanges instead.
  */
-export function useGroupRealtime({ groupId, onExpenseChange, onGroupDeleted }: Options) {
+export function useGroupRealtime({ groupId, onExpenseChange }: Options) {
   const onExpenseChangeRef = useRef(onExpenseChange);
-  const onGroupDeletedRef = useRef(onGroupDeleted);
   onExpenseChangeRef.current = onExpenseChange;
-  onGroupDeletedRef.current = onGroupDeleted;
 
   useEffect(() => {
     if (!groupId) return;
     const ownSessionId = getRealtimeOriginSessionId();
 
     const channel = supabase
-      .channel(`group-realtime:${groupId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "expenses", filter: `group_id=eq.${groupId}` },
-        (payload: RealtimePostgresChangesPayload<ExpenseRow>) => {
-          const next = payload.new as ExpenseRow;
-          const previous = payload.old as ExpenseRow;
-          const row = (next.id ? next : previous) as ExpenseRow;
-          if (!row.id || row.origin_session_id === ownSessionId) return;
-          onExpenseChangeRef.current(payload.eventType, row.id);
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "DELETE", schema: "public", table: "groups", filter: `id=eq.${groupId}` },
-        () => onGroupDeletedRef.current()
-      )
+      .channel(expenseChangesChannel(groupId))
+      .on("broadcast", { event: EXPENSE_CHANGED_EVENT }, ({ payload }) => {
+        const data = payload as ExpenseBroadcast;
+        if (data.originSessionId === ownSessionId) return;
+        onExpenseChangeRef.current(data.event, data.expenseId);
+      })
       .subscribe();
 
     return () => void supabase.removeChannel(channel);
   }, [groupId]);
 }
 
-/** `revision` is the expense's revision after an UPDATE, when the event carries it. */
+/** Listens for changes to a single expense via broadcast. */
 export function useExpenseRealtime(
   expenseId: string,
   onChange: (event: "UPDATE" | "DELETE", revision?: number) => void
@@ -72,22 +61,13 @@ export function useExpenseRealtime(
     if (!expenseId) return;
     const ownSessionId = getRealtimeOriginSessionId();
     const channel = supabase
-      .channel(`expense-realtime:${expenseId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "expenses", filter: `id=eq.${expenseId}` },
-        (payload: RealtimePostgresChangesPayload<ExpenseRow>) => {
-          if (payload.eventType === "INSERT") return;
-          const next = payload.new as ExpenseRow;
-          const previous = payload.old as ExpenseRow;
-          const row = (next.id ? next : previous) as ExpenseRow;
-          if (payload.eventType === "UPDATE" && row.origin_session_id === ownSessionId) return;
-          onChangeRef.current(
-            payload.eventType as "UPDATE" | "DELETE",
-            typeof next.revision === "number" ? next.revision : undefined
-          );
-        }
-      )
+      .channel(singleExpenseChannel(expenseId))
+      .on("broadcast", { event: EXPENSE_CHANGED_EVENT }, ({ payload }) => {
+        const data = payload as ExpenseBroadcast;
+        if (data.event === "INSERT") return;
+        if (data.event === "UPDATE" && data.originSessionId === ownSessionId) return;
+        onChangeRef.current(data.event, data.revision);
+      })
       .subscribe();
 
     return () => void supabase.removeChannel(channel);

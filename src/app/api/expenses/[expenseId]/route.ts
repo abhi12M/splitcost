@@ -5,6 +5,7 @@ import {
 } from "@/lib/activity/server/recordExpenseActivity";
 import { loadExpenseSnapshot } from "@/lib/activity/server/expenseSnapshots";
 import { isSettlement, SETTLEMENT_CATEGORY } from "@/lib/activity/expenseSnapshot";
+import { broadcastExpenseChange } from "@/lib/api/broadcastExpense";
 import { readJsonObject } from "@/lib/api/request";
 import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import { supabaseAdmin } from "@/lib/supabase/server";
@@ -189,6 +190,7 @@ export async function PUT(
 
   const after = await loadExpenseSnapshot(expenseId);
   if (before && after) await recordExpenseEdited(before, after, session);
+  broadcastExpenseChange({ event: "UPDATE", expenseId, groupId, originSessionId: session, revision: row.revision });
 
   return successJson(
     {
@@ -246,7 +248,10 @@ export async function DELETE(
     );
   }
 
-  if (deleted) await recordExpenseDeleted(deleted, session);
+  if (deleted) {
+    await recordExpenseDeleted(deleted, session);
+    broadcastExpenseChange({ event: "DELETE", expenseId, groupId: deleted.groupId, originSessionId: session });
+  }
   return successJson(
     { success: true },
     deleted && isSettlement(deleted) ? SUCCESS_MESSAGES.settlementDeleted : SUCCESS_MESSAGES.expenseDeleted
@@ -331,6 +336,7 @@ export async function PATCH(
       originSessionId
     );
   }
+  broadcastExpenseChange({ event: "UPDATE", expenseId, groupId: row.group_id, originSessionId, revision: row.revision });
 
   return successJson(
     {

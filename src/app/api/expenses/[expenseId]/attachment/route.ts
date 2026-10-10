@@ -1,5 +1,6 @@
 import { recordExpenseChanges } from "@/lib/activity/server/recordExpenseActivity";
 import { loadExpenseSnapshot } from "@/lib/activity/server/expenseSnapshots";
+import { broadcastExpenseChange } from "@/lib/api/broadcastExpense";
 import { readFormData } from "@/lib/api/request";
 import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import { NextResponse } from "next/server";
@@ -37,7 +38,10 @@ async function recordAttachmentChange(
   originSessionId: string | null
 ) {
   const expense = await loadExpenseSnapshot(expenseId);
-  if (expense) await recordExpenseChanges(expense, [{ field: "attachment", action }], originSessionId);
+  if (expense) {
+    await recordExpenseChanges(expense, [{ field: "attachment", action }], originSessionId);
+    broadcastExpenseChange({ event: "UPDATE", expenseId, groupId: expense.groupId, originSessionId });
+  }
 }
 
 export async function GET(

@@ -380,7 +380,6 @@ export default function GroupResponsesPage({
     onExpenseChange: () => {
       void refresh();
     },
-    onGroupDeleted: () => setGroupDeleted(true),
   });
 
   // Member and group edits arrive with their full change, so apply them to the
