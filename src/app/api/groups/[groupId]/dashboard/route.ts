@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { isValidUUID } from "@/lib/api/expenseValidation"
 import { supabaseAdmin } from "@/lib/supabase/server"
 import { reconcileExpenseAttachmentReference } from "@/lib/supabase/attachments"
 
@@ -52,8 +53,8 @@ async function cleanMissingAttachmentReferences<T extends DashboardPayload>(
 }
 
 async function loadDashboard(groupId: string) {
-  if (!groupId) {
-    return NextResponse.json(null, { status: 400 })
+  if (!isValidUUID(groupId)) {
+    return NextResponse.json({ error: "Invalid group ID" }, { status: 400 })
   }
 
   // Read the revision before the details: if a save lands in between, the

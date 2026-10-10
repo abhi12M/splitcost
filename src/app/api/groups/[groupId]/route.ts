@@ -1,6 +1,7 @@
 import { recordGroupChanges } from "@/lib/activity/server/recordGroupActivity";
 import { readJsonObject } from "@/lib/api/request";
 import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
+import { isValidUUID } from "@/lib/api/expenseValidation";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { validateGroupInput } from "@/lib/validations/group.schema";
@@ -117,6 +118,10 @@ export async function GET(
   _req: Request,
   { params }: { params: { groupId: string } }
 ) {
+  if (!isValidUUID(params.groupId)) {
+    return NextResponse.json({ error: "Invalid group ID" }, { status: 400 });
+  }
+
   const { data, error } = await supabaseAdmin
     .from("groups")
     .select(`
@@ -176,7 +181,10 @@ export async function PUT(
       : null;
   const normalizedCurrency = toSupportedCurrency(currency);
 
-  if (!groupId || !Array.isArray(members) || !members.every((member) => member && typeof member === "object")) {
+  if (!isValidUUID(groupId)) {
+    return NextResponse.json({ error: "Invalid group ID" }, { status: 400 });
+  }
+  if (!Array.isArray(members) || !members.every((member) => member && typeof member === "object")) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
   if (!normalizedCurrency) {
@@ -193,6 +201,19 @@ export async function PUT(
     id: member.id ? String(member.id).trim() : undefined,
     name: validation.data.memberNames[index],
   }));
+
+  const seenMemberIds = new Set<string>();
+  for (const member of normalizedMembers) {
+    if (member.id) {
+      if (!isValidUUID(member.id)) {
+        return NextResponse.json({ error: "Invalid member ID" }, { status: 400 });
+      }
+      if (seenMemberIds.has(member.id)) {
+        return NextResponse.json({ error: "Duplicate member ID" }, { status: 400 });
+      }
+      seenMemberIds.add(member.id);
+    }
+  }
 
   try {
     const [currentMembers, { data: currentGroup, error: currentGroupError }] = await Promise.all([
@@ -441,6 +462,10 @@ export async function DELETE(
   req: Request,
   { params }: { params: { groupId: string } }
 ) {
+  if (!isValidUUID(params.groupId)) {
+    return NextResponse.json({ error: "Invalid group ID" }, { status: 400 });
+  }
+
   const delParsed = await readJsonObject(req, { allowedKeys: ["originSessionId"] });
   const body = delParsed.ok ? delParsed.data : null;
 

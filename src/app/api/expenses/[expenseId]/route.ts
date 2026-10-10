@@ -262,9 +262,9 @@ export async function DELETE(
 ) {
   const expenseId = params.expenseId;
 
-  if (!expenseId) {
+  if (!isValidUUID(expenseId)) {
     return NextResponse.json(
-      { error: "Missing expenseId" },
+      { error: "Invalid expense ID" },
       { status: 400 }
     );
   }
@@ -304,9 +304,9 @@ export async function PATCH(
 ) {
   const expenseId = params.expenseId;
 
-  if (!expenseId) {
+  if (!isValidUUID(expenseId)) {
     return NextResponse.json(
-      { error: "Missing expenseId" },
+      { error: "Invalid expense ID" },
       { status: 400 }
     );
   }
@@ -399,8 +399,8 @@ export async function GET(
 ) {
   const expenseId = params.expenseId;
 
-  if (!expenseId) {
-    return NextResponse.json(null, { status: 400 });
+  if (!isValidUUID(expenseId)) {
+    return NextResponse.json({ error: "Invalid expense ID" }, { status: 400 });
   }
 
   const { data, error } = await supabaseAdmin

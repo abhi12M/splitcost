@@ -1,6 +1,7 @@
 import { recordExpenseChanges } from "@/lib/activity/server/recordExpenseActivity";
 import { loadExpenseSnapshot } from "@/lib/activity/server/expenseSnapshots";
 import { broadcastExpenseChange } from "@/lib/api/broadcastExpense";
+import { isValidUUID } from "@/lib/api/expenseValidation";
 import { readFormData, readJsonObject } from "@/lib/api/request";
 import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import { NextResponse } from "next/server";
@@ -50,8 +51,8 @@ export async function GET(
 ) {
   const expenseId = params.expenseId;
 
-  if (!expenseId) {
-    return NextResponse.json(null, { status: 400 });
+  if (!isValidUUID(expenseId)) {
+    return NextResponse.json({ error: "Invalid expense ID" }, { status: 400 });
   }
 
   try {
@@ -74,9 +75,9 @@ export async function POST(
 ) {
   const expenseId = params.expenseId;
 
-  if (!expenseId) {
+  if (!isValidUUID(expenseId)) {
     return NextResponse.json(
-      { error: "Missing expenseId" },
+      { error: "Invalid expense ID" },
       { status: 400 }
     );
   }
@@ -162,9 +163,9 @@ export async function DELETE(
 ) {
   const expenseId = params.expenseId;
 
-  if (!expenseId) {
+  if (!isValidUUID(expenseId)) {
     return NextResponse.json(
-      { error: "Missing expenseId" },
+      { error: "Invalid expense ID" },
       { status: 400 }
     );
   }

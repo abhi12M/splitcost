@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isValidUUID } from "@/lib/api/expenseValidation";
 import { readJsonObject } from "@/lib/api/request";
 import { supabaseAdmin } from "@/lib/supabase/server";
 
@@ -15,6 +16,13 @@ export async function POST(req: Request) {
   if (groupIds.length > 20) {
     return NextResponse.json(
       { error: "Too many groups requested" },
+      { status: 400 }
+    );
+  }
+
+  if (!groupIds.every(isValidUUID)) {
+    return NextResponse.json(
+      { error: "Invalid group ID" },
       { status: 400 }
     );
   }
