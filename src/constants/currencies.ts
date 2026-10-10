@@ -182,3 +182,14 @@ export const CURRENCIES: Currency[] = CURRENCY_DEFINITIONS.map(([code, name]) =>
   symbol: getCurrencySymbol(code),
   name,
 }));
+
+export const UNSUPPORTED_CURRENCY_ERROR = "Unsupported currency";
+
+const SUPPORTED_CURRENCY_CODES =new Set<string>(CURRENCY_DEFINITIONS.map(([code]) => code));
+
+/** The code to save when `value` names a supported currency (spaces and letter case ignored), otherwise null. */
+export function toSupportedCurrency(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const code = value.trim().toUpperCase();
+  return SUPPORTED_CURRENCY_CODES.has(code) ? code : null;
+}

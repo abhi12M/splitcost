@@ -23,6 +23,7 @@ import {
   normalizeExpenseNotes,
 } from "@/lib/expenseNotes";
 import { validateExpenseDescription } from "@/lib/validations/expense.schema";
+import { toSupportedCurrency, UNSUPPORTED_CURRENCY_ERROR } from "@/constants/currencies";
 
 type ParticipantPayload = {
   userId: string;
@@ -113,6 +114,11 @@ export async function PUT(
     return NextResponse.json({ error: descriptionResult.error }, { status: 400 });
   }
 
+  const supportedCurrency = toSupportedCurrency(currency);
+  if (!supportedCurrency) {
+    return NextResponse.json({ error: UNSUPPORTED_CURRENCY_ERROR }, { status: 400 });
+  }
+
   if (participants?.length > 50) {
     return NextResponse.json(
       { error: "Too many participants" },
@@ -136,7 +142,7 @@ export async function PUT(
       p_expense_id: expenseId,
       p_description: descriptionResult.data,
       p_amount: amount,
-      p_currency: currency,
+      p_currency: supportedCurrency,
       p_paid_by_user_id: paidByUserId || null,
       p_split_type: splitType,
       p_category: category,

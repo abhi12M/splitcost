@@ -4,6 +4,7 @@ import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { validateGroupInput } from "@/lib/validations/group.schema";
+import { toSupportedCurrency, UNSUPPORTED_CURRENCY_ERROR } from "@/constants/currencies";
 import {
   GROUP_CHANGES_EVENT,
   GROUP_DELETED_EVENT,
@@ -167,10 +168,13 @@ export async function PUT(
     typeof rawExpectedRevision === "number" && Number.isInteger(rawExpectedRevision)
       ? rawExpectedRevision
       : null;
-  const normalizedCurrency = typeof currency === "string" ? currency.trim() : "";
+  const normalizedCurrency = toSupportedCurrency(currency);
 
-  if (!groupId || !normalizedCurrency || !Array.isArray(members) || !members.every((member) => member && typeof member === "object")) {
+  if (!groupId || !Array.isArray(members) || !members.every((member) => member && typeof member === "object")) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+  }
+  if (!normalizedCurrency) {
+    return NextResponse.json({ error: UNSUPPORTED_CURRENCY_ERROR }, { status: 400 });
   }
 
   const submittedMembers = members as SubmittedMember[];

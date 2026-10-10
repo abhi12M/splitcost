@@ -4,6 +4,7 @@ import { readJsonObject } from "@/lib/api/request";
 import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { validateGroupInput } from "@/lib/validations/group.schema";
+import { toSupportedCurrency, UNSUPPORTED_CURRENCY_ERROR } from "@/constants/currencies";
 
 export async function GET() {
   const { data, error } = await (supabaseAdmin as any).rpc("load_group_summaries", {
@@ -23,11 +24,14 @@ export async function POST(req: Request) {
   if (!parsed.ok) return parsed.response;
 
   const { name, currency, memberNames } = parsed.data as Record<string, unknown>;
-  const normalizedCurrency = typeof currency === "string" ? currency.trim() : "";
+  const normalizedCurrency = toSupportedCurrency(currency);
   const validation = validateGroupInput(name, memberNames);
 
-  if (!normalizedCurrency || !validation.success) {
-    return NextResponse.json({ error: validation.success ? "Invalid currency" : validation.error }, { status: 400 });
+  if (!validation.success) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
+  }
+  if (!normalizedCurrency) {
+    return NextResponse.json({ error: UNSUPPORTED_CURRENCY_ERROR }, { status: 400 });
   }
 
   const { data, error } = await supabaseAdmin.rpc(

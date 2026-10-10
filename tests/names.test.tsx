@@ -7,6 +7,7 @@ import { cleanName, cleanText, isBlankName, isBlankText, nameKey } from "../src/
 import { validateExpenseDescription } from "../src/lib/validations/expense.schema";
 import { validateContactInput } from "../src/lib/validations/contact";
 import { hasExpenseNotesContent, normalizeExpenseNotes } from "../src/lib/expenseNotes";
+import { toSupportedCurrency } from "../src/constants/currencies";
 
 // Built from code points so the test file contains no invisible characters.
 const ZERO_WIDTH_SPACE = String.fromCharCode(0x200b);
@@ -102,6 +103,16 @@ test("the contact API validator cleans fields and rejects blank ones and bad ema
   assert.equal(validateContactInput({ ...base, email: "not-an-email" }).success, false);
   assert.equal(validateContactInput({ ...base, subject: undefined }).success, false);
   assert.equal(validateContactInput({ ...base, message: "x".repeat(5001) }).success, false);
+});
+
+test("only supported currency codes are accepted, ignoring spaces and letter case", () => {
+  assert.equal(toSupportedCurrency("INR"), "INR");
+  assert.equal(toSupportedCurrency(" usd "), "USD");
+  assert.equal(toSupportedCurrency("XYZ"), null);
+  assert.equal(toSupportedCurrency("RUPEES"), null);
+  assert.equal(toSupportedCurrency(""), null);
+  assert.equal(toSupportedCurrency(42), null);
+  assert.equal(toSupportedCurrency(undefined), null);
 });
 
 test("the group API validator rejects blank and duplicate names and returns cleaned ones", () => {
