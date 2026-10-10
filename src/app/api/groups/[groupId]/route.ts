@@ -4,7 +4,11 @@ import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { validateGroupInput } from "@/lib/validations/group.schema";
-import { toSupportedCurrency, UNSUPPORTED_CURRENCY_ERROR } from "@/constants/currencies";
+import {
+  GROUP_CURRENCY_LOCKED_ERROR,
+  toSupportedCurrency,
+  UNSUPPORTED_CURRENCY_ERROR,
+} from "@/constants/currencies";
 import {
   GROUP_CHANGES_EVENT,
   GROUP_DELETED_EVENT,
@@ -208,6 +212,11 @@ export async function PUT(
       return groupVersionConflict(groupId, expectedRevision, currentGroup.revision);
     }
 
+    // A group's currency is set when it's created; its expenses are all in it.
+    if (normalizedCurrency !== currentGroup.currency) {
+      return NextResponse.json({ error: GROUP_CURRENCY_LOCKED_ERROR }, { status: 400 });
+    }
+
     const currentMembersById = new Map(
       currentMembers.map((member) => [member.userId, member])
     );
@@ -260,7 +269,6 @@ export async function PUT(
     }
 
     const nameChanged = currentGroup.name !== validation.data.groupName;
-    const currencyChanged = currentGroup.currency !== normalizedCurrency;
 
     // Nothing to save: leave the revision alone, so other open editors are not
     // pushed into a conflict by a save that changed nothing.
@@ -268,8 +276,7 @@ export async function PUT(
       !membersToAdd.length &&
       !membersToRemove.length &&
       !membersToRename.length &&
-      !nameChanged &&
-      !currencyChanged
+      !nameChanged
     ) {
       return successJson(
         {
@@ -378,7 +385,6 @@ export async function PUT(
       .from("groups")
       .update({
         name: validation.data.groupName,
-        currency: normalizedCurrency,
         updated_at: new Date().toISOString(),
       })
       .eq("id", groupId);
@@ -401,9 +407,6 @@ export async function PUT(
     if (nameChanged) {
       changes.name = { from: currentGroup.name, to: validation.data.groupName };
     }
-    if (currencyChanged) {
-      changes.currency = { from: currentGroup.currency, to: normalizedCurrency };
-    }
 
     // Every bumped revision is broadcast, so open editors stay on the latest one.
     await Promise.all([broadcastGroupChanges(groupId, changes), recordGroupChanges(groupId, changes)]);
@@ -414,7 +417,7 @@ export async function PUT(
       {
         id: groupId,
         name: validation.data.groupName,
-        currency: normalizedCurrency,
+        currency: currentGroup.currency,
         revision: nextRevision,
         members: updatedMembers.map((member) => ({
           id: member.userId,

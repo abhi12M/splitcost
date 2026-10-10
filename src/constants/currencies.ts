@@ -184,6 +184,8 @@ export const CURRENCIES: Currency[] = CURRENCY_DEFINITIONS.map(([code, name]) =>
 }));
 
 export const UNSUPPORTED_CURRENCY_ERROR = "Unsupported currency";
+export const GROUP_CURRENCY_LOCKED_ERROR = "Group currency can't be changed";
+export const EXPENSE_CURRENCY_MISMATCH_ERROR = "Expense currency must match the group currency";
 
 const SUPPORTED_CURRENCY_CODES =new Set<string>(CURRENCY_DEFINITIONS.map(([code]) => code));
 

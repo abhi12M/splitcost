@@ -10,7 +10,7 @@ import {
   normalizeExpenseNotes,
 } from "@/lib/expenseNotes";
 import { validateExpenseDescription } from "@/lib/validations/expense.schema";
-import { toSupportedCurrency, UNSUPPORTED_CURRENCY_ERROR } from "@/constants/currencies";
+import { resolveExpenseCurrency } from "@/lib/api/expenseCurrency";
 
 export async function POST(req: Request) {
   const parsed = await readJsonObject(req);
@@ -47,11 +47,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: descriptionResult.error }, { status: 400 });
   }
 
-  const supportedCurrency = toSupportedCurrency(currency);
-  if (!supportedCurrency) {
-    return NextResponse.json({ error: UNSUPPORTED_CURRENCY_ERROR }, { status: 400 });
-  }
-
   if (participants?.length > 50) {
     return NextResponse.json(
       { error: "Too many participants" },
@@ -63,11 +58,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Notes are too long" }, { status: 400 });
   }
 
+  const currencyResult = await resolveExpenseCurrency(groupId, currency);
+  if (!currencyResult.ok) return currencyResult.response;
+
   const { data, error } = await supabaseAdmin.rpc("add_expense", {
     p_group_id: groupId,
     p_description: descriptionResult.data,
     p_amount: amount,
-    p_currency: supportedCurrency,
+    p_currency: currencyResult.currency,
     p_paid_by_user_id: paidByUserId || null,
     p_split_type: splitType,
     p_category: category,
