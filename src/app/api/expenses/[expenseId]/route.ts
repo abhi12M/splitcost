@@ -25,6 +25,16 @@ import {
 } from "@/lib/expenseNotes";
 import { validateExpenseDescription } from "@/lib/validations/expense.schema";
 import { resolveExpenseCurrency } from "@/lib/api/expenseCurrency";
+import {
+  isValidUUID,
+  validateAmount,
+  validateSplitType,
+  validateCategory,
+  validateExpenseDate,
+  validateParticipants,
+  validatePayers,
+  validateGroupMembership,
+} from "@/lib/api/expenseValidation";
 
 type ParticipantPayload = {
   userId: string;
@@ -109,32 +119,53 @@ export async function PUT(
     originSessionId,
   } = body;
 
-  // 🔐 Basic validation / abuse protection
-  if (!groupId || !expenseId || !description || !amount || !Number.isSafeInteger(expectedRevision)) {
-    return NextResponse.json(
-      { error: "Invalid payload" },
-      { status: 400 }
-    );
-  }
+  const fail = (error: string) => NextResponse.json({ error }, { status: 400 });
+
+  if (!isValidUUID(groupId)) return fail("Invalid group ID");
+  if (!isValidUUID(expenseId)) return fail("Invalid expense ID");
 
   const descriptionResult = validateExpenseDescription(description);
   if (!descriptionResult.success) {
     return NextResponse.json({ error: descriptionResult.error }, { status: 400 });
   }
 
-  if (participants?.length > 50) {
-    return NextResponse.json(
-      { error: "Too many participants" },
-      { status: 400 }
-    );
-  }
+  const amountError = validateAmount(amount);
+  if (amountError) return fail(amountError);
+
+  if (!Number.isSafeInteger(expectedRevision)) return fail("Invalid expected revision");
+
+  const hasSinglePayer = paidByUserId != null && paidByUserId !== "";
+  const hasMultiplePayers = Array.isArray(payers) && payers.length > 0;
+  if (!hasSinglePayer && !hasMultiplePayers) return fail("A payer is required");
+  if (hasSinglePayer && hasMultiplePayers) return fail("Cannot have both paidByUserId and payers");
+  if (hasSinglePayer && !isValidUUID(paidByUserId)) return fail("Invalid payer user ID");
+
+  const splitTypeError = validateSplitType(splitType);
+  if (splitTypeError) return fail(splitTypeError);
+
+  const categoryError = validateCategory(category, subcategory);
+  if (categoryError) return fail(categoryError);
+
+  const dateError = validateExpenseDate(date);
+  if (dateError) return fail(dateError);
+
+  const participantsError = validateParticipants(participants, splitType, amount);
+  if (participantsError) return fail(participantsError);
+
+  const payersError = validatePayers(payers, amount);
+  if (payersError) return fail(payersError);
 
   if (typeof notes === "string" && notes.length > EXPENSE_NOTES_STORAGE_MAX) {
-    return NextResponse.json({ error: "Notes are too long" }, { status: 400 });
+    return fail("Notes are too long");
   }
 
   const currencyResult = await resolveExpenseCurrency(groupId, currency);
   if (!currencyResult.ok) return currencyResult.response;
+
+  const membershipError = await validateGroupMembership(
+    groupId, paidByUserId, participants, payers ?? null,
+  );
+  if (membershipError) return fail(membershipError);
 
   const session = typeof originSessionId === "string" ? originSessionId.slice(0, 128) : null;
   // Read before saving: the save is revision-checked, so when it succeeds this
