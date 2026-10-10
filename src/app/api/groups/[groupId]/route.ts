@@ -163,10 +163,12 @@ export async function PUT(
   { params }: { params: { groupId: string } }
 ) {
   const groupId = params.groupId;
-  const parsed = await readJsonObject(req);
+  const parsed = await readJsonObject(req, {
+    allowedKeys: ["name", "currency", "members", "originSessionId", "expectedRevision"],
+  });
   if (!parsed.ok) return parsed.response;
   const { name, currency, members, originSessionId, expectedRevision: rawExpectedRevision } =
-    parsed.data as Record<string, unknown>;
+    parsed.data;
   // The revision the editor started from. Without it the save is not checked.
   const expectedRevision =
     typeof rawExpectedRevision === "number" && Number.isInteger(rawExpectedRevision)
@@ -439,7 +441,8 @@ export async function DELETE(
   req: Request,
   { params }: { params: { groupId: string } }
 ) {
-  const body = (await req.json().catch(() => null)) as { originSessionId?: unknown } | null;
+  const delParsed = await readJsonObject(req, { allowedKeys: ["originSessionId"] });
+  const body = delParsed.ok ? delParsed.data : null;
 
   const { error } = await supabaseAdmin.rpc(
     "delete_group_and_cleanup_users",

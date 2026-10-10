@@ -38,6 +38,51 @@ const authLimiter = redis
   ? new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(5, "60 s"), prefix: "rl:auth" })
   : null;
 
+// ---------------------------------------------------------------------------
+// Request body size limits (Content-Length pre-check)
+// ---------------------------------------------------------------------------
+
+const BODY_LIMIT_JSON = 102_400; // 100 KB — most API routes
+const BODY_LIMIT_LARGE_JSON = 512_000; // 512 KB — blog content
+const BODY_LIMIT_UPLOAD = 10 * 1024 * 1024; // 10 MB — file uploads
+
+function pickBodyLimit(pathname: string, method: string): number {
+  if (
+    method === "POST" &&
+    (pathname === "/api/blog-images" ||
+      pathname === "/api/admin-media" ||
+      /^\/api\/expenses\/[^/]+\/attachment$/.test(pathname))
+  ) {
+    return BODY_LIMIT_UPLOAD;
+  }
+
+  if (pathname.startsWith("/api/blogs")) {
+    return BODY_LIMIT_LARGE_JSON;
+  }
+
+  return BODY_LIMIT_JSON;
+}
+
+function checkContentLength(request: NextRequest): NextResponse | null {
+  const method = request.method;
+  if (method === "GET" || method === "HEAD" || method === "OPTIONS") return null;
+
+  const contentLength = request.headers.get("content-length");
+  if (!contentLength) return null;
+
+  const bytes = Number(contentLength);
+  if (!Number.isFinite(bytes)) return null;
+
+  if (bytes > pickBodyLimit(request.nextUrl.pathname, method)) {
+    return NextResponse.json(
+      { error: "Request body too large" },
+      { status: 413 }
+    );
+  }
+
+  return null;
+}
+
 function getClientIp(request: NextRequest): string {
   return (
     request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
@@ -121,6 +166,8 @@ export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (pathname.startsWith("/api/")) {
+    const sizeResponse = checkContentLength(request);
+    if (sizeResponse) return sizeResponse;
     const rateLimitResponse = await checkRateLimit(request);
     if (rateLimitResponse) return rateLimitResponse;
     return NextResponse.next();

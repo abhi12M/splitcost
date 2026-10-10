@@ -40,7 +40,7 @@ export async function POST(
   { params }: { params: { groupId: string } }
 ) {
   const groupId = params.groupId;
-  const parsed = await readJsonObject(req);
+  const parsed = await readJsonObject(req, { allowedKeys: ["memberId", "memberName"] });
   if (!parsed.ok) return parsed.response;
   const body = parsed.data;
   const memberId = String(body?.memberId ?? "").trim();

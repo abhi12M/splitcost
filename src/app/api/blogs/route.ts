@@ -27,7 +27,13 @@ export async function GET(request: Request) {
 
 export async function POST(req: Request) {
   if (!isAuthorizedAdminRequest(req)) return unauthorized();
-  const parsed = await readJsonObject(req);
+  const parsed = await readJsonObject(req, {
+    maxBytes: 512_000,
+    allowedKeys: [
+      "title", "slug", "excerpt", "content", "cover_image", "cover_alt",
+      "category", "author", "status", "reading_time", "no_index", "is_featured",
+    ],
+  });
   if (!parsed.ok) return parsed.response;
   try {
     const payload = normalizeBlogInput(parsed.data);

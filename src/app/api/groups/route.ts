@@ -20,10 +20,12 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const parsed = await readJsonObject(req);
+  const parsed = await readJsonObject(req, {
+    allowedKeys: ["name", "currency", "memberNames"],
+  });
   if (!parsed.ok) return parsed.response;
 
-  const { name, currency, memberNames } = parsed.data as Record<string, unknown>;
+  const { name, currency, memberNames } = parsed.data;
   const normalizedCurrency = toSupportedCurrency(currency);
   const validation = validateGroupInput(name, memberNames);
 

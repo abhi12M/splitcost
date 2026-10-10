@@ -7,6 +7,7 @@ import {
   isAuthorizedAdminRequest,
   verifyAdminCredentials,
 } from "@/lib/admin-auth";
+import { readJsonObject } from "@/lib/api/request";
 import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 
 export async function GET(request: Request) {
@@ -14,9 +15,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const body = (await request.json().catch(() => null)) as
-    | { loginId?: unknown; password?: unknown }
-    | null;
+  const parsed = await readJsonObject(request, { allowedKeys: ["loginId", "password"] });
+  const body = parsed.ok ? parsed.data : null;
   const loginId = typeof body?.loginId === "string" ? body.loginId : "";
   const password = typeof body?.password === "string" ? body.password : "";
 

@@ -1,7 +1,7 @@
 import { recordExpenseChanges } from "@/lib/activity/server/recordExpenseActivity";
 import { loadExpenseSnapshot } from "@/lib/activity/server/expenseSnapshots";
 import { broadcastExpenseChange } from "@/lib/api/broadcastExpense";
-import { readFormData } from "@/lib/api/request";
+import { readFormData, readJsonObject } from "@/lib/api/request";
 import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import { NextResponse } from "next/server";
 import sharp from "sharp";
@@ -170,9 +170,11 @@ export async function DELETE(
   }
 
   try {
-    const body = await req.json().catch(() => ({}));
+    const delParsed = await readJsonObject(req, { allowedKeys: ["originSessionId"] });
     const originSessionId =
-      typeof body?.originSessionId === "string" ? body.originSessionId.slice(0, 128) : null;
+      delParsed.ok && typeof delParsed.data.originSessionId === "string"
+        ? delParsed.data.originSessionId.slice(0, 128)
+        : null;
 
     const existingPath = await getExpenseAttachmentPath(expenseId);
 

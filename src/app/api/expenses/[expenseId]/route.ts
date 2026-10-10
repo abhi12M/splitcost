@@ -80,7 +80,14 @@ export async function PUT(
   { params }: { params: { expenseId: string } }
 ) {
   const expenseId = params.expenseId;
-  const parsed = await readJsonObject(req);
+  const parsed = await readJsonObject(req, {
+    allowedKeys: [
+      "groupId", "description", "notes", "amount", "currency",
+      "paidByUserId", "payers", "splitType", "category", "subcategory",
+      "date", "participants", "attachmentDataUrl", "expectedRevision",
+      "originSessionId",
+    ],
+  });
   if (!parsed.ok) return parsed.response;
   const body = parsed.data;
 
@@ -231,8 +238,10 @@ export async function DELETE(
     );
   }
 
-  const body = await req.json().catch(() => ({}));
-  const session = typeof body?.originSessionId === "string" ? body.originSessionId.slice(0, 128) : null;
+  const parsed2 = await readJsonObject(req, { allowedKeys: ["originSessionId"] });
+  const session = parsed2.ok && typeof parsed2.data.originSessionId === "string"
+    ? parsed2.data.originSessionId.slice(0, 128)
+    : null;
   // The deleted expense's last state is what the activity entry shows.
   const deleted = await loadExpenseSnapshot(expenseId);
   const { data, error } = await supabaseAdmin.rpc("delete_expense", {
@@ -271,7 +280,9 @@ export async function PATCH(
     );
   }
 
-  const parsed = await readJsonObject(req);
+  const parsed = await readJsonObject(req, {
+    allowedKeys: ["category", "subcategory", "originSessionId"],
+  });
   if (!parsed.ok) return parsed.response;
   const body = parsed.data;
   const category = body?.category as CategoryKey | undefined;

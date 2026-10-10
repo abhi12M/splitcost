@@ -14,7 +14,13 @@ import { validateExpenseDescription } from "@/lib/validations/expense.schema";
 import { resolveExpenseCurrency } from "@/lib/api/expenseCurrency";
 
 export async function POST(req: Request) {
-  const parsed = await readJsonObject(req);
+  const parsed = await readJsonObject(req, {
+    allowedKeys: [
+      "groupId", "description", "notes", "amount", "currency",
+      "paidByUserId", "payers", "splitType", "category", "subcategory",
+      "date", "participants", "originSessionId",
+    ],
+  });
   if (!parsed.ok) return parsed.response;
   const body = parsed.data;
 

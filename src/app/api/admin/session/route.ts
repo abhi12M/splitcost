@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
+import { readJsonObject } from "@/lib/api/request";
 import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 
 const COOKIE_NAME = "splitcost_admin_session";
@@ -25,7 +26,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Admin authentication is not configured" }, { status: 503 });
   }
 
-  const body = await request.json().catch(() => null) as { loginId?: unknown; password?: unknown } | null;
+  const parsed = await readJsonObject(request, { allowedKeys: ["loginId", "password"] });
+  const body = parsed.ok ? parsed.data : null;
   if (typeof body?.loginId !== "string" || typeof body.password !== "string" || !safelyEqual(body.loginId, loginId) || !safelyEqual(body.password, password)) {
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
   }

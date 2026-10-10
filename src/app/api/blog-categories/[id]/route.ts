@@ -42,7 +42,9 @@ export async function PUT(req: Request, { params }: RouteContext) {
   if (!isAuthorizedAdminRequest(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const parsed = await readJsonObject(req);
+  const parsed = await readJsonObject(req, {
+    allowedKeys: ["name", "slug", "description", "sort_order"],
+  });
   if (!parsed.ok) return parsed.response;
   try {
     const body = parsed.data as Partial<BlogCategoryInput>;

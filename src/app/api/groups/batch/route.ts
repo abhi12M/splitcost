@@ -3,7 +3,7 @@ import { readJsonObject } from "@/lib/api/request";
 import { supabaseAdmin } from "@/lib/supabase/server";
 
 export async function POST(req: Request) {
-  const parsed = await readJsonObject(req);
+  const parsed = await readJsonObject(req, { allowedKeys: ["groupIds"] });
   if (!parsed.ok) return parsed.response;
   const { groupIds } = parsed.data;
 

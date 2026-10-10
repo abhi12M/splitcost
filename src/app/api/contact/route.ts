@@ -15,7 +15,9 @@ const escapeHtml = (value: string) =>
         .replaceAll("'", "&#39;");
 
 export async function POST(req: Request) {
-    const parsed = await readJsonObject(req);
+    const parsed = await readJsonObject(req, {
+      allowedKeys: ["name", "email", "subject", "message"],
+    });
     if (!parsed.ok) return parsed.response;
 
     const input = validateContactInput(parsed.data);
