@@ -193,7 +193,6 @@ export async function PUT(
       p_payers: payers || null,
       p_notes: typeof notes === "string" ? normalizeExpenseNotes(notes) || null : null,
       p_expected_revision: expectedRevision,
-      p_origin_session_id: session,
     }
   );
 
@@ -277,7 +276,6 @@ export async function DELETE(
   const deleted = await loadExpenseSnapshot(expenseId);
   const { data, error } = await supabaseAdmin.rpc("delete_expense", {
     p_expense_id: expenseId,
-    p_origin_session_id: session,
   });
 
   if (error || !data) {
@@ -345,7 +343,6 @@ export async function PATCH(
     p_expense_id: expenseId,
     p_category: category,
     p_subcategory: subcategory,
-    p_origin_session_id: originSessionId,
   });
 
   const row = data?.[0];

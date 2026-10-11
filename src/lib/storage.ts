@@ -310,6 +310,7 @@ export async function addExpense(
     },
     body: JSON.stringify({
       groupId,
+      originSessionId: getRealtimeOriginSessionId(),
       ...expensePayload,
     }),
   });

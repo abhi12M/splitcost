@@ -363,7 +363,6 @@ export type Database = {
           group_id: string
           id: string
           paid_by_user_id: string | null
-          origin_session_id: string | null
           revision: number
           split_type: Database["public"]["Enums"]["split_type"]
           subcategory: string
@@ -381,7 +380,6 @@ export type Database = {
           group_id: string
           id?: string
           paid_by_user_id?: string | null
-          origin_session_id?: string | null
           revision?: number
           split_type: Database["public"]["Enums"]["split_type"]
           subcategory: string
@@ -400,7 +398,6 @@ export type Database = {
           group_id?: string
           id?: string
           paid_by_user_id?: string | null
-          origin_session_id?: string | null
           revision?: number
           split_type?: Database["public"]["Enums"]["split_type"]
           subcategory?: string
@@ -609,7 +606,7 @@ export type Database = {
         Returns: ExpenseResponse
       },
       delete_expense: {
-        Args: { p_expense_id: string; p_origin_session_id?: string | null }
+        Args: { p_expense_id: string }
         Returns: boolean
       },
       edit_expense: {
@@ -635,7 +632,6 @@ export type Database = {
           }[] | null
           p_notes?: string | null
           p_expected_revision?: number | null
-          p_origin_session_id?: string | null
         }
         Returns: ExpenseResponse
       },
@@ -655,7 +651,6 @@ export type Database = {
         Args: {
           p_expense_id: string
           p_attachment_path: string | null
-          p_origin_session_id?: string | null
         }
         Returns: boolean
       },
@@ -664,7 +659,6 @@ export type Database = {
           p_expense_id: string
           p_category: string
           p_subcategory: string
-          p_origin_session_id?: string | null
         }
         Returns: {
           id: string

@@ -128,7 +128,7 @@ export async function POST(
     }
 
     try {
-      await setExpenseAttachmentPath(expenseId, path, originSessionId);
+      await setExpenseAttachmentPath(expenseId, path);
     } catch (error) {
       await supabaseAdmin.storage
         .from(EXPENSE_ATTACHMENT_BUCKET)
@@ -196,7 +196,7 @@ export async function DELETE(
       }
     }
 
-    await setExpenseAttachmentPath(expenseId, null, originSessionId);
+    await setExpenseAttachmentPath(expenseId, null);
 
     if (existingPath) await recordAttachmentChange(expenseId, "removed", originSessionId);
     return successJson({ success: true }, SUCCESS_MESSAGES.receiptRemoved);
