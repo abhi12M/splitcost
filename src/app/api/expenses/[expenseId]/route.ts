@@ -278,12 +278,16 @@ export async function DELETE(
     p_expense_id: expenseId,
   });
 
-  if (error || !data) {
+  if (error) {
     console.error("deleteExpense error:", error);
-    return NextResponse.json(
-      { error: "Failed to delete expense" },
-      { status: error ? 400 : 404 }
-    );
+    return NextResponse.json({ error: "Failed to delete expense" }, { status: 400 });
+  }
+
+  // Nothing was deleted: someone else removed it first. The caller wanted it
+  // gone and it is, so this is a success. Their delete already recorded the
+  // activity and broadcast the change, so neither is repeated here.
+  if (!data) {
+    return successJson({ success: true, alreadyDeleted: true }, SUCCESS_MESSAGES.expenseDeleted);
   }
 
   if (deleted) {

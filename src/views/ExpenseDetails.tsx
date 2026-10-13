@@ -365,8 +365,14 @@ export default function ExpenseDetailsPage({
     setDeletedOpen(false);
   };
 
+  // Set while this tab is deleting the expense, so the broadcast of that delete
+  // (ours, or one from someone deleting it at the same moment) doesn't open the
+  // "Expense deleted" dialog on top of the toast and the move back to the group.
+  const isOwnDeleteRef = useRef(false);
+
   useExpenseRealtime(expenseId, (event) => {
     if (event === "DELETE") {
+      if (isOwnDeleteRef.current) return;
       // Deleting a group deletes its expenses too; check which one happened.
       void isGroupDeleted(groupId).then((gone) => (gone ? showGroupDeleted() : setDeletedOpen(true)));
       return;
@@ -395,6 +401,7 @@ export default function ExpenseDetailsPage({
 
   const handleDeleteExpense = async () => {
     setIsDeletingExpense(true);
+    isOwnDeleteRef.current = true;
     try {
       // If a background upload is still in flight there's no point letting
       // it finish (we're about to delete the expense). Drop the local
@@ -420,6 +427,8 @@ export default function ExpenseDetailsPage({
       toast({ message: tToasts("expenseDeleted"), variant: "destructive" });
       router.push(`/group/${groupId}`);
     } catch (error) {
+      // Still here, so the expense may still exist: let later deletes be reported.
+      isOwnDeleteRef.current = false;
       console.error("delete expense failed:", error);
       toast({
         title: tToasts("couldNotDeleteExpense"),
