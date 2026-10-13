@@ -2053,7 +2053,11 @@
     "keepMine": "Keep my changes",
     "useLatest": "Use latest version",
     "saveMine": "Save my changes",
-    "loadLatest": "Discard and load latest"
+    "loadLatest": "Discard and load latest",
+    "categoryTitle": "Category changed",
+    "categoryDescription": "This expense's category was changed to {current} by someone else. You selected {mine}.",
+    "useCategory": "Use {category}",
+    "applyCategory": "Apply {category}"
   },
   "toasts": {
     "expenseAdded": "Expense added",

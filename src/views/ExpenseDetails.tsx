@@ -35,6 +35,7 @@ import {
   getCategoryIcon,
   EXPENSE_CATEGORIES,
   type CategoryKey,
+  type SubcategoryId,
 } from "@/components/icons/CategoryIcons";
 import {
   deleteExpense,
@@ -77,6 +78,7 @@ import { hasExpenseNotesContent, sanitizeExpenseNotes } from "@/lib/expenseNotes
 import { useBackButtonClose } from "@/hooks/useBackButtonClose";
 import { toast } from "@/hooks/use-toast";
 import { ResourceNotFound } from "@/components/ResourceNotFound";
+import { getTranslatedSubcategoryLabel, resolveCategoryDisplayLabel } from "@/lib/category-labels";
 
 function memberName(
   members: EditExpenseInterface["group"]["members"],
@@ -255,6 +257,8 @@ export default function ExpenseDetailsPage({
   const t = useTranslations("expense");
   const tToasts = useTranslations("toasts");
   const tCommon = useTranslations("common");
+  const tConflict = useTranslations("editConflict");
+  const tCategories = useTranslations("categories");
   const attachmentGalleryInputRef = useRef<HTMLInputElement>(null);
   const attachmentCameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -309,6 +313,40 @@ export default function ExpenseDetailsPage({
 
   const [isDeletingExpense, setIsDeletingExpense] = useState(false);
   const [isUpdatingCategory, setIsUpdatingCategory] = useState(false);
+  // Someone else changed the category between this screen loading and the
+  // user's pick: `mine` is what they picked, `current` what is stored now.
+  type CategoryConflict = {
+    mine: { category: CategoryKey; subcategory: string };
+    current: { category: CategoryKey; subcategory: string };
+  };
+  const [categoryConflict, setCategoryConflict] = useState<CategoryConflict | null>(null);
+  // Mirrors the state synchronously: a dialog button's click is followed by
+  // onOpenChange(false) in the same event, and only the first may resolve it.
+  const categoryConflictRef = useRef<CategoryConflict | null>(null);
+  const openCategoryConflict = (conflict: CategoryConflict) => {
+    categoryConflictRef.current = conflict;
+    setCategoryConflict(conflict);
+  };
+  const takeCategoryConflict = () => {
+    const conflict = categoryConflictRef.current;
+    categoryConflictRef.current = null;
+    setCategoryConflict(null);
+    return conflict;
+  };
+  // Keeps the dialog's wording steady while it animates closed.
+  const shownCategoryConflictRef = useRef<CategoryConflict | null>(null);
+  if (categoryConflict) shownCategoryConflictRef.current = categoryConflict;
+  const shownCategoryConflict = shownCategoryConflictRef.current;
+  // Names a side of the conflict; when both are in the same category only the
+  // subcategory tells them apart.
+  const conflictCategoryLabel = (side: "mine" | "current") => {
+    if (!shownCategoryConflict) return "";
+    const { category, subcategory } = shownCategoryConflict[side];
+    const other = shownCategoryConflict[side === "mine" ? "current" : "mine"];
+    return category === other.category && category in EXPENSE_CATEGORIES
+      ? getTranslatedSubcategoryLabel(tCategories, category, subcategory as SubcategoryId)
+      : resolveCategoryDisplayLabel(tCategories, category);
+  };
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [isAttachmentSourceOpen, setIsAttachmentSourceOpen] = useState(false);
   const [isExpenseDeleteConfirmOpen, setIsExpenseDeleteConfirmOpen] = useState(false);
@@ -467,11 +505,15 @@ export default function ExpenseDetailsPage({
 
 
 
+  /** `expected` is the category the pick replaces; defaults to what is on screen. */
   const handleCategoryPatch = async (
     category: CategoryKey,
-    subcategory: string
+    subcategory: string,
+    expected = details
+      ? { category: details.expense.category, subcategory: details.expense.subcategory }
+      : null
   ) => {
-    if (!details) return;
+    if (!details || !expected) return;
 
     setIsUpdatingCategory(true);
 
@@ -479,7 +521,8 @@ export default function ExpenseDetailsPage({
       const updatedExpense = await patchExpenseCategory(
         expenseId,
         category,
-        subcategory
+        subcategory,
+        expected
       );
 
       if (updatedExpense) {
@@ -494,12 +537,32 @@ export default function ExpenseDetailsPage({
                     category: updatedExpense.category,
                     subcategory: updatedExpense.subcategory,
                     updatedAt: updatedExpense.updatedAt,
+                    revision: updatedExpense.revision ?? current.expense.revision,
                   },
                 }
               : current
         );
       }
     } catch (error) {
+      const failure = error as {
+        code?: string;
+        payload?: { currentCategory?: CategoryKey; currentSubcategory?: string };
+      };
+      if (failure.code === "EXPENSE_CATEGORY_CONFLICT" && failure.payload?.currentCategory) {
+        openCategoryConflict({
+          mine: { category, subcategory },
+          current: {
+            category: failure.payload.currentCategory,
+            subcategory: failure.payload.currentSubcategory ?? "general",
+          },
+        });
+        return;
+      }
+      if (failure.code === "EXPENSE_DELETED") {
+        // Deleting a group deletes its expenses too; check which one happened.
+        void isGroupDeleted(groupId).then((gone) => (gone ? showGroupDeleted() : setDeletedOpen(true)));
+        return;
+      }
       const message = error instanceof Error ? error.message : "Failed to update expense category";
       const isProduction = process.env.NODE_ENV === "production";
       toast({
@@ -512,6 +575,19 @@ export default function ExpenseDetailsPage({
     } finally {
       setIsUpdatingCategory(false);
     }
+  };
+
+  // "Use Travel" (or dismissing): show what is stored now.
+  const handleUseCurrentCategory = () => {
+    if (!takeCategoryConflict()) return;
+    void refresh();
+  };
+
+  // "Apply Shopping": pick again, this time knowingly replacing the stored one.
+  const handleApplyMyCategory = () => {
+    const conflict = takeCategoryConflict();
+    if (!conflict) return;
+    void handleCategoryPatch(conflict.mine.category, conflict.mine.subcategory, conflict.current);
   };
 
   const participantRows = useMemo(() => {
@@ -995,6 +1071,41 @@ export default function ExpenseDetailsPage({
         show={Boolean(attachmentSpinnerMessage)}
         className="z-[100]"
         message={attachmentSpinnerMessage}
+      />
+      <GenericAlertDialog
+        open={Boolean(categoryConflict)}
+        aboveOverlays
+        onOpenChange={(open) => {
+          if (!open) handleUseCurrentCategory();
+        }}
+        title={tConflict("categoryTitle")}
+        description={
+          shownCategoryConflict
+            ? tConflict("categoryDescription", {
+                current: conflictCategoryLabel("current"),
+                mine: conflictCategoryLabel("mine"),
+              })
+            : ""
+        }
+        actions={
+          shownCategoryConflict
+            ? [
+                {
+                  label: tConflict("useCategory", {
+                    category: conflictCategoryLabel("current"),
+                  }),
+                  type: "cancel",
+                  onClick: handleUseCurrentCategory,
+                },
+                {
+                  label: tConflict("applyCategory", {
+                    category: conflictCategoryLabel("mine"),
+                  }),
+                  onClick: handleApplyMyCategory,
+                },
+              ]
+            : []
+        }
       />
       {changeNotices.sheet}
       <GroupDeletedDialog open={groupDeleted} />

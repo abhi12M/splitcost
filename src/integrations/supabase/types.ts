@@ -659,6 +659,8 @@ export type Database = {
           p_expense_id: string
           p_category: string
           p_subcategory: string
+          p_expected_category: string
+          p_expected_subcategory: string
         }
         Returns: {
           id: string

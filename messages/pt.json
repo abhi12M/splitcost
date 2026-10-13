@@ -2051,7 +2051,11 @@
     "keepMine": "Manter minhas alterações",
     "useLatest": "Usar a versão mais recente",
     "saveMine": "Salvar minhas alterações",
-    "loadLatest": "Descartar e carregar a mais recente"
+    "loadLatest": "Descartar e carregar a mais recente",
+    "categoryTitle": "Categoria alterada",
+    "categoryDescription": "Outra pessoa alterou a categoria desta despesa para {current}. Você selecionou {mine}.",
+    "useCategory": "Usar {category}",
+    "applyCategory": "Aplicar {category}"
   },
   "toasts": {
     "expenseAdded": "Despesa adicionada",

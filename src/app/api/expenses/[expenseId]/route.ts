@@ -310,12 +310,18 @@ export async function PATCH(
   }
 
   const parsed = await readJsonObject(req, {
-    allowedKeys: ["category", "subcategory", "originSessionId"],
+    allowedKeys: [
+      "category", "subcategory", "expectedCategory", "expectedSubcategory", "originSessionId",
+    ],
   });
   if (!parsed.ok) return parsed.response;
   const body = parsed.data;
   const category = body?.category as CategoryKey | undefined;
   const subcategory = body?.subcategory as SubcategoryId | undefined;
+  // The category the user saw when picking; a different stored value means
+  // someone else changed it in the meantime.
+  const expectedCategory = body?.expectedCategory;
+  const expectedSubcategory = body?.expectedSubcategory;
   const originSessionId =
     typeof body?.originSessionId === "string" ? body.originSessionId.slice(0, 128) : null;
 
@@ -338,14 +344,46 @@ export async function PATCH(
     );
   }
 
+  if (validateCategory(expectedCategory, expectedSubcategory)) {
+    return NextResponse.json(
+      { error: "Invalid expected category" },
+      { status: 400 }
+    );
+  }
+
   const before = await loadExpenseSnapshot(expenseId);
   const { data, error } = await supabaseAdmin.rpc("set_expense_category", {
     p_expense_id: expenseId,
     p_category: category,
     p_subcategory: subcategory,
+    p_expected_category: expectedCategory as string,
+    p_expected_subcategory: expectedSubcategory as string,
   });
 
   const row = data?.[0];
+
+  if (error?.message === "EXPENSE_DELETED") {
+    return NextResponse.json({ code: "EXPENSE_DELETED", expenseId }, { status: 404 });
+  }
+  if (error?.message === "EXPENSE_CATEGORY_CONFLICT") {
+    const latest = await supabaseAdmin
+      .from("expenses")
+      .select("category, subcategory")
+      .eq("id", expenseId)
+      .maybeSingle();
+    if (!latest.data) {
+      return NextResponse.json({ code: "EXPENSE_DELETED", expenseId }, { status: 404 });
+    }
+    return NextResponse.json(
+      {
+        code: "EXPENSE_CATEGORY_CONFLICT",
+        expenseId,
+        currentCategory: latest.data.category,
+        currentSubcategory: latest.data.subcategory,
+      },
+      { status: 409 }
+    );
+  }
 
   if (error || !row) {
     console.error("patchExpenseCategory error:", error);

@@ -2051,7 +2051,11 @@
     "keepMine": "मेरे बदलाव रखें",
     "useLatest": "नया वर्ज़न इस्तेमाल करें",
     "saveMine": "मेरे बदलाव सेव करें",
-    "loadLatest": "हटाएं और नया लोड करें"
+    "loadLatest": "हटाएं और नया लोड करें",
+    "categoryTitle": "श्रेणी बदल गई",
+    "categoryDescription": "किसी और ने इस खर्च की श्रेणी {current} कर दी है। आपने {mine} चुनी थी।",
+    "useCategory": "{category} रखें",
+    "applyCategory": "{category} लागू करें"
   },
   "toasts": {
     "expenseAdded": "खर्च जोड़ा गया",

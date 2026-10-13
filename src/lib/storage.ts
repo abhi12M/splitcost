@@ -142,6 +142,7 @@ export interface ExpenseCategoryPatchResponse {
   category: CategoryKey;
   subcategory: SubcategoryId;
   updatedAt?: string;
+  revision?: number;
 }
 export interface GroupOverviewItemInterface {//landing page
   id: string;
@@ -381,7 +382,9 @@ export async function updateExpense(
 export async function patchExpenseCategory(
   expenseId: string,
   category: CategoryKey,
-  subcategory: SubcategoryId
+  subcategory: SubcategoryId,
+  /** The category the user saw; the server rejects the change if it has since moved on. */
+  expected: { category: string; subcategory: string }
 ): Promise<ExpenseCategoryPatchResponse | undefined> {
   const res = await fetch(`/api/expenses/${expenseId}`, {
     method: "PATCH",
@@ -391,6 +394,8 @@ export async function patchExpenseCategory(
     body: JSON.stringify({
       category,
       subcategory,
+      expectedCategory: expected.category,
+      expectedSubcategory: expected.subcategory,
       originSessionId: getRealtimeOriginSessionId(),
     }),
   });
@@ -400,9 +405,11 @@ export async function patchExpenseCategory(
     const error = new Error(payload?.error || "Failed to update expense category") as Error & {
       code?: string;
       details?: string;
+      payload?: unknown;
     };
     error.code = payload?.code;
     error.details = payload?.details;
+    error.payload = payload;
     throw error;
   }
 
