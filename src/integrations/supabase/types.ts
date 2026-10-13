@@ -647,12 +647,19 @@ export type Database = {
         }
         Returns: GroupDashboardInterface
       },
-      set_expense_attachment_path: {
+      replace_expense_attachment: {
         Args: {
           p_expense_id: string
-          p_attachment_path: string | null
+          p_attachment_path: string
         }
-        Returns: boolean
+        Returns: { previous_path: string | null }[]
+      },
+      clear_expense_attachment: {
+        Args: {
+          p_expense_id: string
+          p_expected_path?: string | null
+        }
+        Returns: { previous_path: string | null }[]
       },
       set_expense_category: {
         Args: {

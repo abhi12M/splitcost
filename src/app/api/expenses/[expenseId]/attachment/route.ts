@@ -14,10 +14,15 @@ import {
 } from "@/lib/expenseAttachments";
 import {
   buildAttachmentPayload,
+  clearExpenseAttachment,
   getExpenseAttachmentPath,
-  reconcileExpenseAttachmentReference,
+  getFileNameFromPath,
+  getStoragePathFromValue,
+  isMissingExpenseAttachmentError,
+  loadExpenseAttachmentValue,
+  removeAttachmentFiles,
+  replaceExpenseAttachment,
   resolveExpenseAttachmentPayload,
-  setExpenseAttachmentPath,
 } from "@/lib/supabase/attachments";
 import { buildExpenseAttachmentPath } from "@/lib/supabase/storagePaths";
 
@@ -41,9 +46,24 @@ async function recordAttachmentChange(
   const expense = await loadExpenseSnapshot(expenseId);
   if (expense) {
     await recordExpenseChanges(expense, [{ field: "attachment", action }], originSessionId);
-    broadcastExpenseChange({ event: "UPDATE", expenseId, groupId: expense.groupId, originSessionId });
+    // `receipt` tells open screens that only the receipt changed, so they
+    // don't treat it as an edit of the expense's other fields.
+    broadcastExpenseChange({
+      event: "UPDATE",
+      expenseId,
+      groupId: expense.groupId,
+      originSessionId,
+      receipt: action,
+    });
   }
 }
+
+const errorMessage = (error: unknown) => (error as { message?: string } | null)?.message;
+
+const expenseDeletedResponse = (expenseId: string) =>
+  NextResponse.json({ code: "EXPENSE_DELETED", expenseId }, { status: 404 });
+
+const removeStoredFile = (path: string | null, label: string) => removeAttachmentFiles([path], label);
 
 export async function GET(
   _req: Request,
@@ -107,7 +127,11 @@ export async function POST(
       );
     }
 
-    const existingPath = await getExpenseAttachmentPath(expenseId);
+    // Don't process and upload an image for an expense that is already gone.
+    if (!(await loadExpenseAttachmentValue(expenseId)).exists) {
+      return expenseDeletedResponse(expenseId);
+    }
+
     const path = buildExpenseAttachmentPath(expenseId);
     const fileBuffer = await sharp(Buffer.from(await file.arrayBuffer()))
       .rotate()
@@ -127,27 +151,37 @@ export async function POST(
       throw error;
     }
 
+    // The swap reports the receipt it actually replaced, even when someone else
+    // uploaded one a moment ago, so each upload removes exactly one old file.
+    let previousPath: string | null;
     try {
-      await setExpenseAttachmentPath(expenseId, path);
+      ({ previousPath } = await replaceExpenseAttachment(expenseId, path));
     } catch (error) {
-      await supabaseAdmin.storage
-        .from(EXPENSE_ATTACHMENT_BUCKET)
-        .remove([path]);
+      await removeStoredFile(path, "removeUnattachedExpenseAttachment");
+      // Deleted while the image was uploading: nothing to attach it to.
+      if (errorMessage(error) === "EXPENSE_DELETED") return expenseDeletedResponse(expenseId);
       throw error;
     }
 
-    if (existingPath) {
-      const { error: removeError } = await supabaseAdmin.storage
-        .from(EXPENSE_ATTACHMENT_BUCKET)
-        .remove([existingPath]);
+    await removeStoredFile(previousPath, "removePreviousExpenseAttachment");
+    await recordAttachmentChange(expenseId, previousPath ? "replaced" : "added", originSessionId);
 
-      if (removeError) {
-        console.error("removePreviousExpenseAttachment error:", removeError);
-      }
+    let payload;
+    try {
+      payload = await buildAttachmentPayload(path);
+    } catch (error) {
+      if (!isMissingExpenseAttachmentError(error)) throw error;
+      // Someone else replaced this receipt in the instant since it was saved,
+      // which removed the file. The upload did succeed; answer with the receipt
+      // that is there now, so this person sees the latest one.
+      const latest = await resolveExpenseAttachmentPayload(
+        expenseId,
+        (await loadExpenseAttachmentValue(expenseId)).value
+      );
+      if (!latest.attachment) throw error;
+      payload = latest.attachment;
     }
-
-    await recordAttachmentChange(expenseId, existingPath ? "replaced" : "added", originSessionId);
-    return successJson(await buildAttachmentPayload(path), SUCCESS_MESSAGES.receiptUploaded);
+    return successJson(payload, SUCCESS_MESSAGES.receiptUploaded);
   } catch (error) {
     console.error("saveExpenseAttachment error:", error);
     return NextResponse.json(
@@ -171,36 +205,40 @@ export async function DELETE(
   }
 
   try {
-    const delParsed = await readJsonObject(req, { allowedKeys: ["originSessionId"] });
+    const delParsed = await readJsonObject(req, { allowedKeys: ["originSessionId", "expectedName"] });
     const originSessionId =
       delParsed.ok && typeof delParsed.data.originSessionId === "string"
         ? delParsed.data.originSessionId.slice(0, 128)
         : null;
+    // The receipt the user saw. Without it the delete is unconditional, which is
+    // what "Delete anyway" and the edit form's remove rely on.
+    const expectedName =
+      delParsed.ok && typeof delParsed.data.expectedName === "string" && delParsed.data.expectedName
+        ? delParsed.data.expectedName.slice(0, 256)
+        : null;
 
-    const existingPath = await getExpenseAttachmentPath(expenseId);
-
-    if (existingPath) {
-      const reference = await reconcileExpenseAttachmentReference(
-        expenseId,
-        existingPath
-      );
-
-      if (reference.status === "available" || reference.status === "error") {
-        const { error } = await supabaseAdmin.storage
-          .from(EXPENSE_ATTACHMENT_BUCKET)
-          .remove([existingPath]);
-
-        if (error) {
-          throw error;
-        }
+    const current = await loadExpenseAttachmentValue(expenseId);
+    let expectedValue: string | null = null;
+    if (current.value && expectedName) {
+      const currentName = getFileNameFromPath(getStoragePathFromValue(current.value) ?? current.value);
+      if (currentName !== expectedName) {
+        return NextResponse.json({ code: "ATTACHMENT_CHANGED", expenseId }, { status: 409 });
       }
+      // Also checked inside the delete itself, in case it changes right now.
+      expectedValue = current.value;
     }
 
-    await setExpenseAttachmentPath(expenseId, null);
+    // An expense that is already gone, or a receipt that is already removed,
+    // means there is nothing left to do: the caller wanted it gone and it is.
+    const { previousPath } = await clearExpenseAttachment(expenseId, expectedValue);
 
-    if (existingPath) await recordAttachmentChange(expenseId, "removed", originSessionId);
+    await removeStoredFile(previousPath, "removeExpenseAttachmentFile");
+    if (previousPath) await recordAttachmentChange(expenseId, "removed", originSessionId);
     return successJson({ success: true }, SUCCESS_MESSAGES.receiptRemoved);
   } catch (error) {
+    if (errorMessage(error) === "ATTACHMENT_CHANGED") {
+      return NextResponse.json({ code: "ATTACHMENT_CHANGED", expenseId }, { status: 409 });
+    }
     console.error("deleteExpenseAttachment error:", error);
     return NextResponse.json(
       { error: "Failed to delete attachment" },

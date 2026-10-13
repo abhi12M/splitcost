@@ -3,6 +3,7 @@ import { readJsonObject } from "@/lib/api/request";
 import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import { isValidUUID } from "@/lib/api/expenseValidation";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { removeAttachmentFiles } from "@/lib/supabase/attachments";
 import { NextResponse } from "next/server";
 import { validateGroupInput } from "@/lib/validations/group.schema";
 import {
@@ -469,6 +470,15 @@ export async function DELETE(
   const delParsed = await readJsonObject(req, { allowedKeys: ["originSessionId"] });
   const body = delParsed.ok ? delParsed.data : null;
 
+  // The group's expenses go with it, so note their receipt files first: once the
+  // rows are gone nothing says which files they were.
+  const receipts = await supabaseAdmin
+    .from("expenses")
+    .select("attachment_data_url")
+    .eq("group_id", params.groupId)
+    .not("attachment_data_url", "is", null);
+  if (receipts.error) console.error("listGroupReceipts error:", receipts.error);
+
   const { error } = await supabaseAdmin.rpc(
     "delete_group_and_cleanup_users",
     {
@@ -479,6 +489,11 @@ export async function DELETE(
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
+
+  await removeAttachmentFiles(
+    (receipts.data ?? []).map((row) => row.attachment_data_url),
+    "removeDeletedGroupReceipts"
+  );
 
   // Tell open screens of this group (other tabs and devices) that it's gone.
   await broadcastGroupDeleted(params.groupId, {

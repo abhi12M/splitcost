@@ -2057,6 +2057,25 @@
     "useCategory": "{category} रखें",
     "applyCategory": "{category} लागू करें"
   },
+  "receiptChanges": {
+    "removedTitle": "रसीद हटाई गई",
+    "removedDescription": "किसी ने दूसरे सेशन में यह रसीद हटा दी।",
+    "replacedTitle": "रसीद बदली गई",
+    "replacedDescription": "किसी ने दूसरे सेशन में यह रसीद बदल दी। नया वर्ज़न दिखाया जा रहा है।",
+    "addedTitle": "रसीद जोड़ी गई",
+    "addedDescription": "किसी ने दूसरे सेशन में इस खर्च में रसीद जोड़ी।",
+    "replacedDialogTitle": "रसीद बदल दी गई",
+    "replacedDialogDescription": "आपके हटाते समय किसी ने नई रसीद अपलोड कर दी। क्या नई रसीद भी हटानी है, या उसे रखना है?",
+    "keepNew": "नई रसीद रखें",
+    "deleteAnyway": "फिर भी हटाएँ",
+    "changedTitle": "रसीद में बदलाव हुआ",
+    "changedDescription": "किसी ने दूसरे सेशन में यह रसीद बदली। इस फ़ॉर्म में आपका रसीद वाला बदलाव रखा गया है।",
+    "keptTitle": "रसीद रखी गई",
+    "keptDescription": "आपने जो रसीद हटाई थी, उसे किसी ने बदल दिया, इसलिए नई रसीद रखी गई है।",
+    "notCarriedOver": "मूल रसीद नए खर्च में नहीं जा सकती। आप बाद में उसे फिर से जोड़ सकते हैं।",
+    "notSavedTitle": "रसीद सेव नहीं हुई",
+    "notSavedDescription": "यह खर्च दूसरे सेशन में हटा दिया गया।"
+  },
   "toasts": {
     "expenseAdded": "खर्च जोड़ा गया",
     "expenseUpdated": "खर्च अपडेट हुआ",

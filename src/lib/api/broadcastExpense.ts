@@ -7,6 +7,7 @@ import {
   singleExpenseChannel,
   type ExpenseBroadcast,
   type ExpenseEvent,
+  type ReceiptChange,
 } from "@/lib/realtime/expenseChanges";
 
 type BroadcastExpenseOptions = {
@@ -15,6 +16,7 @@ type BroadcastExpenseOptions = {
   groupId: string;
   originSessionId: string | null;
   revision?: number;
+  receipt?: ReceiptChange;
 };
 
 export function broadcastExpenseChange({
@@ -23,6 +25,7 @@ export function broadcastExpenseChange({
   groupId,
   originSessionId,
   revision,
+  receipt,
 }: BroadcastExpenseOptions) {
   const payload: ExpenseBroadcast = {
     event,
@@ -30,6 +33,7 @@ export function broadcastExpenseChange({
     groupId,
     originSessionId,
     revision,
+    receipt,
   };
 
   // Fire to both channels in parallel, best-effort.

@@ -2057,6 +2057,25 @@
     "useCategory": "Usar {category}",
     "applyCategory": "Aplicar {category}"
   },
+  "receiptChanges": {
+    "removedTitle": "Recibo removido",
+    "removedDescription": "Alguém removeu este recibo em outra sessão.",
+    "replacedTitle": "Recibo substituído",
+    "replacedDescription": "Alguém substituiu este recibo em outra sessão. Mostrando a versão mais recente.",
+    "addedTitle": "Recibo adicionado",
+    "addedDescription": "Alguém adicionou um recibo a esta despesa em outra sessão.",
+    "replacedDialogTitle": "O recibo foi substituído",
+    "replacedDialogDescription": "Alguém enviou um novo recibo enquanto você o excluía. Excluir o novo também ou mantê-lo?",
+    "keepNew": "Manter o novo recibo",
+    "deleteAnyway": "Excluir mesmo assim",
+    "changedTitle": "Recibo alterado",
+    "changedDescription": "Alguém alterou este recibo em outra sessão. Sua alteração do recibo neste formulário foi mantida.",
+    "keptTitle": "Recibo mantido",
+    "keptDescription": "Alguém substituiu o recibo que você removeu, então o mais recente foi mantido.",
+    "notCarriedOver": "O recibo original não pode ser levado para a nova despesa. Você pode anexá-lo novamente depois.",
+    "notSavedTitle": "Recibo não salvo",
+    "notSavedDescription": "Esta despesa foi excluída em outra sessão."
+  },
   "toasts": {
     "expenseAdded": "Despesa adicionada",
     "expenseUpdated": "Despesa atualizada",

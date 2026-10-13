@@ -16,6 +16,7 @@ import {
   expenseChangesChannel,
   singleExpenseChannel,
   type ExpenseBroadcast,
+  type ReceiptChange,
 } from "@/lib/realtime/expenseChanges";
 
 type Options = {
@@ -49,10 +50,13 @@ export function useGroupRealtime({ groupId, onExpenseChange }: Options) {
   }, [groupId]);
 }
 
-/** Listens for changes to a single expense via broadcast. */
+/**
+ * Listens for changes to a single expense via broadcast. `receipt` is set when
+ * the change was only to the expense's receipt.
+ */
 export function useExpenseRealtime(
   expenseId: string,
-  onChange: (event: "UPDATE" | "DELETE", revision?: number) => void
+  onChange: (event: "UPDATE" | "DELETE", revision?: number, receipt?: ReceiptChange) => void
 ) {
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
@@ -66,7 +70,7 @@ export function useExpenseRealtime(
         const data = payload as ExpenseBroadcast;
         if (data.event === "INSERT") return;
         if (data.event === "UPDATE" && data.originSessionId === ownSessionId) return;
-        onChangeRef.current(data.event, data.revision);
+        onChangeRef.current(data.event, data.revision, data.receipt);
       })
       .subscribe();
 

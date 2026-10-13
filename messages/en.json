@@ -2059,6 +2059,25 @@
     "useCategory": "Use {category}",
     "applyCategory": "Apply {category}"
   },
+  "receiptChanges": {
+    "removedTitle": "Receipt removed",
+    "removedDescription": "Someone removed this receipt in another session.",
+    "replacedTitle": "Receipt replaced",
+    "replacedDescription": "Someone replaced this receipt in another session. Showing the latest version.",
+    "addedTitle": "Receipt added",
+    "addedDescription": "Someone added a receipt to this expense in another session.",
+    "replacedDialogTitle": "Receipt was replaced",
+    "replacedDialogDescription": "Someone uploaded a new receipt while you were deleting. Delete the new one too, or keep it?",
+    "keepNew": "Keep new receipt",
+    "deleteAnyway": "Delete anyway",
+    "changedTitle": "Receipt changed",
+    "changedDescription": "Someone changed this receipt in another session. Your own change to the receipt in this form was kept.",
+    "keptTitle": "Receipt kept",
+    "keptDescription": "Someone replaced the receipt you removed, so the newer one was kept.",
+    "notCarriedOver": "The original receipt can't be carried over to the new expense. You can attach it again afterwards.",
+    "notSavedTitle": "Receipt not saved",
+    "notSavedDescription": "This expense was deleted in another session."
+  },
   "toasts": {
     "expenseAdded": "Expense added",
     "expenseUpdated": "Expense updated",

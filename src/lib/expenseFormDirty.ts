@@ -31,6 +31,19 @@ function byUserId<T extends { userId: string }>(list: T[]): T[] {
   return [...list].sort((a, b) => a.userId.localeCompare(b.userId));
 }
 
+/**
+ * The same snapshot with its receipt swapped, so a receipt changed elsewhere
+ * can become the form's starting point without making the form look edited.
+ */
+export function withSnapshotAttachment(
+  snapshot: string,
+  attachment: { url?: string; name?: string } | null
+): string {
+  const parsed = JSON.parse(snapshot);
+  parsed.attachment = attachment ? { url: attachment.url ?? null, name: attachment.name ?? null } : null;
+  return JSON.stringify(parsed);
+}
+
 export function buildExpenseFormSnapshot(input: ExpenseFormSnapshotInput): string {
   return JSON.stringify({
     description: cleanName(input.description),

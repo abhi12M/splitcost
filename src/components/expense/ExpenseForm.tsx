@@ -33,7 +33,7 @@ import {
   normalizeExpenseNotes,
   sanitizeExpenseNotes,
 } from "@/lib/expenseNotes";
-import { buildExpenseFormSnapshot } from "@/lib/expenseFormDirty";
+import { buildExpenseFormSnapshot, withSnapshotAttachment } from "@/lib/expenseFormDirty";
 
 interface ExpenseFormProps {
   members: UserInterface[];
@@ -53,6 +53,13 @@ export type ExpenseFormHandle = {
   submit: () => void;
   /** Compares current field values against the initial ones, so an edit that's since been undone reports false. */
   isDirty: () => boolean;
+  /**
+   * Brings in the receipt stored now, for one changed in another session while
+   * this form is open. It applies, and returns true, only when the user hasn't
+   * changed the receipt in this form themselves; otherwise their choice is kept
+   * and it returns false. Either way the form doesn't start to look edited.
+   */
+  syncReceipt: (latest: ExpenseAttachment | null) => boolean;
 };
 
 type EditablePayer = {
@@ -126,6 +133,9 @@ export const ExpenseForm = forwardRef<ExpenseFormHandle, ExpenseFormProps>(funct
   // Captured once, from the same values the state above was seeded with, so
   // isDirty() can tell "edited" apart from "edited, then undone".
   const initialSnapshotRef = useRef<string>();
+  // The receipt the form started from (or last synced to); the user has changed
+  // the receipt in this form when the current one is no longer this object.
+  const baselineAttachmentRef = useRef<ExpenseAttachment | null>(initialAttachment);
   if (initialSnapshotRef.current === undefined) {
     initialSnapshotRef.current = buildExpenseFormSnapshot({
       description,
@@ -397,7 +407,15 @@ export const ExpenseForm = forwardRef<ExpenseFormHandle, ExpenseFormProps>(funct
       notes,
     }) !== initialSnapshotRef.current;
 
-  useImperativeHandle(ref, () => ({ submit: submitForm, isDirty }));
+  const syncReceipt = (latest: ExpenseAttachment | null) => {
+    if (attachment !== baselineAttachmentRef.current) return false;
+    baselineAttachmentRef.current = latest;
+    initialSnapshotRef.current = withSnapshotAttachment(initialSnapshotRef.current!, latest);
+    setAttachment(latest);
+    return true;
+  };
+
+  useImperativeHandle(ref, () => ({ submit: submitForm, isDirty, syncReceipt }));
   const [errors, setErrors] = useState<{
     paidByUserId?: string;
     description?: string;

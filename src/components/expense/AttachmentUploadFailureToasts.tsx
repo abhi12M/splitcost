@@ -13,10 +13,29 @@ import { dismissAttachmentUpload, onAttachmentUploadFailure, startAttachmentUplo
  */
 export function AttachmentUploadFailureToasts() {
   const tToasts = useTranslations("toasts");
+  const tReceipt = useTranslations("receiptChanges");
 
   useEffect(
     () =>
-      onAttachmentUploadFailure(({ groupId, expenseId, attachment }) => {
+      onAttachmentUploadFailure(({ groupId, expenseId, attachment, expectedName, code }) => {
+        // Retrying can't help: the expense it belonged to no longer exists.
+        if (code === "EXPENSE_DELETED") {
+          toast({
+            title: tReceipt("notSavedTitle"),
+            description: tReceipt("notSavedDescription"),
+            variant: "info",
+          });
+          return;
+        }
+        // Someone replaced the receipt the user removed: theirs is kept.
+        if (code === "ATTACHMENT_CHANGED") {
+          toast({
+            title: tReceipt("keptTitle"),
+            description: tReceipt("keptDescription"),
+            variant: "info",
+          });
+          return;
+        }
         toast({
           title: tToasts("couldNotUploadImage"),
           description: tToasts("tryAgainHint"),
@@ -25,12 +44,12 @@ export function AttachmentUploadFailureToasts() {
             label: tToasts("retry"),
             callback: () => {
               dismissAttachmentUpload(expenseId);
-              startAttachmentUpload(groupId, expenseId, attachment);
+              startAttachmentUpload(groupId, expenseId, attachment, expectedName);
             },
           },
         });
       }),
-    [tToasts]
+    [tToasts, tReceipt]
   );
 
   return null;

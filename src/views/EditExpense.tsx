@@ -20,6 +20,7 @@ import { useExpense } from "@/lib/groupExpenseData";
 import { getGroupViewerMemberId } from "@/lib/groupViewer";
 import { useExpenseRealtime, useGroupChanges } from "@/hooks/useGroupRealtime";
 import { useGroupChangeNotices } from "@/components/group/GroupChangeNotices";
+import { useReceiptChangeNotice } from "@/components/expense/useReceiptChangeNotice";
 import { applyGroupChangesToGroup } from "@/lib/realtime/groupChanges";
 import { useToast } from "@/hooks/use-toast";
 import { GenericAlertDialog } from "@/components/ui/generic-alert-dialog";
@@ -31,6 +32,7 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
   const tCommon = useTranslations("common");
   const tConflict = useTranslations("editConflict");
   const tToasts = useTranslations("toasts");
+  const tReceipt = useTranslations("receiptChanges");
   const { toast } = useToast();
   const { data: expenseData, loading, refresh, applyChange } = useExpense(expenseId);
   const group = expenseData?.group;
@@ -65,6 +67,14 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
   // Closes the last "couldn't save" toast once a retry succeeds.
   const saveErrorToastRef = useRef<(() => void) | null>(null);
   const [formKey, setFormKey] = useState(0);
+  // The receipt the form was last based on, by name. A removal made in the form
+  // applies only to this receipt, so one someone else put there meanwhile is
+  // not removed. Captured when the form (re)mounts, since that is when it
+  // starts from the receipt in `attachment`.
+  const formReceiptRef = useRef<{ key: number; name: string | null } | null>(null);
+  if (expense && formReceiptRef.current?.key !== formKey) {
+    formReceiptRef.current = { key: formKey, name: attachment?.name ?? null };
+  }
   const desktopFormRef = useRef<ExpenseFormHandle>(null);
   const mobileFormRef = useRef<ExpenseFormMobileHandle>(null);
   // Read by handleSubmit to decide whether the next submit should create a
@@ -78,6 +88,15 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
     window.matchMedia("(min-width: 768px)").matches
       ? (desktopFormRef.current?.isDirty() ?? false)
       : (mobileFormRef.current?.isDirty() ?? false);
+
+  // Both forms mount together and only one is visible, so both are updated, but
+  // the answer is the visible one's: whether the user's own receipt change
+  // (if any) stands.
+  const syncFormReceipt = (latest: ExpenseAttachment | null) => {
+    const desktop = desktopFormRef.current?.syncReceipt(latest) ?? false;
+    const mobile = mobileFormRef.current?.syncReceipt(latest) ?? false;
+    return window.matchMedia("(min-width: 768px)").matches ? desktop : mobile;
+  };
 
   // The whole group was deleted: nothing here can be saved, so this replaces
   // the expense-level dialogs.
@@ -101,9 +120,31 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
     });
   };
 
-  useExpenseRealtime(expenseId, (event, revision) => {
+  const noticeReceiptChange = useReceiptChangeNotice();
+
+  useExpenseRealtime(expenseId, (event, revision, receipt) => {
     if (event === "DELETE") {
       handleExpenseGone(isFormDirty());
+    } else if (receipt) {
+      // Only the receipt changed, which never clashes with the fields being
+      // edited: no conflict dialog and no refused save.
+      if (!isFormDirty()) {
+        // Nothing to lose: reload the form with the new receipt.
+        void refresh().then(() => setFormKey((key) => key + 1));
+        if (receipt !== "added") noticeReceiptChange(receipt);
+      } else {
+        // Keep the edits, and bring the form's receipt up to date unless the
+        // user has changed the receipt in the form themselves.
+        void refresh().then((latest) => {
+          const next = latest?.expense.attachment ?? null;
+          if (syncFormReceipt(next)) {
+            if (formReceiptRef.current) formReceiptRef.current.name = next?.name ?? null;
+            if (receipt !== "added") noticeReceiptChange(receipt);
+          } else {
+            noticeReceiptChange(receipt, { keptMine: true });
+          }
+        });
+      }
     } else if (isFormDirty()) {
       setConflict({ source: "realtime", currentRevision: revision });
     } else {
@@ -194,9 +235,12 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
       // Only the latter two need server work; the in-flight call runs in
       // the background so the user isn't blocked on the upload round-trip.
       const isNewFile = Boolean(data.attachment?.file);
-      const isRemoval = data.attachment === null && Boolean(attachment);
+      // Removing applies to the receipt the form showed, not whatever is stored
+      // by the time this runs.
+      const removedReceiptName = formReceiptRef.current?.name ?? null;
+      const isRemoval = data.attachment === null && removedReceiptName !== null;
       if (isNewFile || isRemoval) {
-        startAttachmentUpload(groupId, expenseId!, data.attachment ?? null);
+        startAttachmentUpload(groupId, expenseId!, data.attachment ?? null, isRemoval ? removedReceiptName : undefined);
         // Reflect the user's intent locally for the brief moment before we
         // navigate away. (The view page reads the upload store directly.)
         setAttachmentOverride(data.attachment ?? null);
@@ -349,6 +393,13 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
           wasDirtyOnDelete
             ? "This expense was deleted in another session while you were editing it, so it can no longer be updated. You can create a new expense using your current changes, or go back to expenses."
             : "This expense was deleted in another session and is no longer available."
+        }
+        // Create-as-new makes a fresh expense from the form's values; the receipt
+        // that belonged to the deleted one doesn't come along.
+        body={
+          wasDirtyOnDelete && formReceiptRef.current?.name ? (
+            <p className="text-sm text-muted-foreground">{tReceipt("notCarriedOver")}</p>
+          ) : undefined
         }
         actions={[]}
         footer={

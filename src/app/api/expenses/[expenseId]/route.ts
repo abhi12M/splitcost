@@ -25,6 +25,7 @@ import {
 } from "@/lib/expenseNotes";
 import { validateExpenseDescription } from "@/lib/validations/expense.schema";
 import { resolveExpenseCurrency } from "@/lib/api/expenseCurrency";
+import { loadExpenseAttachmentValue, removeAttachmentFiles } from "@/lib/supabase/attachments";
 import {
   isValidUUID,
   validateAmount,
@@ -274,6 +275,8 @@ export async function DELETE(
     : null;
   // The deleted expense's last state is what the activity entry shows.
   const deleted = await loadExpenseSnapshot(expenseId);
+  // Read before deleting, while the row still says which file is its receipt.
+  const receipt = await loadExpenseAttachmentValue(expenseId).catch(() => null);
   const { data, error } = await supabaseAdmin.rpc("delete_expense", {
     p_expense_id: expenseId,
   });
@@ -289,6 +292,10 @@ export async function DELETE(
   if (!data) {
     return successJson({ success: true, alreadyDeleted: true }, SUCCESS_MESSAGES.expenseDeleted);
   }
+
+  // The receipt goes with its expense, whoever deleted it. When the expense was
+  // already gone (handled above), the delete that removed it did this.
+  await removeAttachmentFiles([receipt?.value], "removeDeletedExpenseReceipt");
 
   if (deleted) {
     await recordExpenseDeleted(deleted, session);

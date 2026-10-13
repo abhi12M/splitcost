@@ -64,7 +64,9 @@ import { useExpense } from "@/lib/groupExpenseData";
 import { ExpenseHistory } from "@/components/activity/ExpenseHistory";
 import { useExpenseRealtime, useGroupChanges } from "@/hooks/useGroupRealtime";
 import { useGroupChangeNotices } from "@/components/group/GroupChangeNotices";
+import { useReceiptChangeNotice } from "@/components/expense/useReceiptChangeNotice";
 import { applyGroupChangesToGroup } from "@/lib/realtime/groupChanges";
+import type { ReceiptChange } from "@/lib/realtime/expenseChanges";
 import { getGroupViewerMemberId } from "@/lib/groupViewer";
 import { memberNameForViewer } from "@/lib/groupExpenseLabels";
 import { formatSummaryName } from "@/components/ui/formatters";
@@ -258,6 +260,7 @@ export default function ExpenseDetailsPage({
   const tToasts = useTranslations("toasts");
   const tCommon = useTranslations("common");
   const tConflict = useTranslations("editConflict");
+  const tReceipt = useTranslations("receiptChanges");
   const tCategories = useTranslations("categories");
   const attachmentGalleryInputRef = useRef<HTMLInputElement>(null);
   const attachmentCameraInputRef = useRef<HTMLInputElement>(null);
@@ -353,6 +356,18 @@ export default function ExpenseDetailsPage({
   const [isAttachmentDeleteConfirmOpen, setIsAttachmentDeleteConfirmOpen] = useState(false);
   const [attachmentSpinnerMessage, setAttachmentSpinnerMessage] = useState("");
   const [deletedOpen, setDeletedOpen] = useState(false);
+  // Someone replaced the receipt the user was deleting: the delete dialog then
+  // asks whether to delete the new one too. It is the same dialog, not a second
+  // one, because closing one dialog while opening another in the same moment
+  // fights over the Back-button history and closes the new one at once.
+  const [receiptReplaced, setReceiptReplaced] = useState(false);
+  // Keeps the dialog's wording steady while it animates closed.
+  const shownReceiptReplacedRef = useRef(false);
+  if (isAttachmentDeleteConfirmOpen) shownReceiptReplacedRef.current = receiptReplaced;
+  // This tab removed the receipt, so if someone adds a new one right after, the
+  // user is told (otherwise a receipt appearing explains itself).
+  const deletedReceiptHereRef = useRef(false);
+  const noticeReceiptChange = useReceiptChangeNotice();
 
   useBackButtonClose(isAttachmentSourceOpen, () =>
     setIsAttachmentSourceOpen(false)
@@ -370,7 +385,33 @@ export default function ExpenseDetailsPage({
   // "Expense deleted" dialog on top of the toast and the move back to the group.
   const isOwnDeleteRef = useRef(false);
 
-  useExpenseRealtime(expenseId, (event) => {
+  // The receipt was changed in another session: say what happened to whatever
+  // the user is looking at or about to delete. The refetch in the handler below
+  // brings in the latest receipt itself.
+  const handleRemoteReceiptChange = (receipt: ReceiptChange) => {
+    if (receipt === "removed") {
+      // Nothing left to view or delete.
+      setIsViewerOpen(false);
+      setIsAttachmentDeleteConfirmOpen(false);
+      noticeReceiptChange("removed");
+      return;
+    }
+    if (receipt === "replaced") {
+      if (isAttachmentDeleteConfirmOpen) {
+        // The receipt being deleted is no longer the one stored.
+        setReceiptReplaced(true);
+      } else {
+        noticeReceiptChange("replaced");
+      }
+      return;
+    }
+    if (deletedReceiptHereRef.current) {
+      deletedReceiptHereRef.current = false;
+      noticeReceiptChange("added");
+    }
+  };
+
+  useExpenseRealtime(expenseId, (event, _revision, receipt) => {
     if (event === "DELETE") {
       if (isOwnDeleteRef.current) return;
       // Deleting a group deletes its expenses too; check which one happened.
@@ -382,6 +423,7 @@ export default function ExpenseDetailsPage({
     // value once the refetch below lands.
     setAttachmentOverride(undefined);
     void refresh();
+    if (receipt) handleRemoteReceiptChange(receipt);
   });
 
   // Names on this screen come from the group's member list, so a member or
@@ -409,18 +451,10 @@ export default function ExpenseDetailsPage({
       // its own; the server-side cascade on expense delete handles cleanup.
       dismissAttachmentUpload(expenseId);
 
-      // Only call delete-attachment if the SERVER actually has one.
-      // `cachedAttachment` reflects server state, whereas `attachment` may
-      // be a local pending preview.
-      if (cachedAttachment) {
-        try {
-          await deleteExpenseAttachment(expenseId);
-        } catch (error) {
-          // The attachment may already be gone (e.g. background delete
-          // raced ahead). Swallow so we still get to delete the expense.
-          console.error("delete attachment failed during expense delete:", error);
-        }
-      }
+      // The server removes the receipt file along with the expense. Removing it
+      // here first would tell everyone else viewing the expense "receipt
+      // removed", and their page would reload into "not found" before the
+      // "Expense deleted" notice could show.
       // deleteExpense reports failure as `false`; a failed delete must not
       // navigate away as if it had worked.
       if (!(await deleteExpense(expenseId))) throw new Error("Failed to delete expense");
@@ -479,7 +513,13 @@ export default function ExpenseDetailsPage({
       );
       setAttachment(savedAttachment);
       setIsViewerOpen(false);
+      deletedReceiptHereRef.current = false;
     } catch (error) {
+      if ((error as { code?: string }).code === "EXPENSE_DELETED") {
+        // The expense was deleted while the image uploaded: retrying can't help.
+        void isGroupDeleted(groupId).then((gone) => (gone ? showGroupDeleted() : setDeletedOpen(true)));
+        return;
+      }
       console.error("save attachment failed:", error);
       toast({
         title: tToasts("couldNotUploadImage"),
@@ -496,15 +536,30 @@ export default function ExpenseDetailsPage({
     }
   };
 
-  const handleDeleteAttachment = async () => {
+  /**
+   * Deletes the receipt the user is looking at. If someone has replaced it in
+   * the meantime the server leaves their newer one alone and the user is asked
+   * whether to delete that too; `deleteNewer` answers yes.
+   */
+  const deleteReceipt = async (deleteNewer: boolean) => {
     setIsAttachmentDeleteConfirmOpen(false);
+    setReceiptReplaced(false);
     setAttachmentSpinnerMessage(t("deletingAttachment"));
 
     try {
-      await deleteExpenseAttachment(expenseId);
+      await deleteExpenseAttachment(expenseId, deleteNewer ? undefined : cachedAttachment?.name);
+      deletedReceiptHereRef.current = true;
       setAttachment(null);
       setIsViewerOpen(false);
     } catch (error) {
+      if ((error as { code?: string }).code === "ATTACHMENT_CHANGED") {
+        // Show the newer receipt behind the question.
+        setAttachmentOverride(undefined);
+        void refresh();
+        setReceiptReplaced(true);
+        setIsAttachmentDeleteConfirmOpen(true);
+        return;
+      }
       console.error("delete attachment failed:", error);
       toast({ title: tToasts("couldNotRemoveImage"), description: tToasts("tryAgainHint"), variant: "error" });
     } finally {
@@ -1044,13 +1099,23 @@ export default function ExpenseDetailsPage({
         />
         <GenericAlertDialog
           open={isAttachmentDeleteConfirmOpen}
-          onOpenChange={setIsAttachmentDeleteConfirmOpen}
-          title={t("deleteImageTitle")}
-          description={t("deleteImageDescription")}
-          actions={[
-            { label: tCommon("cancel"), type: "cancel", className: "mt-0 flex-1 border-none bg-muted hover:bg-muted/80" },
-            { label: tCommon("delete"), onClick: handleDeleteAttachment, disabled: Boolean(attachmentSpinnerMessage), variant: "destructive", className: "flex-1" },
-          ]}
+          onOpenChange={(open) => {
+            setIsAttachmentDeleteConfirmOpen(open);
+            if (!open) setReceiptReplaced(false);
+          }}
+          title={shownReceiptReplacedRef.current ? tReceipt("replacedDialogTitle") : t("deleteImageTitle")}
+          description={shownReceiptReplacedRef.current ? tReceipt("replacedDialogDescription") : t("deleteImageDescription")}
+          actions={
+            shownReceiptReplacedRef.current
+              ? [
+                  { label: tReceipt("keepNew"), type: "cancel", className: "mt-0 flex-1 border-none bg-muted hover:bg-muted/80" },
+                  { label: tReceipt("deleteAnyway"), onClick: () => void deleteReceipt(true), variant: "destructive", className: "flex-1" },
+                ]
+              : [
+                  { label: tCommon("cancel"), type: "cancel", className: "mt-0 flex-1 border-none bg-muted hover:bg-muted/80" },
+                  { label: tCommon("delete"), onClick: () => void deleteReceipt(false), disabled: Boolean(attachmentSpinnerMessage), variant: "destructive", className: "flex-1" },
+                ]
+          }
         />
         <GenericAlertDialog
           open={isExpenseDeleteConfirmOpen}

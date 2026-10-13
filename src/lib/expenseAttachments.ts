@@ -35,6 +35,15 @@ function mapAttachmentResponse(
   };
 }
 
+/** `code` says why a receipt call failed, e.g. EXPENSE_DELETED or ATTACHMENT_CHANGED. */
+export type ExpenseAttachmentError = Error & { code?: string };
+
+function attachmentError(payload: { error?: string; code?: string } | null, fallback: string) {
+  const error = new Error(payload?.error || payload?.code || fallback) as ExpenseAttachmentError;
+  error.code = payload?.code;
+  return error;
+}
+
 export function validateAttachmentFile(file: File): string | null {
   if (!file.type.startsWith("image/")) {
     return "Please attach an image file.";
@@ -81,14 +90,20 @@ export function revokeAttachmentObjectUrl(
   }
 }
 
+/**
+ * `expectedName` applies to a removal (`attachment` null): the receipt the user
+ * removed. If someone replaced it meanwhile, the newer one is left alone and
+ * the error's code is ATTACHMENT_CHANGED.
+ */
 export async function saveExpenseAttachment(
   expenseId: string,
-  attachment: ExpenseAttachment | null | undefined
+  attachment: ExpenseAttachment | null | undefined,
+  expectedName?: string
 ) {
   if (attachment === undefined) return null;
 
   if (attachment === null) {
-    await deleteExpenseAttachment(expenseId);
+    await deleteExpenseAttachment(expenseId, expectedName);
     return null;
   }
 
@@ -107,23 +122,31 @@ export async function saveExpenseAttachment(
 
   if (!res.ok) {
     const payload = await res.json().catch(() => null);
-    throw new Error(payload?.error || "Failed to upload attachment");
+    throw attachmentError(payload, "Failed to upload attachment");
   }
 
   const payload = await res.json();
   return mapAttachmentResponse(payload);
 }
 
-export async function deleteExpenseAttachment(expenseId: string) {
+/**
+ * `expectedName` is the receipt the user saw. When someone has replaced it
+ * since, nothing is deleted and the error's code is ATTACHMENT_CHANGED. Leave
+ * it out to delete whatever receipt is there.
+ */
+export async function deleteExpenseAttachment(expenseId: string, expectedName?: string) {
   const res = await fetch(`/api/expenses/${expenseId}/attachment`, {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ originSessionId: getRealtimeOriginSessionId() }),
+    body: JSON.stringify({
+      originSessionId: getRealtimeOriginSessionId(),
+      ...(expectedName ? { expectedName } : {}),
+    }),
   });
 
   if (!res.ok) {
     const payload = await res.json().catch(() => null);
-    throw new Error(payload?.error || "Failed to delete attachment");
+    throw attachmentError(payload, "Failed to delete attachment");
   }
 }
 

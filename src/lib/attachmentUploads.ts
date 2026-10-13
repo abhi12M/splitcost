@@ -24,6 +24,10 @@ export type AttachmentUploadFailure = {
   groupId: string;
   expenseId: string;
   attachment: ExpenseAttachment | null;
+  /** The receipt a removal was for, so a retry removes only that one. */
+  expectedName?: string;
+  /** Why it failed, when the server said (e.g. EXPENSE_DELETED). */
+  code?: string;
 };
 const failureListeners = new Set<(failure: AttachmentUploadFailure) => void>();
 
@@ -49,10 +53,16 @@ function createOwnedPreview(attachment: ExpenseAttachment | null) {
   return { ...attachment, url: URL.createObjectURL(attachment.file) };
 }
 
+/**
+ * `expectedName` is for a removal (`attachment` null): the receipt the user
+ * removed. A different receipt stored now was put there by someone else and
+ * is kept.
+ */
 export function startAttachmentUpload(
   groupId: string,
   expenseId: string,
-  attachment: ExpenseAttachment | null
+  attachment: ExpenseAttachment | null,
+  expectedName?: string
 ) {
   const preview = createOwnedPreview(attachment);
   states.set(expenseId, { status: "uploading", intent: preview });
@@ -60,7 +70,7 @@ export function startAttachmentUpload(
 
   void (async () => {
     try {
-      await saveExpenseAttachment(expenseId, attachment);
+      await saveExpenseAttachment(expenseId, attachment, expectedName);
       completedGroupVersions.set(
         groupId,
         (completedGroupVersions.get(groupId) ?? 0) + 1
@@ -69,14 +79,24 @@ export function startAttachmentUpload(
       emit();
       revokeAttachmentObjectUrl(preview);
     } catch (error) {
-      states.set(expenseId, {
-        status: "error",
-        intent: preview,
-        error: error instanceof Error ? error.message : "Failed to save attachment",
-      });
-      emit();
-      console.error("background attachment save failed:", error);
-      for (const listener of failureListeners) listener({ groupId, expenseId, attachment });
+      const code = (error as { code?: string }).code;
+      if (code === "EXPENSE_DELETED" || code === "ATTACHMENT_CHANGED") {
+        // The expense is gone, or the receipt was replaced since the user saw
+        // it, so there is nothing to retry or show an error on: drop the
+        // pending state and just tell the user.
+        states.delete(expenseId);
+        emit();
+        revokeAttachmentObjectUrl(preview);
+      } else {
+        states.set(expenseId, {
+          status: "error",
+          intent: preview,
+          error: error instanceof Error ? error.message : "Failed to save attachment",
+        });
+        emit();
+        console.error("background attachment save failed:", error);
+      }
+      for (const listener of failureListeners) listener({ groupId, expenseId, attachment, expectedName, code });
     }
   })();
 }

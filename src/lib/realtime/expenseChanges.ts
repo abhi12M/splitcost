@@ -3,6 +3,9 @@
 
 export type ExpenseEvent = "INSERT" | "UPDATE" | "DELETE";
 
+/** What happened to an expense's receipt. */
+export type ReceiptChange = "added" | "replaced" | "removed";
+
 export type ExpenseBroadcast = {
   event: ExpenseEvent;
   expenseId: string;
@@ -11,6 +14,11 @@ export type ExpenseBroadcast = {
   originSessionId: string | null;
   /** The expense's revision after the change (absent on DELETE). */
   revision?: number;
+  /**
+   * Set when the only thing that changed is the receipt. It never conflicts
+   * with someone editing the expense's other fields.
+   */
+  receipt?: ReceiptChange;
 };
 
 export const EXPENSE_CHANGED_EVENT = "expense-changed";
