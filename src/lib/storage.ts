@@ -1,6 +1,33 @@
 import { EXPENSE_CATEGORIES, type CategoryKey, type SubcategoryId } from "@/components/icons/CategoryIcons";
 import type { ExpenseAttachment } from "@/lib/expenseAttachments";
 import { getRealtimeOriginSessionId } from "@/lib/realtime/originSession";
+import {
+  deleteCachedExpense,
+  deleteCachedGroup,
+  patchCachedGroup,
+  readCachedGroupSummaries,
+  writeCachedGroupSummaries,
+} from "@/lib/offline/cache";
+import {
+  addLocalExpense,
+  createLocalGroup,
+  deleteLocalExpense,
+  deleteLocalGroup,
+  findLocalExpense,
+  getLocalGroup,
+  listLocalGroups,
+  localDashboard,
+  localExpenseDetails,
+  localGroupSummary,
+  patchLocalExpenseCategory,
+  updateLocalExpense,
+  updateLocalGroup,
+} from "@/lib/offline/localGroups";
+import { isOfflineError, isOnline, trackedFetch } from "@/lib/offline/network";
+
+// Every call below first checks whether the group was created on this device
+// and hasn't reached the server yet (see lib/offline/localGroups); such a
+// group is read and changed in IndexedDB only, until it is synced.
 
 export type SplitType = "equal" | "percentage" | "custom";
 
@@ -175,28 +202,50 @@ export interface EditExpenseInterface {
 }
 // ========== GROUP OPERATIONS ==========
 // Get a single group for add expense page
-export async function getGroup(groupId: string) {
-  return fetch(`/api/groups/${groupId}`, {
+export async function getGroup(groupId: string): Promise<GroupResponse | null> {
+  const local = await getLocalGroup(groupId);
+  if (local) return local.group;
+
+  const res = await trackedFetch(`/api/groups/${groupId}`, {
     cache: "no-store",
-  }).then(r => r.json());
+  });
+  if (!res.ok) return null;
+  const group = (await res.json()) as GroupResponse | null;
+  if (group) void patchCachedGroup(group);
+  return group;
 }
 
+/**
+ * Creates the group on the server, or, while offline, on this device only
+ * (`local: true`); a local group is sent to the server once back online.
+ */
 export async function createGroup(
   name: string,
   currency: string,
   memberNames: string[]
-): Promise<GroupResponse | undefined> {
-  const res = await fetch("/api/groups", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      name,
-      currency,
-      memberNames,
-    }),
-  });
+): Promise<(GroupResponse & { local?: boolean }) | undefined> {
+  if (!isOnline()) {
+    return { ...(await createLocalGroup(name, currency, memberNames)), local: true };
+  }
+
+  let res: Response;
+  try {
+    res = await trackedFetch("/api/groups", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name,
+        currency,
+        memberNames,
+      }),
+    });
+  } catch (error) {
+    if (!isOfflineError(error)) throw error;
+    // The connection dropped: keep the group on this device instead.
+    return { ...(await createLocalGroup(name, currency, memberNames)), local: true };
+  }
 
   if (!res.ok) {
     console.error("Failed to create group");
@@ -210,7 +259,9 @@ export async function updateGroup(
   groupId: string,
   data: GroupFormRequest
 ): Promise<GroupResponse> {
-  const res = await fetch(`/api/groups/${groupId}`, {
+  if (await getLocalGroup(groupId)) return updateLocalGroup(groupId, data);
+
+  const res = await trackedFetch(`/api/groups/${groupId}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -237,8 +288,11 @@ export async function updateGroup(
   return payload;
 }
 
-export async function loadGroupDetails(groupId: string) {
-  const res = await fetch(`/api/groups/${groupId}/dashboard`, {
+export async function loadGroupDetails(groupId: string): Promise<GroupDashboardInterface | null> {
+  const local = await getLocalGroup(groupId);
+  if (local) return localDashboard(local);
+
+  const res = await trackedFetch(`/api/groups/${groupId}/dashboard`, {
     method: "GET",
     cache: "no-store",
   })
@@ -254,22 +308,44 @@ export async function loadGroupDetails(groupId: string) {
 export async function loadGroupsByIds(
   groupIds: string[]
 ): Promise<GroupOverviewItemInterface[]> {
-  if (groupIds.length === 0) return [];
+  return (await loadMyGroups(groupIds)).groups;
+}
 
-  const res = await fetch("/api/groups/batch", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ groupIds }),
-  });
+/**
+ * The cards for "My groups": local groups from this device, synced ones from
+ * the server, or from the last saved copy while offline. `fromServer` says
+ * whether the server answered, i.e. whether a missing group is really gone.
+ */
+export async function loadMyGroups(
+  groupIds: string[]
+): Promise<{ groups: GroupOverviewItemInterface[]; fromServer: boolean }> {
+  const localGroups = await listLocalGroups();
+  const localIds = new Set(localGroups.map((record) => record.id));
+  const local = localGroups.filter((record) => groupIds.includes(record.id)).map(localGroupSummary);
+  const serverIds = groupIds.filter((id) => !localIds.has(id));
+  if (serverIds.length === 0) return { groups: local, fromServer: true };
 
-  if (!res.ok) {
-    console.error("Failed to load groups");
-    return [];
+  try {
+    const res = await trackedFetch("/api/groups/batch", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ groupIds: serverIds }),
+    });
+
+    if (!res.ok) {
+      console.error("Failed to load groups");
+      return { groups: [...local, ...(await readCachedGroupSummaries(serverIds))], fromServer: false };
+    }
+
+    const groups = (await res.json()) as GroupOverviewItemInterface[];
+    void writeCachedGroupSummaries(groups);
+    return { groups: [...local, ...groups], fromServer: true };
+  } catch (error) {
+    if (!isOfflineError(error)) throw error;
+    return { groups: [...local, ...(await readCachedGroupSummaries(serverIds))], fromServer: false };
   }
-
-  return res.json();
 }
 
 /**
@@ -278,12 +354,16 @@ export async function loadGroupsByIds(
  * every expense in it).
  */
 export async function isGroupDeleted(groupId: string): Promise<boolean> {
-  const res = await fetch(`/api/groups/${groupId}`, { cache: "no-store" }).catch(() => null);
+  if (await getLocalGroup(groupId)) return false;
+  const res = await trackedFetch(`/api/groups/${groupId}`, { cache: "no-store" }).catch(() => null);
+  if (res?.status === 404) void deleteCachedGroup(groupId);
   return res?.status === 404;
 }
 
 export async function deleteGroup(groupId: string): Promise<boolean> {
-  const res = await fetch(`/api/groups/${groupId}`, {
+  if (await getLocalGroup(groupId)) return deleteLocalGroup(groupId);
+
+  const res = await trackedFetch(`/api/groups/${groupId}`, {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
     // Lets this tab ignore its own "group deleted" broadcast.
@@ -295,6 +375,7 @@ export async function deleteGroup(groupId: string): Promise<boolean> {
     return false;
   }
 
+  void deleteCachedGroup(groupId);
   return true;
 }
 
@@ -302,9 +383,11 @@ export async function addExpense(
   groupId: string,
   expenseData: ExpenseRequest
 ): Promise<ExpenseResponse | undefined> {
+  if (await getLocalGroup(groupId)) return addLocalExpense(groupId, expenseData);
+
   const { attachment: _attachment, ...expensePayload } = expenseData;
 
-  const res = await fetch("/api/expenses", {
+  const res = await trackedFetch("/api/expenses", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -333,7 +416,10 @@ export async function addExpense(
 export async function editExpense(
   expenseId: string
 ): Promise<EditExpenseInterface | null> {
-  const res = await fetch(`/api/expenses/${expenseId}`, {
+  const local = await findLocalExpense(expenseId);
+  if (local) return localExpenseDetails(local.record, local.expense);
+
+  const res = await trackedFetch(`/api/expenses/${expenseId}`, {
     cache: "no-store",
   });
 
@@ -352,9 +438,11 @@ export async function updateExpense(
 ): Promise<ExpenseResponse | undefined> {
   // `revision` is sent as `expectedRevision` below; drop it here so it isn't
   // also duplicated into the payload by the spread.
+  if (await getLocalGroup(groupId)) return updateLocalExpense(groupId, expenseId, data);
+
   const { attachment: _attachment, revision: _revision, ...expensePayload } = data;
 
-  const res = await fetch(`/api/expenses/${expenseId}`, {
+  const res = await trackedFetch(`/api/expenses/${expenseId}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -386,7 +474,10 @@ export async function patchExpenseCategory(
   /** The category the user saw; the server rejects the change if it has since moved on. */
   expected: { category: string; subcategory: string }
 ): Promise<ExpenseCategoryPatchResponse | undefined> {
-  const res = await fetch(`/api/expenses/${expenseId}`, {
+  const local = await findLocalExpense(expenseId);
+  if (local) return patchLocalExpenseCategory(local.record.id, expenseId, category, subcategory);
+
+  const res = await trackedFetch(`/api/expenses/${expenseId}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -419,7 +510,10 @@ export async function patchExpenseCategory(
 export async function deleteExpense(
   expenseId: string
 ): Promise<boolean> {
-  const res = await fetch(`/api/expenses/${expenseId}`, {
+  const local = await findLocalExpense(expenseId);
+  if (local) return deleteLocalExpense(local.record.id, expenseId);
+
+  const res = await trackedFetch(`/api/expenses/${expenseId}`, {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ originSessionId: getRealtimeOriginSessionId() }),
@@ -430,6 +524,7 @@ export async function deleteExpense(
     return false;
   }
 
+  void deleteCachedExpense(expenseId);
   return true;
 }
 

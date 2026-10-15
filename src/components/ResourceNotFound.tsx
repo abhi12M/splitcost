@@ -1,6 +1,9 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { Link } from "@/i18n/navigation";
+import { useOnline } from "@/hooks/useOffline";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 
@@ -24,6 +27,14 @@ export function ResourceNotFound({
   actionLabel,
   actionHref,
 }: ResourceNotFoundProps) {
+  const tOffline = useTranslations("offline");
+  // Offline, a missing page usually just wasn't saved on this device yet;
+  // saying "not found" would wrongly suggest it was deleted.
+  if (!useOnline()) {
+    code = undefined;
+    title = tOffline("unavailableTitle");
+    message = tOffline("unavailableMessage");
+  }
   return (
     <Layout>
       <div className="flex flex-1 flex-col items-center justify-center gap-6 px-6 py-16 text-center">

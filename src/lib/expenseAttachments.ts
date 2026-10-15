@@ -1,4 +1,7 @@
 import { getRealtimeOriginSessionId } from "@/lib/realtime/originSession";
+// A dropped connection then fails with an OfflineError (code "OFFLINE"), which
+// callers can tell apart from the server refusing the receipt.
+import { trackedFetch } from "@/lib/offline/network";
 
 export const MAX_ATTACHMENT_SIZE_BYTES = 5 * 1024 * 1024;
 export const MAX_ATTACHMENT_SIZE_LABEL = "5 MB";
@@ -115,7 +118,7 @@ export async function saveExpenseAttachment(
   formData.append("file", attachment.file);
   formData.append("originSessionId", getRealtimeOriginSessionId());
 
-  const res = await fetch(`/api/expenses/${expenseId}/attachment`, {
+  const res = await trackedFetch(`/api/expenses/${expenseId}/attachment`, {
     method: "POST",
     body: formData,
   });
@@ -135,7 +138,7 @@ export async function saveExpenseAttachment(
  * it out to delete whatever receipt is there.
  */
 export async function deleteExpenseAttachment(expenseId: string, expectedName?: string) {
-  const res = await fetch(`/api/expenses/${expenseId}/attachment`, {
+  const res = await trackedFetch(`/api/expenses/${expenseId}/attachment`, {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

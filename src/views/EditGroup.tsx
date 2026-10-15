@@ -49,6 +49,8 @@ import { useGroupChangeNotices } from "@/components/group/GroupChangeNotices";
 import { GroupDeletedDialog } from "@/components/group/GroupDeletedDialog";
 import { applyGroupChangesToDashboard } from "@/lib/realtime/groupChanges";
 import { cn } from "@/lib/utils";
+import { OfflineBanner } from "@/components/sync/OfflineBanner";
+import { useGroupAccess, useOfflineFailureToast } from "@/hooks/useOffline";
 import {
   GROUP_NAME_MAX,
   MEMBER_NAME_MAX,
@@ -241,6 +243,8 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
   const { toast } = useToast();
   const isMdUp = useMdUp();
   const { data: dashboard, loading, refresh, applyChange } = useGroupDashboard(groupId);
+  const access = useGroupAccess(groupId);
+  const showOfflineFailure = useOfflineFailureToast();
   const formInitializedForGroupId = useRef<string | null>(null);
   // The revision this form's edits are based on, sent with the save. It only
   // moves forward when a change merged cleanly or the user resolved a
@@ -720,6 +724,10 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
   };
 
   const handleDeleteGroup = async () => {
+    if (!access.check("deleteGroup")) {
+      setDeleteDialogOpen(false);
+      return;
+    }
     setIsDeleting(true);
     isDeletingRef.current = true;
     try {
@@ -743,6 +751,11 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
       toast({ message: tToasts("groupDeleted"), variant: "destructive" });
       router.push("/");
     } catch (error) {
+      if (showOfflineFailure(error)) {
+        setIsDeleting(false);
+        isDeletingRef.current = false;
+        return;
+      }
       const message =
         error instanceof Error ? error.message : t("failedDelete");
       toast({
@@ -771,6 +784,8 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
 
   /** `revision` overrides the form's base, for "Save my changes" after a conflict. */
   const handleSaveGroup = async (revision: number | undefined = baseRevision) => {
+    // Offline in a synced group: keep the form as it is, to save once back online.
+    if (!access.check("edit")) return;
     const cleanedGroupName = cleanName(groupName);
     const normalizedMembers = members.map((member) => ({
       name: cleanName(member.name),
@@ -833,6 +848,11 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
         setIsSubmitting(false);
         return;
       }
+      // The connection dropped mid-save; the form keeps the changes.
+      if (showOfflineFailure(error)) {
+        setIsSubmitting(false);
+        return;
+      }
 
       const message =
         error instanceof Error ? error.message : t("failedUpdate");
@@ -873,11 +893,18 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
               </Link>
             </Button>
 
-            <Button onClick={() => void handleSaveGroup()} disabled={isSubmitting || !hasChanges}>
+            <Button
+              onClick={() => void handleSaveGroup()}
+              disabled={isSubmitting || !hasChanges}
+              aria-disabled={access.can.edit ? undefined : true}
+              className={cn(!access.can.edit && "opacity-50")}
+            >
               {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               {hasChanges ? t("saveChanges") : t("upToDate")}
             </Button>
           </div>
+
+          <OfflineBanner groupId={groupId} access={access} className="mb-6" />
 
           <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
             <div className="space-y-6">
@@ -1092,8 +1119,14 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
             <Button
               type="button"
               variant="outline"
-              className="shrink-0 border-destructive text-destructive hover:bg-destructive/5 hover:text-destructive"
-              onClick={() => setDeleteDialogOpen(true)}
+              className={cn(
+                "shrink-0 border-destructive text-destructive hover:bg-destructive/5 hover:text-destructive",
+                !access.can.deleteGroup && "opacity-50"
+              )}
+              aria-disabled={access.can.deleteGroup ? undefined : true}
+              onClick={() => {
+                if (access.check("deleteGroup")) setDeleteDialogOpen(true);
+              }}
             >
               {tGroup("deleteGroup")}
             </Button>

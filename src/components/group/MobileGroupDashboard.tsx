@@ -77,6 +77,10 @@ import { ADMIN_BASE_PATH } from "@/lib/constants";
 import { useBackButtonClose } from "@/hooks/useBackButtonClose";
 import { GenericAlertDialog } from "@/components/ui/generic-alert-dialog";
 import { ActivityFeed } from "@/components/activity/ActivityFeed";
+import { GuardedLink } from "@/components/sync/GuardedLink";
+import { OfflineBanner } from "@/components/sync/OfflineBanner";
+import { SyncStatusButton } from "@/components/sync/SyncStatus";
+import type { GroupAccess } from "@/hooks/useOffline";
 
 const ExpenseChart = dynamic(() => import("@/components/group/ExpenseChart"), {
   ssr: false,
@@ -142,6 +146,8 @@ export type MobileGroupDashboardProps = {
   activityRefreshKey: string;
   /** Expenses the activity feed can still open. */
   existingExpenseIds: ReadonlySet<string>;
+  /** What can be changed right now (offline, or a group not synced yet). */
+  access: GroupAccess;
 };
 
 function groupTotal(list: GroupDashboardInterface["expenses"]) {
@@ -182,7 +188,9 @@ export function MobileGroupDashboard({
   onViewerMemberIdChange,
   activityRefreshKey,
   existingExpenseIds,
+  access,
 }: MobileGroupDashboardProps) {
+  const blockEdit = () => access.check("edit");
   const t = useTranslations("groupDetails");
   const tGroup = useTranslations("group");
   const tCommon = useTranslations("common");
@@ -289,6 +297,7 @@ export function MobileGroupDashboard({
           <h1 className="min-w-0 flex-1 truncate text-base font-semibold tracking-tight">
             {group.name}
           </h1>
+          <SyncStatusButton />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon-sm" className="shrink-0" aria-label={t("groupMenu")}>
@@ -297,12 +306,18 @@ export function MobileGroupDashboard({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuItem asChild>
-                <Link href={`/group/${groupId}/edit`} className="flex items-center gap-2">
+                <GuardedLink
+                  href={`/group/${groupId}/edit`}
+                  allowed={access.can.edit}
+                  onBlocked={blockEdit}
+                  className="flex items-center gap-2"
+                >
                   <Pencil className="h-4 w-4" />
                   {t("editGroup")}
-                </Link>
+                </GuardedLink>
               </DropdownMenuItem>
               <DropdownMenuItem
+                className={cn(!access.can.share && "opacity-50")}
                 onClick={() => {
                   void copyLink("link");
                 }}
@@ -312,6 +327,7 @@ export function MobileGroupDashboard({
               </DropdownMenuItem>
               {settlements.length > 0 ? (
                 <DropdownMenuItem
+                  className={cn(!access.can.share && "opacity-50")}
                   onClick={() => {
                     void copyLink("settlement");
                   }}
@@ -433,6 +449,7 @@ export function MobileGroupDashboard({
             )}
           </div>
         </div>
+        <OfflineBanner groupId={groupId} access={access} className="mx-3 mb-2 sm:mx-4" />
       </header>
 
       <Tabs defaultValue="expenses" className="flex flex-1 flex-col px-0">
@@ -769,8 +786,12 @@ export function MobileGroupDashboard({
                           variant="default"
                           size="sm"
                           disabled={isLoading}
-                          className="font-semibold"
-                          onClick={() => setSettleConfirmation({ settlement: s, index: i })}
+                          aria-disabled={access.can.settle ? undefined : true}
+                          className={cn("font-semibold", !access.can.settle && "opacity-50")}
+                          onClick={() => {
+                            if (!access.check("settle")) return;
+                            setSettleConfirmation({ settlement: s, index: i });
+                          }}
                         >
                           {isLoading ? (
                             <span className="inline-flex items-center gap-2">
@@ -835,13 +856,15 @@ export function MobileGroupDashboard({
         </nav>
       </Tabs>
 
-      <Link
+      <GuardedLink
         href={`/group/${groupId}/add-expense`}
+        allowed={access.can.edit}
+        onBlocked={blockEdit}
         className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+5.75rem)] right-[max(1.25rem,env(safe-area-inset-right,0px))] z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition hover:bg-primary/92 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-[0.97]"
         aria-label={t("addExpense")}
       >
         <Plus className="h-7 w-7" strokeWidth={2.25} />
-      </Link>
+      </GuardedLink>
 
       <GenericAlertDialog
         open={settleConfirmation !== null}

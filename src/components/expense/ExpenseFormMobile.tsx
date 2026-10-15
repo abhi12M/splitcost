@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef, forwardRef, useImperativeHandle }
 import { useTranslations } from "next-intl"
 import { ArrowLeft, CalendarIcon, Check, NotebookPen, Settings } from "lucide-react"
 import { Input } from "@/components/ui/input"
+import { SyncStatusButton } from "@/components/sync/SyncStatus"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 import {
@@ -419,7 +420,10 @@ const ExpenseFormMobile = forwardRef<ExpenseFormMobileHandle, Props>(function Ex
             {initialData ? t("editExpense") : t("addExpenseMobile")}
           </span>
 
-          <Check className="w-5 h-5 text-primary" onClick={handleSubmit} />
+          <div className="flex items-center gap-2">
+            <SyncStatusButton className="h-7 w-7" />
+            <Check className="w-5 h-5 text-primary" onClick={handleSubmit} />
+          </div>
         </div>
 
         {/* Avatar row */}

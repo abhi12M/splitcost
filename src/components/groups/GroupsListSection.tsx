@@ -30,7 +30,10 @@ import { formatDisplayDate, formatDisplayDateTime } from "@/components/ui/format
 import { formatCurrency } from "@/lib/avatar-utils";
 import { ADMIN_BASE_PATH, LOCAL_GROUPS_KEY } from "@/lib/constants";
 import { getEncryptedItem, setEncryptedItem } from "@/lib/localStorage";
-import { deleteGroup, GroupOverviewItemInterface, loadGroupsByIds } from "@/lib/storage";
+import { deleteGroup, GroupOverviewItemInterface, loadMyGroups } from "@/lib/storage";
+import { LocalGroupBadge } from "@/components/sync/LocalGroupBadge";
+import { useLocalGroups } from "@/hooks/useOffline";
+import { LOCAL_GROUPS_CHANGED_EVENT } from "@/lib/offline/localGroups";
 
 type HomeGroup = GroupOverviewItemInterface & {
   totalExpenses?: number;
@@ -217,9 +220,9 @@ export function GroupsListSection({ adminMode = false }: { adminMode?: boolean }
     setSortBy("latest-activity");
   };
 
+  // Only the first load shows skeletons (`loading` starts true); reloads swap
+  // the cards in place.
   const fetchGroups = useCallback(async () => {
-    setLoading(true);
-
     try {
       if (adminMode) {
         const res = await fetch("/api/groups", { cache: "no-store" });
@@ -231,10 +234,14 @@ export function GroupsListSection({ adminMode = false }: { adminMode?: boolean }
         setGroups(allGroups);
       } else {
         const groupIds = getEncryptedItem<string[]>(LOCAL_GROUPS_KEY, []);
-        const loadedGroups = await loadGroupsByIds(groupIds);
+        const { groups: loadedGroups, fromServer } = await loadMyGroups(groupIds);
         setGroups(loadedGroups);
-        const validGroupIds = loadedGroups.map((group) => group.id);
-        setEncryptedItem(LOCAL_GROUPS_KEY, validGroupIds);
+        // Forget groups the server no longer has, but only on its word: offline
+        // the list comes from saved copies, which may simply be missing some.
+        if (fromServer) {
+          const validGroupIds = loadedGroups.map((group) => group.id);
+          setEncryptedItem(LOCAL_GROUPS_KEY, validGroupIds);
+        }
       }
     } catch {
       setGroups([]);
@@ -246,6 +253,20 @@ export function GroupsListSection({ adminMode = false }: { adminMode?: boolean }
   useEffect(() => {
     void fetchGroups();
   }, [fetchGroups]);
+
+  // A local group was created, changed, synced or re-keyed: reload the cards.
+  useEffect(() => {
+    if (adminMode) return;
+    const reload = () => void fetchGroups();
+    window.addEventListener(LOCAL_GROUPS_CHANGED_EVENT, reload);
+    return () => window.removeEventListener(LOCAL_GROUPS_CHANGED_EVENT, reload);
+  }, [adminMode, fetchGroups]);
+
+  const localGroups = useLocalGroups();
+  const localStates = useMemo(
+    () => new Map(localGroups.map((record) => [record.id, record.state])),
+    [localGroups]
+  );
 
   const handleDeleteGroup = async (groupId: string) => {
     try {
@@ -452,7 +473,10 @@ export function GroupsListSection({ adminMode = false }: { adminMode?: boolean }
                         />
                       ) : null}
                     </div>
-                    <CardTitle className="mt-3">{group.name}</CardTitle>
+                    <CardTitle className="mt-3 flex items-center gap-2">
+                      <span className="min-w-0 truncate">{group.name}</span>
+                      {localStates.get(group.id) ? <LocalGroupBadge state={localStates.get(group.id)!} /> : null}
+                    </CardTitle>
                     {adminMode ? (
                       <div className="space-y-1 text-sm text-muted-foreground">
                         <p>{t("created", { date: formatDisplayDateTime(group.createdAt) })}</p>

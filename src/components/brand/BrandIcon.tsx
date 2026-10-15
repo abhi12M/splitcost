@@ -13,7 +13,11 @@ type BrandIconProps = {
   height?: number;
 };
 
-/** Theme-aware SplitCost wordmark logo. */
+/**
+ * Theme-aware SplitCost wordmark logo. Served as the plain file (not through
+ * the image optimizer) so it is the copy the service worker precaches, and the
+ * logo shows offline from the first visit.
+ */
 export function BrandIcon({ className, height = 36 }: BrandIconProps) {
   const width = Math.round((height * LOGO_WIDTH) / LOGO_HEIGHT);
   const imageClass = cn("w-auto object-contain object-left", className);
@@ -27,6 +31,7 @@ export function BrandIcon({ className, height = 36 }: BrandIconProps) {
         height={height}
         className={cn(imageClass, "dark:hidden")}
         priority
+        unoptimized
       />
       <Image
         src="/logo-dark.png"
@@ -35,6 +40,7 @@ export function BrandIcon({ className, height = 36 }: BrandIconProps) {
         height={height}
         className={cn(imageClass, "hidden dark:block")}
         priority
+        unoptimized
       />
     </>
   );

@@ -24,6 +24,7 @@ export default function CreateGroupPage() {
   const t = useTranslations("group");
   const tCommon = useTranslations("common");
   const tToasts = useTranslations("toasts");
+  const tOffline = useTranslations("offline");
   const router = useRouter();
   const isMdUp = useMdUp();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,6 +45,9 @@ export default function CreateGroupPage() {
         setEncryptedItem(LOCAL_CURRENCY_KEY, data.currency);
 
         saveErrorToastRef.current?.();
+        if (group.local) {
+          toast({ message: tOffline("groupCreatedLocal"), variant: "info" });
+        }
         router.push(`/group/${group.id}`);
         return;
       }

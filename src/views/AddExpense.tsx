@@ -21,6 +21,9 @@ import { useGroupChangeNotices } from "@/components/group/GroupChangeNotices";
 import { GroupDeletedDialog } from "@/components/group/GroupDeletedDialog";
 import { applyGroupChangesToGroup } from "@/lib/realtime/groupChanges";
 import { useToast } from "@/hooks/use-toast";
+import { AttachmentGuardProvider } from "@/components/expense/ExpenseAttachmentControl";
+import { OfflineBanner } from "@/components/sync/OfflineBanner";
+import { useGroupAccess, useOfflineFailureToast } from "@/hooks/useOffline";
 
 export default function AddExpensePage({ groupId }: { groupId: string }) {
   const t = useTranslations("expense");
@@ -35,6 +38,9 @@ export default function AddExpensePage({ groupId }: { groupId: string }) {
   const saveErrorToastRef = useRef<(() => void) | null>(null);
   const changeNotices = useGroupChangeNotices();
   const [groupDeleted, setGroupDeleted] = useState(false);
+  const access = useGroupAccess(groupId);
+  const showOfflineFailure = useOfflineFailureToast();
+  const attachmentGuard = { allowed: access.can.attachment, check: () => access.check("attachment") };
 
   // Apply the broadcast diff in place: the forms are not remounted, so what
   // the user has entered stays, and new members start out of the split.
@@ -68,6 +74,8 @@ export default function AddExpensePage({ groupId }: { groupId: string }) {
     viewerId && group.members.some((m) => m.id === viewerId) ? viewerId : undefined;
 
   const handleSubmit = async (data: Parameters<typeof addExpense>[1]) => {
+    // Offline in a synced group: keep the filled form, it can be saved once back online.
+    if (!access.check("edit")) return;
     setIsSubmitting(true);
     try {
       const expense = await addExpense(groupId!, data);
@@ -85,6 +93,8 @@ export default function AddExpensePage({ groupId }: { groupId: string }) {
         setGroupDeleted(true);
         return;
       }
+      // The connection dropped mid-save: the form stays filled for a retry.
+      if (showOfflineFailure(error)) return;
       // Stay on the filled form so the user can tap Add again.
       saveErrorToastRef.current = toast({
         title: tToasts("couldNotAddExpense"),
@@ -95,7 +105,7 @@ export default function AddExpensePage({ groupId }: { groupId: string }) {
   };
 
   return (
-    <>
+    <AttachmentGuardProvider value={attachmentGuard}>
       {/* ================= DESKTOP / TABLET ================= */}
       <div className="hidden md:block">
         <Layout variant="minimal">
@@ -114,6 +124,7 @@ export default function AddExpensePage({ groupId }: { groupId: string }) {
                   <CardDescription className="truncate">
                     {t("recordForGroup", { name: group.name })}
                   </CardDescription>
+                  <OfflineBanner groupId={groupId} access={access} className="mt-2" />
                 </CardHeader>
 
                 <CardContent>
@@ -146,6 +157,6 @@ export default function AddExpensePage({ groupId }: { groupId: string }) {
       <Spinner show={isSubmitting} message={tCommon("creating")} />
       {changeNotices.sheet}
       <GroupDeletedDialog open={groupDeleted} />
-    </>
+    </AttachmentGuardProvider>
   );
 }

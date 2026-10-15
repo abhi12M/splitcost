@@ -8,6 +8,7 @@ import { BrandIcon } from "@/components/brand/BrandIcon";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { HeaderDesktopNav } from "@/components/layout/HeaderDesktopNav";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { SyncStatusButton } from "@/components/sync/SyncStatus";
 import { Button } from "@/components/ui/button";
 import { useMyGroupsCount } from "@/hooks/useMyGroupsCount";
 import { Link } from "@/i18n/navigation";
@@ -95,6 +96,9 @@ export function Header() {
           >
             <BrandIcon className="h-8 w-auto sm:h-9" height={36} />
           </Link>
+
+          {/* Phones, on My groups: the logo is centred, so the status sits at the right edge. */}
+          <SyncStatusButton className="absolute right-3 top-1/2 -translate-y-1/2 sm:static sm:order-last sm:translate-y-0" />
 
           <div className="hidden min-w-0 items-center gap-1 sm:flex">
             <nav

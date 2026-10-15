@@ -14,6 +14,7 @@ import {
   Users,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { SyncStatusButton } from "@/components/sync/SyncStatus";
 import { AddMemberInputBox } from "@/components/group/AddMemberInputBox";
 import { GroupFormFieldBox } from "@/components/group/GroupFormFieldBox";
 import { Badge } from "@/components/ui/badge";
@@ -152,18 +153,21 @@ export function EditGroupMobile({
                 <ArrowLeft className="h-5 w-5" />
               </Link>
               <span className="font-medium">{t("editGroup")}</span>
-              <button
-                type="button"
-                onClick={handleSaveRequest}
-                disabled={isSubmitting}
-                aria-label={t("saveGroup")}
-              >
-                {isSubmitting ? (
-                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                ) : (
-                  <Check className="h-5 w-5 text-primary" />
-                )}
-              </button>
+              <div className="flex items-center gap-2">
+                <SyncStatusButton className="h-7 w-7" />
+                <button
+                  type="button"
+                  onClick={handleSaveRequest}
+                  disabled={isSubmitting}
+                  aria-label={t("saveGroup")}
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                  ) : (
+                    <Check className="h-5 w-5 text-primary" />
+                  )}
+                </button>
+              </div>
             </div>
 
             <div className="flex items-center gap-2 overflow-x-auto border-b px-3 py-2.5">

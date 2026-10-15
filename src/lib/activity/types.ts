@@ -85,7 +85,7 @@ type EventOf<K extends ActivityKind> = {
 /** Discriminated by `kind`, so `data` narrows with it. */
 export type ActivityEvent = { [K in ActivityKind]: EventOf<K> }[ActivityKind];
 
-/** An event before it is stored: the database assigns id and time. */
+/** An event before it is stored: the database assigns id and (unless given) time. */
 export type NewActivityEvent = {
   [K in ActivityKind]: {
     groupId: string;
@@ -93,6 +93,8 @@ export type NewActivityEvent = {
     kind: K;
     data: ActivityData[K];
     originSessionId?: string | null;
+    /** When it happened, if not now: e.g. a change made offline and imported later. */
+    createdAt?: string;
   };
 }[ActivityKind];
 

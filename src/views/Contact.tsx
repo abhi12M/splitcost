@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { flushSync } from "react-dom";
 import { motion } from "framer-motion";
 import { Bug, Clock3, Handshake, Mail, Send } from "lucide-react";
@@ -9,6 +9,8 @@ import { useTranslations } from "next-intl";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useOnline } from "@/hooks/useOffline";
+import { isOfflineError, isOnline, trackedFetch } from "@/lib/offline/network";
 import { brandStyles } from "@/lib/brand-styles";
 import { APP_NAME } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -25,16 +27,50 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
+// The unsent message, kept for this tab so a reload (e.g. while offline)
+// doesn't lose it. Cleared once the message is sent.
+const DRAFT_KEY = "splitcost:contact-draft";
+const EMPTY_FORM = { name: "", email: "", subject: "", message: "" };
+
+function readDraft(): typeof EMPTY_FORM | null {
+  try {
+    const raw = sessionStorage.getItem(DRAFT_KEY);
+    return raw ? { ...EMPTY_FORM, ...JSON.parse(raw) } : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeDraft(form: typeof EMPTY_FORM) {
+  try {
+    if (Object.values(form).some((value) => value.trim())) sessionStorage.setItem(DRAFT_KEY, JSON.stringify(form));
+    else sessionStorage.removeItem(DRAFT_KEY);
+  } catch {
+    // Storage unavailable (e.g. private mode): the draft just isn't kept.
+  }
+}
+
 export default function ContactPage() {
   const t = useTranslations("contact");
+  const tOffline = useTranslations("offline");
   const { toast } = useToast();
+  const online = useOnline();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    subject: "",
-    message: "",
-  });
+  const [form, setForm] = useState(EMPTY_FORM);
+
+  // Restored after mounting so the server render and the first client render match.
+  const [draftLoaded, setDraftLoaded] = useState(false);
+  useEffect(() => {
+    const draft = readDraft();
+    if (draft) setForm(draft);
+    setDraftLoaded(true);
+  }, []);
+  useEffect(() => {
+    if (draftLoaded) writeDraft(form);
+  }, [form, draftLoaded]);
+
+  const showOfflineToast = () =>
+    toast({ message: tOffline("contactOffline"), variant: "info", duration: 4_000 });
 
   const contactReasons = [
     {
@@ -56,6 +92,11 @@ export default function ContactPage() {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    // Offline: don't send; the message stays in the form (and the saved draft).
+    if (!isOnline()) {
+      showOfflineToast();
+      return;
+    }
     const formElement = e.currentTarget;
     const cleaned = cleanContactInput(form);
     // A field holding only spaces or invisible characters passes the browser's
@@ -68,7 +109,7 @@ export default function ContactPage() {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch("/api/contact", {
+      const res = await trackedFetch("/api/contact", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -84,18 +125,18 @@ export default function ContactPage() {
         variant:'success',
       });
 
-      setForm({
-        name: "",
-        email: "",
-        subject: "",
-        message: "",
-      });
-    } catch {
-      toast({
-        title: t("toastErrorTitle"),
-        description: t("toastErrorDescription"),
-        variant:'error',
-      });
+      setForm(EMPTY_FORM);
+    } catch (error) {
+      // The connection dropped while sending: same message as offline.
+      if (isOfflineError(error)) {
+        showOfflineToast();
+      } else {
+        toast({
+          title: t("toastErrorTitle"),
+          description: t("toastErrorDescription"),
+          variant:'error',
+        });
+      }
     }
 
     setIsSubmitting(false);
@@ -226,7 +267,17 @@ export default function ContactPage() {
                       />
                     </div>
 
-                    <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={isSubmitting}>
+                    {/* Offline it looks disabled but still explains itself on tap (a
+                        plain button, so the browser's required-field check doesn't
+                        answer first). */}
+                    <Button
+                      type={online ? "submit" : "button"}
+                      size="lg"
+                      className={cn("w-full sm:w-auto", !online && "opacity-50")}
+                      disabled={isSubmitting}
+                      aria-disabled={online ? undefined : true}
+                      onClick={online ? undefined : showOfflineToast}
+                    >
                       {isSubmitting ? (
                         t("sending")
                       ) : (

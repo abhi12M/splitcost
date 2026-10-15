@@ -5,7 +5,8 @@ import { useTranslations } from "next-intl";
 import { ChevronRight, History } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ActivityLoadError, ActivityRowsSkeleton } from "@/components/activity/ActivityFeed";
+import { ActivityLoadError, ActivityRowsSkeleton, LocalActivityNotice } from "@/components/activity/ActivityFeed";
+import { useLocalGroup } from "@/hooks/useOffline";
 import { ActivityItem } from "@/components/activity/ActivityItem";
 import { useActivityTime } from "@/components/activity/useActivityTime";
 import { useGroupActivity } from "@/hooks/useGroupActivity";
@@ -15,16 +16,37 @@ const RECENT_COUNT = 5;
 // Collapsing bursts can merge several rows, so fetch a few extra.
 const FETCH_COUNT = 12;
 
-/** Dashboard summary: the latest few entries and a link to the full feed. */
-export function RecentActivityCard({
-  groupId,
-  refreshKey,
-  existingExpenseIds,
-}: {
+type RecentActivityCardProps = {
   groupId: string;
   refreshKey?: unknown;
   existingExpenseIds: ReadonlySet<string>;
-}) {
+};
+
+/** Dashboard summary: the latest few entries and a link to the full feed. */
+export function RecentActivityCard(props: RecentActivityCardProps) {
+  const t = useTranslations("activity");
+  // A group that hasn't reached the server has no history there yet; wait to
+  // know which it is before asking the server.
+  const local = useLocalGroup(props.groupId);
+  if (local !== null) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <History className="h-5 w-5 shrink-0 text-primary" />
+            {t("recent")}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          {local ? <LocalActivityNotice /> : <ActivityRowsSkeleton rows={3} />}
+        </CardContent>
+      </Card>
+    );
+  }
+  return <RecentActivityContent {...props} />;
+}
+
+function RecentActivityContent({ groupId, refreshKey, existingExpenseIds }: RecentActivityCardProps) {
   const t = useTranslations("activity");
   const { dayLabel, shortTime } = useActivityTime();
   const { events, status, retry } = useGroupActivity(groupId, { limit: FETCH_COUNT, refreshKey });

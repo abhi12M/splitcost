@@ -50,6 +50,8 @@ export async function recordActivity(events: NewActivityEvent[]): Promise<void> 
       kind: event.kind,
       data: event.data as unknown as Json,
       origin_session_id: event.originSessionId ?? null,
+      // Left out (not null) when absent, so the column default applies.
+      ...(event.createdAt ? { created_at: event.createdAt } : {}),
     }))
   );
   if (error) console.error("recordActivity error:", error, events.map((e) => e.kind));

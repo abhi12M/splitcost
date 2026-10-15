@@ -76,6 +76,9 @@ import { ADMIN_BASE_PATH, LOCAL_GROUPS_KEY } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { SmartTooltip } from "@/components/ui/smartTooltip";
 import { GenericAlertDialog } from "@/components/ui/generic-alert-dialog";
+import { GuardedLink } from "@/components/sync/GuardedLink";
+import { OfflineBanner } from "@/components/sync/OfflineBanner";
+import { useGroupAccess, useOfflineFailureToast } from "@/hooks/useOffline";
 
 function ChartLoadingPlaceholder() {
   const tCommon = useTranslations("common");
@@ -368,8 +371,10 @@ export default function GroupResponsesPage({
     [tCategories]
   );
   const youLabel = tGroup("you");
-  const { data: dashboard, loading, refresh, applyChange } = useGroupDashboard(groupId);
+  const { data: dashboard, loading, refresh, applyChange, applyRemoteExpenseChange } = useGroupDashboard(groupId);
   const attachmentUploadVersion = useAttachmentUploadCompletion(groupId);
+  const access = useGroupAccess(groupId);
+  const showOfflineFailure = useOfflineFailureToast();
 
   // Deleted in another session: block the screen with an explanation. Both
   // the broadcast and the database delete event can report it.
@@ -377,7 +382,8 @@ export default function GroupResponsesPage({
 
   useGroupRealtime({
     groupId,
-    onExpenseChange: () => {
+    onExpenseChange: applyRemoteExpenseChange,
+    onReconnect: () => {
       void refresh();
     },
   });
@@ -639,6 +645,8 @@ export default function GroupResponsesPage({
   type CopyType = "settlement" | "link";
 
   const shareGroupContent = async (type: CopyType) => {
+    // Both share a link to the group, which only works once it is on the server.
+    if (!access.check("share")) return;
     const settlementText = type === "settlement" ? getSettlementText() : "";
 
     if (type === "settlement" && !settlementText.trim()) {
@@ -753,6 +761,10 @@ export default function GroupResponsesPage({
     setlementData: ReturnType<typeof calculateSettlements>[number],
     index: number
   ) => {
+    if (!access.check("settle")) {
+      setSettleConfirmation(null);
+      return;
+    }
     try {
       setSettlingIndex(index);
       const data: ExpenseRequest = {
@@ -779,6 +791,7 @@ export default function GroupResponsesPage({
       await refresh();
       toast({ message: tToasts("settled"), variant: "success" });
     } catch (error) {
+      if (showOfflineFailure(error)) return;
       toast({
         title: tToasts("couldNotSettle"),
         description: tToasts("tryAgainHint"),
@@ -832,10 +845,13 @@ export default function GroupResponsesPage({
           chartData={chartData}
           viewerMemberId={viewerMemberId}
           onViewerMemberIdChange={onViewerMemberIdChange}
+          access={access}
         />
       </Layout>
     );
   }
+
+  const blockEdit = () => access.check("edit");
 
   return (
     <Layout>
@@ -870,31 +886,34 @@ export default function GroupResponsesPage({
           </div>
           <div className="flex shrink-0 items-center justify-end gap-2 sm:justify-start">
             <Button variant="outline" size="sm" className="h-9 flex-1 sm:flex-initial" asChild>
-              <Link href={`/group/${groupId}/edit`}>
+              <GuardedLink href={`/group/${groupId}/edit`} allowed={access.can.edit} onBlocked={blockEdit}>
                 <Pencil className="h-4 w-4" />
                 <span className="sm:hidden">{tCommon("edit")}</span>
-              </Link>
+              </GuardedLink>
             </Button>
             <Button
               variant="outline"
               size="sm"
-              className="h-9 flex-1 sm:flex-initial"
+              className={cn("h-9 flex-1 sm:flex-initial", !access.can.share && "opacity-50")}
               type="button"
               title={t("shareGroupLink")}
               aria-label={t("shareGroupLink")}
+              aria-disabled={access.can.share ? undefined : true}
               onClick={() => shareGroupContent("link")}
             >
               <Share2 className="h-4 w-4" />
               <span className="sm:hidden">{tCommon("share")}</span>
             </Button>
             <Button asChild size="sm" className="hidden h-9 sm:inline-flex">
-              <Link href={`/group/${groupId}/add-expense`}>
+              <GuardedLink href={`/group/${groupId}/add-expense`} allowed={access.can.edit} onBlocked={blockEdit}>
                 <Plus className="h-4 w-4" />
                 {t("addExpense")}
-              </Link>
+              </GuardedLink>
             </Button>
           </div>
         </header>
+
+        <OfflineBanner groupId={groupId} access={access} />
 
         {/* Summary strip — matches dashboard-style overview */}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
@@ -1059,10 +1078,10 @@ export default function GroupResponsesPage({
 
                   {/* Add Button */}
                   <Button asChild size="sm">
-                    <Link href={`/group/${groupId}/add-expense`}>
+                    <GuardedLink href={`/group/${groupId}/add-expense`} allowed={access.can.edit} onBlocked={blockEdit}>
                       <Plus className="w-4 h-4" />
                       <span className="hidden sm:inline">{tCommon("add")}</span>
-                    </Link>
+                    </GuardedLink>
                   </Button>
                 </div>
 
@@ -1123,10 +1142,10 @@ export default function GroupResponsesPage({
                     </div>
 
                     <Button asChild size="sm" className="shrink-0">
-                      <Link href={`/group/${groupId}/add-expense`}>
+                      <GuardedLink href={`/group/${groupId}/add-expense`} allowed={access.can.edit} onBlocked={blockEdit}>
                         <Plus className="w-4 h-4" />
                         {t("addFirstExpense")}
-                      </Link>
+                      </GuardedLink>
                     </Button>
                   </div>
                 )}
@@ -1306,7 +1325,8 @@ export default function GroupResponsesPage({
                 {(expenses.length > 0 || settlements.length > 0) && (
                   <button
                     onClick={() => shareGroupContent("settlement")}
-                    className="p-2 rounded-md hover:bg-muted transition"
+                    className={cn("p-2 rounded-md hover:bg-muted transition", !access.can.share && "opacity-50")}
+                    aria-disabled={access.can.share ? undefined : true}
                     title={t("shareSettlement")}
                   >
                     <Share2 className="w-4 h-4 text-muted-foreground" />
@@ -1367,16 +1387,15 @@ export default function GroupResponsesPage({
                         <div className="flex justify-center pb-2">
                           <button
                             disabled={isLoading}
-                            onClick={() =>
-                              setSettleConfirmation({ settlement: s, index: i })
-                            }
-                            className={`
-              text-sm font-medium px-4 py-2 rounded-sm
-              bg-primary/10 text-primary
-              hover:bg-primary/20 transition
-              disabled:opacity-50 disabled:cursor-not-allowed
-              flex items-center gap-2
-            `}
+                            aria-disabled={access.can.settle ? undefined : true}
+                            onClick={() => {
+                              if (!access.check("settle")) return;
+                              setSettleConfirmation({ settlement: s, index: i });
+                            }}
+                            className={cn(
+                              "text-sm font-medium px-4 py-2 rounded-sm bg-primary/10 text-primary hover:bg-primary/20 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2",
+                              !access.can.settle && "opacity-50"
+                            )}
                           >
                             {isLoading && (
                               <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -1446,13 +1465,15 @@ export default function GroupResponsesPage({
           </div>
         </div>
 
-        <Link
+        <GuardedLink
           href={`/group/${groupId}/add-expense`}
+          allowed={access.can.edit}
+          onBlocked={blockEdit}
           className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom,0px))] right-[max(1.25rem,env(safe-area-inset-right,0px))] z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition hover:bg-primary/92 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-[0.97] lg:hidden"
           aria-label={t("addExpense")}
         >
           <Plus className="h-7 w-7" strokeWidth={2.25} />
-        </Link>
+        </GuardedLink>
       </div>
       {changeNotices.sheet}
       <GroupDeletedDialog open={groupDeleted} />

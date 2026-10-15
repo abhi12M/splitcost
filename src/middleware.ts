@@ -45,8 +45,13 @@ const authLimiter = redis
 const BODY_LIMIT_JSON = 102_400; // 100 KB — most API routes
 const BODY_LIMIT_LARGE_JSON = 512_000; // 512 KB — blog content
 const BODY_LIMIT_UPLOAD = 10 * 1024 * 1024; // 10 MB — file uploads
+const BODY_LIMIT_GROUP_IMPORT = 1_000_000; // 1 MB — a group created offline, with all its expenses
 
 function pickBodyLimit(pathname: string, method: string): number {
+  if (method === "POST" && pathname === "/api/groups/import") {
+    return BODY_LIMIT_GROUP_IMPORT;
+  }
+
   if (
     method === "POST" &&
     (pathname === "/api/blog-images" ||

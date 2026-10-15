@@ -14,6 +14,7 @@ import { dismissAttachmentUpload, onAttachmentUploadFailure, startAttachmentUplo
 export function AttachmentUploadFailureToasts() {
   const tToasts = useTranslations("toasts");
   const tReceipt = useTranslations("receiptChanges");
+  const tOffline = useTranslations("offline");
 
   useEffect(
     () =>
@@ -36,20 +37,27 @@ export function AttachmentUploadFailureToasts() {
           });
           return;
         }
+        const retry = {
+          label: tToasts("retry"),
+          callback: () => {
+            dismissAttachmentUpload(expenseId);
+            startAttachmentUpload(groupId, expenseId, attachment, expectedName);
+          },
+        };
+        // The connection dropped during the upload: the expense itself is
+        // saved, only its receipt isn't; say so and keep the Retry.
+        if (code === "OFFLINE") {
+          toast({ message: tOffline("droppedReceiptAfterSave"), variant: "warning", action: retry });
+          return;
+        }
         toast({
           title: tToasts("couldNotUploadImage"),
           description: tToasts("tryAgainHint"),
           variant: "error",
-          action: {
-            label: tToasts("retry"),
-            callback: () => {
-              dismissAttachmentUpload(expenseId);
-              startAttachmentUpload(groupId, expenseId, attachment, expectedName);
-            },
-          },
+          action: retry,
         });
       }),
-    [tToasts, tReceipt]
+    [tToasts, tReceipt, tOffline]
   );
 
   return null;

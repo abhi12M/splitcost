@@ -25,6 +25,9 @@ import { applyGroupChangesToGroup } from "@/lib/realtime/groupChanges";
 import { useToast } from "@/hooks/use-toast";
 import { GenericAlertDialog } from "@/components/ui/generic-alert-dialog";
 import { ResourceNotFound } from "@/components/ResourceNotFound";
+import { AttachmentGuardProvider } from "@/components/expense/ExpenseAttachmentControl";
+import { OfflineBanner } from "@/components/sync/OfflineBanner";
+import { useGroupAccess, useOfflineFailureToast } from "@/hooks/useOffline";
 
 export default function EditExpensePage({ groupId, expenseId }: { groupId: string; expenseId: string }) {
   const router = useRouter();
@@ -35,6 +38,9 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
   const tReceipt = useTranslations("receiptChanges");
   const { toast } = useToast();
   const { data: expenseData, loading, refresh, applyChange } = useExpense(expenseId);
+  const access = useGroupAccess(groupId);
+  const showOfflineFailure = useOfflineFailureToast();
+  const attachmentGuard = { allowed: access.can.attachment, check: () => access.check("attachment") };
   const group = expenseData?.group;
   const expense = expenseData?.expense;
   // Local override so successful save flows can swap the saved attachment in
@@ -197,6 +203,12 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
     data: Parameters<typeof updateExpense>[2],
     revision: number | undefined = revisionOverride ?? expense.revision
   ) => {
+    // Offline in a synced group: the edits stay in the open form, not saved
+    // anywhere, until the user saves again once back online.
+    if (!access.check("edit")) {
+      createAsNewRef.current = false;
+      return;
+    }
     if (createAsNewRef.current) {
       createAsNewRef.current = false;
       setIsSubmitting(true);
@@ -214,6 +226,7 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
           showGroupDeleted();
           return;
         }
+        if (showOfflineFailure(error)) return;
         saveErrorToastRef.current = toast({
           title: tToasts("couldNotAddExpense"),
           description: tToasts("tryAgainHint"),
@@ -261,6 +274,8 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
         handleExpenseGone(true);
       } else if (failure.code === "EXPENSE_VERSION_CONFLICT") {
         setConflict({ source: "save", currentRevision: failure.payload?.currentRevision });
+      } else if (showOfflineFailure(error)) {
+        // The connection dropped mid-save; the edits stay in the form.
       } else {
         // Anything else: say so and stay on the filled form to try again.
         saveErrorToastRef.current = toast({
@@ -303,7 +318,7 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
   };
 
   return (
-    <>
+    <AttachmentGuardProvider value={attachmentGuard}>
       <div className="hidden md:block">
         <Layout variant="minimal">
           <div className="container py-6 md:py-8 max-w-2xl">
@@ -323,6 +338,7 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
                       <CardDescription>{t("editDescription")}</CardDescription>
                     </div>
                   </div>
+                  <OfflineBanner groupId={groupId} access={access} className="mt-2" />
                 </CardHeader>
 
                 <CardContent>
@@ -419,6 +435,6 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
           )
         }
       />
-    </>
+    </AttachmentGuardProvider>
   );
 }

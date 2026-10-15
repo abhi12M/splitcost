@@ -11,6 +11,7 @@ import { useGroupActivity } from "@/hooks/useGroupActivity";
 import { collapseRapidUpdates } from "@/lib/activity/feed";
 import type { ActivityEvent, ActivityFilter } from "@/lib/activity/types";
 import { cn } from "@/lib/utils";
+import { useLocalGroup, useOnline } from "@/hooks/useOffline";
 
 const FILTERS: { value: ActivityFilter; label: "filterAll" | "filterExpenses" | "filterSettlements" | "filterMembers" }[] = [
   { value: "all", label: "filterAll" },
@@ -37,30 +38,46 @@ export function ActivityRowsSkeleton({ rows = 5 }: { rows?: number }) {
 
 export function ActivityLoadError({ onRetry }: { onRetry: () => void }) {
   const t = useTranslations("activity");
+  const tOffline = useTranslations("offline");
+  const online = useOnline();
   return (
     <div className="flex flex-col items-center gap-2 py-8 text-center">
-      <p className="text-sm text-muted-foreground">{t("loadError")}</p>
-      <Button type="button" variant="outline" size="sm" onClick={onRetry}>
-        {t("retry")}
-      </Button>
+      <p className="text-sm text-muted-foreground">{online ? t("loadError") : tOffline("activityOffline")}</p>
+      {online ? (
+        <Button type="button" variant="outline" size="sm" onClick={onRetry}>
+          {t("retry")}
+        </Button>
+      ) : null}
     </div>
   );
 }
 
-/** The full group feed: filters, day groups and "Load more". */
-export function ActivityFeed({
-  groupId,
-  refreshKey,
-  existingExpenseIds,
-  className,
-}: {
+/** Shown instead of activity for a group that hasn't reached the server yet. */
+export function LocalActivityNotice() {
+  const t = useTranslations("offline");
+  return <p className="py-6 text-center text-sm text-muted-foreground">{t("activityAfterSync")}</p>;
+}
+
+type ActivityFeedProps = {
   groupId: string;
   /** Changes whenever the group's data changes, to reload in the background. */
   refreshKey?: unknown;
   /** Expenses that can still be opened. */
   existingExpenseIds: ReadonlySet<string>;
   className?: string;
-}) {
+};
+
+/** The full group feed: filters, day groups and "Load more". */
+export function ActivityFeed(props: ActivityFeedProps) {
+  // A group that hasn't reached the server has no history there yet; wait to
+  // know which it is before asking the server.
+  const local = useLocalGroup(props.groupId);
+  if (local === undefined) return <ActivityRowsSkeleton />;
+  if (local) return <LocalActivityNotice />;
+  return <ActivityFeedContent {...props} />;
+}
+
+function ActivityFeedContent({ groupId, refreshKey, existingExpenseIds, className }: ActivityFeedProps) {
   const t = useTranslations("activity");
   const { dayKey, dayLabel, shortTime } = useActivityTime();
   const [filter, setFilter] = useState<ActivityFilter>("all");

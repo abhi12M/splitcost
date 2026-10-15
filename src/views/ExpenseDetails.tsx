@@ -12,6 +12,7 @@ import {
   Check,
   ChevronDown,
   FileText,
+  ImageOff,
   ImagePlus,
   Images,
   Loader2,
@@ -81,6 +82,11 @@ import { useBackButtonClose } from "@/hooks/useBackButtonClose";
 import { toast } from "@/hooks/use-toast";
 import { ResourceNotFound } from "@/components/ResourceNotFound";
 import { getTranslatedSubcategoryLabel, resolveCategoryDisplayLabel } from "@/lib/category-labels";
+import { GuardedLink } from "@/components/sync/GuardedLink";
+import { OfflineBanner } from "@/components/sync/OfflineBanner";
+import { SyncStatusButton } from "@/components/sync/SyncStatus";
+import { useGroupAccess, useOfflineFailureToast } from "@/hooks/useOffline";
+import { cn } from "@/lib/utils";
 
 function memberName(
   members: EditExpenseInterface["group"]["members"],
@@ -262,10 +268,16 @@ export default function ExpenseDetailsPage({
   const tConflict = useTranslations("editConflict");
   const tReceipt = useTranslations("receiptChanges");
   const tCategories = useTranslations("categories");
+  const tOffline = useTranslations("offline");
   const attachmentGalleryInputRef = useRef<HTMLInputElement>(null);
   const attachmentCameraInputRef = useRef<HTMLInputElement>(null);
 
   const { data: details, loading, refresh, setData: setDetails, applyChange } = useExpense(expenseId);
+  const access = useGroupAccess(groupId);
+  const showOfflineFailure = useOfflineFailureToast();
+  const openAttachmentSource = () => {
+    if (access.check("attachment")) setIsAttachmentSourceOpen(true);
+  };
 
   const [viewerMemberId, setViewerMemberId] = useState<string | null>(null);
   useEffect(() => {
@@ -401,6 +413,9 @@ export default function ExpenseDetailsPage({
         // The receipt being deleted is no longer the one stored.
         setReceiptReplaced(true);
       } else {
+        // Don't swap the image under someone zooming into it: close the viewer
+        // and let them reopen the new one.
+        setIsViewerOpen(false);
         noticeReceiptChange("replaced");
       }
       return;
@@ -463,6 +478,7 @@ export default function ExpenseDetailsPage({
     } catch (error) {
       // Still here, so the expense may still exist: let later deletes be reported.
       isOwnDeleteRef.current = false;
+      if (showOfflineFailure(error, tOffline("droppedNotDeleted"))) return;
       console.error("delete expense failed:", error);
       toast({
         title: tToasts("couldNotDeleteExpense"),
@@ -520,6 +536,7 @@ export default function ExpenseDetailsPage({
         void isGroupDeleted(groupId).then((gone) => (gone ? showGroupDeleted() : setDeletedOpen(true)));
         return;
       }
+      if (showOfflineFailure(error, tOffline("droppedReceipt"))) return;
       console.error("save attachment failed:", error);
       toast({
         title: tToasts("couldNotUploadImage"),
@@ -560,6 +577,7 @@ export default function ExpenseDetailsPage({
         setIsAttachmentDeleteConfirmOpen(true);
         return;
       }
+      if (showOfflineFailure(error, tOffline("droppedReceipt"))) return;
       console.error("delete attachment failed:", error);
       toast({ title: tToasts("couldNotRemoveImage"), description: tToasts("tryAgainHint"), variant: "error" });
     } finally {
@@ -627,6 +645,7 @@ export default function ExpenseDetailsPage({
         void isGroupDeleted(groupId).then((gone) => (gone ? showGroupDeleted() : setDeletedOpen(true)));
         return;
       }
+      if (showOfflineFailure(error)) return;
       const message = error instanceof Error ? error.message : "Failed to update expense category";
       const isProduction = process.env.NODE_ENV === "production";
       toast({
@@ -717,6 +736,9 @@ export default function ExpenseDetailsPage({
     amount: Number(participant.amount) || 0,
   }));
   const isImageAttachment = attachment?.type.startsWith("image/");
+  // The expense has a receipt, but its (short-lived) link isn't saved on the
+  // device, so offline it can't be shown. Say so rather than look receipt-less.
+  const receiptUnavailable = !attachment && !pendingUpload && Boolean(expense.attachmentDataUrl);
   const safeNotes = expense.notes ? sanitizeExpenseNotes(expense.notes) : "";
   const hasNotes = hasExpenseNotesContent(safeNotes);
   const createdAtLabel = getDateTimeMs(expense.createdAt) !== null
@@ -728,16 +750,19 @@ export default function ExpenseDetailsPage({
   )
     ? formatDisplayDateTime(expense.updatedAt)
     : "";
-  const attachmentActionButtonClass =
-    "inline-flex h-10 w-10 items-center justify-center rounded-full bg-transparent text-foreground/70 transition-colors [-webkit-tap-highlight-color:transparent] hover:bg-transparent hover:text-foreground active:bg-transparent focus:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60 sm:hover:bg-muted";
+  const attachmentActionButtonClass = cn(
+    "inline-flex h-10 w-10 items-center justify-center rounded-full bg-transparent text-foreground/70 transition-colors [-webkit-tap-highlight-color:transparent] hover:bg-transparent hover:text-foreground active:bg-transparent focus:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60 sm:hover:bg-muted",
+    !access.can.attachment && "opacity-50"
+  );
   const attachmentActionsDisabled =
     Boolean(attachmentSpinnerMessage) || isAttachmentUploading;
   const attachmentActions = (
     <>
       <button
         type="button"
-        onClick={() => setIsAttachmentSourceOpen(true)}
+        onClick={openAttachmentSource}
         aria-label={attachment ? t("replaceAttachment") : t("uploadAttachment")}
+        aria-disabled={access.can.attachment ? undefined : true}
         className={attachmentActionButtonClass}
         disabled={attachmentActionsDisabled}
       >
@@ -750,8 +775,11 @@ export default function ExpenseDetailsPage({
       {attachment && (
         <button
           type="button"
-          onClick={() => setIsAttachmentDeleteConfirmOpen(true)}
+          onClick={() => {
+            if (access.check("attachment")) setIsAttachmentDeleteConfirmOpen(true);
+          }}
           aria-label={t("deleteAttachment")}
+          aria-disabled={access.can.attachment ? undefined : true}
           className={attachmentActionButtonClass}
           disabled={attachmentActionsDisabled}
         >
@@ -831,29 +859,36 @@ export default function ExpenseDetailsPage({
               <ArrowLeft className="h-5 w-5" />
             </Link>
             <div className="flex items-center gap-1 text-foreground/70">
-              {!attachment && (
+              <SyncStatusButton className="h-10 w-10" />
+              {!attachment && !receiptUnavailable && (
                 <button
                   type="button"
-                  onClick={() => setIsAttachmentSourceOpen(true)}
+                  onClick={openAttachmentSource}
                   aria-label={t("uploadAttachment")}
-                  className={headerIconButtonClass}
+                  aria-disabled={access.can.attachment ? undefined : true}
+                  className={cn(headerIconButtonClass, !access.can.attachment && "opacity-50")}
                   disabled={attachmentActionsDisabled}
                 >
                   <ImagePlus className="h-5 w-5" />
                 </button>
               )}
-              <Link
+              <GuardedLink
                 href={`/group/${groupId}/edit-expense/${expenseId}`}
+                allowed={access.can.edit}
+                onBlocked={() => access.check("edit")}
                 aria-label={t("editExpenseAria")}
                 className={headerIconButtonClass}
               >
                 <Pencil className="h-5 w-5" />
-              </Link>
+              </GuardedLink>
               <button
                 type="button"
-                onClick={() => setIsExpenseDeleteConfirmOpen(true)}
+                onClick={() => {
+                  if (access.check("edit")) setIsExpenseDeleteConfirmOpen(true);
+                }}
                 aria-label={t("deleteExpenseAria")}
-                className={headerIconButtonClass}
+                aria-disabled={access.can.edit ? undefined : true}
+                className={cn(headerIconButtonClass, !access.can.edit && "opacity-50")}
                 disabled={isDeletingExpense}
               >
                 {isDeletingExpense ? (
@@ -880,9 +915,9 @@ export default function ExpenseDetailsPage({
                     })),
                   }))}
                   value={{ groupId: expense.category, itemId: expense.subcategory }}
-                  onSelect={(groupId, itemId) =>
-                    handleCategoryPatch(groupId as CategoryKey, itemId)
-                  }
+                  onSelect={(groupId, itemId) => {
+                    if (access.check("edit")) void handleCategoryPatch(groupId as CategoryKey, itemId);
+                  }}
                   inputPlaceholder={t("searchCategory")}
                   fullscreenOnMobile
                   disabled={isUpdatingCategory}
@@ -916,6 +951,7 @@ export default function ExpenseDetailsPage({
         </header>
 
         <main className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4 pt-10">
+          <OfflineBanner groupId={groupId} access={access} className="shrink-0" />
           <section className="shrink-0">
             <div className="flex items-start gap-3">
               {attachment && (
@@ -956,6 +992,19 @@ export default function ExpenseDetailsPage({
                         <AlertCircle className="h-5 w-5 text-white" />
                       </div>
                     )}
+                  </div>
+                </button>
+              )}
+              {receiptUnavailable && (
+                <button
+                  type="button"
+                  className="mt-1 block shrink-0"
+                  aria-label={tOffline("receiptOffline")}
+                  title={tOffline("receiptOffline")}
+                  onClick={() => toast({ message: tOffline("receiptOffline"), variant: "info", duration: 3_000 })}
+                >
+                  <div className="flex h-14 w-14 items-center justify-center rounded-sm border border-dashed bg-muted/50">
+                    <ImageOff className="h-6 w-6 text-muted-foreground" aria-hidden />
                   </div>
                 </button>
               )}
@@ -1080,14 +1129,14 @@ export default function ExpenseDetailsPage({
             </section>
           )}
 
-          <ExpenseHistory
+          {!access.isLocal && <ExpenseHistory
             expenseId={expenseId}
             currency={expense.currency}
             // Receipt changes don't bump revision/updatedAt, so key on the saved attachment too.
             refreshKey={`${expense.revision ?? ""}|${expense.updatedAt ?? ""}|${
               cachedAttachment?.updatedAt ?? "none"
             }`}
-          />
+          />}
 
         </main>
 

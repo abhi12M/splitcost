@@ -21,7 +21,12 @@ import {
 
 type Options = {
   groupId: string;
-  onExpenseChange: (event: "INSERT" | "UPDATE" | "DELETE", expenseId: string) => void;
+  onExpenseChange: (event: "INSERT" | "UPDATE" | "DELETE", expenseId: string, revision?: number) => void;
+  /**
+   * The channel reconnected (e.g. the phone slept). Broadcasts sent while it
+   * was down are lost, so the screen should reload.
+   */
+  onReconnect?: () => void;
 };
 
 /**
@@ -29,22 +34,29 @@ type Options = {
  * are hints: callers reload their canonical API payload before updating UI.
  * Group deletion arrives through useGroupChanges instead.
  */
-export function useGroupRealtime({ groupId, onExpenseChange }: Options) {
+export function useGroupRealtime({ groupId, onExpenseChange, onReconnect }: Options) {
   const onExpenseChangeRef = useRef(onExpenseChange);
   onExpenseChangeRef.current = onExpenseChange;
+  const onReconnectRef = useRef(onReconnect);
+  onReconnectRef.current = onReconnect;
 
   useEffect(() => {
     if (!groupId) return;
     const ownSessionId = getRealtimeOriginSessionId();
+    let subscribedOnce = false;
 
     const channel = supabase
       .channel(expenseChangesChannel(groupId))
       .on("broadcast", { event: EXPENSE_CHANGED_EVENT }, ({ payload }) => {
         const data = payload as ExpenseBroadcast;
         if (data.originSessionId === ownSessionId) return;
-        onExpenseChangeRef.current(data.event, data.expenseId);
+        onExpenseChangeRef.current(data.event, data.expenseId, data.revision);
       })
-      .subscribe();
+      .subscribe((status) => {
+        if (status !== "SUBSCRIBED") return;
+        if (subscribedOnce) onReconnectRef.current?.();
+        subscribedOnce = true;
+      });
 
     return () => void supabase.removeChannel(channel);
   }, [groupId]);

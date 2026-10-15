@@ -1,6 +1,43 @@
+import { createHash, randomUUID } from "node:crypto";
+import { readFileSync, readdirSync } from "node:fs";
+import withSerwistInit from "@serwist/next";
 import createNextIntlPlugin from "next-intl/plugin";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
+
+// Files in public/ the app needs offline: the logos (both themes) and the
+// icons. The large marketing images load on demand instead. Listed here
+// rather than through Serwist's `globPublicPatterns`, which it ignores once
+// `additionalPrecacheEntries` is set. Each revision is the file's hash, so a
+// changed file is fetched again.
+const OFFLINE_PUBLIC_FILE = /^(favicon.*|android-chrome-.*\.png|apple-touch-icon\.png|logo-.*\.png|placeholder\.svg)$/;
+const offlinePublicFiles = readdirSync("public")
+  .filter((name) => OFFLINE_PUBLIC_FILE.test(name))
+  .map((name) => ({
+    url: `/${name}`,
+    revision: createHash("md5").update(readFileSync(`public/${name}`)).digest("hex"),
+  }));
+
+// Builds public/sw.js from src/app/sw.ts: the app shell, the offline fallback
+// page (one per locale) and the files above are precached so the app opens
+// offline.
+const offlinePageRevision = randomUUID();
+const withSerwist = withSerwistInit({
+  swSrc: "src/app/sw.ts",
+  swDest: "public/sw.js",
+  // A reload when the connection returns would throw away unsaved forms; the
+  // app refreshes its data itself instead.
+  reloadOnOnline: false,
+  // The service worker would serve stale code during development.
+  disable: process.env.NODE_ENV === "development",
+  additionalPrecacheEntries: [
+    ...offlinePublicFiles,
+    ...["en", "es", "pt", "hi"].map((locale) => ({
+      url: `/${locale}/offline`,
+      revision: offlinePageRevision,
+    })),
+  ],
+});
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -166,6 +203,16 @@ const nextConfig = {
         ],
       },
       {
+        // Browsers must always check for a new service worker.
+        source: "/sw.js",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-cache, no-store, must-revalidate",
+          },
+        ],
+      },
+      {
         source: "/manifest.webmanifest",
         headers: [
           {
@@ -187,4 +234,4 @@ const nextConfig = {
   },
 };
 
-export default withNextIntl(nextConfig);
+export default withSerwist(withNextIntl(nextConfig));

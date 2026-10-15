@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { AlertTriangle, ArrowLeft, Check, ChevronDown, Users, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { SyncStatusButton } from "@/components/sync/SyncStatus";
 import { SingleSelect } from "@/components/ui/single-select";
 import { AddMemberInputBox } from "@/components/group/AddMemberInputBox";
 import { GroupFormFieldBox } from "@/components/group/GroupFormFieldBox";
@@ -205,9 +206,12 @@ export function GroupFormMobile({
               <ArrowLeft className="h-5 w-5" />
             </Link>
             <h1 className="font-medium">{t("createGroup")}</h1>
-            <button type="button" onClick={handleSubmit} aria-label={t("createGroup")}>
-              <Check className="h-5 w-5 text-primary" />
-            </button>
+            <div className="flex items-center gap-2">
+              <SyncStatusButton className="h-7 w-7" />
+              <button type="button" onClick={handleSubmit} aria-label={t("createGroup")}>
+                <Check className="h-5 w-5 text-primary" />
+              </button>
+            </div>
           </div>
 
           <div className="flex items-center gap-2 border-b px-4 py-1">
