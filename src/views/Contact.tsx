@@ -1,7 +1,6 @@
 "use client";
 
-import { type FormEvent, useEffect, useState } from "react";
-import { flushSync } from "react-dom";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Bug, Clock3, Handshake, Mail, Send } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -16,13 +15,16 @@ import { APP_NAME } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import {
   cleanContactInput,
-  CONTACT_EMAIL_MAX,
+  CONTACT_FIELDS,
+  CONTACT_LIMITS,
   CONTACT_MESSAGE_MAX,
-  CONTACT_NAME_MAX,
-  CONTACT_SUBJECT_MAX,
+  CONTACT_MESSAGE_MIN,
+  getContactFieldErrors,
+  type ContactField,
+  type ContactFieldErrors,
 } from "@/lib/validations/contact";
-import { isBlankText } from "@/lib/validations/names";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CharacterCounter } from "@/components/ui/CharacterCounter";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -90,6 +92,54 @@ export default function ContactPage() {
     },
   ];
 
+  // Field messages appear once the field has been left, or after a send
+  // attempt, and then update as the user types. The checks are the same ones
+  // the API runs (getContactFieldErrors).
+  const [touched, setTouched] = useState<Partial<Record<ContactField, boolean>>>({});
+  const [attempted, setAttempted] = useState(false);
+  // What the server refused, if the form's own checks somehow passed.
+  const [serverErrors, setServerErrors] = useState<ContactFieldErrors>({});
+  const liveErrors = useMemo(() => getContactFieldErrors(cleanContactInput(form)), [form]);
+  const errorFor = (field: ContactField) => {
+    const code = serverErrors[field] ?? (attempted || touched[field] ? liveErrors[field] : undefined);
+    if (!code) return undefined;
+    if (code === "tooShort") return t("errorTooShort", { min: CONTACT_MESSAGE_MIN });
+    if (code === "tooLong") return t("errorTooLong", { max: CONTACT_LIMITS[field] });
+    if (code === "invalid") return t("errorEmailInvalid");
+    return t(`error${field[0].toUpperCase()}${field.slice(1)}Required` as "errorNameRequired");
+  };
+
+  const updateField = (field: ContactField, value: string) => {
+    setForm((current) => ({ ...current, [field]: value }));
+    setServerErrors(({ [field]: _cleared, ...rest }) => rest);
+  };
+  const focusFirst = (errors: ContactFieldErrors) => {
+    const first = CONTACT_FIELDS.find((field) => errors[field]);
+    if (first) document.getElementById(first)?.focus();
+  };
+  // Props shared by every field: the blur that reveals its message, and the
+  // accessibility wiring between the field and that message.
+  const fieldProps = (field: ContactField) => {
+    const error = errorFor(field);
+    return {
+      id: field,
+      value: form[field],
+      maxLength: CONTACT_LIMITS[field],
+      onBlur: () => setTouched((current) => ({ ...current, [field]: true })),
+      "aria-invalid": error ? true : undefined,
+      "aria-describedby": error ? `${field}-error` : undefined,
+      className: cn(error && "border-destructive focus-visible:ring-destructive"),
+    };
+  };
+  const fieldError = (field: ContactField) => {
+    const error = errorFor(field);
+    return error ? (
+      <p id={`${field}-error`} className="text-xs text-destructive">
+        {error}
+      </p>
+    ) : null;
+  };
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     // Offline: don't send; the message stays in the form (and the saved draft).
@@ -97,13 +147,11 @@ export default function ContactPage() {
       showOfflineToast();
       return;
     }
-    const formElement = e.currentTarget;
     const cleaned = cleanContactInput(form);
-    // A field holding only spaces or invisible characters passes the browser's
-    // "required" check; show it cleaned (empty) so the browser asks for it.
-    if (isBlankText(cleaned.name) || isBlankText(cleaned.subject) || isBlankText(cleaned.message)) {
-      flushSync(() => setForm(cleaned));
-      formElement.reportValidity();
+    setAttempted(true);
+    const errors = getContactFieldErrors(cleaned);
+    if (Object.keys(errors).length) {
+      focusFirst(errors);
       return;
     }
     setIsSubmitting(true);
@@ -117,6 +165,26 @@ export default function ContactPage() {
         body: JSON.stringify(cleaned),
       });
 
+      if (res.status === 400) {
+        const payload = await res.json().catch(() => null);
+        const fields = (payload?.fields ?? {}) as ContactFieldErrors;
+        if (Object.keys(fields).length) {
+          setServerErrors(fields);
+          focusFirst(fields);
+          setIsSubmitting(false);
+          return;
+        }
+      }
+      // Blocked by the rate limit: nothing is wrong, the message stays in the form to resend.
+      if (res.status === 429) {
+        toast({
+          title: t("toastErrorTitle"),
+          description: t("toastRateLimitDescription"),
+          variant: "warning",
+        });
+        setIsSubmitting(false);
+        return;
+      }
       if (!res.ok) throw new Error();
 
       toast({
@@ -126,6 +194,8 @@ export default function ContactPage() {
       });
 
       setForm(EMPTY_FORM);
+      setAttempted(false);
+      setTouched({});
     } catch (error) {
       // The connection dropped while sending: same message as offline.
       if (isOfflineError(error)) {
@@ -214,69 +284,73 @@ export default function ContactPage() {
                 </CardHeader>
 
                 <CardContent>
-                  <form onSubmit={handleSubmit} className="space-y-5">
+                  {/* noValidate: the form shows its own messages under the fields
+                      (in the page's language) instead of the browser's pop-ups. */}
+                  <form onSubmit={handleSubmit} noValidate className="space-y-5">
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div className="space-y-2">
                         <Label htmlFor="name">{t("nameLabel")}</Label>
                         <Input
-                          id="name"
+                          {...fieldProps("name")}
                           placeholder={t("namePlaceholder")}
-                          value={form.name}
-                          onChange={(e) => setForm({ ...form, name: e.target.value })}
-                          maxLength={CONTACT_NAME_MAX}
-                          required
+                          autoComplete="name"
+                          onChange={(e) => updateField("name", e.target.value)}
                         />
+                        {fieldError("name")}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="email">{t("emailLabel")}</Label>
                         <Input
-                          id="email"
+                          {...fieldProps("email")}
                           type="email"
+                          inputMode="email"
+                          autoComplete="email"
                           placeholder={t("emailPlaceholder")}
-                          value={form.email}
-                          onChange={(e) => setForm({ ...form, email: e.target.value })}
-                          maxLength={CONTACT_EMAIL_MAX}
-                          required
+                          onChange={(e) => updateField("email", e.target.value)}
                         />
+                        {fieldError("email")}
                       </div>
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="subject">{t("subjectLabel")}</Label>
                       <Input
-                        id="subject"
+                        {...fieldProps("subject")}
                         placeholder={t("subjectPlaceholder")}
-                        value={form.subject}
-                        onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                        maxLength={CONTACT_SUBJECT_MAX}
-                        required
+                        onChange={(e) => updateField("subject", e.target.value)}
                       />
+                      {fieldError("subject")}
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="message">{t("messageLabel")}</Label>
                       <Textarea
-                        id="message"
+                        {...fieldProps("message")}
                         placeholder={t("messagePlaceholder")}
                         rows={6}
-                        value={form.message}
-                        onChange={(e) => setForm({ ...form, message: e.target.value })}
-                        maxLength={CONTACT_MESSAGE_MAX}
-                        required
-                        className="min-h-[140px] h-auto sm:min-h-[180px] sm:h-auto resize-y"
+                        onChange={(e) => updateField("message", e.target.value)}
+                        className={cn(
+                          "min-h-[140px] h-auto sm:min-h-[180px] sm:h-auto resize-y",
+                          fieldProps("message").className
+                        )}
                       />
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">{fieldError("message")}</div>
+                        <CharacterCounter
+                          current={form.message.length}
+                          max={CONTACT_MESSAGE_MAX}
+                          className="ml-auto shrink-0"
+                        />
+                      </div>
                     </div>
 
-                    {/* Offline it looks disabled but still explains itself on tap (a
-                        plain button, so the browser's required-field check doesn't
-                        answer first). */}
+                    {/* Offline it looks disabled but still explains itself on tap. */}
                     <Button
-                      type={online ? "submit" : "button"}
+                      type="submit"
                       size="lg"
                       className={cn("w-full sm:w-auto", !online && "opacity-50")}
                       disabled={isSubmitting}
                       aria-disabled={online ? undefined : true}
-                      onClick={online ? undefined : showOfflineToast}
                     >
                       {isSubmitting ? (
                         t("sending")

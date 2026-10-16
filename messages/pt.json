@@ -639,7 +639,15 @@
     "toastSuccessTitle": "Mensagem enviada!",
     "toastSuccessDescription": "Responderemos o mais rápido possível.",
     "toastErrorTitle": "Erro",
-    "toastErrorDescription": "Algo deu errado. Tente novamente."
+    "toastErrorDescription": "Algo deu errado. Tente novamente.",
+    "toastRateLimitDescription": "Você está enviando mensagens rápido demais. Aguarde um minuto e tente novamente.",
+    "errorNameRequired": "Digite seu nome.",
+    "errorEmailRequired": "Digite seu e-mail.",
+    "errorEmailInvalid": "Digite um e-mail válido, como voce@exemplo.com.",
+    "errorSubjectRequired": "Adicione um assunto.",
+    "errorMessageRequired": "Escreva sua mensagem.",
+    "errorTooShort": "Escreva pelo menos {min} caracteres para que possamos ajudar.",
+    "errorTooLong": "Use no máximo {max} caracteres."
   },
   "privacy": {
     "title": "Política de privacidade",

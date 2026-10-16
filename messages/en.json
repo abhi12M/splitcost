@@ -1538,7 +1538,15 @@
     "toastSuccessTitle": "Message sent!",
     "toastSuccessDescription": "We'll get back to you as soon as possible.",
     "toastErrorTitle": "Error",
-    "toastErrorDescription": "Something went wrong. Please try again."
+    "toastErrorDescription": "Something went wrong. Please try again.",
+    "toastRateLimitDescription": "You're sending messages too quickly. Please wait a minute and try again.",
+    "errorNameRequired": "Enter your name.",
+    "errorEmailRequired": "Enter your email address.",
+    "errorEmailInvalid": "Enter a valid email address, like you@example.com.",
+    "errorSubjectRequired": "Add a subject.",
+    "errorMessageRequired": "Write your message.",
+    "errorTooShort": "Write at least {min} characters so we can help.",
+    "errorTooLong": "Keep this to {max} characters or fewer."
   },
   "privacy": {
     "title": "Privacy Policy",

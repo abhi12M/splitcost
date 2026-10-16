@@ -639,7 +639,15 @@
     "toastSuccessTitle": "संदेश भेजा गया!",
     "toastSuccessDescription": "हम जल्द से जल्द आपको जवाब देंगे।",
     "toastErrorTitle": "त्रुटि",
-    "toastErrorDescription": "कुछ गलत हो गया। कृपया पुनः प्रयास करें।"
+    "toastErrorDescription": "कुछ गलत हो गया। कृपया पुनः प्रयास करें।",
+    "toastRateLimitDescription": "आप बहुत तेज़ी से संदेश भेज रहे हैं। कृपया एक मिनट रुककर फिर कोशिश करें।",
+    "errorNameRequired": "अपना नाम लिखें।",
+    "errorEmailRequired": "अपना ईमेल पता लिखें।",
+    "errorEmailInvalid": "सही ईमेल पता लिखें, जैसे you@example.com।",
+    "errorSubjectRequired": "विषय जोड़ें।",
+    "errorMessageRequired": "अपना संदेश लिखें।",
+    "errorTooShort": "कम से कम {min} अक्षर लिखें ताकि हम आपकी मदद कर सकें।",
+    "errorTooLong": "इसे {max} अक्षरों के अंदर रखें।"
   },
   "privacy": {
     "title": "गोपनीयता नीति",

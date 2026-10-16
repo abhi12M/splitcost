@@ -22,12 +22,12 @@ export async function POST(req: Request) {
 
     const input = validateContactInput(parsed.data);
     if (!input.success) {
-        return Response.json({ success: false, error: input.error }, { status: 400 });
+        return Response.json({ success: false, error: input.error, fields: input.fields }, { status: 400 });
     }
     const { name, email, subject, message } = input.data;
 
     try {
-        const data = await resend.emails.send({
+        const { data, error } = await resend.emails.send({
             from: 'onboarding@resend.dev',
             to: 'contact@splitcost.in',
             replyTo: email,
@@ -43,9 +43,19 @@ export async function POST(req: Request) {
             text: `Name: ${name}\nEmail: ${email}\nSubject: ${subject}\n\n${message}`,
         });
 
+        // Resend reports a refused email in `error` instead of throwing.
+        if (error) {
+            console.error("Contact email was not sent:", error);
+            return Response.json(
+                { success: false, error: "Failed to send email" },
+                { status: 500 }
+            );
+        }
+
         return successJson({ success: true, data }, SUCCESS_MESSAGES.contactSent);
 
     } catch (error) {
+        console.error("Contact email failed:", error);
         return Response.json(
             { success: false, error: "Failed to send email" },
             { status: 500 }
