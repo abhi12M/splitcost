@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { CircleAlert, CircleCheck, RefreshCw, WifiOff, type LucideIcon } from "lucide-react";
 
 import { Drawer, DrawerContent, DrawerDescription, DrawerTitle } from "@/components/ui/drawer";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -20,16 +19,6 @@ import { cn } from "@/lib/utils";
 
 /** What the indicator shows: the connection, or a local group that needs a look. */
 type IndicatorKind = SyncStatus | "attention";
-
-// Outline icons in the state's colour, drawn a little heavier than usual so
-// they stay readable at 16px.
-const indicatorIcon: Record<IndicatorKind, { icon: LucideIcon; className: string }> = {
-  online: { icon: CircleCheck, className: "text-emerald-600 dark:text-emerald-400" },
-  offline: { icon: WifiOff, className: "text-red-600 dark:text-red-400" },
-  // Spins for as long as anything is syncing.
-  syncing: { icon: RefreshCw, className: "animate-spin text-blue-600 motion-reduce:animate-none dark:text-blue-400" },
-  attention: { icon: CircleAlert, className: "text-amber-500 dark:text-amber-400" },
-};
 
 /** Offline and syncing come first; "needs attention" only once both are over. */
 function useIndicator() {
@@ -67,24 +56,21 @@ function isStatusPath(pathname: string) {
   return STATUS_PATHS.some((pattern) => pattern.test(pathname));
 }
 
-/** `className` sizes the icon (default 16px) and can position it. */
-function StatusIcon({ kind, className }: { kind: IndicatorKind; className?: string }) {
-  const { icon: Icon, className: tone } = indicatorIcon[kind];
-  return <Icon className={cn("h-4 w-4 shrink-0", tone, className)} strokeWidth={2.5} aria-hidden />;
-}
-
-// The phone header's status: a small dot instead of an icon. Green when
-// online, red when offline, blue and blinking while anything syncs, amber when
-// a local group needs a look.
+// The status on every screen size: a small dot. Each state differs in shape
+// as well as colour, so it doesn't rely on telling green from red: a solid
+// green dot when online, a blinking blue dot while anything syncs, a hollow red
+// ring when offline, and an amber dot with a ring around it when a local group
+// needs a look.
 const indicatorDot: Record<IndicatorKind, string> = {
   online: "bg-emerald-500",
-  offline: "bg-red-500",
+  offline: "border-2 border-red-500 bg-transparent",
   syncing: "animate-pulse bg-blue-500 [animation-duration:800ms] motion-reduce:animate-none",
-  attention: "bg-amber-500",
+  attention: "bg-amber-500 ring-2 ring-amber-500/40",
 };
 
-function StatusDot({ kind }: { kind: IndicatorKind }) {
-  return <span className={cn("block h-2.5 w-2.5 rounded-full", indicatorDot[kind])} aria-hidden />;
+/** `className` sizes the dot (default 10px) and can position it. */
+function StatusDot({ kind, className }: { kind: IndicatorKind; className?: string }) {
+  return <span className={cn("block h-2.5 w-2.5 shrink-0 rounded-full", indicatorDot[kind], className)} aria-hidden />;
 }
 
 function hintFor(t: ReturnType<typeof useTranslations>, record: LocalGroupRecord, online: boolean) {
@@ -126,7 +112,7 @@ function StatusDetails({ onNavigate }: { onNavigate: () => void }) {
   return (
     <div className="space-y-4">
       <div className="flex items-start gap-3">
-        <StatusIcon kind={kind} className="mt-0.5 h-5 w-5" />
+        <StatusDot kind={kind} className="mt-1.5 h-3 w-3" />
         <div className="min-w-0">
           <p className="font-semibold text-foreground">{label}</p>
           <p className="text-sm text-muted-foreground">{hint}</p>
@@ -160,12 +146,13 @@ function StatusDetails({ onNavigate }: { onNavigate: () => void }) {
 }
 
 /**
- * The connection status: green check when online with nothing waiting, red
- * wifi-off offline, a blue arrow that spins while anything syncs, and an amber
- * alert when a group created on this device needs a look. A labelled pill on
- * larger screens; on phones, a dot (green, blinking blue, red, amber) in the
- * screen's own header (see SyncStatusButton), so nothing shows while a screen
- * is still loading. Shown only on the screens isStatusPath lists.
+ * The connection status, as the same dot everywhere (see indicatorDot): solid
+ * green when online with nothing waiting, a blinking blue dot while anything
+ * syncs, a hollow red ring offline, and an amber dot with a ring when a group
+ * created on this device needs a look. A labelled pill on larger screens; on
+ * phones, the dot in the screen's own header (see SyncStatusButton), so nothing
+ * shows while a screen is still loading. Shown only on the screens isStatusPath
+ * lists.
  */
 export function SyncStatusIndicator() {
   const t = useTranslations("offline");
@@ -188,7 +175,7 @@ export function SyncStatusIndicator() {
             aria-label={ariaLabel}
             className="fixed bottom-4 left-4 z-40 hidden items-center gap-2 md:inline-flex rounded-full border border-border/80 bg-card/95 px-3 py-1.5 text-xs font-semibold text-foreground shadow-md backdrop-blur hover:bg-muted"
           >
-            <StatusIcon kind={kind} />
+            <StatusDot kind={kind} />
             <span>{label}</span>
             {pendingCount > 0 ? (
               <span className="rounded-full bg-muted px-1.5 text-[11px] tabular-nums text-muted-foreground">
@@ -222,7 +209,11 @@ function MobileStatusButton({ className }: { className?: string }) {
         type="button"
         aria-label={ariaLabel}
         onClick={() => setOpen(true)}
-        className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full", className)}
+        // The ::before widens the tap area to about 44px without moving the dot.
+        className={cn(
+          "relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full before:absolute before:-inset-2.5 before:content-['']",
+          className
+        )}
       >
         <StatusDot kind={kind} />
       </button>

@@ -1,5 +1,6 @@
 import Dexie, { type Table } from "dexie";
 
+import type { ActivityCursor, ActivityEvent } from "@/lib/activity/types";
 import type {
   EditExpenseInterface,
   ExpenseResponse,
@@ -20,6 +21,19 @@ export type CachedExpense = {
   expenseId: string;
   groupId: string;
   data: EditExpenseInterface;
+  savedAt: number;
+};
+
+/**
+ * The newest activity of a group's feed (one filter), or of one expense's
+ * history, as last loaded. `key` is "group:<groupId>|<filter>|<limit>" or
+ * "expense:<expenseId>".
+ */
+export type CachedActivity = {
+  key: string;
+  groupId?: string;
+  events: ActivityEvent[];
+  nextCursor?: ActivityCursor | null;
   savedAt: number;
 };
 
@@ -81,6 +95,7 @@ class OfflineDatabase extends Dexie {
   expenses!: Table<CachedExpense, string>;
   groupSummaries!: Table<CachedGroupSummary, string>;
   localGroups!: Table<LocalGroupRecord, string>;
+  activity!: Table<CachedActivity, string>;
 
   constructor() {
     super("splitcost-offline");
@@ -89,6 +104,9 @@ class OfflineDatabase extends Dexie {
       expenses: "&expenseId, groupId",
       groupSummaries: "&id",
       localGroups: "&id, state",
+    });
+    this.version(2).stores({
+      activity: "&key, groupId",
     });
   }
 }

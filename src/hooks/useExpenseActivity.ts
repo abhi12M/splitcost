@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchExpenseActivity } from "@/lib/activity/client";
+import { readCachedActivity, writeCachedActivity } from "@/lib/offline/cache";
 import type { ActivityEvent } from "@/lib/activity/types";
 import { ACTIVITY_RECHECK_MS, type ActivityStatus } from "./useGroupActivity";
 
@@ -18,6 +19,7 @@ export function useExpenseActivity(expenseId: string, refreshKey?: unknown) {
       hasDataRef.current = true;
       setEvents(next);
       setStatus("ready");
+      void writeCachedActivity(`expense:${expenseId}`, { events: next });
     } catch (error) {
       if (request !== requestRef.current) return;
       console.error("Failed to load expense history:", error);
@@ -27,10 +29,23 @@ export function useExpenseActivity(expenseId: string, refreshKey?: unknown) {
 
   useEffect(() => {
     if (!expenseId) return;
+    let cancelled = false;
+    if (!hasDataRef.current) {
+      // Show the saved history at once (a quick local read); the load below refreshes it.
+      void readCachedActivity(`expense:${expenseId}`).then((saved) => {
+        if (cancelled || !saved || hasDataRef.current) return;
+        hasDataRef.current = true;
+        setEvents(saved.events);
+        setStatus("ready");
+      });
+    }
     void load();
     // Realtime can report a change a moment before its activity row is written.
     const recheck = window.setTimeout(() => void load(), ACTIVITY_RECHECK_MS);
-    return () => window.clearTimeout(recheck);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(recheck);
+    };
   }, [expenseId, load, refreshKey]);
 
   return { events, status, retry: load };

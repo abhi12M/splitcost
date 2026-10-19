@@ -67,7 +67,7 @@ import { useActivitySignals } from "@/hooks/useActivitySignals";
 import { RecentActivityCard } from "@/components/activity/RecentActivityCard";
 import { useAttachmentUploadCompletion } from "@/lib/attachmentUploads";
 import { SingleSelect } from "@/components/ui/single-select";
-import { formatExpenseGroupHeaderTitle, toTitleCase } from "@/components/ui/formatters";
+import { formatDateForDB, formatExpenseGroupHeaderTitle, toTitleCase } from "@/components/ui/formatters";
 import { resolveCategoryDisplayLabel } from "@/lib/category-labels";
 import { shareOrCopy } from "@/lib/shareContent";
 import { useDeviceType } from "@/hooks/useDeviceType";
@@ -742,7 +742,7 @@ export default function GroupResponsesPage({
     });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    const today = new Date().toISOString().split("T")[0];
+    const today = formatDateForDB(new Date());
 
     link.href = url;
     link.download = `${slugifyFilename(group.name)}-expenses-${today}.csv`;
@@ -779,7 +779,9 @@ export default function GroupResponsesPage({
         currency: group.currency,
         paidByUserId: setlementData.fromId,
         splitType: "equal",
-        date: new Date().toISOString().split("T")[0],
+        // The local date, as the add form uses; toISOString() would give the
+        // UTC date, which is yesterday's for part of the night in India.
+        date: formatDateForDB(new Date()),
         participants: [
           {
             userId: setlementData.toId,

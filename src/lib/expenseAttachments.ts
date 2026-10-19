@@ -2,6 +2,7 @@ import { getRealtimeOriginSessionId } from "@/lib/realtime/originSession";
 // A dropped connection then fails with an OfflineError (code "OFFLINE"), which
 // callers can tell apart from the server refusing the receipt.
 import { trackedFetch } from "@/lib/offline/network";
+import { patchCachedExpenseReceipt } from "@/lib/offline/cache";
 
 export const MAX_ATTACHMENT_SIZE_BYTES = 5 * 1024 * 1024;
 export const MAX_ATTACHMENT_SIZE_LABEL = "5 MB";
@@ -129,6 +130,8 @@ export async function saveExpenseAttachment(
   }
 
   const payload = await res.json();
+  // Mark it in the saved copies so the dashboard's receipt marker is right at once.
+  await patchCachedExpenseReceipt(expenseId, true);
   return mapAttachmentResponse(payload);
 }
 
@@ -151,6 +154,7 @@ export async function deleteExpenseAttachment(expenseId: string, expectedName?: 
     const payload = await res.json().catch(() => null);
     throw attachmentError(payload, "Failed to delete attachment");
   }
+  await patchCachedExpenseReceipt(expenseId, false);
 }
 
 export function formatAttachmentSize(size: number) {

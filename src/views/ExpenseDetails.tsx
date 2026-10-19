@@ -94,12 +94,13 @@ function memberName(
   members: EditExpenseInterface["group"]["members"],
   userId: string | null,
   viewerMemberId: string | null,
-  unknownLabel: string
+  unknownLabel: string,
+  youLabel?: string
 ) {
   if (!userId) return unknownLabel;
   const m = members.find((member) => member.id === userId);
   if (!m) return unknownLabel;
-  return memberNameForViewer(m.id, m.name, viewerMemberId);
+  return memberNameForViewer(m.id, m.name, viewerMemberId, youLabel);
 }
 
 function getDateTimeMs(date?: string | Date | null) {
@@ -271,6 +272,8 @@ export default function ExpenseDetailsPage({
   const tReceipt = useTranslations("receiptChanges");
   const tCategories = useTranslations("categories");
   const tOffline = useTranslations("offline");
+  // The same translated word for "you" as the dashboard uses.
+  const youLabel = useTranslations("group")("you");
   const attachmentGalleryInputRef = useRef<HTMLInputElement>(null);
   const attachmentCameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -688,9 +691,9 @@ export default function ExpenseDetailsPage({
 
     return details.expense.participants.map((participant: ExpenseParticipantsRequest) => ({
       ...participant,
-      name: memberName(details.group.members, participant.userId, viewerMemberId, t("unknown")),
+      name: memberName(details.group.members, participant.userId, viewerMemberId, t("unknown"), youLabel),
     }));
-  }, [details, viewerMemberId, t]);
+  }, [details, viewerMemberId, t, youLabel]);
 
   if (loading) {
     return <ExpenseDetailsSkeleton />;
@@ -724,13 +727,13 @@ export default function ExpenseDetailsPage({
   const payers = expense.payers?.length
     ? expense.payers.map((payer) => ({
         userId: payer.userId,
-        name: memberName(group.members, payer.userId, viewerMemberId, t("unknown")),
+        name: memberName(group.members, payer.userId, viewerMemberId, t("unknown"), youLabel),
         amount: payer.amount,
       }))
     : [
         {
           userId: expense.paidByUserId,
-          name: memberName(group.members, expense.paidByUserId, viewerMemberId, t("unknown")),
+          name: memberName(group.members, expense.paidByUserId, viewerMemberId, t("unknown"), youLabel),
           amount: expense.amount,
         },
       ];
@@ -745,6 +748,17 @@ export default function ExpenseDetailsPage({
     name: formatSummaryName(participant.name),
     amount: Number(participant.amount) || 0,
   }));
+  // One payer and one person in the split is common (settle up, paying for or
+  // lending to someone, or an expense just for yourself): say it in one line
+  // instead of a split. Anything with more of either shows the full split card.
+  const hasOneOfEach = payers.length === 1 && owedRows.length === 1;
+  const isPaidForOne = hasOneOfEach && payers[0].userId !== owedRows[0].userId;
+  const isPaidForSelf = hasOneOfEach && payers[0].userId === owedRows[0].userId;
+  // With nobody or just one person in the split there is nothing to split, so
+  // the "Split between N people" chip and the "Split equally" line would only
+  // be noise.
+  const hideSplit = owedRows.length <= 1;
+  const receiverIsViewer = Boolean(viewerMemberId && owedRows[0]?.userId === viewerMemberId);
   const isImageAttachment = attachment?.type.startsWith("image/");
   // The expense has a receipt, but its (short-lived) link isn't saved on the
   // device, so offline it can't be shown. Say so rather than look receipt-less.
@@ -1028,13 +1042,16 @@ export default function ExpenseDetailsPage({
                 </p>
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1">
-                    <CalendarDays className="h-3.5 w-3.5" />
+                    <CalendarDays className="h-3.5 w-3.5" aria-hidden />
+                    <span className="sr-only">{isSettlementExpense ? t("settlementDateLabel") : t("expenseDateLabel")}</span>
                     {t("expenseDate", { date: formatDisplayDate(expense.date) })}
                   </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1">
-                    <Users className="h-3.5 w-3.5" />
-                    {t("splitCount", { count: participantRows.length })}
-                  </span>
+                  {hideSplit ? null : (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1">
+                      <Users className="h-3.5 w-3.5" />
+                      {t("splitCount", { count: participantRows.length })}
+                    </span>
+                  )}
                 </div>
                 {/* A group that so far lives only on this device has no history to open. */}
                 {access.isLocal ? (
@@ -1049,6 +1066,24 @@ export default function ExpenseDetailsPage({
 
           <section className="grid shrink-0 gap-3 overflow-visible md:grid-cols-[1fr_0.85fr]">
             <div className="h-auto overflow-visible rounded-lg border bg-card p-4">
+              {isPaidForOne ? (
+                // One person paid for one other person: say so in a line, without a split.
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-2.5 text-sm">
+                    <UserAvatar name={payers[0].name} size="sm" disableMobileTooltip />
+                    {/* Wraps rather than truncates: the end of the sentence is who it was for. */}
+                    <span className="min-w-0 break-words font-medium leading-snug">
+                      {t.rich(isSettlementExpense ? "settlementPaid" : "paidForOne", {
+                        payer: formatSummaryName(payers[0].name),
+                        receiver: owedRows[0].name,
+                        receiverIsYou: String(receiverIsViewer),
+                        muted: (chunks) => <span className="font-normal text-muted-foreground">{chunks}</span>,
+                      })}
+                    </span>
+                  </div>
+                  <span className="shrink-0 font-medium">{formatAmount(payers[0].amount, expense.currency)}</span>
+                </div>
+              ) : (
               <div className="space-y-4">
                 <div className="space-y-3">
                   {payers.map((payer) => (
@@ -1066,19 +1101,21 @@ export default function ExpenseDetailsPage({
                     </div>
                   ))}
 
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Users className="h-4 w-4" />
-                    {expense.splitType === "equal"
-                      ? t("splitEquallyLabel")
-                      : expense.splitType === "percentage"
-                        ? t("splitByPercentage")
-                        : t("splitUnequally")}
-                  </div>
+                  {hideSplit ? null : (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Users className="h-4 w-4" />
+                      {expense.splitType === "equal"
+                        ? t("splitEquallyLabel")
+                        : expense.splitType === "percentage"
+                          ? t("splitByPercentage")
+                          : t("splitUnequally")}
+                    </div>
+                  )}
                 </div>
 
-                <div className="h-px bg-border" />
+                {isPaidForSelf ? null : <div className="h-px bg-border" />}
 
-                <div className="space-y-3">
+                <div className={cn("space-y-3", isPaidForSelf && "hidden")}>
                   {owedRows.length > 0 ? (
                     owedRows.map((participant) => (
                       <div
@@ -1089,6 +1126,7 @@ export default function ExpenseDetailsPage({
                           <span className="truncate font-medium">
                             {t.rich("shareOf", {
                               name: participant.name,
+                              isYou: String(Boolean(viewerMemberId && participant.userId === viewerMemberId)),
                               muted: (chunks) => <span className="font-normal text-muted-foreground">{chunks}</span>,
                             })}
                           </span>
@@ -1128,6 +1166,7 @@ export default function ExpenseDetailsPage({
                   </>
                 )} */}
               </div>
+              )}
             </div>
 
           </section>
@@ -1149,6 +1188,7 @@ export default function ExpenseDetailsPage({
             expenseId={expenseId}
             currency={expense.currency}
             createdAt={expense.createdAt}
+            isSettlement={isSettlementExpense}
             // Shows at once, before the history loads (and offline).
             updatedAt={updatedAtLabel ? expense.updatedAt : null}
             // Receipt changes don't bump revision/updatedAt, so key on the saved attachment too.
@@ -1199,12 +1239,12 @@ export default function ExpenseDetailsPage({
           open={deletedOpen}
           aboveOverlays
           onOpenChange={setDeletedOpen}
-          title="Expense deleted"
-          description="This expense was deleted in another session and is no longer available."
+          title={tToasts("expenseDeleted")}
+          description={t("deletedElsewhere")}
           actions={[]}
           footer={
             <Button asChild variant="outline" className="w-full rounded-xl">
-              <Link href={`/group/${groupId}`}>Back to expenses</Link>
+              <Link href={`/group/${groupId}`}>{t("backToGroup")}</Link>
             </Button>
           }
         />

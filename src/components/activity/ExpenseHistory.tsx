@@ -22,6 +22,7 @@ export function ExpenseHistory({
   expenseId,
   currency,
   createdAt,
+  isSettlement = false,
   updatedAt,
   refreshKey,
 }: {
@@ -29,6 +30,8 @@ export function ExpenseHistory({
   currency: string;
   /** When the expense was added. */
   createdAt?: string | null;
+  /** A settlement is "recorded" rather than "added". */
+  isSettlement?: boolean;
   /** When it was last changed; leave out if it never was. */
   updatedAt?: string | null;
   /** Changes whenever the expense changes, to reload in the background. */
@@ -45,8 +48,17 @@ export function ExpenseHistory({
   const updates = events.filter((event) => event.kind === "expense_updated");
   const latest = updates[0];
   const hasCreated = isValidTime(createdAt);
-  // Until the history has loaded, the expense's own times stand in for it.
-  const lastChangeAt = ready ? latest?.createdAt : isValidTime(updatedAt) ? updatedAt : undefined;
+  // The newer of the latest change in the history and the expense's own saved
+  // time: until the history has loaded, or when its saved copy is a step
+  // behind, the expense's own time is the more current one.
+  const savedChangeAt = isValidTime(updatedAt) ? updatedAt : undefined;
+  const eventAt = ready ? latest?.createdAt : undefined;
+  const lastChangeAt =
+    eventAt && savedChangeAt
+      ? Date.parse(savedChangeAt) > Date.parse(eventAt)
+        ? savedChangeAt
+        : eventAt
+      : eventAt ?? savedChangeAt;
   if (!lastChangeAt && !hasCreated) return null;
 
   const timeOf = (at: string) => (dayLabel(at) === t("today") ? shortTime(at) : dayAtTime(at));
@@ -56,8 +68,8 @@ export function ExpenseHistory({
       ? t("historyUpdatedJustNow")
       : t("historyLastUpdated", { time: timeOf(lastChangeAt) })
     : isJustNow(createdAt as string)
-      ? t("historyAddedJustNow")
-      : t("historyLastAdded", { time: timeOf(createdAt as string) });
+      ? t(isSettlement ? "historyRecordedJustNow" : "historyAddedJustNow")
+      : t(isSettlement ? "historyLastRecorded" : "historyLastAdded", { time: timeOf(createdAt as string) });
 
   return (
     <section className="shrink-0 rounded-lg border bg-card">
@@ -103,7 +115,9 @@ export function ExpenseHistory({
           {hasCreated ? (
             <li className="relative">
               <span className="absolute -left-[1.3rem] top-1.5 h-2 w-2 rounded-full bg-border" aria-hidden />
-              <p className="text-sm leading-snug text-foreground">{t("historyCreated")}</p>
+              <p className="text-sm leading-snug text-foreground">
+                {t(isSettlement ? "historyCreatedSettlement" : "historyCreated")}
+              </p>
               <p className="mt-0.5 text-xs text-muted-foreground/80">{dayAtTime(createdAt as string)}</p>
             </li>
           ) : null}

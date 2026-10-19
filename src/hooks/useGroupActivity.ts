@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchGroupActivity } from "@/lib/activity/client";
+import { readCachedActivity, writeCachedActivity } from "@/lib/offline/cache";
+import type { CachedActivity } from "@/lib/offline/db";
 import type { ActivityCursor, ActivityEvent, ActivityFilter } from "@/lib/activity/types";
 
 export type ActivityStatus = "loading" | "ready" | "error";
@@ -40,15 +42,26 @@ export function useGroupActivity(
   const loadFirstPage = useCallback(async () => {
     const request = ++requestRef.current;
     const isNewView = shownKeyRef.current !== viewKey;
+    let saved: CachedActivity | null = null;
     if (isNewView) {
       setStatus("loading");
       setEvents([]);
       setCursor(null);
+      // Show the saved newest page at once (a quick local read), then ask the server.
+      saved = await readCachedActivity(`group:${viewKey}`);
+      if (request !== requestRef.current) return;
+      if (saved) {
+        setEvents(saved.events);
+        setCursor(saved.nextCursor ?? null);
+        setStatus("ready");
+        shownKeyRef.current = viewKey;
+      }
     }
     try {
       const page = await fetchGroupActivity(groupId, { filter, limit });
       if (request !== requestRef.current) return;
-      const existing = isNewView ? [] : eventsRef.current;
+      void writeCachedActivity(`group:${viewKey}`, { groupId, events: page.events, nextCursor: page.nextCursor });
+      const existing = isNewView ? saved?.events ?? [] : eventsRef.current;
       const oldestFresh = page.events[page.events.length - 1];
       // A full page entirely newer than what's shown leaves a gap; start over.
       const hasGap = Boolean(page.nextCursor && existing[0] && oldestFresh && newestFirst(oldestFresh, existing[0]) < 0);
@@ -63,8 +76,8 @@ export function useGroupActivity(
     } catch (error) {
       if (request !== requestRef.current) return;
       console.error("Failed to load activity:", error);
-      // A failed background refresh keeps what's already shown.
-      if (isNewView || !eventsRef.current.length) setStatus("error");
+      // A failed background refresh keeps what's already shown, including the saved page.
+      if (!saved && (isNewView || !eventsRef.current.length)) setStatus("error");
     }
   }, [filter, groupId, limit, viewKey]);
 

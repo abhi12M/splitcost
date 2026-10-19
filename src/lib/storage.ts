@@ -4,6 +4,7 @@ import { getRealtimeOriginSessionId } from "@/lib/realtime/originSession";
 import {
   deleteCachedExpense,
   deleteCachedGroup,
+  patchCachedExpenseCategory,
   patchCachedGroup,
   readCachedGroupSummaries,
   upsertCachedDashboardExpense,
@@ -25,6 +26,7 @@ import {
   updateLocalGroup,
 } from "@/lib/offline/localGroups";
 import { isOfflineError, isOnline, trackedFetch } from "@/lib/offline/network";
+import { findArrivedAdd, forgetFailedAdd, rememberFailedAdd } from "@/lib/offline/lostAdd";
 
 // Every call below first checks whether the group was created on this device
 // and hasn't reached the server yet (see lib/offline/localGroups); such a
@@ -286,7 +288,11 @@ export async function updateGroup(
     throw error;
   }
 
-  return payload;
+  // Save the new name and members before the caller goes back to the dashboard
+  // and the My groups list, so they open with them already.
+  const group = withoutMessage(payload) as GroupResponse;
+  await patchCachedGroup(group);
+  return group;
 }
 
 export async function loadGroupDetails(groupId: string): Promise<GroupDashboardInterface | null> {
@@ -401,19 +407,36 @@ export async function addExpense(
 ): Promise<ExpenseResponse | undefined> {
   if (await getLocalGroup(groupId)) return addLocalExpense(groupId, expenseData);
 
+  // An earlier try at this same expense may have reached the server although
+  // its answer was lost; use that one instead of adding it twice.
+  const arrived = await findArrivedAdd(groupId, expenseData);
+  if (arrived) {
+    await upsertCachedDashboardExpense(groupId, arrived);
+    return arrived;
+  }
+
   const { attachment: _attachment, ...expensePayload } = expenseData;
 
-  const res = await trackedFetch("/api/expenses", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      groupId,
-      originSessionId: getRealtimeOriginSessionId(),
-      ...expensePayload,
-    }),
-  });
+  let res: Response;
+  try {
+    res = await trackedFetch("/api/expenses", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        groupId,
+        originSessionId: getRealtimeOriginSessionId(),
+        ...expensePayload,
+      }),
+    });
+  } catch (error) {
+    // No answer at all: it may or may not have been saved. Remember it, so a
+    // retry can check first.
+    if (isOfflineError(error)) await rememberFailedAdd(groupId, expenseData);
+    throw error;
+  }
+  forgetFailedAdd();
 
   // Throw rather than return nothing, so callers can't mistake a failed save
   // for a successful one.
@@ -533,7 +556,10 @@ export async function patchExpenseCategory(
     throw error;
   }
 
-  return res.json();
+  const changed = withoutMessage(await res.json()) as ExpenseCategoryPatchResponse;
+  // Show the new category in the saved dashboard and the expense's saved copy too.
+  await patchCachedExpenseCategory(changed);
+  return changed;
 }
 
 export async function deleteExpense(
