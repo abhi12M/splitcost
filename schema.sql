@@ -213,6 +213,43 @@ $$;
 ALTER FUNCTION "public"."cleanup_orphan_users"("p_user_ids" "uuid"[]) OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."clear_expense_attachment"("p_expense_id" "uuid", "p_expected_path" "text" DEFAULT NULL::"text") RETURNS TABLE("previous_path" "text")
+    LANGUAGE "plpgsql"
+    AS $$
+DECLARE
+  v_previous text;
+BEGIN
+  SELECT e.attachment_data_url INTO v_previous
+  FROM public.expenses e
+  WHERE e.id = p_expense_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RETURN;
+  END IF;
+
+  IF v_previous IS NULL THEN
+    RETURN QUERY SELECT NULL::text;
+    RETURN;
+  END IF;
+
+  IF p_expected_path IS NOT NULL AND v_previous IS DISTINCT FROM p_expected_path THEN
+    RAISE EXCEPTION 'ATTACHMENT_CHANGED' USING ERRCODE = 'P0001';
+  END IF;
+
+  UPDATE public.expenses AS e
+  SET attachment_data_url = NULL,
+      updated_at = now()
+  WHERE e.id = p_expense_id;
+
+  RETURN QUERY SELECT v_previous;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."clear_expense_attachment"("p_expense_id" "uuid", "p_expected_path" "text") OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."create_group_with_members"("group_name" "text", "group_currency" "text", "member_names" "text"[]) RETURNS json
     LANGUAGE "plpgsql"
     AS $$
@@ -255,19 +292,17 @@ $$;
 ALTER FUNCTION "public"."create_group_with_members"("group_name" "text", "group_currency" "text", "member_names" "text"[]) OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "public"."delete_expense"("p_expense_id" "uuid", "p_origin_session_id" "text" DEFAULT NULL::"text") RETURNS boolean
+CREATE OR REPLACE FUNCTION "public"."delete_expense"("p_expense_id" "uuid") RETURNS boolean
     LANGUAGE "plpgsql"
     AS $$
 BEGIN
-  -- Deliberately not version-gated: if an update commits first, the requested
-  -- delete still commits second; if delete wins, an edit gets EXPENSE_DELETED.
   DELETE FROM public.expenses WHERE id = p_expense_id;
   RETURN FOUND;
 END;
 $$;
 
 
-ALTER FUNCTION "public"."delete_expense"("p_expense_id" "uuid", "p_origin_session_id" "text") OWNER TO "postgres";
+ALTER FUNCTION "public"."delete_expense"("p_expense_id" "uuid") OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."delete_group_and_cleanup_users"("p_group_id" "uuid") RETURNS "void"
@@ -292,7 +327,7 @@ $$;
 ALTER FUNCTION "public"."delete_group_and_cleanup_users"("p_group_id" "uuid") OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "public"."edit_expense"("p_group_id" "uuid", "p_expense_id" "uuid", "p_description" "text", "p_amount" numeric, "p_currency" "text", "p_paid_by_user_id" "uuid" DEFAULT NULL::"uuid", "p_split_type" "text" DEFAULT 'equal'::"text", "p_category" "text" DEFAULT 'uncategorized'::"text", "p_subcategory" "text" DEFAULT 'general'::"text", "p_date" "date" DEFAULT CURRENT_DATE, "p_participants" "jsonb" DEFAULT '[]'::"jsonb", "p_payers" "jsonb" DEFAULT NULL::"jsonb", "p_notes" "text" DEFAULT NULL::"text", "p_expected_revision" bigint DEFAULT NULL::bigint, "p_origin_session_id" "text" DEFAULT NULL::"text") RETURNS TABLE("id" "uuid", "group_id" "uuid", "description" "text", "notes" "text", "amount" numeric, "currency" "text", "paid_by_user_id" "uuid", "paid_by_name" "text", "split_type" "text", "category" "text", "subcategory" "text", "date" "date", "created_at" timestamp with time zone, "updated_at" timestamp with time zone, "revision" bigint)
+CREATE OR REPLACE FUNCTION "public"."edit_expense"("p_group_id" "uuid", "p_expense_id" "uuid", "p_description" "text", "p_amount" numeric, "p_currency" "text", "p_paid_by_user_id" "uuid" DEFAULT NULL::"uuid", "p_split_type" "text" DEFAULT 'equal'::"text", "p_category" "text" DEFAULT 'general'::"text", "p_subcategory" "text" DEFAULT 'general'::"text", "p_date" "date" DEFAULT CURRENT_DATE, "p_participants" "jsonb" DEFAULT '[]'::"jsonb", "p_payers" "jsonb" DEFAULT NULL::"jsonb", "p_notes" "text" DEFAULT NULL::"text", "p_expected_revision" bigint DEFAULT NULL::bigint) RETURNS TABLE("id" "uuid", "group_id" "uuid", "description" "text", "notes" "text", "amount" numeric, "currency" "text", "paid_by_user_id" "uuid", "paid_by_name" "text", "split_type" "text", "category" "text", "subcategory" "text", "date" "date", "created_at" timestamp with time zone, "updated_at" timestamp with time zone, "revision" bigint)
     LANGUAGE "plpgsql"
     AS $$
 DECLARE
@@ -309,8 +344,7 @@ BEGIN
       subcategory = p_subcategory,
       date = p_date,
       updated_at = now(),
-      revision = e.revision + 1,
-      origin_session_id = p_origin_session_id
+      revision = e.revision + 1
   WHERE e.id = p_expense_id
     AND e.group_id = p_group_id
     AND e.revision = p_expected_revision;
@@ -353,7 +387,7 @@ END;
 $$;
 
 
-ALTER FUNCTION "public"."edit_expense"("p_group_id" "uuid", "p_expense_id" "uuid", "p_description" "text", "p_amount" numeric, "p_currency" "text", "p_paid_by_user_id" "uuid", "p_split_type" "text", "p_category" "text", "p_subcategory" "text", "p_date" "date", "p_participants" "jsonb", "p_payers" "jsonb", "p_notes" "text", "p_expected_revision" bigint, "p_origin_session_id" "text") OWNER TO "postgres";
+ALTER FUNCTION "public"."edit_expense"("p_group_id" "uuid", "p_expense_id" "uuid", "p_description" "text", "p_amount" numeric, "p_currency" "text", "p_paid_by_user_id" "uuid", "p_split_type" "text", "p_category" "text", "p_subcategory" "text", "p_date" "date", "p_participants" "jsonb", "p_payers" "jsonb", "p_notes" "text", "p_expected_revision" bigint) OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."guard_blog_slug_redirect_ownership"() RETURNS "trigger"
@@ -384,6 +418,95 @@ $$;
 
 
 ALTER FUNCTION "public"."guard_blog_slug_redirect_ownership"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."import_local_group"("p_group_id" "uuid", "p_payload_hash" "text", "p_name" "text", "p_currency" "text", "p_created_at" timestamp with time zone, "p_members" "jsonb", "p_expenses" "jsonb") RETURNS "text"
+    LANGUAGE "plpgsql"
+    AS $$
+DECLARE
+  v_existing_hash text;
+  v_expense jsonb;
+  v_expense_id uuid;
+  v_group_created_at timestamptz := LEAST(COALESCE(p_created_at, now()), now());
+BEGIN
+  -- Concurrent imports of the same id queue on this primary key, so only
+  -- one of them can get past this point.
+  INSERT INTO public.group_imports (group_id, payload_hash)
+  VALUES (p_group_id, p_payload_hash)
+  ON CONFLICT (group_id) DO NOTHING;
+
+  IF NOT FOUND THEN
+    SELECT gi.payload_hash INTO v_existing_hash
+    FROM public.group_imports gi
+    WHERE gi.group_id = p_group_id;
+
+    IF v_existing_hash = p_payload_hash THEN
+      RETURN 'already_imported';
+    END IF;
+    RAISE EXCEPTION 'IMPORT_CONFLICT' USING ERRCODE = 'P0001';
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM public.groups g WHERE g.id = p_group_id) THEN
+    RAISE EXCEPTION 'IMPORT_CONFLICT' USING ERRCODE = 'P0001';
+  END IF;
+
+  INSERT INTO public.groups (id, name, currency, created_at, updated_at)
+  VALUES (p_group_id, p_name, p_currency, v_group_created_at, now());
+
+  INSERT INTO public.users (id, name, created_at)
+  SELECT (m->>'id')::uuid, m->>'name', v_group_created_at
+  FROM jsonb_array_elements(p_members) AS m;
+
+  INSERT INTO public.group_members (group_id, user_id, role, joined_at, created_at)
+  SELECT p_group_id, (m->>'id')::uuid, 'member', v_group_created_at, v_group_created_at
+  FROM jsonb_array_elements(p_members) AS m;
+
+  FOR v_expense IN SELECT e FROM jsonb_array_elements(p_expenses) AS e
+  LOOP
+    v_expense_id := (v_expense->>'id')::uuid;
+
+    INSERT INTO public.expenses (
+      id, group_id, description, notes, amount, currency, paid_by_user_id,
+      split_type, category, subcategory, date, created_at, updated_at
+    )
+    VALUES (
+      v_expense_id,
+      p_group_id,
+      v_expense->>'description',
+      NULLIF(v_expense->>'notes', ''),
+      (v_expense->>'amount')::numeric,
+      p_currency,
+      NULLIF(v_expense->>'paidByUserId', '')::uuid,
+      (v_expense->>'splitType')::split_type_enum,
+      v_expense->>'category',
+      v_expense->>'subcategory',
+      (v_expense->>'date')::date,
+      LEAST(COALESCE((v_expense->>'createdAt')::timestamptz, now()), now()),
+      LEAST(COALESCE((v_expense->>'updatedAt')::timestamptz, now()), now())
+    );
+
+    INSERT INTO public.expense_participants (expense_id, user_id, share_amount, share_percent)
+    SELECT
+      v_expense_id,
+      (p->>'userId')::uuid,
+      NULLIF(p->>'amount', '')::numeric,
+      NULLIF(p->>'percent', '')::numeric
+    FROM jsonb_array_elements(COALESCE(v_expense->'participants', '[]'::jsonb)) AS p;
+
+    INSERT INTO public.expense_payers (expense_id, user_id, amount)
+    SELECT
+      v_expense_id,
+      (p->>'userId')::uuid,
+      (p->>'amount')::numeric
+    FROM jsonb_array_elements(COALESCE(v_expense->'payers', '[]'::jsonb)) AS p;
+  END LOOP;
+
+  RETURN 'created';
+END;
+$$;
+
+
+ALTER FUNCTION "public"."import_local_group"("p_group_id" "uuid", "p_payload_hash" "text", "p_name" "text", "p_currency" "text", "p_created_at" timestamp with time zone, "p_members" "jsonb", "p_expenses" "jsonb") OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."increment_blog_view"("p_blog_id" "uuid") RETURNS boolean
@@ -580,6 +703,34 @@ $$;
 ALTER FUNCTION "public"."load_group_summaries"("p_group_ids" "uuid"[]) OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."replace_expense_attachment"("p_expense_id" "uuid", "p_attachment_path" "text") RETURNS TABLE("previous_path" "text")
+    LANGUAGE "plpgsql"
+    AS $$
+DECLARE
+  v_previous text;
+BEGIN
+  SELECT e.attachment_data_url INTO v_previous
+  FROM public.expenses e
+  WHERE e.id = p_expense_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'EXPENSE_DELETED' USING ERRCODE = 'P0001';
+  END IF;
+
+  UPDATE public.expenses AS e
+  SET attachment_data_url = p_attachment_path,
+      updated_at = now()
+  WHERE e.id = p_expense_id;
+
+  RETURN QUERY SELECT v_previous;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."replace_expense_attachment"("p_expense_id" "uuid", "p_attachment_path" "text") OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."set_blog_category_updated_at"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
@@ -659,34 +810,41 @@ $$;
 ALTER FUNCTION "public"."set_blog_updated_at"() OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "public"."set_expense_attachment_path"("p_expense_id" "uuid", "p_attachment_path" "text", "p_origin_session_id" "text" DEFAULT NULL::"text") RETURNS boolean
+CREATE OR REPLACE FUNCTION "public"."set_expense_category"("p_expense_id" "uuid", "p_category" "text", "p_subcategory" "text", "p_expected_category" "text", "p_expected_subcategory" "text") RETURNS TABLE("id" "uuid", "group_id" "uuid", "category" "text", "subcategory" "text", "updated_at" timestamp with time zone, "revision" bigint)
     LANGUAGE "plpgsql"
     AS $$
+DECLARE
+  v_category text;
+  v_subcategory text;
 BEGIN
-  UPDATE public.expenses
-  SET attachment_data_url = p_attachment_path,
-      updated_at = now(),
-      revision = revision + 1,
-      origin_session_id = p_origin_session_id
-  WHERE id = p_expense_id;
-  RETURN FOUND;
-END;
-$$;
+  SELECT e.category, e.subcategory INTO v_category, v_subcategory
+  FROM public.expenses e
+  WHERE e.id = p_expense_id
+  FOR UPDATE;
 
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'EXPENSE_DELETED' USING ERRCODE = 'P0001';
+  END IF;
 
-ALTER FUNCTION "public"."set_expense_attachment_path"("p_expense_id" "uuid", "p_attachment_path" "text", "p_origin_session_id" "text") OWNER TO "postgres";
+  -- Already what the user picked: nothing to change, nothing to conflict with.
+  IF v_category = p_category AND v_subcategory = p_subcategory THEN
+    RETURN QUERY
+    SELECT e.id, e.group_id, e.category, e.subcategory, e.updated_at, e.revision
+    FROM public.expenses e
+    WHERE e.id = p_expense_id;
+    RETURN;
+  END IF;
 
+  IF v_category IS DISTINCT FROM p_expected_category
+     OR v_subcategory IS DISTINCT FROM p_expected_subcategory THEN
+    RAISE EXCEPTION 'EXPENSE_CATEGORY_CONFLICT' USING ERRCODE = 'P0001';
+  END IF;
 
-CREATE OR REPLACE FUNCTION "public"."set_expense_category"("p_expense_id" "uuid", "p_category" "text", "p_subcategory" "text", "p_origin_session_id" "text" DEFAULT NULL::"text") RETURNS TABLE("id" "uuid", "group_id" "uuid", "category" "text", "subcategory" "text", "updated_at" timestamp with time zone, "revision" bigint)
-    LANGUAGE "plpgsql"
-    AS $$
-BEGIN
   UPDATE public.expenses AS e
   SET category = p_category,
       subcategory = p_subcategory,
       updated_at = now(),
-      revision = e.revision + 1,
-      origin_session_id = p_origin_session_id
+      revision = e.revision + 1
   WHERE e.id = p_expense_id;
 
   RETURN QUERY
@@ -697,7 +855,7 @@ END;
 $$;
 
 
-ALTER FUNCTION "public"."set_expense_category"("p_expense_id" "uuid", "p_category" "text", "p_subcategory" "text", "p_origin_session_id" "text") OWNER TO "postgres";
+ALTER FUNCTION "public"."set_expense_category"("p_expense_id" "uuid", "p_category" "text", "p_subcategory" "text", "p_expected_category" "text", "p_expected_subcategory" "text") OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."tombstone_deleted_blog_slugs"() RETURNS "trigger"
@@ -928,7 +1086,6 @@ CREATE TABLE IF NOT EXISTS "public"."expenses" (
     "attachment_data_url" "text",
     "notes" "text",
     "revision" bigint DEFAULT 1 NOT NULL,
-    "origin_session_id" "text",
     CONSTRAINT "expenses_notes_length" CHECK ((("notes" IS NULL) OR ("char_length"("notes") <= 10000)))
 );
 
@@ -936,6 +1093,16 @@ ALTER TABLE ONLY "public"."expenses" REPLICA IDENTITY FULL;
 
 
 ALTER TABLE "public"."expenses" OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "public"."group_imports" (
+    "group_id" "uuid" NOT NULL,
+    "payload_hash" "text" NOT NULL,
+    "imported_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
+ALTER TABLE "public"."group_imports" OWNER TO "postgres";
 
 
 CREATE TABLE IF NOT EXISTS "public"."group_members" (
@@ -1047,6 +1214,11 @@ ALTER TABLE ONLY "public"."expense_payers"
 
 ALTER TABLE ONLY "public"."expenses"
     ADD CONSTRAINT "expenses_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."group_imports"
+    ADD CONSTRAINT "group_imports_pkey" PRIMARY KEY ("group_id");
 
 
 
@@ -1264,6 +1436,9 @@ ALTER TABLE "public"."expense_payers" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."expenses" ENABLE ROW LEVEL SECURITY;
 
 
+ALTER TABLE "public"."group_imports" ENABLE ROW LEVEL SECURITY;
+
+
 ALTER TABLE "public"."group_members" ENABLE ROW LEVEL SECURITY;
 
 
@@ -1459,13 +1634,18 @@ GRANT ALL ON FUNCTION "public"."cleanup_orphan_users"("p_user_ids" "uuid"[]) TO 
 
 
 
+REVOKE ALL ON FUNCTION "public"."clear_expense_attachment"("p_expense_id" "uuid", "p_expected_path" "text") FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."clear_expense_attachment"("p_expense_id" "uuid", "p_expected_path" "text") TO "service_role";
+
+
+
 REVOKE ALL ON FUNCTION "public"."create_group_with_members"("group_name" "text", "group_currency" "text", "member_names" "text"[]) FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."create_group_with_members"("group_name" "text", "group_currency" "text", "member_names" "text"[]) TO "service_role";
 
 
 
-REVOKE ALL ON FUNCTION "public"."delete_expense"("p_expense_id" "uuid", "p_origin_session_id" "text") FROM PUBLIC;
-GRANT ALL ON FUNCTION "public"."delete_expense"("p_expense_id" "uuid", "p_origin_session_id" "text") TO "service_role";
+REVOKE ALL ON FUNCTION "public"."delete_expense"("p_expense_id" "uuid") FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."delete_expense"("p_expense_id" "uuid") TO "service_role";
 
 
 
@@ -1474,14 +1654,19 @@ GRANT ALL ON FUNCTION "public"."delete_group_and_cleanup_users"("p_group_id" "uu
 
 
 
-REVOKE ALL ON FUNCTION "public"."edit_expense"("p_group_id" "uuid", "p_expense_id" "uuid", "p_description" "text", "p_amount" numeric, "p_currency" "text", "p_paid_by_user_id" "uuid", "p_split_type" "text", "p_category" "text", "p_subcategory" "text", "p_date" "date", "p_participants" "jsonb", "p_payers" "jsonb", "p_notes" "text", "p_expected_revision" bigint, "p_origin_session_id" "text") FROM PUBLIC;
-GRANT ALL ON FUNCTION "public"."edit_expense"("p_group_id" "uuid", "p_expense_id" "uuid", "p_description" "text", "p_amount" numeric, "p_currency" "text", "p_paid_by_user_id" "uuid", "p_split_type" "text", "p_category" "text", "p_subcategory" "text", "p_date" "date", "p_participants" "jsonb", "p_payers" "jsonb", "p_notes" "text", "p_expected_revision" bigint, "p_origin_session_id" "text") TO "service_role";
+REVOKE ALL ON FUNCTION "public"."edit_expense"("p_group_id" "uuid", "p_expense_id" "uuid", "p_description" "text", "p_amount" numeric, "p_currency" "text", "p_paid_by_user_id" "uuid", "p_split_type" "text", "p_category" "text", "p_subcategory" "text", "p_date" "date", "p_participants" "jsonb", "p_payers" "jsonb", "p_notes" "text", "p_expected_revision" bigint) FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."edit_expense"("p_group_id" "uuid", "p_expense_id" "uuid", "p_description" "text", "p_amount" numeric, "p_currency" "text", "p_paid_by_user_id" "uuid", "p_split_type" "text", "p_category" "text", "p_subcategory" "text", "p_date" "date", "p_participants" "jsonb", "p_payers" "jsonb", "p_notes" "text", "p_expected_revision" bigint) TO "service_role";
 
 
 
 GRANT ALL ON FUNCTION "public"."guard_blog_slug_redirect_ownership"() TO "anon";
 GRANT ALL ON FUNCTION "public"."guard_blog_slug_redirect_ownership"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."guard_blog_slug_redirect_ownership"() TO "service_role";
+
+
+
+REVOKE ALL ON FUNCTION "public"."import_local_group"("p_group_id" "uuid", "p_payload_hash" "text", "p_name" "text", "p_currency" "text", "p_created_at" timestamp with time zone, "p_members" "jsonb", "p_expenses" "jsonb") FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."import_local_group"("p_group_id" "uuid", "p_payload_hash" "text", "p_name" "text", "p_currency" "text", "p_created_at" timestamp with time zone, "p_members" "jsonb", "p_expenses" "jsonb") TO "service_role";
 
 
 
@@ -1497,6 +1682,11 @@ GRANT ALL ON FUNCTION "public"."load_group_details"("group_id" "uuid") TO "servi
 
 REVOKE ALL ON FUNCTION "public"."load_group_summaries"("p_group_ids" "uuid"[]) FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."load_group_summaries"("p_group_ids" "uuid"[]) TO "service_role";
+
+
+
+REVOKE ALL ON FUNCTION "public"."replace_expense_attachment"("p_expense_id" "uuid", "p_attachment_path" "text") FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."replace_expense_attachment"("p_expense_id" "uuid", "p_attachment_path" "text") TO "service_role";
 
 
 
@@ -1518,13 +1708,8 @@ GRANT ALL ON FUNCTION "public"."set_blog_updated_at"() TO "service_role";
 
 
 
-REVOKE ALL ON FUNCTION "public"."set_expense_attachment_path"("p_expense_id" "uuid", "p_attachment_path" "text", "p_origin_session_id" "text") FROM PUBLIC;
-GRANT ALL ON FUNCTION "public"."set_expense_attachment_path"("p_expense_id" "uuid", "p_attachment_path" "text", "p_origin_session_id" "text") TO "service_role";
-
-
-
-REVOKE ALL ON FUNCTION "public"."set_expense_category"("p_expense_id" "uuid", "p_category" "text", "p_subcategory" "text", "p_origin_session_id" "text") FROM PUBLIC;
-GRANT ALL ON FUNCTION "public"."set_expense_category"("p_expense_id" "uuid", "p_category" "text", "p_subcategory" "text", "p_origin_session_id" "text") TO "service_role";
+REVOKE ALL ON FUNCTION "public"."set_expense_category"("p_expense_id" "uuid", "p_category" "text", "p_subcategory" "text", "p_expected_category" "text", "p_expected_subcategory" "text") FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."set_expense_category"("p_expense_id" "uuid", "p_category" "text", "p_subcategory" "text", "p_expected_category" "text", "p_expected_subcategory" "text") TO "service_role";
 
 
 
@@ -1592,6 +1777,10 @@ GRANT ALL ON TABLE "public"."expense_payers" TO "service_role";
 
 
 GRANT ALL ON TABLE "public"."expenses" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."group_imports" TO "service_role";
 
 
 

@@ -27,6 +27,41 @@ export function writeCachedDashboard(data: GroupDashboardInterface) {
   });
 }
 
+function isDashboardExpense(value: unknown): value is ExpenseResponse {
+  const expense = value as Partial<ExpenseResponse> | null;
+  return (
+    Boolean(expense) &&
+    typeof expense?.id === "string" &&
+    typeof expense.createdAt === "string" &&
+    typeof expense.date === "string" &&
+    Array.isArray(expense.participants) &&
+    expense.participants.every((participant) => Boolean(participant?.user))
+  );
+}
+
+/** The dashboard's own order: newest date first, then newest added. */
+function newestFirst(a: ExpenseResponse, b: ExpenseResponse) {
+  if (a.date !== b.date) return a.date < b.date ? 1 : -1;
+  return Date.parse(b.createdAt) - Date.parse(a.createdAt) || 0;
+}
+
+/**
+ * Puts an expense the server just saved into the saved dashboard (added at its
+ * place, or replacing the same one), so the dashboard opens with it already
+ * there. Does nothing if that group's dashboard hasn't been saved yet.
+ */
+export function upsertCachedDashboardExpense(groupId: string, expense: unknown) {
+  if (!groupId || !isDashboardExpense(expense)) return Promise.resolve();
+  return withDb(undefined, async (db) => {
+    await db.transaction("rw", db.dashboards, async () => {
+      const cached = await db.dashboards.get(groupId);
+      if (!cached) return;
+      const expenses = [expense, ...cached.data.expenses.filter((item) => item.id !== expense.id)].sort(newestFirst);
+      await db.dashboards.put({ ...cached, data: { ...cached.data, expenses } });
+    });
+  });
+}
+
 /** Keeps the cached dashboard's group (name, members) in step with a fresh load. */
 export function patchCachedGroup(group: GroupResponse) {
   if (!group?.id) return Promise.resolve();

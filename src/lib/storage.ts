@@ -6,6 +6,7 @@ import {
   deleteCachedGroup,
   patchCachedGroup,
   readCachedGroupSummaries,
+  upsertCachedDashboardExpense,
   writeCachedGroupSummaries,
 } from "@/lib/offline/cache";
 import {
@@ -349,6 +350,21 @@ export async function loadMyGroups(
 }
 
 /**
+ * "My groups" from this device only: local groups plus the last saved copy of
+ * the synced ones. Null unless every group has a saved copy, so the list never
+ * appears partly filled before the server answers.
+ */
+export async function loadCachedMyGroups(groupIds: string[]): Promise<GroupOverviewItemInterface[] | null> {
+  const localGroups = await listLocalGroups();
+  const localIds = new Set(localGroups.map((record) => record.id));
+  const local = localGroups.filter((record) => groupIds.includes(record.id)).map(localGroupSummary);
+  const serverIds = groupIds.filter((id) => !localIds.has(id));
+  const cached = await readCachedGroupSummaries(serverIds);
+  if (cached.length < serverIds.length) return null;
+  return [...local, ...cached];
+}
+
+/**
  * True when the server no longer has this group. Used to tell "this expense
  * was deleted" apart from "its whole group was deleted" (which also deletes
  * every expense in it).
@@ -409,7 +425,11 @@ export async function addExpense(
     throw error;
   }
 
-  return res.json();
+  const created = await res.json();
+  // Save it into the cached dashboard before the caller goes there, so the
+  // dashboard opens with the new expense already in its list.
+  await upsertCachedDashboardExpense(groupId, withoutMessage(created));
+  return created;
 }
 
 
@@ -463,8 +483,17 @@ export async function updateExpense(
     throw error;
   }
 
-  // Cached read may now be stale (description / amount / split changed).
-  return res.json();
+  const updated = await res.json();
+  // Replace it in the cached dashboard before the caller goes there.
+  await upsertCachedDashboardExpense(groupId, withoutMessage(updated));
+  return updated;
+}
+
+/** An API reply without its human-readable `message`. */
+function withoutMessage(body: unknown) {
+  if (!body || typeof body !== "object") return body;
+  const { message: _message, ...rest } = body as Record<string, unknown>;
+  return rest;
 }
 
 export async function patchExpenseCategory(

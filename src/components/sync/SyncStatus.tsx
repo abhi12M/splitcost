@@ -1,17 +1,20 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { CircleAlert, CircleCheck, RefreshCw, WifiOff, type LucideIcon } from "lucide-react";
 
 import { Drawer, DrawerContent, DrawerDescription, DrawerTitle } from "@/components/ui/drawer";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useActivityTime } from "@/components/activity/useActivityTime";
+import { formatDisplayDateTime } from "@/components/ui/formatters";
 import { LocalGroupBadge } from "@/components/sync/LocalGroupBadge";
 import { toast } from "@/hooks/use-toast";
 import { useMdUp } from "@/hooks/useDeviceType";
 import { useSyncStatus, type SyncStatus } from "@/hooks/useOffline";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { requestPersistentStorage, type LocalGroupRecord } from "@/lib/offline/db";
+import { getLastSyncedAt, subscribeLastSynced } from "@/lib/offline/network";
 import { LOCAL_GROUP_REKEYED_EVENT, startLocalGroupSync } from "@/lib/offline/syncLocalGroups";
 import { cn } from "@/lib/utils";
 
@@ -70,6 +73,20 @@ function StatusIcon({ kind, className }: { kind: IndicatorKind; className?: stri
   return <Icon className={cn("h-4 w-4 shrink-0", tone, className)} strokeWidth={2.5} aria-hidden />;
 }
 
+// The phone header's status: a small dot instead of an icon. Green when
+// online, red when offline, blue and blinking while anything syncs, amber when
+// a local group needs a look.
+const indicatorDot: Record<IndicatorKind, string> = {
+  online: "bg-emerald-500",
+  offline: "bg-red-500",
+  syncing: "animate-pulse bg-blue-500 [animation-duration:800ms] motion-reduce:animate-none",
+  attention: "bg-amber-500",
+};
+
+function StatusDot({ kind }: { kind: IndicatorKind }) {
+  return <span className={cn("block h-2.5 w-2.5 rounded-full", indicatorDot[kind])} aria-hidden />;
+}
+
 function hintFor(t: ReturnType<typeof useTranslations>, record: LocalGroupRecord, online: boolean) {
   if (record.state === "rejected") return t("hintRejected", { reason: (record.error ?? "").replace(/[.。।]\s*$/, "") });
   if (record.state === "unknown") return t("hintUnknown");
@@ -77,9 +94,34 @@ function hintFor(t: ReturnType<typeof useTranslations>, record: LocalGroupRecord
   return online ? t("hintDraftOnline") : t("hintDraftOffline");
 }
 
+/** "Last synced 5 minutes ago": when the server last answered, refreshed while the sheet is open. */
+function useLastSyncedText() {
+  const t = useTranslations("offline");
+  const locale = useLocale();
+  const { shortTime } = useActivityTime();
+  const at = useSyncExternalStore(subscribeLastSynced, getLastSyncedAt, () => null);
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => setTick((tick) => tick + 1), 30_000);
+    return () => clearInterval(timer);
+  }, []);
+
+  if (!at) return null;
+  const age = Date.now() - at;
+  const when =
+    age < 60_000
+      ? shortTime(new Date(at).toISOString()).toLocaleLowerCase(locale)
+      : age < 6 * 60 * 60_000
+        ? shortTime(new Date(at).toISOString())
+        : formatDisplayDateTime(new Date(at));
+  return t("lastSynced", { time: when });
+}
+
 function StatusDetails({ onNavigate }: { onNavigate: () => void }) {
   const t = useTranslations("offline");
   const { kind, label, hint, online, localGroups } = useIndicator();
+  const lastSynced = useLastSyncedText();
 
   return (
     <div className="space-y-4">
@@ -88,6 +130,7 @@ function StatusDetails({ onNavigate }: { onNavigate: () => void }) {
         <div className="min-w-0">
           <p className="font-semibold text-foreground">{label}</p>
           <p className="text-sm text-muted-foreground">{hint}</p>
+          {lastSynced ? <p className="mt-1 text-xs text-muted-foreground">{lastSynced}</p> : null}
         </div>
       </div>
       {localGroups.length ? (
@@ -120,9 +163,9 @@ function StatusDetails({ onNavigate }: { onNavigate: () => void }) {
  * The connection status: green check when online with nothing waiting, red
  * wifi-off offline, a blue arrow that spins while anything syncs, and an amber
  * alert when a group created on this device needs a look. A labelled pill on
- * larger screens; on phones, an icon in the screen's own header (see
- * SyncStatusButton), or floating at the top on screens without one. Shown
- * only on the screens isStatusPath lists.
+ * larger screens; on phones, a dot (green, blinking blue, red, amber) in the
+ * screen's own header (see SyncStatusButton), so nothing shows while a screen
+ * is still loading. Shown only on the screens isStatusPath lists.
  */
 export function SyncStatusIndicator() {
   const t = useTranslations("offline");
@@ -130,7 +173,6 @@ export function SyncStatusIndicator() {
   const isMdUp = useMdUp();
   const { kind, label, pendingCount, attentionCount } = useIndicator();
   const [open, setOpen] = useState(false);
-  const inlineShown = useSyncExternalStore(subscribeInline, () => inlineCount > 0, () => false);
 
   if (!isStatusPath(pathname)) return null;
 
@@ -162,15 +204,11 @@ export function SyncStatusIndicator() {
     );
   }
 
-  // A screen whose header shows the status itself doesn't need the floating one.
-  if (inlineShown) return null;
-
-  return (
-    <MobileStatusButton className="fixed left-1/2 top-[max(env(safe-area-inset-top,0px),2px)] z-[60] -translate-x-1/2" />
-  );
+  // On phones each screen's own header shows the status (SyncStatusButton).
+  return null;
 }
 
-/** The phone-sized status icon and the sheet it opens. */
+/** The phone-sized status dot and the sheet it opens. */
 function MobileStatusButton({ className }: { className?: string }) {
   const t = useTranslations("offline");
   const { kind, label, attentionCount } = useIndicator();
@@ -186,7 +224,7 @@ function MobileStatusButton({ className }: { className?: string }) {
         onClick={() => setOpen(true)}
         className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full", className)}
       >
-        <StatusIcon kind={kind} />
+        <StatusDot kind={kind} />
       </button>
       <Drawer open={open} onOpenChange={setOpen}>
         <DrawerContent className="rounded-t-2xl px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-5">
@@ -199,36 +237,15 @@ function MobileStatusButton({ className }: { className?: string }) {
   );
 }
 
-// How many inline status buttons are on screen; while any is, the floating
-// mobile one stays hidden.
-let inlineCount = 0;
-const inlineListeners = new Set<() => void>();
-const subscribeInline = (listener: () => void) => {
-  inlineListeners.add(listener);
-  return () => {
-    inlineListeners.delete(listener);
-  };
-};
-const setInlineCount = (delta: number) => {
-  inlineCount += delta;
-  inlineListeners.forEach((listener) => listener());
-};
-
 /**
- * The status icon for a mobile screen's own header, placed next to its menu
- * or actions. Renders nothing at desktop widths, where the pill shows instead,
+ * The status dot for a mobile screen's own header, placed right after its
+ * heading. Renders nothing at desktop widths, where the pill shows instead,
  * and nothing on screens that don't show the status (see isStatusPath).
  */
 export function SyncStatusButton({ className }: { className?: string }) {
   const isMdUp = useMdUp();
   const pathname = usePathname();
-  const shown = !isMdUp && isStatusPath(pathname);
-  useEffect(() => {
-    if (!shown) return;
-    setInlineCount(1);
-    return () => setInlineCount(-1);
-  }, [shown]);
-  if (!shown) return null;
+  if (isMdUp || !isStatusPath(pathname)) return null;
   return <MobileStatusButton className={className} />;
 }
 

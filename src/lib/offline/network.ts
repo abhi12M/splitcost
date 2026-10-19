@@ -90,6 +90,45 @@ export function reportNetworkFailure() {
   setOnline(false);
 }
 
+// When the server last answered a request successfully, kept across reloads so
+// the status sheet can still say it while offline.
+const LAST_SYNCED_KEY = "splitcost:lastSyncedAt";
+let lastSyncedAt: number | null = null;
+let lastSyncedLoaded = false;
+const lastSyncedListeners = new Set<Listener>();
+
+/** When the server last answered a request successfully; null if never on this device. */
+export function getLastSyncedAt() {
+  if (!lastSyncedLoaded && typeof window !== "undefined") {
+    lastSyncedLoaded = true;
+    try {
+      const stored = Number(window.localStorage.getItem(LAST_SYNCED_KEY));
+      if (stored > 0) lastSyncedAt = stored;
+    } catch {
+      // Storage unavailable: it just starts empty.
+    }
+  }
+  return lastSyncedAt;
+}
+
+export function subscribeLastSynced(listener: Listener) {
+  lastSyncedListeners.add(listener);
+  return () => {
+    lastSyncedListeners.delete(listener);
+  };
+}
+
+function markSynced() {
+  getLastSyncedAt();
+  lastSyncedAt = Date.now();
+  try {
+    window.localStorage.setItem(LAST_SYNCED_KEY, String(lastSyncedAt));
+  } catch {
+    // Not saved across reloads; still right for this page.
+  }
+  lastSyncedListeners.forEach((listener) => listener());
+}
+
 /** Thrown instead of sending a request the app already knows can't go out. */
 export class OfflineError extends Error {
   code = "OFFLINE" as const;
@@ -111,6 +150,7 @@ export async function trackedFetch(input: RequestInfo | URL, init?: RequestInit)
   try {
     const res = await fetch(input, init);
     reportNetworkSuccess();
+    if (res.ok) markSynced();
     return res;
   } catch (error) {
     // An aborted request says nothing about the network.

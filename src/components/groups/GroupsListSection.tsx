@@ -4,7 +4,7 @@ import { useRouter as useNextRouter } from "next/navigation";
 
 import { Link, useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Plus, Search, SlidersHorizontal, X } from "lucide-react";
 
 import {
@@ -30,7 +30,7 @@ import { formatDisplayDate, formatDisplayDateTime } from "@/components/ui/format
 import { formatCurrency } from "@/lib/avatar-utils";
 import { ADMIN_BASE_PATH, LOCAL_GROUPS_KEY } from "@/lib/constants";
 import { getEncryptedItem, setEncryptedItem } from "@/lib/localStorage";
-import { deleteGroup, GroupOverviewItemInterface, loadMyGroups } from "@/lib/storage";
+import { deleteGroup, GroupOverviewItemInterface, loadCachedMyGroups, loadMyGroups } from "@/lib/storage";
 import { LocalGroupBadge } from "@/components/sync/LocalGroupBadge";
 import { useLocalGroups } from "@/hooks/useOffline";
 import { LOCAL_GROUPS_CHANGED_EVENT } from "@/lib/offline/localGroups";
@@ -220,10 +220,20 @@ export function GroupsListSection({ adminMode = false }: { adminMode?: boolean }
     setSortBy("latest-activity");
   };
 
-  // Only the first load shows skeletons (`loading` starts true); reloads swap
-  // the cards in place.
+  // Only the first load shows skeletons (`loading` starts true), and only when
+  // nothing is saved on this device yet; reloads swap the cards in place.
+  const showedSavedRef = useRef(false);
   const fetchGroups = useCallback(async () => {
     try {
+      if (!adminMode && !showedSavedRef.current) {
+        // Show the saved copy first (a quick local read), then ask the server.
+        const saved = await loadCachedMyGroups(getEncryptedItem<string[]>(LOCAL_GROUPS_KEY, []));
+        if (saved) {
+          showedSavedRef.current = true;
+          setGroups(saved);
+          setLoading(false);
+        }
+      }
       if (adminMode) {
         const res = await fetch("/api/groups", { cache: "no-store" });
         if (!res.ok) {
@@ -244,7 +254,8 @@ export function GroupsListSection({ adminMode = false }: { adminMode?: boolean }
         }
       }
     } catch {
-      setGroups([]);
+      // A failed refresh keeps the saved copy that is already on screen.
+      if (!showedSavedRef.current) setGroups([]);
     } finally {
       setLoading(false);
     }

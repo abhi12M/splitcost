@@ -294,10 +294,11 @@ export function MobileGroupDashboard({
               </Link>
             )}
           </Button>
-          <h1 className="min-w-0 flex-1 truncate text-base font-semibold tracking-tight">
+          <h1 className="min-w-0 truncate text-base font-semibold tracking-tight">
             {group.name}
           </h1>
-          <SyncStatusButton />
+          <SyncStatusButton className="-ml-1 h-6 w-6" />
+          <div className="flex-1" aria-hidden />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon-sm" className="shrink-0" aria-label={t("groupMenu")}>

@@ -1,5 +1,5 @@
 import { recordExpenseAdded } from "@/lib/activity/server/recordExpenseActivity";
-import { loadExpenseSnapshot } from "@/lib/activity/server/expenseSnapshots";
+import { loadExpenseDetails } from "@/lib/activity/server/expenseSnapshots";
 import { SETTLEMENT_CATEGORY } from "@/lib/activity/expenseSnapshot";
 import { broadcastExpenseChange } from "@/lib/api/broadcastExpense";
 import { readJsonObject } from "@/lib/api/request";
@@ -125,15 +125,16 @@ export async function POST(req: Request) {
   }
   const createdId = (data as { id?: unknown } | null)?.id;
   const session = typeof originSessionId === "string" ? originSessionId.slice(0, 128) : null;
-  const created = typeof createdId === "string" ? await loadExpenseSnapshot(createdId) : null;
-  if (created) {
-    await recordExpenseAdded(created, session);
+  const loaded = typeof createdId === "string" ? await loadExpenseDetails(createdId) : null;
+  if (loaded) {
+    await recordExpenseAdded(loaded.snapshot, session);
   }
   if (typeof createdId === "string") {
     broadcastExpenseChange({ event: "INSERT", expenseId: createdId, groupId, originSessionId: session });
   }
+  // The saved expense as the dashboard lists it, so the client can show it at once.
   return successJson(
-    data,
+    { ...(data as object | null), ...loaded?.response },
     category === SETTLEMENT_CATEGORY ? SUCCESS_MESSAGES.settlementRecorded : SUCCESS_MESSAGES.expenseAdded
   );
 }

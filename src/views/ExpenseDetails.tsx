@@ -63,6 +63,7 @@ import {
 } from "@/lib/expenseAttachments";
 import { useExpense } from "@/lib/groupExpenseData";
 import { ExpenseHistory } from "@/components/activity/ExpenseHistory";
+import { UserAvatar } from "@/components/ui/UserAvatar";
 import { useExpenseRealtime, useGroupChanges } from "@/hooks/useGroupRealtime";
 import { useGroupChangeNotices } from "@/components/group/GroupChangeNotices";
 import { useReceiptChangeNotice } from "@/components/expense/useReceiptChangeNotice";
@@ -1017,19 +1018,22 @@ export default function ExpenseDetailsPage({
                   {formatAmount(expense.amount, expense.currency)}
                 </p>
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-1">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1">
                     <CalendarDays className="h-3.5 w-3.5" />
                     {t("expenseDate", { date: formatDisplayDate(expense.date) })}
                   </span>
-                  <span className="inline-flex items-center gap-1">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1">
                     <Users className="h-3.5 w-3.5" />
                     {t("splitCount", { count: participantRows.length })}
                   </span>
                 </div>
-                <div className="mt-2 space-y-1 text-xs text-muted-foreground">
-                  {createdAtLabel ? <p>{t("addedOn", { date: createdAtLabel })}</p> : null}
-                  {updatedAtLabel ? <p>{t("updatedOn", { date: updatedAtLabel })}</p> : null}
-                </div>
+                {/* A group that so far lives only on this device has no history to open. */}
+                {access.isLocal ? (
+                  <div className="mt-2 space-y-1 text-xs text-muted-foreground">
+                    {createdAtLabel ? <p>{t("addedOn", { date: createdAtLabel })}</p> : null}
+                    {updatedAtLabel ? <p>{t("updatedOn", { date: updatedAtLabel })}</p> : null}
+                  </div>
+                ) : null}
               </div>
             </div>
           </section>
@@ -1040,7 +1044,8 @@ export default function ExpenseDetailsPage({
                 <div className="space-y-3">
                   {payers.map((payer) => (
                     <div key={`payer-${payer.userId}`} className="flex items-center justify-between">
-                      <div className="flex min-w-0 items-center gap-2 text-sm">
+                      <div className="flex min-w-0 items-center gap-2.5 text-sm">
+                        <UserAvatar name={payer.name} size="sm" disableMobileTooltip />
                         <span className="truncate font-medium">
                           {formatSummaryName(payer.name)}{" "}
                           <span className="font-normal text-muted-foreground">{t("paidLabel")}</span>
@@ -1073,8 +1078,10 @@ export default function ExpenseDetailsPage({
                       >
                         <div className="flex min-w-0 items-center gap-2 text-sm">
                           <span className="truncate font-medium">
-                            {participant.name}{" "}
-                            <span className="font-normal text-muted-foreground">{t("owedLabel")}</span>
+                            {t.rich("shareOf", {
+                              name: participant.name,
+                              muted: (chunks) => <span className="font-normal text-muted-foreground">{chunks}</span>,
+                            })}
                           </span>
                         </div>
                         <span className="shrink-0 text-sm font-medium">
@@ -1132,6 +1139,9 @@ export default function ExpenseDetailsPage({
           {!access.isLocal && <ExpenseHistory
             expenseId={expenseId}
             currency={expense.currency}
+            createdAt={expense.createdAt}
+            // Shows at once, before the history loads (and offline).
+            updatedAt={updatedAtLabel ? expense.updatedAt : null}
             // Receipt changes don't bump revision/updatedAt, so key on the saved attachment too.
             refreshKey={`${expense.revision ?? ""}|${expense.updatedAt ?? ""}|${
               cachedAttachment?.updatedAt ?? "none"

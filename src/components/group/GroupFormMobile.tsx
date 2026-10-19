@@ -205,13 +205,13 @@ export function GroupFormMobile({
             <Link href={backHref}>
               <ArrowLeft className="h-5 w-5" />
             </Link>
-            <h1 className="font-medium">{t("createGroup")}</h1>
-            <div className="flex items-center gap-2">
-              <SyncStatusButton className="h-7 w-7" />
-              <button type="button" onClick={handleSubmit} aria-label={t("createGroup")}>
-                <Check className="h-5 w-5 text-primary" />
-              </button>
+            <div className="flex items-center">
+              <h1 className="font-medium">{t("createGroup")}</h1>
+              <SyncStatusButton className="h-6 w-6" />
             </div>
+            <button type="button" onClick={handleSubmit} aria-label={t("createGroup")}>
+              <Check className="h-5 w-5 text-primary" />
+            </button>
           </div>
 
           <div className="flex items-center gap-2 border-b px-4 py-1">

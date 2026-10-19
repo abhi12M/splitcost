@@ -416,14 +416,14 @@ const ExpenseFormMobile = forwardRef<ExpenseFormMobileHandle, Props>(function Ex
             <ArrowLeft className="w-5 h-5" />
           </Link>
 
-          <span className="font-medium">
-            {initialData ? t("editExpense") : t("addExpenseMobile")}
-          </span>
-
-          <div className="flex items-center gap-2">
-            <SyncStatusButton className="h-7 w-7" />
-            <Check className="w-5 h-5 text-primary" onClick={handleSubmit} />
+          <div className="flex items-center">
+            <span className="font-medium">
+              {initialData ? t("editExpense") : t("addExpenseMobile")}
+            </span>
+            <SyncStatusButton className="h-6 w-6" />
           </div>
+
+          <Check className="w-5 h-5 text-primary" onClick={handleSubmit} />
         </div>
 
         {/* Avatar row */}

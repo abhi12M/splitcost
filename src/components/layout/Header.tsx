@@ -87,18 +87,19 @@ export function Header() {
             "sm:h-16 sm:justify-between sm:py-0"
           )}
         >
-          <Link
-            href="/"
-            className={cn(
-              "flex min-w-0 flex-1 items-center justify-center gap-2 sm:flex-none sm:justify-start sm:gap-3",
-              "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg",
-            )}
-          >
-            <BrandIcon className="h-8 w-auto sm:h-9" height={36} />
-          </Link>
-
-          {/* Phones, on My groups: the logo is centred, so the status sits at the right edge. */}
-          <SyncStatusButton className="absolute right-3 top-1/2 -translate-y-1/2 sm:static sm:order-last sm:translate-y-0" />
+          {/* Phones, on My groups: the status dot sits right after the logo. */}
+          <div className="flex min-w-0 flex-1 items-center justify-center sm:contents">
+            <Link
+              href="/"
+              className={cn(
+                "flex min-w-0 items-center gap-2 sm:gap-3",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg",
+              )}
+            >
+              <BrandIcon className="h-8 w-auto sm:h-9" height={36} />
+            </Link>
+            <SyncStatusButton className="h-6 w-6 sm:order-last sm:h-8 sm:w-8" />
+          </div>
 
           <div className="hidden min-w-0 items-center gap-1 sm:flex">
             <nav

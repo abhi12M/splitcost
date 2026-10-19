@@ -10,7 +10,8 @@
     "test": "tsx --tsconfig tsconfig.app.json --test tests/*.test.tsx",
     "test:rendered": "node tests/rendered-blog-phase-one.test.mjs",
     "lint": "eslint .",
-    "deploy": "npm run build && firebase deploy"
+    "deploy": "npm run build && firebase deploy",
+    "prod-run":"npm run build && npm run start"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

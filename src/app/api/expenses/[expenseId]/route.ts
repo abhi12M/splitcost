@@ -3,7 +3,7 @@ import {
   recordExpenseDeleted,
   recordExpenseEdited,
 } from "@/lib/activity/server/recordExpenseActivity";
-import { loadExpenseSnapshot } from "@/lib/activity/server/expenseSnapshots";
+import { loadExpenseDetails, loadExpenseSnapshot } from "@/lib/activity/server/expenseSnapshots";
 import { isSettlement, SETTLEMENT_CATEGORY } from "@/lib/activity/expenseSnapshot";
 import { broadcastExpenseChange } from "@/lib/api/broadcastExpense";
 import { readJsonObject } from "@/lib/api/request";
@@ -226,7 +226,8 @@ export async function PUT(
 
   const row = data[0];
 
-  const after = await loadExpenseSnapshot(expenseId);
+  const loaded = await loadExpenseDetails(expenseId);
+  const after = loaded?.snapshot ?? null;
   if (before && after) await recordExpenseEdited(before, after, session);
   broadcastExpenseChange({ event: "UPDATE", expenseId, groupId, originSessionId: session, revision: row.revision });
 
@@ -251,6 +252,9 @@ export async function PUT(
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       revision: row.revision,
+      // The saved expense as the dashboard lists it (overrides the fields above
+      // that differ), so the client can show it at once.
+      ...loaded?.response,
     },
     row.category === SETTLEMENT_CATEGORY ? SUCCESS_MESSAGES.settlementUpdated : SUCCESS_MESSAGES.expenseUpdated
   );
