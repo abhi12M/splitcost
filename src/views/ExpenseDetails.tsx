@@ -64,6 +64,7 @@ import {
 import { useExpense } from "@/lib/groupExpenseData";
 import { ExpenseHistory } from "@/components/activity/ExpenseHistory";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { deleteCachedExpense } from "@/lib/offline/cache";
 import { useExpenseRealtime, useGroupChanges } from "@/hooks/useGroupRealtime";
 import { useGroupChangeNotices } from "@/components/group/GroupChangeNotices";
 import { useReceiptChangeNotice } from "@/components/expense/useReceiptChangeNotice";
@@ -431,7 +432,15 @@ export default function ExpenseDetailsPage({
     if (event === "DELETE") {
       if (isOwnDeleteRef.current) return;
       // Deleting a group deletes its expenses too; check which one happened.
-      void isGroupDeleted(groupId).then((gone) => (gone ? showGroupDeleted() : setDeletedOpen(true)));
+      void isGroupDeleted(groupId).then((gone) => {
+        if (gone) {
+          showGroupDeleted();
+          return;
+        }
+        // Drop it from the saved dashboard too, so going back doesn't list it.
+        void deleteCachedExpense(expenseId);
+        setDeletedOpen(true);
+      });
       return;
     }
     // Drop any locally-set attachment override so a remote change (e.g. the

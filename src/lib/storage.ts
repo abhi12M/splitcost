@@ -425,10 +425,10 @@ export async function addExpense(
     throw error;
   }
 
-  const created = await res.json();
+  const created = withoutMessage(await res.json()) as ExpenseResponse;
   // Save it into the cached dashboard before the caller goes there, so the
   // dashboard opens with the new expense already in its list.
-  await upsertCachedDashboardExpense(groupId, withoutMessage(created));
+  await upsertCachedDashboardExpense(groupId, created);
   return created;
 }
 
@@ -483,9 +483,9 @@ export async function updateExpense(
     throw error;
   }
 
-  const updated = await res.json();
+  const updated = withoutMessage(await res.json()) as ExpenseResponse;
   // Replace it in the cached dashboard before the caller goes there.
-  await upsertCachedDashboardExpense(groupId, withoutMessage(updated));
+  await upsertCachedDashboardExpense(groupId, updated);
   return updated;
 }
 
@@ -553,7 +553,8 @@ export async function deleteExpense(
     return false;
   }
 
-  void deleteCachedExpense(expenseId);
+  // Wait, so the dashboard the caller goes to next no longer lists it.
+  await deleteCachedExpense(expenseId);
   return true;
 }
 

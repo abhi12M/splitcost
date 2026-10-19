@@ -186,7 +186,7 @@ export function SyncStatusIndicator() {
           <button
             type="button"
             aria-label={ariaLabel}
-            className="fixed bottom-4 left-4 z-40 inline-flex items-center gap-2 rounded-full border border-border/80 bg-card/95 px-3 py-1.5 text-xs font-semibold text-foreground shadow-md backdrop-blur hover:bg-muted"
+            className="fixed bottom-4 left-4 z-40 hidden items-center gap-2 md:inline-flex rounded-full border border-border/80 bg-card/95 px-3 py-1.5 text-xs font-semibold text-foreground shadow-md backdrop-blur hover:bg-muted"
           >
             <StatusIcon kind={kind} />
             <span>{label}</span>

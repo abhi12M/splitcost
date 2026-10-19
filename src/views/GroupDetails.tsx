@@ -57,6 +57,7 @@ import {
   GroupDashboardInterface,
   UserInterface,
 } from "@/lib/storage";
+import { isDashboardExpense, withExpenseInList } from "@/lib/offline/cache";
 import { useGroupDashboard } from "@/lib/groupExpenseData";
 import { useGroupChanges, useGroupRealtime } from "@/hooks/useGroupRealtime";
 import { useGroupChangeNotices } from "@/components/group/GroupChangeNotices";
@@ -787,8 +788,12 @@ export default function GroupResponsesPage({
           }
         ]
       }
-      await addExpense(groupId!, data);
-      await refresh();
+      const settlement = await addExpense(groupId!, data);
+      // Show it at once from the saved expense; the reload below confirms it.
+      if (isDashboardExpense(settlement)) {
+        applyChange((prev) => (prev ? { ...prev, expenses: withExpenseInList(prev.expenses, settlement) } : prev));
+      }
+      void refresh();
       toast({ message: tToasts("settled"), variant: "success" });
     } catch (error) {
       if (showOfflineFailure(error)) return;

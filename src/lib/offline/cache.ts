@@ -27,7 +27,7 @@ export function writeCachedDashboard(data: GroupDashboardInterface) {
   });
 }
 
-function isDashboardExpense(value: unknown): value is ExpenseResponse {
+export function isDashboardExpense(value: unknown): value is ExpenseResponse {
   const expense = value as Partial<ExpenseResponse> | null;
   return (
     Boolean(expense) &&
@@ -45,19 +45,38 @@ function newestFirst(a: ExpenseResponse, b: ExpenseResponse) {
   return Date.parse(b.createdAt) - Date.parse(a.createdAt) || 0;
 }
 
+/** The list with this expense added at its place, or replacing the one with the same id. */
+export function withExpenseInList(expenses: ExpenseResponse[], expense: ExpenseResponse) {
+  return [expense, ...expenses.filter((item) => item.id !== expense.id)].sort(newestFirst);
+}
+
 /**
- * Puts an expense the server just saved into the saved dashboard (added at its
- * place, or replacing the same one), so the dashboard opens with it already
- * there. Does nothing if that group's dashboard hasn't been saved yet.
+ * Saves an expense the server just saved, so the screens that show it open
+ * with it already there: in the saved dashboard (added at its place, or
+ * replacing the same one), and as the expense's own saved copy for its view /
+ * edit screens, replacing any older one. Without a saved group to build that
+ * copy from, the older copy is dropped rather than left stale.
  */
 export function upsertCachedDashboardExpense(groupId: string, expense: unknown) {
   if (!groupId || !isDashboardExpense(expense)) return Promise.resolve();
   return withDb(undefined, async (db) => {
-    await db.transaction("rw", db.dashboards, async () => {
+    await db.transaction("rw", db.dashboards, db.expenses, async () => {
       const cached = await db.dashboards.get(groupId);
-      if (!cached) return;
-      const expenses = [expense, ...cached.data.expenses.filter((item) => item.id !== expense.id)].sort(newestFirst);
-      await db.dashboards.put({ ...cached, data: { ...cached.data, expenses } });
+      if (cached) {
+        const expenses = withExpenseInList(cached.data.expenses, expense);
+        await db.dashboards.put({ ...cached, data: { ...cached.data, expenses } });
+      }
+      const group = cached?.data.group ?? (await db.expenses.get(expense.id))?.data.group;
+      if (!group) {
+        await db.expenses.delete(expense.id);
+        return;
+      }
+      await db.expenses.put({
+        expenseId: expense.id,
+        groupId,
+        data: { group, expense: expenseResponseToForm(expense) },
+        savedAt: Date.now(),
+      });
     });
   });
 }
@@ -106,9 +125,19 @@ export function writeCachedExpense(details: EditExpenseInterface) {
   });
 }
 
+/** Forgets a deleted expense: its own saved copy, and its place in the saved dashboard. */
 export function deleteCachedExpense(expenseId: string) {
   return withDb(undefined, async (db) => {
-    await db.expenses.delete(expenseId);
+    await db.transaction("rw", db.dashboards, db.expenses, async () => {
+      await db.expenses.delete(expenseId);
+      const dashboards = await db.dashboards.filter((entry) => entry.data.expenses.some((e) => e.id === expenseId)).toArray();
+      for (const entry of dashboards) {
+        await db.dashboards.put({
+          ...entry,
+          data: { ...entry.data, expenses: entry.data.expenses.filter((e) => e.id !== expenseId) },
+        });
+      }
+    });
   });
 }
 
