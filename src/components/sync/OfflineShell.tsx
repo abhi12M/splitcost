@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { CloudOff } from "lucide-react";
 
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
+import { useMounted } from "@/hooks/useMounted";
 import { useOnline } from "@/hooks/useOffline";
 import { Link } from "@/i18n/navigation";
-import { locales } from "@/i18n/routing";
+import { appScreenFor } from "@/lib/offline/screens";
 
 const GroupDetails = dynamic(() => import("@/views/GroupDetails"), { ssr: false });
 const ExpenseDetails = dynamic(() => import("@/views/ExpenseDetails"), { ssr: false });
@@ -20,54 +21,47 @@ const GroupActivity = dynamic(() => import("@/views/GroupActivity"), { ssr: fals
 const Groups = dynamic(() => import("@/views/Groups"), { ssr: false });
 const AddGroup = dynamic(() => import("@/views/AddGroup"), { ssr: false });
 
-/** The app screen for a URL, read from the URL itself (without its locale). */
+/** The view for an app screen, read from the URL itself (without its locale). */
 function screenFor(path: string): ReactNode | null {
-  const parts = path.split("/").filter(Boolean);
-  if (parts.length === 0 || (parts.length === 1 && parts[0] === "groups")) return <Groups />;
-  if (parts.length === 1 && parts[0] === "create-group") return <AddGroup />;
-  if (parts[0] !== "group" || !parts[1]) return null;
-
-  const [, groupId, section, expenseId] = parts;
-  if (!section) return <GroupDetails groupId={groupId} />;
-  if (section === "add-expense") return <AddExpense groupId={groupId} />;
-  if (section === "edit") return <EditGroup groupId={groupId} />;
-  if (section === "activity") return <GroupActivity groupId={groupId} />;
-  if (section === "expense" && expenseId) return <ExpenseDetails groupId={groupId} expenseId={expenseId} />;
-  if (section === "edit-expense" && expenseId) return <EditExpense groupId={groupId} expenseId={expenseId} />;
-  return null;
-}
-
-function withoutLocale(pathname: string) {
-  const [first, ...rest] = pathname.split("/").filter(Boolean);
-  return (locales as readonly string[]).includes(first) ? `/${rest.join("/")}` : pathname;
+  const screen = appScreenFor(path);
+  switch (screen?.name) {
+    case "groups":
+      return <Groups />;
+    case "createGroup":
+      return <AddGroup />;
+    case "group":
+      return <GroupDetails groupId={screen.groupId} />;
+    case "addExpense":
+      return <AddExpense groupId={screen.groupId} />;
+    case "editGroup":
+      return <EditGroup groupId={screen.groupId} />;
+    case "activity":
+      return <GroupActivity groupId={screen.groupId} />;
+    case "expense":
+      return <ExpenseDetails groupId={screen.groupId} expenseId={screen.expenseId} />;
+    case "editExpense":
+      return <EditExpense groupId={screen.groupId} expenseId={screen.expenseId} />;
+    default:
+      return null;
+  }
 }
 
 /**
- * The offline fallback page. The service worker serves it for any page it has
- * no saved copy of, so it renders the screen the URL asks for from the data on
- * this device; anything else gets a short explanation.
+ * A page drawn from this device: the app screen the path asks for, from its
+ * data, or a short explanation for any other page. `path` is without locale.
  */
-export function OfflineShell() {
+export function OfflineScreen({ path }: { path: string }) {
   const t = useTranslations("offline");
-  // Decided after mounting: the server-rendered HTML is the same for every URL.
-  const [screen, setScreen] = useState<ReactNode | null | undefined>(undefined);
-
-  useEffect(() => {
-    const path = withoutLocale(window.location.pathname);
-    setScreen(path === "/offline" ? null : screenFor(path));
-  }, []);
+  const screen = useMemo(() => (path === "/offline" ? null : screenFor(path)), [path]);
 
   // Standing in for a page that couldn't load: once the connection is back,
   // load the real page. Only for this explanation, which holds nothing; an app
   // screen rendered here may have a form in progress and catches up by itself.
   const online = useOnline();
   useEffect(() => {
-    if (screen === null && online && withoutLocale(window.location.pathname) !== "/offline") {
-      window.location.reload();
-    }
-  }, [screen, online]);
+    if (!screen && online && path !== "/offline") window.location.reload();
+  }, [screen, online, path]);
 
-  if (screen === undefined) return null;
   if (screen) return <>{screen}</>;
 
   return (
@@ -86,4 +80,15 @@ export function OfflineShell() {
       </div>
     </Layout>
   );
+}
+
+/**
+ * The offline fallback page. The service worker serves it for any page it has
+ * no saved copy of; OfflineRouter then draws the page the address asks for.
+ * Opened at its own address, it shows the explanation. Nothing renders before
+ * mounting: the server-rendered HTML is the same for every address.
+ */
+export function OfflineShell() {
+  const mounted = useMounted();
+  return mounted ? <OfflineScreen path="/offline" /> : null;
 }

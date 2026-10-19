@@ -63,6 +63,8 @@ const runtimeCaching: RuntimeCaching[] = [
       plugins: [new ExpirationPlugin({ maxEntries: 64, maxAgeSeconds: 7 * DAY })],
     }),
   },
+  // Full page loads. The page also adds each page opened while online here
+  // (`cacheOnNavigation` in next.config.mjs), so keep the cache name.
   {
     matcher: ({ sameOrigin, request }) => sameOrigin && request.mode === "navigate",
     handler: new NetworkFirst({

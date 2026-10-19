@@ -8,6 +8,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { AttachmentUploadFailureToasts } from "@/components/expense/AttachmentUploadFailureToasts";
 import { SyncProvider, SyncStatusIndicator } from "@/components/sync/SyncStatus";
 import { ImageFallback } from "@/components/sync/ImageFallback";
+import { OfflineLinkGuard } from "@/components/sync/OfflineLinkGuard";
+import { OfflineRouter } from "@/components/sync/OfflineRouter";
 
 export default function AppProviders({ children }: { children: ReactNode }) {
   return (
@@ -18,7 +20,8 @@ export default function AppProviders({ children }: { children: ReactNode }) {
         <SyncProvider />
         <SyncStatusIndicator />
         <ImageFallback />
-        {children}
+        <OfflineLinkGuard />
+        <OfflineRouter>{children}</OfflineRouter>
       </TooltipProvider>
     </ThemeProvider>
   );

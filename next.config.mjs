@@ -28,6 +28,10 @@ const withSerwist = withSerwistInit({
   // A reload when the connection returns would throw away unsaved forms; the
   // app refreshes its data itself instead.
   reloadOnOnline: false,
+  // Saves each page opened while online, including the first one, which loads
+  // before the service worker is in control and so would never be kept. Goes
+  // into the same "pages" cache the service worker serves offline pages from.
+  cacheOnNavigation: true,
   // The service worker would serve stale code during development.
   disable: process.env.NODE_ENV === "development",
   additionalPrecacheEntries: [

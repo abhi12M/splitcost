@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef } from "react";
 
-const BACK_CLOSE_KEY = "__backButtonCloseId";
+import { BACK_CLOSE_KEY } from "@/lib/historyKeys";
 
 export function useBackButtonClose(isOpen: boolean, onClose: () => void) {
   const reactId = useId();
