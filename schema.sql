@@ -76,12 +76,32 @@ CREATE TYPE "public"."split_type_enum" AS ENUM (
 ALTER TYPE "public"."split_type_enum" OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "public"."add_expense"("p_group_id" "uuid", "p_description" "text", "p_amount" numeric, "p_currency" "text", "p_paid_by_user_id" "uuid" DEFAULT NULL::"uuid", "p_split_type" "text" DEFAULT 'equal'::"text", "p_category" "text" DEFAULT 'uncategorized'::"text", "p_subcategory" "text" DEFAULT 'general'::"text", "p_date" "date" DEFAULT CURRENT_DATE, "p_participants" "jsonb" DEFAULT '[]'::"jsonb", "p_payers" "jsonb" DEFAULT NULL::"jsonb", "p_notes" "text" DEFAULT NULL::"text") RETURNS json
+CREATE OR REPLACE FUNCTION "public"."add_expense"("p_group_id" "uuid", "p_description" "text", "p_amount" numeric, "p_currency" "text", "p_paid_by_user_id" "uuid" DEFAULT NULL::"uuid", "p_split_type" "text" DEFAULT 'equal'::"text", "p_category" "text" DEFAULT 'uncategorized'::"text", "p_subcategory" "text" DEFAULT 'general'::"text", "p_date" "date" DEFAULT CURRENT_DATE, "p_participants" "jsonb" DEFAULT '[]'::"jsonb", "p_payers" "jsonb" DEFAULT NULL::"jsonb", "p_notes" "text" DEFAULT NULL::"text", "p_request_id" "uuid" DEFAULT NULL::"uuid") RETURNS json
     LANGUAGE "plpgsql"
     AS $$
 DECLARE
   v_expense expenses;
+  v_request_group uuid;
+  v_request_expense uuid;
+  v_already_added boolean := false;
 BEGIN
+  IF p_request_id IS NOT NULL THEN
+    PERFORM pg_advisory_xact_lock(hashtextextended(p_request_id::text, 0));
+
+    SELECT r.group_id, r.expense_id INTO v_request_group, v_request_expense
+    FROM public.expense_add_requests r
+    WHERE r.request_id = p_request_id;
+
+    IF FOUND THEN
+      IF v_request_group IS DISTINCT FROM p_group_id THEN
+        RAISE EXCEPTION 'ADD_REQUEST_CONFLICT' USING ERRCODE = 'P0001';
+      END IF;
+      SELECT * INTO v_expense FROM public.expenses e WHERE e.id = v_request_expense;
+      v_already_added := true;
+    END IF;
+  END IF;
+
+  IF NOT v_already_added THEN
   INSERT INTO expenses (
     group_id, description, notes, amount, currency,
     paid_by_user_id, split_type, category, subcategory, date
@@ -112,6 +132,12 @@ BEGIN
     FROM jsonb_array_elements(p_payers) AS p;
   END IF;
 
+  IF p_request_id IS NOT NULL THEN
+    INSERT INTO public.expense_add_requests (request_id, group_id, expense_id)
+    VALUES (p_request_id, p_group_id, v_expense.id);
+  END IF;
+  END IF;
+
   RETURN json_build_object(
     'id', v_expense.id,
     'groupId', v_expense.group_id,
@@ -124,6 +150,7 @@ BEGIN
     'subcategory', v_expense.subcategory,
     'date', v_expense.date,
     'createdAt', v_expense.created_at,
+    'alreadyAdded', v_already_added,
     'paidBy', (
       SELECT json_build_object('id', u.id, 'name', u.name)
       FROM users u
@@ -148,7 +175,7 @@ END;
 $$;
 
 
-ALTER FUNCTION "public"."add_expense"("p_group_id" "uuid", "p_description" "text", "p_amount" numeric, "p_currency" "text", "p_paid_by_user_id" "uuid", "p_split_type" "text", "p_category" "text", "p_subcategory" "text", "p_date" "date", "p_participants" "jsonb", "p_payers" "jsonb", "p_notes" "text") OWNER TO "postgres";
+ALTER FUNCTION "public"."add_expense"("p_group_id" "uuid", "p_description" "text", "p_amount" numeric, "p_currency" "text", "p_paid_by_user_id" "uuid", "p_split_type" "text", "p_category" "text", "p_subcategory" "text", "p_date" "date", "p_participants" "jsonb", "p_payers" "jsonb", "p_notes" "text", "p_request_id" "uuid") OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."bump_group_revision"("p_group_id" "uuid", "p_expected_revision" bigint DEFAULT NULL::bigint) RETURNS bigint
@@ -1095,6 +1122,17 @@ ALTER TABLE ONLY "public"."expenses" REPLICA IDENTITY FULL;
 ALTER TABLE "public"."expenses" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."expense_add_requests" (
+    "request_id" "uuid" NOT NULL,
+    "group_id" "uuid" NOT NULL,
+    "expense_id" "uuid" NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
+ALTER TABLE "public"."expense_add_requests" OWNER TO "postgres";
+
+
 CREATE TABLE IF NOT EXISTS "public"."group_imports" (
     "group_id" "uuid" NOT NULL,
     "payload_hash" "text" NOT NULL,
@@ -1217,6 +1255,11 @@ ALTER TABLE ONLY "public"."expenses"
 
 
 
+ALTER TABLE ONLY "public"."expense_add_requests"
+    ADD CONSTRAINT "expense_add_requests_pkey" PRIMARY KEY ("request_id");
+
+
+
 ALTER TABLE ONLY "public"."group_imports"
     ADD CONSTRAINT "group_imports_pkey" PRIMARY KEY ("group_id");
 
@@ -1271,6 +1314,10 @@ CREATE INDEX "blogs_status_published_at_idx" ON "public"."blogs" USING "btree" (
 
 
 CREATE INDEX "blogs_views_idx" ON "public"."blogs" USING "btree" ("views" DESC);
+
+
+
+CREATE INDEX "expense_add_requests_expense_id_idx" ON "public"."expense_add_requests" USING "btree" ("expense_id");
 
 
 
@@ -1370,6 +1417,16 @@ ALTER TABLE ONLY "public"."expense_payers"
 
 
 
+ALTER TABLE ONLY "public"."expense_add_requests"
+    ADD CONSTRAINT "expense_add_requests_expense_id_fkey" FOREIGN KEY ("expense_id") REFERENCES "public"."expenses"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."expense_add_requests"
+    ADD CONSTRAINT "expense_add_requests_group_id_fkey" FOREIGN KEY ("group_id") REFERENCES "public"."groups"("id") ON DELETE CASCADE;
+
+
+
 ALTER TABLE ONLY "public"."expenses"
     ADD CONSTRAINT "expenses_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id");
 
@@ -1434,6 +1491,9 @@ ALTER TABLE "public"."expense_payers" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."expenses" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."expense_add_requests" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."group_imports" ENABLE ROW LEVEL SECURITY;
@@ -1619,8 +1679,8 @@ GRANT USAGE ON SCHEMA "public" TO "service_role";
 
 
 
-REVOKE ALL ON FUNCTION "public"."add_expense"("p_group_id" "uuid", "p_description" "text", "p_amount" numeric, "p_currency" "text", "p_paid_by_user_id" "uuid", "p_split_type" "text", "p_category" "text", "p_subcategory" "text", "p_date" "date", "p_participants" "jsonb", "p_payers" "jsonb", "p_notes" "text") FROM PUBLIC;
-GRANT ALL ON FUNCTION "public"."add_expense"("p_group_id" "uuid", "p_description" "text", "p_amount" numeric, "p_currency" "text", "p_paid_by_user_id" "uuid", "p_split_type" "text", "p_category" "text", "p_subcategory" "text", "p_date" "date", "p_participants" "jsonb", "p_payers" "jsonb", "p_notes" "text") TO "service_role";
+REVOKE ALL ON FUNCTION "public"."add_expense"("p_group_id" "uuid", "p_description" "text", "p_amount" numeric, "p_currency" "text", "p_paid_by_user_id" "uuid", "p_split_type" "text", "p_category" "text", "p_subcategory" "text", "p_date" "date", "p_participants" "jsonb", "p_payers" "jsonb", "p_notes" "text", "p_request_id" "uuid") FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."add_expense"("p_group_id" "uuid", "p_description" "text", "p_amount" numeric, "p_currency" "text", "p_paid_by_user_id" "uuid", "p_split_type" "text", "p_category" "text", "p_subcategory" "text", "p_date" "date", "p_participants" "jsonb", "p_payers" "jsonb", "p_notes" "text", "p_request_id" "uuid") TO "service_role";
 
 
 
@@ -1777,6 +1837,10 @@ GRANT ALL ON TABLE "public"."expense_payers" TO "service_role";
 
 
 GRANT ALL ON TABLE "public"."expenses" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."expense_add_requests" TO "service_role";
 
 
 

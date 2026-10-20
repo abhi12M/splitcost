@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { isDashboardExpense, withExpenseInList } from "../src/lib/offline/cache";
-import { expenseFingerprint } from "../src/lib/offline/lostAdd";
-import type { ExpenseResponse } from "../src/lib/storage";
+import { expenseFingerprint, forgetFailedAdd, rememberFailedAdd, requestIdForAdd } from "../src/lib/offline/lostAdd";
+import type { ExpenseRequest, ExpenseResponse } from "../src/lib/storage";
 
 const user = (id: string) => ({ id, name: id.toUpperCase() });
 
@@ -65,6 +65,41 @@ test("unequal shares count in the fingerprint, equal ones do not", () => {
     );
   assert.notEqual(unequal(50, 40), unequal(60, 30));
   assert.equal(unequal(50, 40), unequal(50, 40));
+});
+
+const request = (overrides: Partial<ExpenseRequest> = {}) =>
+  ({
+    description: "Dinner",
+    amount: 90,
+    currency: "INR",
+    paidByUserId: "a",
+    splitType: "equal",
+    category: "food",
+    subcategory: "restaurants",
+    date: "2026-10-19",
+    participants: [
+      { userId: "a", amount: null, percent: null },
+      { userId: "b", amount: null, percent: null },
+    ],
+    ...overrides,
+  }) as ExpenseRequest;
+
+test("a retry of an unanswered add sends the same request id; anything else gets a new one", () => {
+  forgetFailedAdd();
+  const first = requestIdForAdd("g1", request());
+  assert.match(first ?? "", /^[0-9a-f-]{36}$/);
+  // A fresh add never reuses an id.
+  assert.notEqual(requestIdForAdd("g1", request()), first);
+
+  rememberFailedAdd("g1", request(), first);
+  assert.equal(requestIdForAdd("g1", request({ description: " dinner  " })), first);
+  // A changed expense, or the same one in another group, is a new add.
+  assert.notEqual(requestIdForAdd("g1", request({ amount: 91 })), first);
+  assert.notEqual(requestIdForAdd("g2", request()), first);
+
+  // Once the server has answered, the id is done with.
+  forgetFailedAdd();
+  assert.notEqual(requestIdForAdd("g1", request()), first);
 });
 
 test("a saved expense replaces the one with its id and the list keeps the dashboard's order", () => {

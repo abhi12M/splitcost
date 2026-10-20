@@ -28,7 +28,7 @@ export async function POST(req: Request) {
     allowedKeys: [
       "groupId", "description", "notes", "amount", "currency",
       "paidByUserId", "payers", "splitType", "category", "subcategory",
-      "date", "participants", "originSessionId",
+      "date", "participants", "originSessionId", "requestId",
     ],
   });
   if (!parsed.ok) return parsed.response;
@@ -48,11 +48,14 @@ export async function POST(req: Request) {
     date,
     participants,
     originSessionId,
+    requestId,
   } = body;
 
   const fail = (error: string) => NextResponse.json({ error }, { status: 400 });
 
   if (!isValidUUID(groupId)) return fail("Invalid group ID");
+  // Optional: retries of one add send the same id, so it is only added once.
+  if (requestId != null && !isValidUUID(requestId)) return fail("Invalid request ID");
 
   const descriptionResult = validateExpenseDescription(description);
   if (!descriptionResult.success) {
@@ -108,9 +111,15 @@ export async function POST(req: Request) {
     p_participants: participants,
     p_payers: payers || null,
     p_notes: typeof notes === "string" ? normalizeExpenseNotes(notes) || null : null,
+    p_request_id: isValidUUID(requestId) ? requestId : null,
   });
 
   if (error) {
+    // The request id was already used in another group: refuse, as the RPC
+    // does, without saying anything about that group.
+    if (error.message?.includes("ADD_REQUEST_CONFLICT")) {
+      return NextResponse.json({ code: "ADD_REQUEST_CONFLICT", error: "Invalid request ID" }, { status: 409 });
+    }
     console.error("addExpense error:", error);
     // A deleted group is a specific, permanent failure; say so, so the
     // client can explain it instead of suggesting a retry.
@@ -123,18 +132,21 @@ export async function POST(req: Request) {
       { status: 400 }
     );
   }
-  const createdId = (data as { id?: unknown } | null)?.id;
+  const { alreadyAdded, ...created } = (data ?? {}) as { id?: unknown; alreadyAdded?: boolean };
+  const createdId = created.id;
   const session = typeof originSessionId === "string" ? originSessionId.slice(0, 128) : null;
   const loaded = typeof createdId === "string" ? await loadExpenseDetails(createdId) : null;
-  if (loaded) {
+  // A repeat of an add that already went through: its activity and broadcast
+  // were done the first time.
+  if (loaded && !alreadyAdded) {
     await recordExpenseAdded(loaded.snapshot, session);
   }
-  if (typeof createdId === "string") {
+  if (typeof createdId === "string" && !alreadyAdded) {
     broadcastExpenseChange({ event: "INSERT", expenseId: createdId, groupId, originSessionId: session });
   }
   // The saved expense as the dashboard lists it, so the client can show it at once.
   return successJson(
-    { ...(data as object | null), ...loaded?.response },
+    { ...created, ...loaded?.response },
     category === SETTLEMENT_CATEGORY ? SUCCESS_MESSAGES.settlementRecorded : SUCCESS_MESSAGES.expenseAdded
   );
 }

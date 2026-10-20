@@ -1,17 +1,16 @@
 // A new expense can reach the server while its answer is lost (the connection
 // drops in between). The form then stays filled for a retry, and sending it
-// again would add the expense twice. So when an add fails that way, the app
-// remembers it, and the next identical add first asks the server whether the
-// first one arrived, and uses that expense instead of sending a new one.
+// again would add the expense twice. So every add carries a random request id,
+// and when an add fails that way the app remembers the id; sending the same
+// expense again reuses it, and the server answers with the expense the first
+// try added instead of adding another (see add_expense).
 
-import type { EditExpenseInterface, ExpenseRequest, ExpenseResponse } from "@/lib/storage";
-import { expenseFormToResponse, isDashboardExpense, readCachedDashboard } from "./cache";
-import { trackedFetch } from "./network";
+import type { ExpenseRequest } from "@/lib/storage";
 
-/** How long a failed add is remembered; also the window an arrived expense must fall in. */
+/** How long a failed add's request id is kept for a retry. */
 const REMEMBER_MS = 30 * 60 * 1000;
 
-type FailedAdd = { groupId: string; fingerprint: string; knownIds: string[]; at: number };
+type FailedAdd = { groupId: string; fingerprint: string; requestId: string; at: number };
 let failedAdd: FailedAdd | null = null;
 
 type Comparable = {
@@ -52,56 +51,30 @@ export function expenseFingerprint(expense: Comparable) {
   ]);
 }
 
-/** Call when an add failed without a definite answer from the server. */
-export async function rememberFailedAdd(groupId: string, request: ExpenseRequest) {
-  const fingerprint = expenseFingerprint(request);
-  // Expenses that already look the same are not the lost one.
-  const dashboard = await readCachedDashboard(groupId);
-  const knownIds = (dashboard?.expenses ?? [])
-    .filter((expense) => expenseFingerprint(expense) === fingerprint)
-    .map((expense) => expense.id);
-  failedAdd = { groupId, fingerprint, knownIds, at: Date.now() };
-}
-
 /**
- * The expense a failed add left on the server, if the same add is being sent
- * again and the first one did arrive; otherwise null, and the add goes ahead.
+ * The request id to send with this add: the failed add's, if this is the same
+ * expense being sent again; otherwise a new one. Undefined where the browser
+ * can't make one (plain http other than localhost); the add then goes without.
  */
-export async function findArrivedAdd(groupId: string, request: ExpenseRequest): Promise<ExpenseResponse | null> {
+export function requestIdForAdd(groupId: string, request: ExpenseRequest): string | undefined {
   const pending = failedAdd;
-  if (!pending || pending.groupId !== groupId || Date.now() - pending.at > REMEMBER_MS) return null;
-  if (pending.fingerprint !== expenseFingerprint(request)) return null;
-
-  try {
-    const res = await trackedFetch(`/api/groups/${groupId}/dashboard`, { cache: "no-store" });
-    if (!res.ok) return null;
-    const dashboard = (await res.json()) as { expenses?: unknown[] } | null;
-    const known = new Set(pending.knownIds);
-    const arrived = (dashboard?.expenses ?? []).find(
-      (expense): expense is ExpenseResponse =>
-        isDashboardExpense(expense) &&
-        !known.has(expense.id) &&
-        // Server time against this device's clock: allow for the two differing.
-        Date.now() - Date.parse(expense.createdAt) < REMEMBER_MS &&
-        expenseFingerprint(expense) === pending.fingerprint
-    );
-    if (!arrived) return null;
-    failedAdd = null;
-    // The dashboard's entry has no notes or revision; the expense's own
-    // endpoint has everything an edit screen needs.
-    const full = await trackedFetch(`/api/expenses/${arrived.id}`, { cache: "no-store" }).catch(() => null);
-    if (full?.ok) {
-      const details = (await full.json()) as EditExpenseInterface;
-      if (details?.expense && details.group) return expenseFormToResponse(details.expense, details.group);
-    }
-    return arrived;
-  } catch {
-    // Can't ask (offline): the add itself will fail the same way.
-    return null;
+  if (
+    pending &&
+    pending.groupId === groupId &&
+    Date.now() - pending.at <= REMEMBER_MS &&
+    pending.fingerprint === expenseFingerprint(request)
+  ) {
+    return pending.requestId;
   }
+  return globalThis.crypto?.randomUUID?.();
 }
 
-/** Call when an add got a definite answer, so nothing stale is matched later. */
+/** Call when an add failed without a definite answer from the server. */
+export function rememberFailedAdd(groupId: string, request: ExpenseRequest, requestId: string | undefined) {
+  failedAdd = requestId ? { groupId, fingerprint: expenseFingerprint(request), requestId, at: Date.now() } : null;
+}
+
+/** Call when an add got a definite answer, so its id isn't reused for a new expense. */
 export function forgetFailedAdd() {
   failedAdd = null;
 }

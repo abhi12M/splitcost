@@ -602,8 +602,9 @@ export type Database = {
             amount: number
           }[] | null
           p_notes?: string | null
+          p_request_id?: string | null
         }
-        Returns: ExpenseResponse
+        Returns: ExpenseResponse & { alreadyAdded?: boolean }
       },
       delete_expense: {
         Args: { p_expense_id: string }

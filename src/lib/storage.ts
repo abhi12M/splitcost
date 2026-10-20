@@ -26,7 +26,7 @@ import {
   updateLocalGroup,
 } from "@/lib/offline/localGroups";
 import { isOfflineError, isOnline, trackedFetch } from "@/lib/offline/network";
-import { findArrivedAdd, forgetFailedAdd, rememberFailedAdd } from "@/lib/offline/lostAdd";
+import { forgetFailedAdd, rememberFailedAdd, requestIdForAdd } from "@/lib/offline/lostAdd";
 
 // Every call below first checks whether the group was created on this device
 // and hasn't reached the server yet (see lib/offline/localGroups); such a
@@ -407,15 +407,11 @@ export async function addExpense(
 ): Promise<ExpenseResponse | undefined> {
   if (await getLocalGroup(groupId)) return addLocalExpense(groupId, expenseData);
 
-  // An earlier try at this same expense may have reached the server although
-  // its answer was lost; use that one instead of adding it twice.
-  const arrived = await findArrivedAdd(groupId, expenseData);
-  if (arrived) {
-    await upsertCachedDashboardExpense(groupId, arrived);
-    return arrived;
-  }
-
   const { attachment: _attachment, ...expensePayload } = expenseData;
+  // An earlier try at this same expense may have reached the server although
+  // its answer was lost; sending its request id again makes the server return
+  // that expense instead of adding it twice.
+  const requestId = requestIdForAdd(groupId, expenseData);
 
   let res: Response;
   try {
@@ -427,16 +423,19 @@ export async function addExpense(
       body: JSON.stringify({
         groupId,
         originSessionId: getRealtimeOriginSessionId(),
+        requestId,
         ...expensePayload,
       }),
     });
   } catch (error) {
-    // No answer at all: it may or may not have been saved. Remember it, so a
-    // retry can check first.
-    if (isOfflineError(error)) await rememberFailedAdd(groupId, expenseData);
+    // No answer at all: it may or may not have been saved. Keep its id for a retry.
+    if (isOfflineError(error)) rememberFailedAdd(groupId, expenseData, requestId);
     throw error;
   }
-  forgetFailedAdd();
+  // A server error may come after the expense was saved (e.g. a timeout in
+  // front of it), so keep the id for a retry then too; any other answer is final.
+  if (res.status >= 500) rememberFailedAdd(groupId, expenseData, requestId);
+  else forgetFailedAdd();
 
   // Throw rather than return nothing, so callers can't mistake a failed save
   // for a successful one.
