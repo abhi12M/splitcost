@@ -404,12 +404,8 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
         open={deletedOpen}
         aboveOverlays
         onOpenChange={setDeletedOpen}
-        title="Expense deleted"
-        description={
-          wasDirtyOnDelete
-            ? "This expense was deleted in another session while you were editing it, so it can no longer be updated. You can create a new expense using your current changes, or go back to expenses."
-            : "This expense was deleted in another session and is no longer available."
-        }
+        title={tToasts("expenseDeleted")}
+        description={wasDirtyOnDelete ? t("deletedWhileEditing") : t("deletedElsewhere")}
         // Create-as-new makes a fresh expense from the form's values; the receipt
         // that belonged to the deleted one doesn't come along.
         body={
@@ -422,15 +418,15 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
           wasDirtyOnDelete ? (
             <div className="flex w-full flex-col-reverse gap-2 sm:flex-row">
               <Button variant="outline" className="w-full rounded-xl sm:flex-1" onClick={handleCreateAsNew}>
-                Create as new expense
+                {t("createAsNew")}
               </Button>
               <Button asChild className="w-full rounded-xl sm:flex-1">
-                <Link href={`/group/${groupId}`}>Back to expenses</Link>
+                <Link href={`/group/${groupId}`}>{t("backToGroup")}</Link>
               </Button>
             </div>
           ) : (
             <Button asChild variant="outline" className="w-full rounded-xl">
-              <Link href={`/group/${groupId}`}>Back to expenses</Link>
+              <Link href={`/group/${groupId}`}>{t("backToGroup")}</Link>
             </Button>
           )
         }
