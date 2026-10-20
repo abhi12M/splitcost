@@ -217,13 +217,4 @@ export function buildLocaleSitemapEntries(): {
   );
 }
 
-export function getSiteRootAlternates(): Metadata["alternates"] {
-  return {
-    canonical: getLocalizedCanonicalUrl("en", "/"),
-    languages: Object.fromEntries(
-      getHreflangAlternates("/").map(({ hreflang, url }) => [hreflang, url])
-    ),
-  };
-}
-
 export { getSiteUrl };

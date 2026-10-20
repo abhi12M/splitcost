@@ -25,7 +25,7 @@ import {
   SITE_TITLE,
   getSiteUrl,
 } from "@/lib/seo";
-import { getSiteRootAlternates, getLocalizedCanonicalUrl } from "@/lib/seo-i18n";
+import { getLocalizedCanonicalUrl } from "@/lib/seo-i18n";
 import { getOrganizationId, getWebsiteId } from "@/lib/schema-identity";
 
 const siteUrl = getSiteUrl();
@@ -42,7 +42,8 @@ export const metadata: Metadata = {
   applicationName: SITE_NAME,
   title: SITE_TITLE,
   description: SITE_DESCRIPTION,
-  alternates: getSiteRootAlternates(),
+  // No default canonical: each page sets its own, so a page without one
+  // (such as a 404) never claims to be the home page.
   openGraph: {
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
