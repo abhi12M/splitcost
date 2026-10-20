@@ -272,10 +272,17 @@ export function deleteCachedExpense(expenseId: string) {
 export function deleteCachedGroup(groupId: string) {
   return withDb(undefined, async (db) => {
     await db.transaction("rw", db.dashboards, db.expenses, db.groupSummaries, db.activity, async () => {
+      // An expense's saved history is keyed by the expense alone, so find the
+      // group's expenses (in its dashboard and its saved copies) before they go.
+      const dashboard = await db.dashboards.get(groupId);
+      const savedIds = await db.expenses.where("groupId").equals(groupId).primaryKeys();
+      const expenseIds = new Set([...(dashboard?.data.expenses ?? []).map((expense) => expense.id), ...savedIds]);
+
       await db.dashboards.delete(groupId);
       await db.expenses.where("groupId").equals(groupId).delete();
       await db.groupSummaries.delete(groupId);
       await db.activity.where("groupId").equals(groupId).delete();
+      await db.activity.bulkDelete([...expenseIds].map((id) => `expense:${id}`));
     });
   });
 }

@@ -42,14 +42,26 @@ export function useGroupActivity(
   const loadFirstPage = useCallback(async () => {
     const request = ++requestRef.current;
     const isNewView = shownKeyRef.current !== viewKey;
+    // Ask the server straight away; the saved page below is read meanwhile.
+    const pageRequest = fetchGroupActivity(groupId, { filter, limit });
+    let pageArrived = false;
+    pageRequest.then(
+      () => {
+        pageArrived = true;
+      },
+      // Handled where it's awaited below.
+      () => {}
+    );
     let saved: CachedActivity | null = null;
     if (isNewView) {
       setStatus("loading");
       setEvents([]);
       setCursor(null);
-      // Show the saved newest page at once (a quick local read), then ask the server.
+      // Show the saved newest page at once (a quick local read), unless the
+      // server's answer is already here.
       saved = await readCachedActivity(`group:${viewKey}`);
       if (request !== requestRef.current) return;
+      if (pageArrived) saved = null;
       if (saved) {
         setEvents(saved.events);
         setCursor(saved.nextCursor ?? null);
@@ -58,7 +70,7 @@ export function useGroupActivity(
       }
     }
     try {
-      const page = await fetchGroupActivity(groupId, { filter, limit });
+      const page = await pageRequest;
       if (request !== requestRef.current) return;
       void writeCachedActivity(`group:${viewKey}`, { groupId, events: page.events, nextCursor: page.nextCursor });
       const existing = isNewView ? saved?.events ?? [] : eventsRef.current;

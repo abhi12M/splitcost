@@ -42,14 +42,15 @@ function useIndicator() {
 
 /**
  * The only screens that show the status (path without the locale): My
- * groups, a group's dashboard, add / edit expense, and create / edit group.
- * Every other page (home, expense details, activity, marketing) never shows it.
+ * groups, a group's dashboard, an expense's view, add / edit expense, and
+ * create / edit group. Every other page (home, activity, marketing) never
+ * shows it.
  */
 const STATUS_PATHS = [
   /^\/groups$/,
   /^\/create-group$/,
   /^\/group\/[^/]+$/,
-  /^\/group\/[^/]+\/(add-expense|edit|edit-expense\/[^/]+)$/,
+  /^\/group\/[^/]+\/(add-expense|edit|expense\/[^/]+|edit-expense\/[^/]+)$/,
 ];
 
 function isStatusPath(pathname: string) {

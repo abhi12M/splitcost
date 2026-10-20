@@ -883,7 +883,9 @@ export default function ExpenseDetailsPage({
               <ArrowLeft className="h-5 w-5" />
             </Link>
             <div className="flex items-center gap-1 text-foreground/70">
-              <SyncStatusButton className="h-10 w-10" />
+              {/* As big as the header's other buttons, so it needs no wider tap area
+                  (which would overlap the button next to it). */}
+              <SyncStatusButton className="h-10 w-10 before:hidden" />
               {!attachment && !receiptUnavailable && (
                 <button
                   type="button"
