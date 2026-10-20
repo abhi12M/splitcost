@@ -196,6 +196,8 @@ export function MobileGroupDashboard({
   const tCommon = useTranslations("common");
   const tCategories = useTranslations("categories");
   const tActivity = useTranslations("activity");
+  // "Gets back" / "Needs to pay": one set of words for every screen (messages: balanceLabels).
+  const tBalance = useTranslations("balanceLabels");
   const resolveCategoryLabel = useCallback(
     (key: string) => resolveCategoryDisplayLabel(tCategories, key),
     [tCategories]
@@ -716,8 +718,8 @@ export function MobileGroupDashboard({
                 Math.abs(bal) < 0.01
                   ? t("settledUp")
                   : bal > 0.01
-                    ? t("getsBack")
-                    : t("owesGroup");
+                    ? tBalance("getsBack")
+                    : tBalance("needsToPay");
               const displayName = memberDisplayNameForViewer(m.id, m.name, viewerMemberId, youLabel);
 
               return (

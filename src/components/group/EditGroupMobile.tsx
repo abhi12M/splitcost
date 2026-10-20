@@ -113,6 +113,8 @@ export function EditGroupMobile({
 }: EditGroupMobileProps) {
   const t = useTranslations("group");
   const tCommon = useTranslations("common");
+  // "Gets back" / "Needs to pay": one set of words for every screen (messages: balanceLabels).
+  const tBalance = useTranslations("balanceLabels");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [pendingMemberConfirmation, setPendingMemberConfirmation] = useState<string | null>(null);
   const memberInputRef = useRef<HTMLInputElement>(null);
@@ -188,11 +190,11 @@ export function EditGroupMobile({
                   className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
                   strokeWidth={1.75}
                 />
-                <span className={balanceStyles.positiveSummary}>{t("getsBackCount", { count: summary.getBackCount })}</span>
+                <span className={balanceStyles.positiveSummary}>{tBalance("getsBackCount", { count: summary.getBackCount })}</span>
                 <span className="text-muted-foreground" aria-hidden>
                   ·
                 </span>
-                <span className={balanceStyles.negativeSummary}>{t("owesCount", { count: summary.oweCount })}</span>
+                <span className={balanceStyles.negativeSummary}>{tBalance("needsToPayCount", { count: summary.oweCount })}</span>
               </StatChip>
             </div>
           </>

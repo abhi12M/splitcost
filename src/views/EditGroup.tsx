@@ -219,6 +219,8 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
   const tConflict = useTranslations("editConflict");
   const tToasts = useTranslations("toasts");
   const tVal = useTranslations("group.validation");
+  // "Gets back" / "Needs to pay": one set of words for every screen (messages: balanceLabels).
+  const tBalance = useTranslations("balanceLabels");
   const { GroupSchema, MemberNameSchema } = useMemo(
     () =>
       createGroupSchemas({
@@ -233,11 +235,11 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
   );
   const balanceLabels = useMemo(
     () => ({
-      getsBack: t("getsBack"),
-      owes: t("owes"),
+      getsBack: tBalance("getsBack"),
+      owes: tBalance("needsToPay"),
       settled: t("settled"),
     }),
-    [t]
+    [t, tBalance]
   );
   const router = useRouter();
   const { toast } = useToast();
@@ -962,11 +964,11 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
                     <p className="mt-2 text-2xl font-semibold">{memberCards.length}</p>
                   </div>
                   <div className={balanceStyles.positiveCard}>
-                    <p className={balanceStyles.positiveCardLabel}>{t("getsBack")}</p>
+                    <p className={balanceStyles.positiveCardLabel}>{tBalance("getsBack")}</p>
                     <p className={balanceStyles.positiveCardValue}>{summary.getBackCount}</p>
                   </div>
                   <div className={balanceStyles.negativeCard}>
-                    <p className={balanceStyles.negativeCardLabel}>{t("owes")}</p>
+                    <p className={balanceStyles.negativeCardLabel}>{tBalance("needsToPay")}</p>
                     <p className={balanceStyles.negativeCardValue}>{summary.oweCount}</p>
                   </div>
                   <div className={balanceStyles.warningCard}>

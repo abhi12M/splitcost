@@ -367,6 +367,8 @@ export default function GroupResponsesPage({
   const tGroup = useTranslations("group");
   const tCommon = useTranslations("common");
   const tCategories = useTranslations("categories");
+  // "Gets back" / "Needs to pay": one set of words for every screen (messages: balanceLabels).
+  const tBalance = useTranslations("balanceLabels");
   const resolveCategoryLabel = useCallback(
     (key: string) => resolveCategoryDisplayLabel(tCategories, key, toTitleCase(key.replace(/_/g, " "))),
     [tCategories]
@@ -734,7 +736,7 @@ export default function GroupResponsesPage({
       category: t("exportCategory"),
       cost: t("exportCost"),
       currency: t("exportCurrency"),
-      netMeaning: t("exportNetMeaning"),
+      netMeaning: tBalance("exportNetMeaning"),
       totalBalance: t("exportTotalBalance"),
     });
     const blob = new Blob([`\uFEFF${csv}`], {
