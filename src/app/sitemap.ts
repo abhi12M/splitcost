@@ -8,19 +8,27 @@ export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const blogPaths = await getPublishedBlogPaths();
-  const now = new Date();
+  const blogDates = blogPaths.map((blog) => {
+    const value = blog.updated_at ?? blog.published_at;
+    return value ? new Date(value) : undefined;
+  });
+  // The blog index changes when any post does.
+  const newestBlogDate = blogDates.reduce<Date | undefined>(
+    (newest, date) => (date && (!newest || date > newest) ? date : newest),
+    undefined
+  );
 
   return [
     ...buildLocaleSitemapEntries(),
     {
       url: getCanonicalUrl("/en/blog"),
-      lastModified: now,
+      lastModified: newestBlogDate,
       changeFrequency: "weekly",
       priority: 0.8,
     },
-    ...blogPaths.map((blog) => ({
+    ...blogPaths.map((blog, index) => ({
       url: getCanonicalUrl(`/en/blog/${blog.slug}`),
-      lastModified: new Date(blog.updated_at ?? blog.published_at ?? now),
+      lastModified: blogDates[index],
       changeFrequency: "monthly" as const,
       priority: 0.7,
     })),

@@ -186,7 +186,7 @@ export default async function middleware(request: NextRequest) {
   if (match && canonicalBlogSlug.test(match[1])) {
     const targetSlug = await resolvePublishedBlogRedirect(match[1]);
     if (targetSlug) {
-      const response = NextResponse.redirect(new URL(`/en/blog/${encodeURIComponent(targetSlug)}`, request.url), 307);
+      const response = NextResponse.redirect(new URL(`/en/blog/${encodeURIComponent(targetSlug)}`, request.url), 308);
       response.headers.set("Cache-Control", BLOG_REDIRECT_CACHE_CONTROL);
       return response;
     }

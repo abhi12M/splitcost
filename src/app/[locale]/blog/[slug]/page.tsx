@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 
 import { BlogViewTracker } from "@/components/blog/BlogViewTracker";
@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!blog) {
     const redirectSlug = await getPublishedBlogRedirectSlug(slug);
     if (redirectSlug) {
-      redirect(`/en/blog/${encodeURIComponent(redirectSlug)}`);
+      permanentRedirect(`/en/blog/${encodeURIComponent(redirectSlug)}`);
     }
     notFound();
   }
@@ -104,7 +104,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
   if (!blog) {
     const redirectSlug = await getPublishedBlogRedirectSlug(resolved.slug);
     if (redirectSlug) {
-      redirect(`/en/blog/${encodeURIComponent(redirectSlug)}`);
+      permanentRedirect(`/en/blog/${encodeURIComponent(redirectSlug)}`);
     }
     notFound();
   }

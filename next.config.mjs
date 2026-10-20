@@ -1,3 +1,4 @@
+import { execSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
 import withSerwistInit from "@serwist/next";
@@ -43,6 +44,20 @@ const withSerwist = withSerwistInit({
   ],
 });
 
+// When the marketing pages' text last changed: the date of the last commit
+// touching it. The sitemap uses it as lastmod, so the date moves only when
+// the content does. Empty (no lastmod) when git isn't available.
+function getContentLastModified() {
+  try {
+    return execSync(
+      "git log -1 --format=%cI -- messages src/views src/components/landing src/lib/use-cases.ts src/lib/compare.ts src/lib/resources.ts",
+      { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }
+    ).trim();
+  } catch {
+    return "";
+  }
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Realtime runs in the browser. Expose only the public project URL and
@@ -52,6 +67,7 @@ const nextConfig = {
       process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? process.env.NEXT_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:
       process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_SUPABASE_PUBLISHABLE_KEY,
+    CONTENT_LAST_MODIFIED: getContentLastModified(),
   },
   reactStrictMode: true,
   compress: true,
