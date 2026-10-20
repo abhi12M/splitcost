@@ -25,6 +25,7 @@ import { BlogFilters } from "@/components/blog/BlogFilters";
 import { BlogPagination } from "@/components/blog/BlogPagination";
 import { Layout } from "@/components/layout/Layout";
 import { Link } from "@/i18n/navigation";
+import { localeDefinitions } from "@/i18n/config";
 import { resolveLocaleParam } from "@/i18n/params";
 import type { AppLocale } from "@/i18n/routing";
 import { listBlogCategories } from "@/lib/blog/category-queries";
@@ -34,7 +35,7 @@ import {
   listFeaturedBlogs,
 } from "@/lib/blog/queries";
 import type { BlogSort } from "@/lib/blog/types";
-import { buildLocalizedMetadata } from "@/lib/seo-i18n";
+import { buildLocalizedMetadata, getLocalizedCanonicalUrl } from "@/lib/seo-i18n";
 
 type PageProps = {
   params: { locale: AppLocale } | Promise<{ locale: AppLocale }>;
@@ -51,13 +52,30 @@ const topicIcons = [Users, Plane, Home, WalletCards, Landmark, CalendarDays, Bar
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const locale = await resolveLocaleParam(params);
-  return buildLocalizedMetadata({
+  // The blog is English-only and other locales are 404s, so list no
+  // translations, matching the article pages.
+  if (locale !== "en") notFound();
+
+  const metadata = buildLocalizedMetadata({
     locale,
     title: "SplitCost Guides",
     description: "Practical guides for splitting expenses, budgeting together, and settling up without the awkwardness.",
     path: "/blog",
     absoluteTitle: true,
   });
+  const canonicalUrl = getLocalizedCanonicalUrl("en", "/blog");
+
+  return {
+    ...metadata,
+    alternates: {
+      canonical: canonicalUrl,
+      languages: {
+        [localeDefinitions.en.hreflang]: canonicalUrl,
+        "x-default": canonicalUrl,
+      },
+    },
+    openGraph: { ...metadata.openGraph, alternateLocale: [] },
+  };
 }
 
 export default async function BlogIndexPage({ params, searchParams = {} }: PageProps) {
