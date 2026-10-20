@@ -52,7 +52,7 @@ Source: [Create an Expense Group](https://www.splitcost.in/en/create-group)
 
 **Settlement suggestion:** A calculated recommendation showing which debtor can pay which creditor and how much. It is derived from net balances rather than treating every original expense as a separate repayment.
 
-**Group currency:** The currency selected when a group is created or edited. Expenses in that group are recorded using the group currency.
+**Group currency:** The currency selected when a group is created. Expenses in that group are recorded using the group currency, and the currency cannot be changed after the group is created.
 
 ## Expense Splitting Methods
 
@@ -111,7 +111,7 @@ SplitCost calculates balances and settlement suggestions. Actual payments occur 
 ### Group creation and management
 
 - Create a group with a name, selected currency, and two or more members.
-- Edit the group name, currency, and member list.
+- Edit the group name and member list. The group currency is fixed once the group is created.
 - Share a group through its group link.
 - Shared groups can be used without requiring every participant to create an account.
 - Review the group's expenses, balances, and settlement suggestions from the dashboard.
@@ -139,11 +139,21 @@ A group can export its current expense information as a CSV file. The export con
 
 ### Currency
 
-Each group has a selected currency. Expenses in that group use the group currency. The currency can be selected during group creation and changed through group editing.
+Each group has one currency, chosen from 156 supported ISO 4217 currencies when the group is created. Expenses in that group use the group currency. The currency cannot be changed after the group is created, and SplitCost does not convert amounts between currencies. A trip through several countries can use one group per currency.
 
 ### Browser and device access
 
-SplitCost is a web application. Its interface supports desktop browsers, phones, and tablets, allowing members to add expenses and review balances from different device sizes.
+SplitCost is a web application. Its interface supports desktop browsers, phones, and tablets, allowing members to add expenses and review balances from different device sizes. It can be added to a phone's home screen and opened like an app, without an app store download.
+
+### Live updates and activity history
+
+When a member adds, edits, or deletes an expense, records a settlement, or changes the group, other members viewing the group see the change without refreshing. Each group has an activity history listing expenses, settlements, and member changes with the time each happened, and each expense has its own history showing what was edited, such as the amount, payer, split, date, category, notes, or receipt. The history records what changed and when; it does not identify which person made a change, because members do not sign in.
+
+If an expense or group changes while someone is editing it, SplitCost notifies them and lets them keep their changes or switch to the latest version, so one edit does not silently overwrite another.
+
+### Offline use
+
+SplitCost keeps a copy of groups opened on a device so they can be viewed without an internet connection. While offline, groups that are already shared are view-only. New groups can be created offline, and expenses can be added to them; they are saved on that device and sync automatically when the connection returns. Editing shared groups, settling up, deleting a group, sharing a group link, and adding or changing receipts require a connection so every member's balances stay accurate.
 
 ## Use Cases
 
@@ -219,7 +229,7 @@ Settlement suggestions use the group balances to show who can pay whom and how m
 
 ### Which currency does a group use?
 
-The group uses the currency selected during group creation or editing. Expenses recorded in that group use the group currency.
+The group uses the currency selected when it was created, from 156 supported currencies. Expenses recorded in that group use the group currency, and the currency cannot be changed later.
 
 ### Can an expense include a receipt or screenshot?
 
@@ -231,7 +241,19 @@ The CSV contains the exported expense records, per-member net values for those e
 
 ### Can SplitCost be used on a phone or tablet?
 
-Yes. SplitCost is a web application with interfaces designed for desktop and mobile-sized browsers.
+Yes. SplitCost is a web application with interfaces designed for desktop and mobile-sized browsers. It can also be added to the home screen and opened like an app.
+
+### Does SplitCost work offline?
+
+Partly. Groups opened on a device can be viewed without internet, and new groups can be created and filled with expenses offline; they sync when the device reconnects. Changing groups that are already shared, settling up, and adding receipts require a connection.
+
+### Can members see what changed in a group?
+
+Yes. Each group has an activity history of expenses, settlements, and member changes with their times, and each expense shows what was edited. Changes from other members appear without refreshing.
+
+### What happens if two people edit the same expense?
+
+SplitCost notifies the person editing when the expense changes elsewhere and lets them keep their changes or load the latest version.
 
 ### What happens when someone owes money?
 
@@ -283,11 +305,11 @@ Source: [How to Split Expenses With Friends Fairly](https://www.splitcost.in/en/
 
 ## Data and Privacy
 
-SplitCost handles information needed to create and operate shared expense groups. This can include group names, member names, selected currencies, expense descriptions, amounts, payers, participants, notes, and attached expense images. Technical and analytics information may also be processed to operate and improve the service.
+SplitCost handles information needed to create and operate shared expense groups. This can include group names, member names, selected currencies, expense descriptions, amounts, payers, participants, notes, attached expense images, and a history of changes in each group. Technical information such as IP addresses is processed to keep the service secure and prevent abuse, and analytics information may be processed to improve the service.
 
-Group and expense information may be stored locally on a user's device and on third-party infrastructure so shared links can work across devices and sessions. Third-party services may support analytics, hosting, databases, infrastructure, email, and support communications. The Privacy Policy identifies Google Analytics as an example of an analytics service.
+Group and expense information is stored on third-party infrastructure so shared links can work across devices and sessions. A copy of groups and visited pages is also kept in the browser's storage on the user's device so the app can open and work offline; groups created offline stay only on that device until they sync. Third-party services may support analytics, hosting, databases, file storage, live updates, rate limiting, email, and support communications. The Privacy Policy identifies Google Analytics as an example of an analytics service.
 
-Cookies or similar browser technologies may be used for analytics, session continuity, and product functionality. Browser settings and privacy tools may provide controls over some of these technologies.
+Cookies, browser storage, or similar browser technologies may be used for analytics, session continuity, offline access, and product functionality. Browser settings and privacy tools may provide controls over some of these technologies.
 
 Depending on location, users may have rights related to access, deletion of expense data they control, or limiting analytics. Requests and privacy questions can be directed through SplitCost's official contact channel.
 
@@ -303,7 +325,7 @@ Users are responsible for keeping group links secure and using the service lawfu
 
 Calculations depend on user-entered records. Incorrect amounts, payers, participants, or split allocations can produce incorrect balances. SplitCost does not resolve disagreements about whether an expense was fair, who should participate, or whether an external payment was completed.
 
-The service is provided on an “as is” and “as available” basis. The Terms describe limitations concerning disputes, errors caused by user input, technical data loss, and financial decisions based on calculations. This section provides product context rather than legal advice or a complete legal summary.
+The service is provided on an “as is” and “as available” basis. The Terms describe limitations concerning disputes, errors caused by user input, technical data loss, loss of groups saved only on a device before they sync, and financial decisions based on calculations. This section provides product context rather than legal advice or a complete legal summary.
 
 Source: [SplitCost Terms of Service](https://www.splitcost.in/en/terms)
 

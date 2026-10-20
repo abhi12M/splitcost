@@ -3,7 +3,7 @@
     "siteName": "SplitCost",
     "home": {
       "title": "App para dividir despesas e controle de gastos em grupo",
-      "description": "O SplitCost é um app inteligente para dividir despesas, controlar contas compartilhadas, gerenciar pagamentos em grupo e organizar viagens ou despesas entre colegas de quarto."
+      "description": "App grátis para dividir despesas: controle contas e pagamentos em grupo, divida viagens e gastos da casa e acerte as contas. Funciona offline e sem cadastro."
     },
     "notFound": {
       "title": "Página não encontrada",
@@ -41,7 +41,7 @@
     },
     "editGroup": {
       "title": "Editar grupo",
-      "description": "Edite o nome, a moeda e os membros deste grupo."
+      "description": "Edite o nome e os membros deste grupo."
     },
     "editExpense": {
       "title": "Editar despesa",
@@ -104,12 +104,15 @@
     "softwareApplication": {
       "features": {
         "one": "Criar grupos de despesas compartilhadas",
-        "two": "Editar nome, moeda e membros do grupo",
+        "two": "Editar nome e membros do grupo",
         "three": "Registrar despesas com um ou vários pagadores",
         "four": "Dividir contas igualmente, por porcentagem ou com valores personalizados",
         "five": "Acompanhar saldos de viagens, repúblicas e eventos em grupo",
         "six": "Compartilhar links do grupo sem cadastro",
-        "seven": "Acertar saldos com pagamentos simplificados"
+        "seven": "Acertar saldos com pagamentos simplificados",
+        "eight": "Ver grupos e criar novos offline, com sincronização automática",
+        "nine": "Atualizações ao vivo para todo o grupo",
+        "ten": "Histórico de atividade de cada grupo e despesa"
       }
     },
     "groupActivity": {
@@ -172,7 +175,7 @@
     "createGroup": "Criar um grupo",
     "trustFree": "100% grátis para começar",
     "trustNoCard": "Sem cartão de crédito",
-    "trustDevices": "Web e celular"
+    "trustDevices": "Funciona offline em qualquer dispositivo"
   },
   "landing": {
     "features": {
@@ -202,16 +205,32 @@
           "description": "Compartilhe links de grupo com amigos, colegas de quarto ou parceiros de viagem — eles entram em segundos."
         },
         "multiCurrency": {
-          "title": "Suporte a várias moedas",
-          "description": "Perfeito para viagens internacionais, colegas de quarto no exterior e pagamentos em grupo entre moedas."
+          "title": "156 moedas disponíveis",
+          "description": "Escolha a moeda do grupo entre 156 opções. Todas as despesas usam essa moeda, então os totais ficam claros para todos."
         },
         "receipts": {
           "title": "Recibos e anexos",
-          "description": "Adicione recibos, faturas ou capturas de tela para que cada despesa tenha comprovação clara."
+          "description": "Anexe uma foto do recibo ou uma captura do pagamento a qualquer despesa para que cada custo tenha comprovação clara."
         },
         "downloadReports": {
           "title": "Baixar relatórios de despesas",
           "description": "Exporte resumos de despesas em CSV para registros ou documentação fiscal."
+        },
+        "liveUpdates": {
+          "title": "Atualizações ao vivo",
+          "description": "Quando alguém adiciona ou edita uma despesa, todo o grupo vê na hora, sem precisar recarregar."
+        },
+        "activityHistory": {
+          "title": "Histórico de atividade",
+          "description": "Veja cada despesa, acerto e mudança de membros, e o que foi editado em cada despesa e quando."
+        },
+        "offline": {
+          "title": "Funciona offline",
+          "description": "Abra seus grupos sem internet e crie novos onde estiver. Os grupos novos sincronizam sozinhos quando você volta a ficar online."
+        },
+        "installApp": {
+          "title": "Instale no celular",
+          "description": "Adicione à tela inicial e abra como um app, sem baixar nada da loja de apps."
         }
       },
       "cta": {
@@ -464,7 +483,7 @@
     },
     "currencies": {
       "question": "O {appName} suporta moedas diferentes?",
-      "answer": "Sim. Você pode definir a moeda do grupo ao criar ou editar um grupo, o que torna o {appName} útil para viagens internacionais e pagamentos compartilhados entre moedas."
+      "answer": "Sim. Escolha entre 156 moedas ao criar um grupo. Cada grupo mantém uma moeda e todas as despesas dele a usam, então os saldos ficam consistentes. Para uma viagem ao exterior, basta escolher a moeda local."
     },
     "account": {
       "question": "Preciso criar uma conta para usar o {appName}?",
@@ -472,7 +491,7 @@
     },
     "attachments": {
       "question": "Posso enviar recibos ou anexos?",
-      "answer": "Sim. Você pode anexar recibos, faturas e capturas de pagamento para manter cada despesa organizada e fácil de verificar."
+      "answer": "Sim. Você pode anexar uma foto do recibo ou uma captura do pagamento a cada despesa para mantê-la organizada e fácil de verificar."
     },
     "splitMethods": {
       "question": "Como posso dividir despesas no {appName}?",
@@ -492,11 +511,23 @@
     },
     "mobile": {
       "question": "O {appName} é compatível com celular?",
-      "answer": "Sim. O {appName} é otimizado para celulares e tablets, para que você possa adicionar despesas e consultar saldos em qualquer lugar."
+      "answer": "Sim. O {appName} é otimizado para celulares e tablets, para que você possa adicionar despesas e consultar saldos em qualquer lugar. Você também pode adicioná-lo à tela inicial e abri-lo como um app, sem baixar nada da loja de apps."
     },
     "whoCanUse": {
       "question": "Quem pode usar o {appName}?",
       "answer": "O {appName} funciona bem para colegas de quarto, casais, grupos de viagem, amigos, equipes, eventos e qualquer pessoa que gerencie despesas compartilhadas."
+    },
+    "offline": {
+      "question": "O {appName} funciona offline?",
+      "answer": "Sim. Os grupos que você já abriu no seu dispositivo continuam disponíveis para consulta sem internet, e você pode criar grupos novos e adicionar despesas a eles offline. Eles sincronizam sozinhos quando você volta a ficar online. Alterar grupos já compartilhados, acertar contas e adicionar recibos exige conexão para que os saldos de todos fiquem corretos."
+    },
+    "activityHistory": {
+      "question": "Posso ver o que mudou em um grupo?",
+      "answer": "Sim. Cada grupo tem um histórico de atividade com cada despesa, acerto e mudança de membros e o horário em que aconteceu, e cada despesa mostra exatamente o que foi editado, como o valor, quem pagou ou a divisão. As mudanças feitas pelos outros aparecem na hora, sem recarregar."
+    },
+    "editConflicts": {
+      "question": "O que acontece se duas pessoas editarem a mesma despesa?",
+      "answer": "O {appName} avisa quando uma despesa ou um grupo muda enquanto você está editando. Você pode manter suas alterações ou mudar para a versão mais recente, para que nenhuma edição seja sobrescrita sem ninguém saber."
     }
   },
   "common": {
@@ -655,18 +686,18 @@
     "section1Title": "1. Informações que coletamos",
     "section1Intro": "O {appName} coleta as informações necessárias para criar e gerenciar grupos de despesas compartilhadas:",
     "section1Item1": "Nomes de grupo, nomes de membros e preferências de moeda",
-    "section1Item2": "Lançamentos de despesas como descrições, valores, pagadores e participantes",
-    "section1Item3": "Dados técnicos e de análise que nos ajudam a melhorar desempenho e usabilidade",
+    "section1Item2": "Lançamentos de despesas como descrições, valores, pagadores, participantes, notas e as imagens de recibos que você anexar",
+    "section1Item3": "Dados técnicos, como endereços IP, usados para manter o serviço seguro e evitar abusos, e dados de análise que nos ajudam a melhorar desempenho e usabilidade",
     "section2Title": "2. Como armazenamos seus dados",
-    "section2Body": "Dados de grupos e despesas podem ser armazenados localmente no seu dispositivo e em infraestrutura segura de terceiros para que links compartilhados funcionem entre dispositivos e sessões. Usamos salvaguardas técnicas razoáveis para proteger dados em trânsito e em repouso, mas nenhum sistema na internet pode ser garantido como totalmente seguro.",
+    "section2Body": "Dados de grupos e despesas são armazenados em infraestrutura segura de terceiros para que links compartilhados funcionem entre dispositivos e sessões. Para que o app possa abrir e funcionar sem internet, uma cópia dos seus grupos e das páginas que você visita também fica no armazenamento do navegador do seu dispositivo. Grupos criados offline ficam apenas nesse dispositivo até sincronizarem. Você pode remover essa cópia a qualquer momento limpando os dados do navegador para este site. Usamos salvaguardas técnicas razoáveis para proteger dados em trânsito e em repouso, mas nenhum sistema na internet pode ser garantido como totalmente seguro.",
     "section3Title": "3. Serviços de terceiros",
     "section3Intro": "Podemos usar serviços de terceiros que apoiam o produto, como:",
     "section3Item1": "Análise (Google Analytics)",
-    "section3Item2": "Provedores de hospedagem, banco de dados e infraestrutura",
+    "section3Item2": "Provedores de hospedagem, banco de dados, armazenamento de arquivos e infraestrutura de atualizações ao vivo",
     "section3Item3": "Ferramentas de e-mail e suporte quando você nos contata",
     "section3Outro": "Esses provedores podem processar dados técnicos ou de uso limitados em nosso nome, conforme descrito em suas próprias políticas de privacidade.",
     "section4Title": "4. Cookies",
-    "section4Body": "O {appName} pode usar cookies ou tecnologias semelhantes para análise, continuidade de sessão e funcionalidade do produto. Você pode gerenciar muitas dessas preferências nas configurações do navegador.",
+    "section4Body": "O {appName} pode usar cookies, armazenamento do navegador ou tecnologias semelhantes para análise, continuidade de sessão, acesso offline e funcionalidade do produto. Você pode gerenciar muitas dessas preferências nas configurações do navegador.",
     "section5Title": "5. Seus direitos",
     "section5Intro": "Dependendo da sua localização, você pode ter direito a:",
     "section5Item1": "Solicitar acesso aos dados associados ao seu uso do serviço",
@@ -678,7 +709,9 @@
     "section7Body": "Se tiver dúvidas sobre esta Política de Privacidade ou precisar de ajuda com seus dados, entre em contato pela página de Contato.",
     "jsonLdName": "Política de privacidade do {appName}",
     "breadcrumbHome": "Início",
-    "breadcrumbPrivacy": "Política de privacidade"
+    "breadcrumbPrivacy": "Política de privacidade",
+    "section1Item4": "Um histórico de mudanças de cada grupo, como quando despesas, acertos e membros foram adicionados, editados ou removidos",
+    "section3Item4": "Serviços de segurança e limite de requisições que processam endereços IP para evitar abusos"
   },
   "terms": {
     "title": "Termos de serviço",
@@ -686,7 +719,7 @@
     "section1Title": "1. Aceitação dos termos",
     "section1Body": "Ao acessar ou usar o {appName}, você concorda com estes Termos de Serviço. Se não concordar, deve parar de usar o serviço.",
     "section2Title": "2. Descrição do serviço",
-    "section2Body": "O {appName} é um rastreador de despesas na web que permite aos grupos criar registros de despesas compartilhadas, atribuir pagadores e participantes e revisar saldos. O serviço é fornecido \"no estado em que se encontra\" e \"conforme disponível\".",
+    "section2Body": "O {appName} é um rastreador de despesas na web que permite aos grupos criar registros de despesas compartilhadas, atribuir pagadores e participantes e revisar saldos. Alguns recursos funcionam offline, e grupos criados offline sincronizam quando o dispositivo volta a se conectar. O serviço é fornecido \"no estado em que se encontra\" e \"conforme disponível\".",
     "section3Title": "3. Responsabilidades do usuário",
     "section3Intro": "Você é responsável por:",
     "section3Item1": "A precisão dos dados de despesas que você insere",
@@ -709,7 +742,8 @@
     "section8Body": "Para dúvidas sobre estes termos, entre em contato pela página de Contato.",
     "jsonLdName": "Termos de serviço do {appName}",
     "breadcrumbHome": "Início",
-    "breadcrumbTerms": "Termos de serviço"
+    "breadcrumbTerms": "Termos de serviço",
+    "section4Item5": "Perda de grupos ou despesas salvos apenas no seu dispositivo antes de sincronizarem, por exemplo se os dados do navegador forem apagados"
   },
   "theme": {
     "appearance": "Aparência",
@@ -1158,10 +1192,10 @@
           }
         },
         "multiCurrency": {
-          "feature": "Grupos multimoeda",
+          "feature": "Escolher a moeda do grupo",
           "splitcost": "yes",
           "competitor": {
-            "splitwise": "Recurso Pro",
+            "splitwise": "yes",
             "splid": "yes",
             "tricount": "yes"
           }
@@ -1268,7 +1302,7 @@
         },
         "three": {
           "question": "Como o {appName} se compara ao Splitwise?",
-          "answer": "Tanto o {appName} quanto o Splitwise ajudam a dividir contas e acompanhar despesas compartilhadas. O {appName} foca em oferecer uma plataforma fácil de usar com acesso pelo navegador, divisões flexíveis, acesso compartilhado ao grupo e ferramentas pensadas para simplificar a gestão de despesas no dia a dia."
+          "answer": "Tanto o {appName} quanto o Splitwise ajudam a dividir contas e acompanhar despesas compartilhadas. O {appName} oferece acesso pelo navegador, divisões flexíveis, links de grupo compartilháveis, atualizações ao vivo para todo o grupo, histórico de atividade e acesso offline, tudo pensado para simplificar a gestão de despesas no dia a dia."
         },
         "four": {
           "question": "Preciso instalar um app para usar o {appName}?",
@@ -1346,7 +1380,7 @@
         },
         "four": {
           "question": "Quais recursos o {appName} oferece?",
-          "answer": "O {appName} inclui divisão de contas, acompanhamento de despesas compartilhadas, gestão de despesas em grupo, cálculo de saldos, controle de despesas de viagem, gestão de despesas de república, compartilhamento de orçamento doméstico e histórico e acerto de despesas."
+          "answer": "O {appName} inclui divisão de contas, acompanhamento de despesas compartilhadas, gestão de despesas em grupo, cálculo de saldos, controle de despesas de viagem, gestão de despesas de república, compartilhamento de orçamento doméstico, histórico e acerto de despesas, atualizações ao vivo do grupo e acesso offline."
         },
         "five": {
           "question": "Posso usar o {appName} para viagens em grupo e despesas compartilhadas?",
@@ -1413,7 +1447,7 @@
         },
         "three": {
           "question": "Como o {appName} se compara ao Tricount?",
-          "answer": "Tanto o {appName} quanto o Tricount ajudam a gerenciar despesas compartilhadas e dividir contas. O {appName} oferece acesso web, links de grupo compartilháveis, recibos anexados, exportação de despesas e opções de divisão flexíveis, facilitando a colaboração e o acompanhamento de qualquer lugar."
+          "answer": "Tanto o {appName} quanto o Tricount ajudam a gerenciar despesas compartilhadas e dividir contas. O {appName} oferece acesso web, links de grupo compartilháveis, recibos anexados, exportação de despesas, opções de divisão flexíveis, atualizações ao vivo do grupo e acesso offline, facilitando a colaboração e o acompanhamento de qualquer lugar."
         },
         "four": {
           "question": "Preciso instalar um app para usar o {appName}?",
@@ -1496,7 +1530,7 @@
         "description": "Viagens geram boas lembranças, mas custos compartilhados criam atrito quando ninguém sabe quem pagou o quê.",
         "one": {
           "title": "Planilhas falham na estrada",
-          "description": "Viagens multi-cidade, pagadores diferentes e reservas de última hora tornam o controle manual lento e sujeito a erros."
+          "description": "Viagens multi-cidade, pagadores diferentes, reservas de última hora e sinal fraco tornam o controle manual lento e sujeito a erros."
         },
         "two": {
           "title": "Confusão cambial acumula rápido",
@@ -1531,8 +1565,8 @@
           "description": "Transporte, hospedagem, comida e atividades em um só lugar, não em notas e chats espalhados."
         },
         "two": {
-          "title": "Pronto para várias moedas",
-          "description": "Defina a moeda do grupo para todos verem totais consistentes, mesmo quando pagamentos são em outras moedas."
+          "title": "A moeda da sua viagem",
+          "description": "Ao criar o grupo da viagem, escolha a moeda em que vocês vão gastar (há 156 disponíveis) para que todos vejam os totais na mesma moeda."
         },
         "three": {
           "title": "Recibos sempre anexados",
@@ -1540,7 +1574,7 @@
         },
         "four": {
           "title": "Saldos atualizados na hora",
-          "description": "Cada despesa atualiza os saldos do grupo automaticamente — sem recalcular após cada jantar ou passeio."
+          "description": "Cada despesa atualiza os saldos de todo o grupo na hora, sem recalcular após cada jantar ou passeio."
         }
       },
       "faq": {
@@ -1550,11 +1584,15 @@
         },
         "two": {
           "question": "Posso acompanhar despesas de viagem em moedas diferentes?",
-          "answer": "Sim. Defina a moeda do grupo ao criar a viagem. O {appName} ajuda o grupo a se manter organizado mesmo com pagamentos em dinheiro, moeda local ou cartão no exterior."
+          "answer": "Cada grupo de viagem usa uma moeda, escolhida entre 156 disponíveis. Escolha a que vocês mais vão usar, ou crie um grupo para cada país em uma viagem por vários países para que cada total fique claro."
         },
         "three": {
           "question": "Todos os viajantes precisam de conta?",
           "answer": "Não. Compartilhe o link do grupo e os companheiros podem ver e adicionar despesas sem todos se cadastrarem primeiro."
+        },
+        "four": {
+          "question": "Posso adicionar despesas da viagem sem internet?",
+          "answer": "Sim, com alguns limites. Os grupos de viagem que você já abriu continuam disponíveis para consulta offline, e você pode criar um grupo de viagem novo e adicionar despesas a ele sem conexão. Ele sincroniza quando você volta a ficar online. Editar um grupo já compartilhado, acertar contas e adicionar recibos exige internet."
         }
       },
       "cta": {
@@ -1614,7 +1652,7 @@
         },
         "three": {
           "title": "Histórico de pagamentos claro",
-          "description": "Veja quem pagou cada conta e como os saldos mudaram — útil para confiança e registros."
+          "description": "Veja quem pagou cada conta, além de um histórico de atividade com cada despesa, acerto e mudança. Útil para confiança e registros."
         },
         "four": {
           "title": "Exporte quando precisar de registros",
@@ -1688,7 +1726,7 @@
         },
         "two": {
           "title": "Histórico compartilhado transparente",
-          "description": "Ambos veem a mesma lista de despesas, divisões e saldos — sem totais escondidos."
+          "description": "Ambos veem a mesma lista de despesas, divisões e saldos, e as mudanças aparecem para os dois na hora."
         },
         "three": {
           "title": "Funciona no dia a dia e em viagens",
@@ -1840,7 +1878,7 @@
       "benefits": {
         "one": {
           "title": "Feito para responsabilidade compartilhada",
-          "description": "Cada membro vê o mesmo histórico de despesas, divisões e saldos."
+          "description": "Cada membro vê as mesmas despesas, divisões e saldos, além de um histórico de atividade com cada mudança e quando ela aconteceu."
         },
         "two": {
           "title": "Vários pagadores suportados",

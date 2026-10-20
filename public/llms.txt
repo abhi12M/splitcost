@@ -14,7 +14,10 @@
 - SplitCost calculates balances and suggests simplified settlements; participants make the actual payments outside SplitCost.
 - An expense can include one image attachment, such as a receipt or payment screenshot.
 - A group's expense records and calculated member balances can be exported together as a CSV file.
-- Each group has a selected currency, and expenses in that group are recorded using the group currency.
+- Each group has one currency, chosen from 156 supported currencies when the group is created; it cannot be changed later, and expenses in that group are recorded using the group currency.
+- Changes made by any member appear for everyone viewing the group without refreshing. Each group has an activity history of expenses, settlements, and member changes, and each expense shows what was edited and when.
+- Groups opened on a device can be viewed offline. New groups can be created and filled with expenses offline and sync when the device reconnects; changing shared groups, settling up, and receipts need a connection.
+- SplitCost can be added to a phone's home screen and opened like an app, without an app store download.
 
 ## Use Cases
 

@@ -7,14 +7,18 @@ import {
   FileImage,
   Globe,
   HandCoins,
+  History,
   Link2,
+  MonitorSmartphone,
   PieChart,
+  RefreshCw,
   Scale,
   ShieldCheck,
   Smartphone,
   Sparkles,
   UserRoundX,
   Wallet,
+  WifiOff,
   type LucideIcon,
 } from "lucide-react";
 import Image from "next/image";
@@ -32,6 +36,10 @@ type FeatureKey =
   | "flexibleSplit"
   | "multiplePayers"
   | "autoBalances"
+  | "liveUpdates"
+  | "activityHistory"
+  | "offline"
+  | "installApp"
   | "shareableGroups"
   | "multiCurrency"
   | "receipts"
@@ -63,6 +71,10 @@ const featureConfigs: FeatureConfig[] = [
   { key: "flexibleSplit", icon: PieChart, accent: "emerald" },
   { key: "multiplePayers", icon: HandCoins, accent: "orange" },
   { key: "autoBalances", icon: Scale, accent: "brand" },
+  { key: "liveUpdates", icon: RefreshCw, accent: "brand" },
+  { key: "activityHistory", icon: History, accent: "emerald" },
+  { key: "offline", icon: WifiOff, accent: "orange" },
+  { key: "installApp", icon: MonitorSmartphone, accent: "brand" },
   { key: "shareableGroups", icon: Link2, accent: "brand" },
   { key: "multiCurrency", icon: Globe, accent: "emerald" },
   { key: "receipts", icon: FileImage, accent: "orange" },

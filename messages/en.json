@@ -3,7 +3,7 @@
     "siteName": "SplitCost",
     "home": {
       "title": "Split Expenses App for Bill Sharing & Group Expense Tracking",
-      "description": "SplitCost is a smart split expenses app to track shared bills, manage group payments, split travel costs, and organise roommate or couple expenses easily."
+      "description": "Free split expenses app to track shared bills and group payments, split travel and roommate costs, and settle up. Works offline, no sign-up needed."
     },
     "notFound": {
       "title": "Page not found",
@@ -41,7 +41,7 @@
     },
     "editGroup": {
       "title": "Edit group",
-      "description": "Edit the name, currency, and members for this group."
+      "description": "Edit the name and members of this group."
     },
     "editExpense": {
       "title": "Edit expense",
@@ -104,12 +104,15 @@
     "softwareApplication": {
       "features": {
         "one": "Create shared expense groups",
-        "two": "Edit group name, currency, and members",
+        "two": "Edit group name and members",
         "three": "Track expenses with one payer or multiple payers",
         "four": "Split bills equally, by percentage, or with custom amounts",
         "five": "Track balances for trips, roommates, and group events",
         "six": "Share group links without sign-up",
-        "seven": "Settle balances with simplified payouts"
+        "seven": "Settle balances with simplified payouts",
+        "eight": "View groups and create new ones offline, with automatic sync",
+        "nine": "Live updates for everyone in the group",
+        "ten": "Activity history for every group and expense"
       }
     },
     "groupActivity": {
@@ -172,7 +175,7 @@
     "createGroup": "Create a Group",
     "trustFree": "100% Free to start",
     "trustNoCard": "No credit card required",
-    "trustDevices": "Works on Web & Mobile"
+    "trustDevices": "Works offline on any device"
   },
   "landing": {
     "features": {
@@ -202,16 +205,32 @@
           "description": "Share group links with friends, roommates, or travel partners — they join in seconds."
         },
         "multiCurrency": {
-          "title": "Multi-Currency Support",
-          "description": "Perfect for international trips, roommates abroad, and cross-currency group payments."
+          "title": "156 Currencies Supported",
+          "description": "Pick your group's currency from 156 options. Every expense uses it, so totals stay clear for everyone."
         },
         "receipts": {
           "title": "Receipts & Attachments",
-          "description": "Add receipts, invoices, or screenshots so every expense has clear proof."
+          "description": "Attach a receipt photo or payment screenshot to any expense so every cost has clear proof."
         },
         "downloadReports": {
           "title": "Download Expense Reports",
           "description": "Export expense summaries as CSV for records or tax documentation."
+        },
+        "liveUpdates": {
+          "title": "Live Group Updates",
+          "description": "When someone adds or edits an expense, everyone in the group sees it right away, without refreshing."
+        },
+        "activityHistory": {
+          "title": "Activity History",
+          "description": "See every expense, settlement, and member change, plus exactly what was edited on each expense and when."
+        },
+        "offline": {
+          "title": "Works Offline",
+          "description": "Open your groups without internet and start new ones on the go. New groups sync automatically when you're back online."
+        },
+        "installApp": {
+          "title": "Install on Your Phone",
+          "description": "Add it to your home screen and open it like an app, with no app store download needed."
         }
       },
       "cta": {
@@ -466,7 +485,7 @@
     },
     "currencies": {
       "question": "Does {appName} support different currencies?",
-      "answer": "Yes. You can set a group currency when creating or editing a group, which makes {appName} useful for international trips and shared payments across currencies."
+      "answer": "Yes. Choose from 156 currencies when you create a group. Each group keeps one currency and every expense in it uses that currency, so balances stay consistent. For a trip abroad, just pick the local currency."
     },
     "account": {
       "question": "Do I need to create an account to use {appName}?",
@@ -474,7 +493,7 @@
     },
     "attachments": {
       "question": "Can I upload receipts or attachments?",
-      "answer": "Yes. You can attach receipts, invoices, and payment screenshots to keep every expense organized and easy to verify."
+      "answer": "Yes. You can attach a receipt photo or payment screenshot to each expense to keep it organized and easy to verify."
     },
     "splitMethods": {
       "question": "How can I split expenses in {appName}?",
@@ -494,11 +513,23 @@
     },
     "mobile": {
       "question": "Is {appName} mobile friendly?",
-      "answer": "Yes. {appName} is optimized for phones and tablets, so you can add expenses and check balances on the go."
+      "answer": "Yes. {appName} is optimized for phones and tablets, so you can add expenses and check balances on the go. You can also add it to your home screen and open it like an app, with no app store download needed."
     },
     "whoCanUse": {
       "question": "Who can use {appName}?",
       "answer": "{appName} works well for roommates, couples, travel groups, friends, teams, events, and anyone managing shared expenses together."
+    },
+    "offline": {
+      "question": "Does {appName} work offline?",
+      "answer": "Yes. Groups you've opened on your device stay available to view without internet, and you can create new groups and add expenses to them offline. They sync automatically when you're back online. Changing groups that are already shared, settling up, and adding receipts need a connection so everyone's balances stay accurate."
+    },
+    "activityHistory": {
+      "question": "Can I see what changed in a group?",
+      "answer": "Yes. Each group has an activity history that lists every expense, settlement, and member change with the time it happened, and each expense shows exactly what was edited, such as the amount, payer, or split. Changes made by others appear instantly, without refreshing."
+    },
+    "editConflicts": {
+      "question": "What happens if two people edit the same expense?",
+      "answer": "{appName} tells you when an expense or group changes while you're editing it. You can keep your changes or switch to the latest version, so nobody's edit is silently overwritten."
     }
   },
   "common": {
@@ -673,7 +704,7 @@
         "description": "Travel brings great memories, but shared costs can create friction when nobody knows who paid for what.",
         "one": {
           "title": "Spreadsheets fall apart on the road",
-          "description": "Multi-city trips, different payers, and last-minute bookings make manual tracking slow and error-prone."
+          "description": "Multi-city trips, different payers, last-minute bookings, and patchy signal make manual tracking slow and error-prone."
         },
         "two": {
           "title": "Currency confusion adds up fast",
@@ -708,8 +739,8 @@
           "description": "Track transport, accommodation, food, and activities in one place instead of scattered notes and chats."
         },
         "two": {
-          "title": "Multi-currency ready",
-          "description": "Set a group currency for your trip so everyone sees consistent totals, even when payments happen in different currencies."
+          "title": "Your trip's currency",
+          "description": "Set the currency you'll spend in when you create the trip group, from 156 supported, so everyone sees totals in the same currency."
         },
         "three": {
           "title": "Receipts stay attached",
@@ -717,7 +748,7 @@
         },
         "four": {
           "title": "Instant balance updates",
-          "description": "Every expense updates group balances automatically — no manual recalculation after each dinner or day trip."
+          "description": "Every expense updates balances for the whole group as it happens, with no manual recalculation after each dinner or day trip."
         }
       },
       "faq": {
@@ -727,11 +758,15 @@
         },
         "two": {
           "question": "Can I track travel expenses in different currencies?",
-          "answer": "Yes. Set a group currency when you create your trip. {appName} helps your travel group stay organized even when people pay in cash, local currency, or cards abroad."
+          "answer": "Each trip group uses one currency, chosen from 156 supported currencies. Pick the one you'll spend in most, or create a separate group for each country on a multi-country trip so every total stays clear."
         },
         "three": {
           "question": "Do all travelers need an account?",
           "answer": "No. Share your group link and companions can view and add expenses without everyone creating an account first."
+        },
+        "four": {
+          "question": "Can I add trip expenses without internet?",
+          "answer": "Yes, with some limits. Trip groups you've opened before stay available to view offline, and you can create a new trip group and add expenses to it without a connection. It syncs when you're back online. Editing a group that's already shared, settling up, and adding receipts need internet."
         }
       },
       "cta": {
@@ -791,7 +826,7 @@
         },
         "three": {
           "title": "Clear payment history",
-          "description": "See who paid for each bill and how balances changed over time — useful for trust and record-keeping."
+          "description": "See who paid for each bill, plus an activity history of every expense, settlement, and change. Useful for trust and record-keeping."
         },
         "four": {
           "title": "Export when you need records",
@@ -865,7 +900,7 @@
         },
         "two": {
           "title": "Transparent shared history",
-          "description": "Both partners see the same expense list, splits, and balances — no hidden totals."
+          "description": "Both partners see the same expense list, splits, and balances, and changes show up for both of you instantly."
         },
         "three": {
           "title": "Works for daily life and trips",
@@ -1017,7 +1052,7 @@
       "benefits": {
         "one": {
           "title": "Built for shared accountability",
-          "description": "Every member sees the same expense history, splits, and balances."
+          "description": "Every member sees the same expenses, splits, and balances, plus an activity history of every change and when it happened."
         },
         "two": {
           "title": "Multiple payers supported",
@@ -1161,10 +1196,10 @@
           }
         },
         "multiCurrency": {
-          "feature": "Multi-currency groups",
+          "feature": "Choose a group currency",
           "splitcost": "yes",
           "competitor": {
-            "splitwise": "Pro feature",
+            "splitwise": "yes",
             "splid": "yes",
             "tricount": "yes"
           }
@@ -1271,7 +1306,7 @@
         },
         "three": {
           "question": "How does {appName} compare to Splitwise?",
-          "answer": "Both {appName} and Splitwise help users split bills and track shared expenses. {appName} focuses on providing an easy-to-use platform with browser access, flexible expense splitting, shareable group access, and tools designed to simplify group expense management for everyday use."
+          "answer": "Both {appName} and Splitwise help users split bills and track shared expenses. {appName} offers browser access, flexible expense splitting, shareable group links, live updates for everyone in the group, an activity history, and offline access, all designed to keep group expense management simple for everyday use."
         },
         "four": {
           "question": "Do I need to install an app to use {appName}?",
@@ -1349,7 +1384,7 @@
         },
         "four": {
           "question": "What features does {appName} offer?",
-          "answer": "{appName} includes a range of expense-sharing features, including bill splitting, shared expense tracking, group expense management, balance calculations, trip and travel expense tracking, roommate expense management, household budget sharing, and expense history and settlement tracking."
+          "answer": "{appName} includes a range of expense-sharing features, including bill splitting, shared expense tracking, group expense management, balance calculations, trip and travel expense tracking, roommate expense management, household budget sharing, expense history and settlement tracking, live group updates, and offline access."
         },
         "five": {
           "question": "Can I use {appName} for group trips and shared expenses?",
@@ -1416,7 +1451,7 @@
         },
         "three": {
           "question": "How does {appName} compare to Tricount?",
-          "answer": "Both {appName} and Tricount help users manage shared expenses and split bills. {appName} offers browser access, shareable group links, receipt attachments, expense exports, and flexible splitting options, making it easy for groups to collaborate and track expenses from anywhere."
+          "answer": "Both {appName} and Tricount help users manage shared expenses and split bills. {appName} offers browser access, shareable group links, receipt attachments, expense exports, flexible splitting options, live group updates, and offline access, making it easy for groups to collaborate and track expenses from anywhere."
         },
         "four": {
           "question": "Do I need to install an app to use {appName}?",
@@ -1554,18 +1589,18 @@
     "section1Title": "1. Information We Collect",
     "section1Intro": "{appName} collects the information required to create and manage shared expense groups:",
     "section1Item1": "Group names, member names, and currency preferences",
-    "section1Item2": "Expense entries such as descriptions, amounts, payers, and participants",
-    "section1Item3": "Technical and analytics data that helps us improve performance and usability",
+    "section1Item2": "Expense entries such as descriptions, amounts, payers, participants, notes, and any receipt images you attach",
+    "section1Item3": "Technical data such as IP addresses, used to keep the service secure and prevent abuse, and analytics data that helps us improve performance and usability",
     "section2Title": "2. How We Store Your Data",
-    "section2Body": "Group and expense data may be stored locally on your device and on secure third-party infrastructure so shared group links work across devices and sessions. We use reasonable technical safeguards to protect data in transit and at rest, but no internet-based system can be guaranteed to be completely secure.",
+    "section2Body": "Group and expense data is stored on secure third-party infrastructure so shared group links work across devices and sessions. So the app can open and work without internet, a copy of your groups and of the pages you visit is also kept in your browser's storage on your device. Groups you create while offline stay only on that device until they sync. You can remove this copy at any time by clearing your browser's data for this site. We use reasonable technical safeguards to protect data in transit and at rest, but no internet-based system can be guaranteed to be completely secure.",
     "section3Title": "3. Third-Party Services",
     "section3Intro": "We may use third-party services that support the product, such as:",
     "section3Item1": "Analytics (Google Analytics)",
-    "section3Item2": "Hosting, database, and infrastructure providers",
+    "section3Item2": "Hosting, database, file storage, and live-update infrastructure providers",
     "section3Item3": "Email and support tooling when you contact us",
     "section3Outro": "These providers may process limited technical or usage data on our behalf as described in their own privacy policies.",
     "section4Title": "4. Cookies",
-    "section4Body": "{appName} may use cookies or similar technologies for analytics, session continuity, and product functionality. You can manage many of these preferences through your browser settings.",
+    "section4Body": "{appName} may use cookies, browser storage, or similar technologies for analytics, session continuity, offline access, and product functionality. You can manage many of these preferences through your browser settings.",
     "section5Title": "5. Your Rights",
     "section5Intro": "Depending on your location, you may have the right to:",
     "section5Item1": "Request access to the data associated with your use of the service",
@@ -1577,7 +1612,9 @@
     "section7Body": "If you have questions about this Privacy Policy or want to request help related to your data, please contact us through the Contact page.",
     "jsonLdName": "{appName} Privacy Policy",
     "breadcrumbHome": "Home",
-    "breadcrumbPrivacy": "Privacy Policy"
+    "breadcrumbPrivacy": "Privacy Policy",
+    "section1Item4": "A history of changes in each group, such as when expenses, settlements, and members were added, edited, or removed",
+    "section3Item4": "Security and rate-limiting services that process IP addresses to prevent abuse"
   },
   "terms": {
     "title": "Terms of Service",
@@ -1585,7 +1622,7 @@
     "section1Title": "1. Acceptance of Terms",
     "section1Body": "By accessing or using {appName}, you agree to these Terms of Service. If you do not agree, you should stop using the service.",
     "section2Title": "2. Description of Service",
-    "section2Body": "{appName} is a web-based expense tracker that allows groups to create shared expense records, assign payers and participants, and review balances. The service is provided on an \"as is\" and \"as available\" basis.",
+    "section2Body": "{appName} is a web-based expense tracker that allows groups to create shared expense records, assign payers and participants, and review balances. Some features work offline, and groups created offline sync when your device reconnects. The service is provided on an \"as is\" and \"as available\" basis.",
     "section3Title": "3. User Responsibilities",
     "section3Intro": "You are responsible for:",
     "section3Item1": "The accuracy of expense data you enter",
@@ -1608,7 +1645,8 @@
     "section8Body": "For questions about these terms, please contact us through the Contact page.",
     "jsonLdName": "{appName} Terms of Service",
     "breadcrumbHome": "Home",
-    "breadcrumbTerms": "Terms of Service"
+    "breadcrumbTerms": "Terms of Service",
+    "section4Item5": "Loss of groups or expenses saved only on your device before they sync, for example if browser data is cleared"
   },
   "theme": {
     "appearance": "Appearance",

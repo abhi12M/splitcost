@@ -3,7 +3,7 @@
     "siteName": "SplitCost",
     "home": {
       "title": "App para dividir gastos y gestionar gastos en grupo",
-      "description": "SplitCost es una app inteligente para dividir gastos, controlar facturas compartidas, gestionar pagos en grupo y organizar viajes o gastos entre compañeros de piso."
+      "description": "App gratis para dividir gastos: controla facturas y pagos en grupo, reparte viajes y gastos de piso y liquida cuentas. Funciona sin conexión y sin registro."
     },
     "notFound": {
       "title": "Página no encontrada",
@@ -41,7 +41,7 @@
     },
     "editGroup": {
       "title": "Editar grupo",
-      "description": "Edita el nombre, la moneda y los miembros de este grupo."
+      "description": "Edita el nombre y los miembros de este grupo."
     },
     "editExpense": {
       "title": "Editar gasto",
@@ -104,12 +104,15 @@
     "softwareApplication": {
       "features": {
         "one": "Crear grupos de gastos compartidos",
-        "two": "Editar nombre, moneda y miembros del grupo",
+        "two": "Editar nombre y miembros del grupo",
         "three": "Registrar gastos con un pagador o varios pagadores",
         "four": "Dividir facturas por igual, por porcentaje o con importes personalizados",
         "five": "Controlar saldos de viajes, compañeros de piso y eventos en grupo",
         "six": "Compartir enlaces de grupo sin registro",
-        "seven": "Liquidar saldos con pagos simplificados"
+        "seven": "Liquidar saldos con pagos simplificados",
+        "eight": "Ver grupos y crear nuevos sin conexión, con sincronización automática",
+        "nine": "Actualizaciones en vivo para todo el grupo",
+        "ten": "Historial de actividad de cada grupo y gasto"
       }
     },
     "groupActivity": {
@@ -172,7 +175,7 @@
     "createGroup": "Crear un grupo",
     "trustFree": "100 % gratis para empezar",
     "trustNoCard": "Sin tarjeta de crédito",
-    "trustDevices": "Web y móvil"
+    "trustDevices": "Funciona sin conexión en cualquier dispositivo"
   },
   "landing": {
     "features": {
@@ -202,16 +205,32 @@
           "description": "Comparte enlaces de grupo con amigos, compañeros de piso o compañeros de viaje; se unen en segundos."
         },
         "multiCurrency": {
-          "title": "Varias monedas",
-          "description": "Ideal para viajes internacionales, compañeros de piso en el extranjero y pagos en grupo entre monedas."
+          "title": "156 monedas disponibles",
+          "description": "Elige la moneda del grupo entre 156 opciones. Todos los gastos la usan, así los totales quedan claros para todos."
         },
         "receipts": {
           "title": "Recibos y adjuntos",
-          "description": "Añade recibos, facturas o capturas para que cada gasto tenga prueba clara."
+          "description": "Adjunta una foto del recibo o una captura del pago a cualquier gasto para que cada coste tenga prueba clara."
         },
         "downloadReports": {
           "title": "Descargar informes de gastos",
           "description": "Exporta resúmenes de gastos en CSV para registros o documentación fiscal."
+        },
+        "liveUpdates": {
+          "title": "Actualizaciones en vivo",
+          "description": "Cuando alguien añade o edita un gasto, todo el grupo lo ve al momento, sin recargar."
+        },
+        "activityHistory": {
+          "title": "Historial de actividad",
+          "description": "Consulta cada gasto, liquidación y cambio de miembros, y qué se editó exactamente en cada gasto y cuándo."
+        },
+        "offline": {
+          "title": "Funciona sin conexión",
+          "description": "Abre tus grupos sin internet y crea grupos nuevos sobre la marcha. Los grupos nuevos se sincronizan solos al volver a estar en línea."
+        },
+        "installApp": {
+          "title": "Instálala en tu móvil",
+          "description": "Añádela a la pantalla de inicio y ábrela como una app, sin descargar nada de la tienda de apps."
         }
       },
       "cta": {
@@ -464,7 +483,7 @@
     },
     "currencies": {
       "question": "¿{appName} admite distintas monedas?",
-      "answer": "Sí. Puedes establecer la moneda del grupo al crearlo o editarlo, lo que hace útil a {appName} para viajes internacionales y pagos compartidos entre monedas."
+      "answer": "Sí. Elige entre 156 monedas al crear un grupo. Cada grupo mantiene una moneda y todos sus gastos la usan, así los saldos son coherentes. Para un viaje al extranjero, elige la moneda local."
     },
     "account": {
       "question": "¿Necesito crear una cuenta para usar {appName}?",
@@ -472,7 +491,7 @@
     },
     "attachments": {
       "question": "¿Puedo subir recibos o adjuntos?",
-      "answer": "Sí. Puedes adjuntar recibos, facturas y capturas de pago para mantener cada gasto organizado y fácil de verificar."
+      "answer": "Sí. Puedes adjuntar una foto del recibo o una captura del pago a cada gasto para mantenerlo organizado y fácil de verificar."
     },
     "splitMethods": {
       "question": "¿Cómo puedo dividir gastos en {appName}?",
@@ -492,11 +511,23 @@
     },
     "mobile": {
       "question": "¿{appName} es compatible con móviles?",
-      "answer": "Sí. {appName} está optimizado para teléfonos y tabletas, para que puedas añadir gastos y consultar saldos donde estés."
+      "answer": "Sí. {appName} está optimizado para teléfonos y tabletas, para que puedas añadir gastos y consultar saldos donde estés. También puedes añadirlo a la pantalla de inicio y abrirlo como una app, sin descargar nada de la tienda de apps."
     },
     "whoCanUse": {
       "question": "¿Quién puede usar {appName}?",
       "answer": "{appName} funciona bien para compañeros de piso, parejas, grupos de viaje, amigos, equipos, eventos y cualquiera que gestione gastos compartidos."
+    },
+    "offline": {
+      "question": "¿{appName} funciona sin conexión?",
+      "answer": "Sí. Los grupos que hayas abierto en tu dispositivo siguen disponibles para consultar sin internet, y puedes crear grupos nuevos y añadirles gastos sin conexión. Se sincronizan solos cuando vuelvas a estar en línea. Cambiar grupos ya compartidos, liquidar cuentas y añadir recibos requiere conexión para que los saldos de todos sean correctos."
+    },
+    "activityHistory": {
+      "question": "¿Puedo ver qué ha cambiado en un grupo?",
+      "answer": "Sí. Cada grupo tiene un historial de actividad con cada gasto, liquidación y cambio de miembros y la hora en que ocurrió, y cada gasto muestra exactamente qué se editó, como el importe, quién pagó o el reparto. Los cambios de los demás aparecen al instante, sin recargar."
+    },
+    "editConflicts": {
+      "question": "¿Qué pasa si dos personas editan el mismo gasto?",
+      "answer": "{appName} te avisa cuando un gasto o un grupo cambia mientras lo editas. Puedes conservar tus cambios o pasar a la versión más reciente, para que ninguna edición se sobrescriba sin que nadie lo sepa."
     }
   },
   "common": {
@@ -655,18 +686,18 @@
     "section1Title": "1. Información que recopilamos",
     "section1Intro": "{appName} recopila la información necesaria para crear y gestionar grupos de gastos compartidos:",
     "section1Item1": "Nombres de grupo, nombres de miembros y preferencias de moneda",
-    "section1Item2": "Entradas de gastos como descripciones, importes, pagadores y participantes",
-    "section1Item3": "Datos técnicos y de analítica que nos ayudan a mejorar el rendimiento y la usabilidad",
+    "section1Item2": "Entradas de gastos como descripciones, importes, pagadores, participantes, notas y las imágenes de recibos que adjuntes",
+    "section1Item3": "Datos técnicos, como direcciones IP, que usamos para mantener el servicio seguro y evitar abusos, y datos de analítica que nos ayudan a mejorar el rendimiento y la usabilidad",
     "section2Title": "2. Cómo almacenamos tus datos",
-    "section2Body": "Los datos de grupos y gastos pueden almacenarse localmente en tu dispositivo y en infraestructura segura de terceros para que los enlaces compartidos funcionen entre dispositivos y sesiones. Aplicamos medidas técnicas razonables para proteger los datos en tránsito y en reposo, pero ningún sistema en internet puede garantizarse totalmente seguro.",
+    "section2Body": "Los datos de grupos y gastos se almacenan en infraestructura segura de terceros para que los enlaces compartidos funcionen entre dispositivos y sesiones. Para que la app pueda abrirse y funcionar sin internet, también se guarda una copia de tus grupos y de las páginas que visitas en el almacenamiento del navegador de tu dispositivo. Los grupos que crees sin conexión permanecen solo en ese dispositivo hasta que se sincronizan. Puedes eliminar esta copia en cualquier momento borrando los datos del navegador para este sitio. Aplicamos medidas técnicas razonables para proteger los datos en tránsito y en reposo, pero ningún sistema en internet puede garantizarse totalmente seguro.",
     "section3Title": "3. Servicios de terceros",
     "section3Intro": "Podemos usar servicios de terceros que respaldan el producto, como:",
     "section3Item1": "Analítica (Google Analytics)",
-    "section3Item2": "Proveedores de alojamiento, bases de datos e infraestructura",
+    "section3Item2": "Proveedores de alojamiento, bases de datos, almacenamiento de archivos e infraestructura de actualizaciones en vivo",
     "section3Item3": "Herramientas de correo y soporte cuando nos contactas",
     "section3Outro": "Estos proveedores pueden procesar datos técnicos o de uso limitados en nuestro nombre según sus propias políticas de privacidad.",
     "section4Title": "4. Cookies",
-    "section4Body": "{appName} puede usar cookies o tecnologías similares para analítica, continuidad de sesión y funcionalidad del producto. Puedes gestionar muchas de estas preferencias en la configuración del navegador.",
+    "section4Body": "{appName} puede usar cookies, almacenamiento del navegador o tecnologías similares para analítica, continuidad de sesión, acceso sin conexión y funcionalidad del producto. Puedes gestionar muchas de estas preferencias en la configuración del navegador.",
     "section5Title": "5. Tus derechos",
     "section5Intro": "Según tu ubicación, puedes tener derecho a:",
     "section5Item1": "Solicitar acceso a los datos asociados a tu uso del servicio",
@@ -678,7 +709,9 @@
     "section7Body": "Si tienes preguntas sobre esta Política de privacidad o necesitas ayuda con tus datos, contáctanos a través de la página de Contacto.",
     "jsonLdName": "Política de privacidad de {appName}",
     "breadcrumbHome": "Inicio",
-    "breadcrumbPrivacy": "Política de privacidad"
+    "breadcrumbPrivacy": "Política de privacidad",
+    "section1Item4": "Un historial de cambios de cada grupo, como cuándo se añadieron, editaron o eliminaron gastos, liquidaciones y miembros",
+    "section3Item4": "Servicios de seguridad y limitación de solicitudes que procesan direcciones IP para evitar abusos"
   },
   "terms": {
     "title": "Términos del servicio",
@@ -686,7 +719,7 @@
     "section1Title": "1. Aceptación de los términos",
     "section1Body": "Al acceder o usar {appName}, aceptas estos Términos del servicio. Si no estás de acuerdo, debes dejar de usar el servicio.",
     "section2Title": "2. Descripción del servicio",
-    "section2Body": "{appName} es un controlador de gastos web que permite a los grupos crear registros de gastos compartidos, asignar pagadores y participantes y revisar saldos. El servicio se ofrece \"tal cual\" y \"según disponibilidad\".",
+    "section2Body": "{appName} es un controlador de gastos web que permite a los grupos crear registros de gastos compartidos, asignar pagadores y participantes y revisar saldos. Algunas funciones están disponibles sin conexión, y los grupos creados sin conexión se sincronizan cuando el dispositivo vuelve a conectarse. El servicio se ofrece \"tal cual\" y \"según disponibilidad\".",
     "section3Title": "3. Responsabilidades del usuario",
     "section3Intro": "Eres responsable de:",
     "section3Item1": "La exactitud de los datos de gastos que introduces",
@@ -709,7 +742,8 @@
     "section8Body": "Para preguntas sobre estos términos, contáctanos a través de la página de Contacto.",
     "jsonLdName": "Términos del servicio de {appName}",
     "breadcrumbHome": "Inicio",
-    "breadcrumbTerms": "Términos del servicio"
+    "breadcrumbTerms": "Términos del servicio",
+    "section4Item5": "Pérdida de grupos o gastos guardados solo en tu dispositivo antes de sincronizarse, por ejemplo si se borran los datos del navegador"
   },
   "theme": {
     "appearance": "Apariencia",
@@ -1158,10 +1192,10 @@
           }
         },
         "multiCurrency": {
-          "feature": "Grupos multidivisa",
+          "feature": "Elegir la moneda del grupo",
           "splitcost": "yes",
           "competitor": {
-            "splitwise": "Función Pro",
+            "splitwise": "yes",
             "splid": "yes",
             "tricount": "yes"
           }
@@ -1268,7 +1302,7 @@
         },
         "three": {
           "question": "¿Cómo se compara {appName} con Splitwise?",
-          "answer": "Tanto {appName} como Splitwise ayudan a dividir facturas y controlar gastos compartidos. {appName} se centra en ofrecer una plataforma fácil de usar con acceso desde el navegador, divisiones flexibles, acceso compartido al grupo y herramientas pensadas para simplificar la gestión de gastos en el día a día."
+          "answer": "Tanto {appName} como Splitwise ayudan a dividir facturas y controlar gastos compartidos. {appName} ofrece acceso desde el navegador, divisiones flexibles, enlaces de grupo compartibles, actualizaciones en vivo para todo el grupo, historial de actividad y acceso sin conexión, todo pensado para simplificar la gestión de gastos en el día a día."
         },
         "four": {
           "question": "¿Necesito instalar una app para usar {appName}?",
@@ -1346,7 +1380,7 @@
         },
         "four": {
           "question": "¿Qué funciones ofrece {appName}?",
-          "answer": "{appName} incluye división de facturas, seguimiento de gastos compartidos, gestión de gastos en grupo, cálculo de saldos, control de gastos de viaje, gestión de gastos entre compañeros de piso, reparto de presupuesto del hogar e historial y liquidación de gastos."
+          "answer": "{appName} incluye división de facturas, seguimiento de gastos compartidos, gestión de gastos en grupo, cálculo de saldos, control de gastos de viaje, gestión de gastos entre compañeros de piso, reparto de presupuesto del hogar, historial y liquidación de gastos, actualizaciones en vivo del grupo y acceso sin conexión."
         },
         "five": {
           "question": "¿Puedo usar {appName} para viajes en grupo y gastos compartidos?",
@@ -1413,7 +1447,7 @@
         },
         "three": {
           "question": "¿Cómo se compara {appName} con Tricount?",
-          "answer": "Tanto {appName} como Tricount ayudan a gestionar gastos compartidos y dividir facturas. {appName} ofrece acceso web, enlaces de grupo compartibles, tickets adjuntos, exportación de gastos y opciones de división flexibles, facilitando la colaboración y el seguimiento desde cualquier lugar."
+          "answer": "Tanto {appName} como Tricount ayudan a gestionar gastos compartidos y dividir facturas. {appName} ofrece acceso web, enlaces de grupo compartibles, tickets adjuntos, exportación de gastos, opciones de división flexibles, actualizaciones en vivo del grupo y acceso sin conexión, facilitando la colaboración y el seguimiento desde cualquier lugar."
         },
         "four": {
           "question": "¿Necesito instalar una app para usar {appName}?",
@@ -1496,7 +1530,7 @@
         "description": "Los viajes dejan buenos recuerdos, pero los costes compartidos generan fricción cuando nadie sabe quién pagó qué.",
         "one": {
           "title": "Las hojas de cálculo fallan en ruta",
-          "description": "Viajes multi-ciudad, distintos pagadores y reservas de última hora hacen que el seguimiento manual sea lento y propenso a errores."
+          "description": "Viajes multi-ciudad, distintos pagadores, reservas de última hora y mala cobertura hacen que el seguimiento manual sea lento y propenso a errores."
         },
         "two": {
           "title": "La confusión de divisas se acumula rápido",
@@ -1531,8 +1565,8 @@
           "description": "Transporte, alojamiento, comida y actividades en un solo lugar, no en notas y chats dispersos."
         },
         "two": {
-          "title": "Listo para varias divisas",
-          "description": "Define la divisa del grupo para que todos vean totales coherentes, aunque los pagos sean en otras monedas."
+          "title": "La moneda de tu viaje",
+          "description": "Al crear el grupo del viaje, elige la moneda en la que vais a gastar (hay 156 disponibles) para que todos vean los totales en la misma moneda."
         },
         "three": {
           "title": "Recibos siempre adjuntos",
@@ -1540,7 +1574,7 @@
         },
         "four": {
           "title": "Saldos al instante",
-          "description": "Cada gasto actualiza los saldos del grupo automáticamente — sin recalcular tras cada cena o excursión."
+          "description": "Cada gasto actualiza los saldos de todo el grupo en el momento, sin recalcular tras cada cena o excursión."
         }
       },
       "faq": {
@@ -1550,11 +1584,15 @@
         },
         "two": {
           "question": "¿Puedo registrar gastos de viaje en distintas divisas?",
-          "answer": "Sí. Elige la divisa del grupo al crear el viaje. {appName} ayuda a mantener el orden aunque algunos paguen en efectivo, moneda local o tarjeta en el extranjero."
+          "answer": "Cada grupo de viaje usa una moneda, elegida entre 156 disponibles. Elige la que más vayáis a usar, o crea un grupo para cada país en un viaje por varios países para que cada total quede claro."
         },
         "three": {
           "question": "¿Todos los viajeros necesitan una cuenta?",
           "answer": "No. Comparte el enlace del grupo y tus compañeros pueden ver y añadir gastos sin que todos se registren primero."
+        },
+        "four": {
+          "question": "¿Puedo añadir gastos del viaje sin internet?",
+          "answer": "Sí, con algunos límites. Los grupos de viaje que hayas abierto antes siguen disponibles para consultar sin conexión, y puedes crear un grupo de viaje nuevo y añadirle gastos sin conexión. Se sincroniza cuando vuelvas a estar en línea. Editar un grupo ya compartido, liquidar cuentas y añadir recibos requiere internet."
         }
       },
       "cta": {
@@ -1614,7 +1652,7 @@
         },
         "three": {
           "title": "Historial de pagos claro",
-          "description": "Ve quién pagó cada factura y cómo cambiaron los saldos — útil para confianza y registros."
+          "description": "Ve quién pagó cada factura, además de un historial de actividad con cada gasto, liquidación y cambio. Útil para la confianza y los registros."
         },
         "four": {
           "title": "Exporta cuando necesites registros",
@@ -1688,7 +1726,7 @@
         },
         "two": {
           "title": "Historial compartido transparente",
-          "description": "Ambos veis la misma lista de gastos, repartos y saldos — sin totales ocultos."
+          "description": "Ambos veis la misma lista de gastos, repartos y saldos, y los cambios os aparecen a los dos al instante."
         },
         "three": {
           "title": "Sirve para el día a día y viajes",
@@ -1840,7 +1878,7 @@
       "benefits": {
         "one": {
           "title": "Pensado para responsabilidad compartida",
-          "description": "Cada miembro ve el mismo historial de gastos, repartos y saldos."
+          "description": "Cada miembro ve los mismos gastos, repartos y saldos, además de un historial de actividad con cada cambio y cuándo ocurrió."
         },
         "two": {
           "title": "Varios pagadores admitidos",

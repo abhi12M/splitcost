@@ -34,7 +34,7 @@ export default async function Page({ params }: PageProps) {
   const tFeatures = await getTranslations({ locale, namespace: "metadata.softwareApplication.features" });
   const faqItems = getFaqItems((key, values) => tFaq(key, values));
   const faqJsonLd = buildFaqPageJsonLd(faqItems, locale);
-  const featureList = ["one", "two", "three", "four", "five", "six", "seven"].map((key) =>
+  const featureList = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"].map((key) =>
     tFeatures(key as "one")
   );
   const softwareApplicationJsonLd =

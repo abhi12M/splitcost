@@ -73,7 +73,8 @@ const accentStyles: Record<
 const PAIN_POINT_KEYS = ["one", "two", "three"] as const;
 const STEP_KEYS = ["one", "two", "three", "four"] as const;
 const BENEFIT_KEYS = ["one", "two", "three", "four"] as const;
-const FAQ_KEYS = ["one", "two", "three"] as const;
+// "four" is optional; only some use cases have a fourth question.
+const FAQ_KEYS = ["one", "two", "three", "four"] as const;
 
 type UseCaseDetailPageProps = {
   locale: AppLocale;
@@ -92,7 +93,7 @@ export default async function UseCaseDetailPage({ locale, slug }: UseCaseDetailP
   const pagePath = getUseCasePath(slug);
   const pageUrl = getLocalizedCanonicalUrl(locale, pagePath);
 
-  const faqItems = FAQ_KEYS.map((key) => ({
+  const faqItems = FAQ_KEYS.filter((key) => t.has(`faq.${key}.question`)).map((key) => ({
     question: t(`faq.${key}.question`, { appName: APP_NAME }),
     answer: t(`faq.${key}.answer`, { appName: APP_NAME }),
   }));

@@ -13,6 +13,9 @@ export const FAQ_KEYS = [
   "travel",
   "export",
   "mobile",
+  "offline",
+  "activityHistory",
+  "editConflicts",
   "whoCanUse",
 ] as const;
 

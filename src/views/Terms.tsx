@@ -96,6 +96,7 @@ export default async function TermsPage({ locale }: TermsPageProps) {
                 <li>{t("section4Item2")}</li>
                 <li>{t("section4Item3")}</li>
                 <li>{t("section4Item4")}</li>
+                <li>{t("section4Item5")}</li>
               </ul>
             </section>
 
