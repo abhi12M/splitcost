@@ -23,11 +23,11 @@
     },
     "privacy": {
       "title": "Política de privacidad",
-      "description": "Descubre cómo SplitCost trata tus datos y tu privacidad."
+      "description": "Cómo SplitCost recopila, guarda y protege los datos de tus grupos y gastos, qué servicios usamos, cómo funciona el modo sin conexión y tus opciones."
     },
     "terms": {
       "title": "Términos del servicio",
-      "description": "Lee los términos y condiciones de uso de SplitCost."
+      "description": "Las condiciones de uso de SplitCost, un controlador de gastos gratuito: qué ofrece el servicio, tus responsabilidades, límites de responsabilidad y cambios."
     },
     "group": {
       "title": "Gastos del grupo",
@@ -1597,7 +1597,8 @@
       "cta": {
         "title": "Empieza a registrar gastos compartidos hoy",
         "button": "Crear un grupo gratis"
-      }
+      },
+      "relatedGuidesTitle": "Guías relacionadas"
     },
     "travel": {
       "jsonLdName": "Divisor de gastos de viaje de {appName}",

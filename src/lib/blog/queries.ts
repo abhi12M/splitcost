@@ -189,6 +189,24 @@ export async function getBlogBySlug(slug: string): Promise<Blog | null> {
   return (data as Blog | null) ?? null;
 }
 
+/** Published, indexable posts with these slugs, in the given order. Missing slugs are skipped. */
+export async function getPublishedBlogsBySlugs(slugs: readonly string[]): Promise<Blog[]> {
+  if (slugs.length === 0) return [];
+  const { data, error } = await supabaseAdmin
+    .from("blogs")
+    .select(BLOG_SELECT)
+    .in("slug", [...slugs])
+    .eq("status", "published")
+    .eq("no_index", false);
+
+  if (error) {
+    console.error("getPublishedBlogsBySlugs error:", error);
+    return [];
+  }
+  const bySlug = new Map(((data ?? []) as Blog[]).map((blog) => [blog.slug, blog]));
+  return slugs.flatMap((slug) => bySlug.get(slug) ?? []);
+}
+
 export async function getPublishedBlogRedirectSlug(slug: string): Promise<string | null> {
   const { data: redirect, error: redirectError } = await supabaseAdmin
     .from("blog_slug_redirects")

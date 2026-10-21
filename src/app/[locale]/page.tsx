@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
+import { localeDefinitions } from "@/i18n/config";
 import { resolveLocaleParam } from "@/i18n/params";
 import type { AppLocale } from "@/i18n/routing";
 import { buildFaqPageJsonLd, getFaqItems } from "@/lib/faq";
 import { serializeStructuredDataForHtml } from "@/lib/blog/schema";
 import { getSoftwareApplicationId } from "@/lib/schema-identity";
-import { getCanonicalUrl, SITE_NAME } from "@/lib/seo";
-import { buildLocalizedMetadata } from "@/lib/seo-i18n";
+import { SITE_NAME } from "@/lib/seo";
+import { buildLocalizedMetadata, getLocalizedCanonicalUrl } from "@/lib/seo-i18n";
 import HomePage from "@/views/Index";
 
 type PageProps = {
@@ -37,21 +38,20 @@ export default async function Page({ params }: PageProps) {
   const featureList = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"].map((key) =>
     tFeatures(key as "one")
   );
-  const softwareApplicationJsonLd =
-    locale === "en"
-      ? {
-          "@context": "https://schema.org",
-          "@type": "SoftwareApplication",
-          "@id": getSoftwareApplicationId(),
-          name: SITE_NAME,
-          url: getCanonicalUrl("/en"),
-          applicationCategory: "FinanceApplication",
-          operatingSystem: "Web",
-          description: tHome("description"),
-          inLanguage: "en",
-          featureList,
-        }
-      : null;
+  const softwareApplicationJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "@id": getSoftwareApplicationId(),
+    name: SITE_NAME,
+    url: getLocalizedCanonicalUrl(locale, "/"),
+    applicationCategory: "FinanceApplication",
+    operatingSystem: "Web",
+    description: tHome("description"),
+    inLanguage: localeDefinitions[locale].htmlLang,
+    featureList,
+    // Free to use; needed for Google to show the app as a rich result.
+    offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+  };
 
   return (
     <>
@@ -59,12 +59,10 @@ export default async function Page({ params }: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: serializeStructuredDataForHtml(faqJsonLd) }}
       />
-      {softwareApplicationJsonLd ? (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: serializeStructuredDataForHtml(softwareApplicationJsonLd) }}
-        />
-      ) : null}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeStructuredDataForHtml(softwareApplicationJsonLd) }}
+      />
       <HomePage />
     </>
   );

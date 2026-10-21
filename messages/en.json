@@ -23,11 +23,11 @@
     },
     "privacy": {
       "title": "Privacy Policy",
-      "description": "Learn how SplitCost handles your data and privacy."
+      "description": "How SplitCost collects, stores, and protects your group and expense data, which services we use, how offline storage works, and your privacy choices."
     },
     "terms": {
       "title": "Terms of Service",
-      "description": "Read the terms and conditions for using SplitCost."
+      "description": "The terms for using SplitCost, a free expense tracker: what the service does, your responsibilities, limits on liability, and how the terms can change."
     },
     "group": {
       "title": "Group expenses",
@@ -726,7 +726,8 @@
       "cta": {
         "title": "Start tracking shared expenses today",
         "button": "Create a free group"
-      }
+      },
+      "relatedGuidesTitle": "Related guides"
     },
     "travel": {
       "jsonLdName": "Travel expense splitter by {appName}",

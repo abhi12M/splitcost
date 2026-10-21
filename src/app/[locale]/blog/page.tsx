@@ -34,7 +34,10 @@ import {
   listBlogs,
   listFeaturedBlogs,
 } from "@/lib/blog/queries";
+import { serializeStructuredDataForHtml } from "@/lib/blog/schema";
 import type { BlogSort } from "@/lib/blog/types";
+import { getWebPageId, getWebsiteId } from "@/lib/schema-identity";
+import { getCanonicalBlogUrl } from "@/lib/seo";
 import { buildLocalizedMetadata, getLocalizedCanonicalUrl } from "@/lib/seo-i18n";
 
 type PageProps = {
@@ -58,8 +61,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const metadata = buildLocalizedMetadata({
     locale,
-    title: "SplitCost Guides",
-    description: "Practical guides for splitting expenses, budgeting together, and settling up without the awkwardness.",
+    title: "Guides to Splitting Shared Expenses | SplitCost",
+    description: "Practical guides to splitting bills fairly, sharing trip and household costs, handling multiple payers, and settling up with friends and roommates.",
     path: "/blog",
     absoluteTitle: true,
   });
@@ -97,8 +100,32 @@ export default async function BlogIndexPage({ params, searchParams = {} }: PageP
   );
   const categoriesWithPosts = categories.filter((item) => (categoryCounts[item.name] ?? 0) > 0);
 
+  const pageUrl = getLocalizedCanonicalUrl("en", "/blog");
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "@id": getWebPageId(pageUrl),
+    name: "Guides to splitting shared expenses",
+    url: pageUrl,
+    inLanguage: "en",
+    isPartOf: { "@id": getWebsiteId() },
+    mainEntity: {
+      "@type": "ItemList",
+      itemListElement: result.blogs.map((blog, index) => ({
+        "@type": "ListItem",
+        position: (result.page - 1) * result.pageSize + index + 1,
+        url: getCanonicalBlogUrl(blog.slug),
+        name: blog.title,
+      })),
+    },
+  };
+
   return (
     <Layout>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeStructuredDataForHtml(jsonLd) }}
+      />
       <div className="bg-background">
         <section className="container pb-5 pt-7 md:pb-8 md:pt-10">
           <nav aria-label="Breadcrumb" className="mb-6 flex items-center gap-2 text-xs text-muted-foreground">
@@ -112,7 +139,7 @@ export default async function BlogIndexPage({ params, searchParams = {} }: PageP
               <span className="mb-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-primary">
                 <Sparkles className="h-3 w-3" /> SplitCost guides
               </span>
-              <h1 className="font-serif text-4xl font-bold tracking-tight text-foreground md:text-5xl">Money, made simpler.</h1>
+              <h1 className="font-serif text-4xl font-bold tracking-tight text-foreground md:text-5xl">Guides to splitting shared expenses</h1>
               <p className="mt-3 max-w-md text-sm leading-6 text-muted-foreground md:text-base">
                 Practical, human guides to help you split fairly, plan confidently, and keep money from getting awkward.
               </p>

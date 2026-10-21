@@ -23,6 +23,10 @@ async function resolveParams(params: PageProps["params"]) {
   return params instanceof Promise ? await params : params;
 }
 
+// Rebuild hourly so the related blog guides follow published, renamed, or
+// removed posts without a redeploy.
+export const revalidate = 3600;
+
 export function generateStaticParams() {
   return locales.flatMap((locale) =>
     USE_CASE_SLUGS.map((slug) => ({ locale, slug }))
