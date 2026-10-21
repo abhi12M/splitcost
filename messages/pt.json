@@ -2,7 +2,7 @@
   "metadata": {
     "siteName": "SplitCost",
     "home": {
-      "title": "App para dividir despesas e controle de gastos em grupo",
+      "title": "App grátis para dividir despesas em grupo | SplitCost",
       "description": "App grátis para dividir despesas: controle contas e pagamentos em grupo, divida viagens e gastos da casa e acerte as contas. Funciona offline e sem cadastro."
     },
     "notFound": {
@@ -53,37 +53,37 @@
     },
     "compare": {
       "index": {
-        "title": "Comparar SplitCost — Alternativas ao Splitwise, Splid e Tricount",
+        "title": "Alternativas ao Splitwise, Splid e Tricount | SplitCost",
         "description": "Compare o SplitCost com Splitwise, Splid e Tricount. Veja as diferenças em divisão de contas, despesas em grupo e acompanhamento de pagamentos compartilhados."
       },
       "splitwise": {
-        "title": "SplitCost vs Splitwise: uma alternativa gratuita mais inteligente",
-        "description": "Cansado dos recursos pagos do Splitwise? Alternativa ao Splitwise para dividir contas, acompanhar despesas compartilhadas, acertar saldos e gerenciar gastos em grupo com facilidade."
+        "title": "SplitCost vs Splitwise: uma alternativa grátis e simples",
+        "description": "Cansado dos recursos pagos do Splitwise? Divida contas, acompanhe despesas compartilhadas e acerte saldos em grupo grátis com o SplitCost."
       },
       "splid": {
-        "title": "Cansado do Splid? Experimente esta poderosa alternativa ao Splid",
-        "description": "Precisa de uma alternativa ao Splid? O SplitCost ajuda você a acompanhar despesas, dividir contas e gerenciar custos compartilhados com uma plataforma simples e fácil de usar."
+        "title": "Cansado do Splid? Experimente esta alternativa ao Splid",
+        "description": "Precisa de uma alternativa ao Splid? O SplitCost ajuda a acompanhar despesas, dividir contas e gerenciar custos compartilhados de forma simples."
       },
       "tricount": {
-        "title": "A melhor alternativa ao Tricount para viagens e despesas em grupo",
-        "description": "Procurando uma alternativa ao Tricount? O SplitCost ajuda grupos a dividir despesas de viagem, acompanhar custos compartilhados, gerenciar saldos e acertar contas com facilidade."
+        "title": "A melhor alternativa ao Tricount para viagens e grupos",
+        "description": "Procurando uma alternativa ao Tricount? O SplitCost ajuda a dividir despesas de viagem, acompanhar custos compartilhados e acertar contas."
       }
     },
     "useCases": {
       "index": {
         "title": "Casos de uso — Divida despesas em viagens, repúblicas e mais",
-        "description": "Descubra como o SplitCost ajuda grupos de viagem, colegas de quarto, casais, amigos e equipes a dividir contas, acompanhar despesas compartilhadas e acertar saldos com justiça — grátis e sem cadastro."
+        "description": "Veja como o SplitCost ajuda viajantes, colegas de quarto, casais, amigos e equipes a dividir contas e acertar saldos. Grátis e sem cadastro."
       },
       "travel": {
-        "title": "Divisor de despesas de viagem — Divida os custos da viagem com amigos",
-        "description": "Divida despesas de viagem com justiça em viagens em grupo. Acompanhe hotéis, transporte, comida e atividades em um divisor de despesas de viagem gratuito. Sem cadastro."
+        "title": "Divisor de despesas de viagem: divida custos com amigos",
+        "description": "Divida despesas de viagens em grupo com justiça. Acompanhe hotéis, transporte, comida e atividades em um divisor gratuito. Sem cadastro."
       },
       "roommates": {
-        "title": "Controle de despesas entre colegas — Aluguel, contas e mercado",
+        "title": "Controle de despesas entre colegas: aluguel e contas",
         "description": "Gerencie custos compartilhados da casa com um controle de despesas gratuito. Divida aluguel, utilidades, compras e contas sem planilhas nem confusão."
       },
       "couples": {
-        "title": "Controle de despesas do casal — Gerenciem gastos compartilhados juntos",
+        "title": "Controle de despesas do casal: gastos a dois",
         "description": "Acompanhe gastos compartilhados como casal com um controle simples. Organize custos do dia a dia, assinaturas, jantares e viagens em um só lugar."
       },
       "friends": {
@@ -91,14 +91,14 @@
         "description": "Divida jantares, festas, shows e eventos com justiça entre amigos. Um divisor de contas gratuito que mantém cada pagamento compartilhado transparente."
       },
       "teams": {
-        "title": "Controle de despesas da equipe — Reembolsos e pagamentos compartilhados",
-        "description": "Organize reembolsos da equipe, despesas de clube e pagamentos de comunidade. Veja quem pagou o quê e acerte custos compartilhados com menos trabalho administrativo."
+        "title": "Controle de despesas da equipe: reembolsos e pagamentos",
+        "description": "Organize reembolsos da equipe, despesas de clube e pagamentos de comunidade. Veja quem pagou o quê e acerte custos com menos trabalho."
       }
     },
     "resources": {
       "index": {
-        "title": "Recursos sobre despesas compartilhadas — Guias para colegas de quarto e divisão de contas",
-        "description": "Guias selecionadas sobre dividir contas, acompanhar despesas compartilhadas e gerir custos entre colegas de quarto de forma justa. Artigos sobre divisão igual vs proporcional, aluguel e utilidades."
+        "title": "Guias de despesas compartilhadas para colegas de quarto",
+        "description": "Guias selecionados para dividir contas, acompanhar despesas compartilhadas e repartir aluguel e contas da casa de forma justa entre colegas."
       }
     },
     "softwareApplication": {
@@ -1085,8 +1085,8 @@
   "comparePages": {
     "index": {
       "badge": "Comparar",
-      "title": "Encontre a melhor",
-      "titleHighlight": "alternativa",
+      "title": "Compare alternativas ao",
+      "titleHighlight": "Splitwise, Splid e Tricount",
       "description": "Veja como o {appName} se compara com os apps mais populares para dividir despesas. Comparativos honestos de recursos para escolher a ferramenta certa em viagens, repúblicas e contas em grupo.",
       "breadcrumbHome": "Início",
       "breadcrumbCompare": "Comparar",
@@ -1111,6 +1111,51 @@
         "title": "Experimente o {appName} grátis hoje",
         "description": "Crie um grupo em segundos e descubra por que equipes migram para um divisor de despesas mais simples.",
         "button": "Criar um grupo grátis"
+      },
+      "guide": {
+        "title": "O que procurar em um app para dividir despesas",
+        "intro": "Quase todo app para dividir despesas cobre o básico. Estas são as diferenças que decidem se o seu grupo vai usá-lo sem complicação.",
+        "items": {
+          "signup": {
+            "title": "Entrar sem criar conta",
+            "description": "Se cada membro precisa se cadastrar antes, alguns nunca fazem isso. Veja se dá para entrar por um link e começar a adicionar despesas na hora."
+          },
+          "freeFeatures": {
+            "title": "O que é grátis e o que é pago",
+            "description": "Alguns apps limitam despesas por dia ou deixam recibos, exportações ou moedas só na assinatura. Compare o que o seu grupo precisa com o plano grátis."
+          },
+          "splitting": {
+            "title": "Divisões flexíveis e vários pagadores",
+            "description": "Contas reais quase nunca são meio a meio. Procure divisões iguais, por porcentagem e personalizadas, e despesas pagas por mais de uma pessoa."
+          },
+          "currency": {
+            "title": "Uma moeda para viagens ao exterior",
+            "description": "Para viajar, confira se dá para escolher a moeda em que o grupo gasta, para que os saldos fiquem claros para todos."
+          },
+          "records": {
+            "title": "Recibos e exportações",
+            "description": "Fotos de recibos evitam discussões, e uma exportação CSV dá a tesoureiros e casas um registro fora do app."
+          },
+          "devices": {
+            "title": "Funciona onde o grupo estiver",
+            "description": "Veja se funciona no navegador, instala no celular e continua funcionando quando a conexão cai, para ninguém ficar de fora."
+          }
+        }
+      },
+      "faq": {
+        "title": "Perguntas sobre trocar de app",
+        "one": {
+          "question": "Qual é a melhor alternativa grátis ao Splitwise?",
+          "answer": "Depende do que o seu grupo precisa. O {appName} é grátis e sem cadastro, e inclui divisões flexíveis, vários pagadores, fotos de recibos e exportação CSV sem plano pago."
+        },
+        "two": {
+          "question": "Como levo meu grupo de outro app para o {appName}?",
+          "answer": "Crie um grupo com os mesmos membros e registre os saldos em aberto do app antigo, por exemplo como uma despesa paga por quem tem a receber, para os totais baterem. Daí em diante, adicione as despesas novas no {appName}."
+        },
+        "three": {
+          "question": "Posso testar o {appName} antes de trocar?",
+          "answer": "Sim. Criar um grupo leva segundos e não exige conta nem cartão, então você pode testar junto com o app atual até o grupo estar pronto para trocar."
+        }
       }
     },
     "shared": {
@@ -1499,6 +1544,43 @@
         "title": "Pronto para dividir sua próxima despesa compartilhada?",
         "description": "Crie um grupo grátis em segundos e comece a acompanhar contas compartilhadas com o {appName}. Não precisa de conta.",
         "button": "Crie seu primeiro grupo"
+      },
+      "splits": {
+        "title": "Qual divisão combina com a sua despesa?",
+        "intro": "Cada grupo divide os custos do seu jeito. O {appName} deixa você escolher a divisão de cada despesa, então um mesmo grupo dá conta de todos estes casos.",
+        "items": {
+          "equal": {
+            "title": "Divisão igual",
+            "description": "Ideal quando todos aproveitam igualmente, como um táxi, o mercado ou um jantar em grupo com pratos compartilhados."
+          },
+          "percentage": {
+            "title": "Divisão por porcentagem",
+            "description": "Útil para proporções combinadas, como o aluguel pelo tamanho do quarto ou as contas da casa pela renda."
+          },
+          "custom": {
+            "title": "Valores personalizados",
+            "description": "Para contas em que cada um gastou diferente, como pedidos separados no restaurante ou ingressos com preços diferentes."
+          },
+          "multiplePayers": {
+            "title": "Vários pagadores",
+            "description": "Quando duas ou mais pessoas pagaram a mesma conta, como o sinal e o pagamento final de um aluguel de temporada."
+          }
+        }
+      },
+      "faq": {
+        "title": "Perguntas sobre grupos",
+        "one": {
+          "question": "Crio um grupo ou vários?",
+          "answer": "Crie um grupo por viagem, casa ou evento. Grupos separados deixam os saldos de cada um claros, e cada grupo usa uma só moeda, então uma viagem por vários países pode usar um grupo por moeda."
+        },
+        "two": {
+          "question": "Como convido pessoas para um grupo?",
+          "answer": "Compartilhe o link do grupo. Qualquer pessoa com o link pode abrir o grupo, adicionar despesas e ver os saldos sem criar conta, então compartilhe só com quem faz parte do grupo."
+        },
+        "three": {
+          "question": "O {appName} é grátis para todos os casos de uso?",
+          "answer": "Sim. Viagens, colegas de quarto, casais, amigos e equipes têm os mesmos recursos grátis, sem cartão nem cadastro."
+        }
       }
     },
     "shared": {

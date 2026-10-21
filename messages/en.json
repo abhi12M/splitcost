@@ -2,7 +2,7 @@
   "metadata": {
     "siteName": "SplitCost",
     "home": {
-      "title": "Split Expenses App for Bill Sharing & Group Expense Tracking",
+      "title": "Free Split Expenses App for Groups & Trips | SplitCost",
       "description": "Free split expenses app to track shared bills and group payments, split travel and roommate costs, and settle up. Works offline, no sign-up needed."
     },
     "notFound": {
@@ -54,7 +54,7 @@
     "useCases": {
       "index": {
         "title": "Use Cases — Split Expenses for Travel, Roommates & More",
-        "description": "Discover how SplitCost helps travel groups, roommates, couples, friends, and teams split bills, track shared expenses, and settle up fairly — free and without sign-up."
+        "description": "See how SplitCost helps travel groups, roommates, couples, friends, and teams split bills, track shared expenses, and settle up. Free, no sign-up."
       },
       "travel": {
         "title": "Travel Expense Splitter — Split Trip Costs with Friends",
@@ -69,11 +69,11 @@
         "description": "Track shared spending as a couple with a simple expense tracker. Organize daily costs, subscriptions, dinners, and travel plans in one place."
       },
       "friends": {
-        "title": "Split Bills with Friends — Group Dinner & Event Expense Splitter",
+        "title": "Split Bills with Friends — Dinner & Event Expense Splitter",
         "description": "Split group dinners, parties, concerts, and event costs fairly with friends. A free bill splitter that keeps every shared payment transparent."
       },
       "teams": {
-        "title": "Team Expense Tracker — Group Reimbursements & Shared Payments",
+        "title": "Team Expense Tracker — Reimbursements & Shared Payments",
         "description": "Organize team reimbursements, club expenses, and community group payments. Track who paid what and settle shared costs with less admin work."
       }
     },
@@ -98,7 +98,7 @@
     "resources": {
       "index": {
         "title": "Shared Expense Resources — Roommate & Bill Splitting Guides",
-        "description": "Curated guides on splitting bills, tracking shared expenses, and managing roommate costs fairly. Expert articles on equal vs proportional splitting, rent, and utilities."
+        "description": "Curated guides on splitting bills, tracking shared expenses, and dividing rent and utilities fairly, including equal vs proportional splits."
       }
     },
     "softwareApplication": {
@@ -673,6 +673,43 @@
         "title": "Ready to split your next shared expense?",
         "description": "Create a free group in seconds and start tracking shared bills with {appName}. No account required.",
         "button": "Create your first group"
+      },
+      "splits": {
+        "title": "Which split fits your expense?",
+        "intro": "Every group shares costs differently. {appName} lets you choose the split for each expense, so one group can handle all of these.",
+        "items": {
+          "equal": {
+            "title": "Equal split",
+            "description": "Best when everyone shares the benefit, like a taxi, groceries, or a group dinner with shared plates."
+          },
+          "percentage": {
+            "title": "Percentage split",
+            "description": "Useful for agreed proportions, such as rent based on room size or household costs based on income."
+          },
+          "custom": {
+            "title": "Custom amounts",
+            "description": "For bills where people spent different amounts, like separate restaurant orders or tickets at different prices."
+          },
+          "multiplePayers": {
+            "title": "Multiple payers",
+            "description": "When two or more people paid the same bill, such as a deposit and the final payment on a holiday rental."
+          }
+        }
+      },
+      "faq": {
+        "title": "Questions about groups",
+        "one": {
+          "question": "Should I create one group or several?",
+          "answer": "Create one group per trip, household, or event. Separate groups keep each set of balances clear, and each group uses a single currency, so a multi-country trip can use one group per currency."
+        },
+        "two": {
+          "question": "How do I invite people to a group?",
+          "answer": "Share the group's link. Anyone with the link can open the group, add expenses, and see balances without creating an account, so share it only with people in the group."
+        },
+        "three": {
+          "question": "Is {appName} free for every use case?",
+          "answer": "Yes. Trips, roommates, couples, friends, and teams all get the same free features, with no credit card or sign-up needed."
+        }
       }
     },
     "shared": {
@@ -1089,8 +1126,8 @@
   "comparePages": {
     "index": {
       "badge": "Compare",
-      "title": "Find the Best",
-      "titleHighlight": "Alternative",
+      "title": "Compare Alternatives to",
+      "titleHighlight": "Splitwise, Splid & Tricount",
       "description": "See how {appName} compares to popular expense splitting apps. Honest feature comparisons to help you choose the right tool for travel, roommates, and group bills.",
       "breadcrumbHome": "Home",
       "breadcrumbCompare": "Compare",
@@ -1115,6 +1152,51 @@
         "title": "Try {appName} free today",
         "description": "Create a group in seconds and see why teams switch to a simpler expense splitter.",
         "button": "Create a free group"
+      },
+      "guide": {
+        "title": "What to look for in an expense splitting app",
+        "intro": "Most bill splitting apps cover the basics. These are the differences that decide how smoothly your group actually uses one.",
+        "items": {
+          "signup": {
+            "title": "Joining without an account",
+            "description": "If every member must sign up first, some never do. Check whether people can join from a shared link and start adding expenses right away."
+          },
+          "freeFeatures": {
+            "title": "What's free and what's paid",
+            "description": "Some apps limit daily expenses or keep receipts, exports, or currencies behind a subscription. Compare what your group needs with the free plan."
+          },
+          "splitting": {
+            "title": "Flexible splits and multiple payers",
+            "description": "Real bills are rarely 50/50. Look for equal, percentage, and custom splits, and for expenses that more than one person paid."
+          },
+          "currency": {
+            "title": "A currency for trips abroad",
+            "description": "For travel, make sure you can set the currency your group spends in, so balances stay clear for everyone."
+          },
+          "records": {
+            "title": "Receipts and exports",
+            "description": "Receipt photos settle disputes, and a CSV export gives treasurers and households a record outside the app."
+          },
+          "devices": {
+            "title": "Works where your group is",
+            "description": "Check whether it runs in the browser, installs on phones, and keeps working when the connection drops, so nobody is left out."
+          }
+        }
+      },
+      "faq": {
+        "title": "Questions about switching apps",
+        "one": {
+          "question": "What is the best free alternative to Splitwise?",
+          "answer": "It depends on what your group needs. {appName} is free with no sign-up, and flexible splits, multiple payers, receipt photos, and CSV export are included without a paid plan."
+        },
+        "two": {
+          "question": "How do I move my group from another app to {appName}?",
+          "answer": "Create a group with the same members, then record the open balances from your old app, for example as one expense paid by whoever is owed, so the totals match. From then on, add new expenses in {appName}."
+        },
+        "three": {
+          "question": "Can I try {appName} before switching?",
+          "answer": "Yes. Creating a group takes seconds and needs no account or credit card, so you can try it alongside your current app until your group is ready to switch."
+        }
       }
     },
     "shared": {
