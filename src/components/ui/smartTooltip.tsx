@@ -33,7 +33,7 @@ export function SmartTooltip({
     if (device != 'desktop') {
         if (disableMobileTooltip) {
             return (
-                <span className={`truncate block max-w-full ${className}`}>
+                <span className={`truncate block w-fit max-w-full ${className}`}>
                     {text}
                 </span>
             );
@@ -43,7 +43,7 @@ export function SmartTooltip({
             <Popover>
                 <PopoverTrigger asChild>
                     <span
-                        className={`truncate block max-w-full cursor-pointer ${className}`}
+                        className={`truncate block w-fit max-w-full cursor-pointer ${className}`}
                     >
                         {text}
                     </span>
@@ -62,7 +62,7 @@ export function SmartTooltip({
             <Tooltip>
                 <TooltipTrigger asChild>
                     <span
-                        className={`truncate block max-w-full cursor-pointer ${className}`}
+                        className={`truncate block w-fit max-w-full cursor-pointer ${className}`}
                     >
                         {text}
                     </span>
