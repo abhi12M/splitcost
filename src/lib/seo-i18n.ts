@@ -200,30 +200,29 @@ function getPathPriority(path: string): {
   return { changeFrequency: "yearly", priority: 0.4 };
 }
 
+/** When the marketing pages' text last changed (set at build from git), or undefined if unknown. */
+function getContentLastModified(): Date | undefined {
+  const value = process.env.CONTENT_LAST_MODIFIED;
+  if (!value) return undefined;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date;
+}
+
 export function buildLocaleSitemapEntries(): {
   url: string;
-  lastModified: Date;
+  lastModified?: Date;
   changeFrequency: "daily" | "weekly" | "monthly" | "yearly";
   priority: number;
 }[] {
-  const now = new Date();
+  const lastModified = getContentLastModified();
 
   return locales.flatMap((locale) =>
     INDEXABLE_PATHS.map((path) => ({
       url: getLocalizedCanonicalUrl(locale, path),
-      lastModified: now,
+      lastModified,
       ...getPathPriority(path),
     }))
   );
-}
-
-export function getSiteRootAlternates(): Metadata["alternates"] {
-  return {
-    canonical: getLocalizedCanonicalUrl("en", "/"),
-    languages: Object.fromEntries(
-      getHreflangAlternates("/").map(({ hreflang, url }) => [hreflang, url])
-    ),
-  };
 }
 
 export { getSiteUrl };

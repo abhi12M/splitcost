@@ -41,6 +41,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_events: {
+        Row: {
+          actor_name: string | null
+          actor_user_id: string | null
+          created_at: string
+          data: Json
+          expense_id: string | null
+          group_id: string
+          id: string
+          kind: string
+          origin_session_id: string | null
+        }
+        Insert: {
+          actor_name?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          data?: Json
+          expense_id?: string | null
+          group_id: string
+          id?: string
+          kind: string
+          origin_session_id?: string | null
+        }
+        Update: {
+          actor_name?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          data?: Json
+          expense_id?: string | null
+          group_id?: string
+          id?: string
+          kind?: string
+          origin_session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_events_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_events_actor_user_id_fkey"
+            columns: ["actor_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blog_categories: {
         Row: {
           created_at: string
@@ -312,6 +363,7 @@ export type Database = {
           group_id: string
           id: string
           paid_by_user_id: string | null
+          revision: number
           split_type: Database["public"]["Enums"]["split_type"]
           subcategory: string
           updated_at: string
@@ -328,6 +380,7 @@ export type Database = {
           group_id: string
           id?: string
           paid_by_user_id?: string | null
+          revision?: number
           split_type: Database["public"]["Enums"]["split_type"]
           subcategory: string
           updated_at?: string
@@ -345,6 +398,7 @@ export type Database = {
           group_id?: string
           id?: string
           paid_by_user_id?: string | null
+          revision?: number
           split_type?: Database["public"]["Enums"]["split_type"]
           subcategory?: string
           updated_at?: string
@@ -428,6 +482,7 @@ export type Database = {
           currency: string
           id: string
           name: string
+          revision: number
           updated_at: string | null
         }
         Insert: {
@@ -436,6 +491,7 @@ export type Database = {
           currency: string
           id?: string
           name: string
+          revision?: number
           updated_at?: string | null
         }
         Update: {
@@ -444,6 +500,7 @@ export type Database = {
           currency?: string
           id?: string
           name?: string
+          revision?: number
           updated_at?: string | null
         }
         Relationships: [
@@ -505,6 +562,13 @@ export type Database = {
         }
         Returns: GroupResponse
       },
+      bump_group_revision: {
+        Args: {
+          p_group_id: string
+          p_expected_revision?: number | null
+        }
+        Returns: number
+      },
       cleanup_orphan_users: {
         Args: {
           p_user_ids: string[]
@@ -538,8 +602,13 @@ export type Database = {
             amount: number
           }[] | null
           p_notes?: string | null
+          p_request_id?: string | null
         }
-        Returns: ExpenseResponse
+        Returns: ExpenseResponse & { alreadyAdded?: boolean }
+      },
+      delete_expense: {
+        Args: { p_expense_id: string }
+        Returns: boolean
       },
       edit_expense: {
         Args: {
@@ -563,6 +632,7 @@ export type Database = {
             amount: number
           }[] | null
           p_notes?: string | null
+          p_expected_revision?: number | null
         }
         Returns: ExpenseResponse
       },
@@ -577,6 +647,37 @@ export type Database = {
           group_id: string
         }
         Returns: GroupDashboardInterface
+      },
+      replace_expense_attachment: {
+        Args: {
+          p_expense_id: string
+          p_attachment_path: string
+        }
+        Returns: { previous_path: string | null }[]
+      },
+      clear_expense_attachment: {
+        Args: {
+          p_expense_id: string
+          p_expected_path?: string | null
+        }
+        Returns: { previous_path: string | null }[]
+      },
+      set_expense_category: {
+        Args: {
+          p_expense_id: string
+          p_category: string
+          p_subcategory: string
+          p_expected_category: string
+          p_expected_subcategory: string
+        }
+        Returns: {
+          id: string
+          group_id: string
+          category: string
+          subcategory: string
+          updated_at: string
+          revision: number
+        }[]
       },
     }
     Enums: {

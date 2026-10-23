@@ -6,16 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { GenericAlertDialog } from "@/components/ui/generic-alert-dialog";
 import {
   Select,
   SelectContent,
@@ -735,7 +726,7 @@ export function MediaAdmin() {
         </div>
       )}
 
-      <AlertDialog
+      <GenericAlertDialog
         open={Boolean(renameTarget)}
         onOpenChange={(open) => {
           if (!open && !renaming) {
@@ -743,14 +734,11 @@ export function MediaAdmin() {
             setRenameName("");
           }
         }}
-      >
-        <AlertDialogContent className="max-w-sm rounded-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-lg">Rename media</AlertDialogTitle>
-            <AlertDialogDescription className="text-xs">
-              The image remains in its current folder. Blog references are updated automatically.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
+        title="Rename media"
+        description="The image remains in its current folder. Blog references are updated automatically."
+        contentClassName="max-w-sm rounded-2xl"
+        descriptionClassName="text-xs"
+        body={<>
           <Input
             value={renameName}
             onChange={(event) => setRenameName(event.target.value)}
@@ -767,60 +755,43 @@ export function MediaAdmin() {
           <p className="text-xs text-muted-foreground">
             Images are stored as WebP, so the filename will end in .webp.
           </p>
-          <AlertDialogFooter className="mt-2 flex-row gap-2">
-            <AlertDialogCancel disabled={renaming} className="mt-0 flex-1 rounded-xl">
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(event) => {
+        </>}
+        footerClassName="mt-2 flex-row gap-2"
+        actions={[
+          { label: "Cancel", type: "cancel", disabled: renaming, className: "mt-0 flex-1" },
+          {
+            label: <>{renaming ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Rename</>,
+            disabled: renaming || !renameName.trim(),
+            className: "flex-1",
+            onClick: (event) => {
                 event.preventDefault();
                 void renameMedia();
-              }}
-              disabled={renaming || !renameName.trim()}
-              className="flex-1 rounded-xl"
-            >
-              {renaming ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              Rename
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            },
+          },
+        ]}
+      />
 
-      <AlertDialog
+      <GenericAlertDialog
         open={Boolean(deleteTargets.length)}
         onOpenChange={(open) => {
           if (!open && !deletingPath) setDeleteTargets([]);
         }}
-      >
-        <AlertDialogContent className="max-w-[290px] rounded-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-lg">
-              Delete {deleteTargets.length > 1 ? "selected media" : "media"}?
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-xs">
-              This permanently deletes {deleteTargets.length > 1 ? `${deleteTargets.length} media files` : deleteTargets[0]?.name ?? "this media file"} from the media library.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="mt-4 flex-row gap-2">
-            <AlertDialogCancel
-              disabled={Boolean(deletingPath)}
-              className="mt-0 flex-1 rounded-xl border-none bg-muted hover:bg-muted/80"
-            >
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
+        title={`Delete ${deleteTargets.length > 1 ? "selected media" : "media"}?`}
+        description={`This permanently deletes ${deleteTargets.length > 1 ? `${deleteTargets.length} media files` : deleteTargets[0]?.name ?? "this media file"} from the media library.`}
+        descriptionClassName="text-xs"
+        footerClassName="mt-4 flex-row gap-2"
+        actions={[
+          { label: "Cancel", type: "cancel", disabled: Boolean(deletingPath), className: "mt-0 flex-1 border-none bg-muted hover:bg-muted/80" },
+          {
+            label: <>{deletingPath ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Delete</>,
+            disabled: Boolean(deletingPath),
+            className: "flex-1 bg-destructive text-white hover:bg-destructive/90",
+            onClick: () => {
                 void deleteMedia(deleteTargets);
-              }}
-              disabled={Boolean(deletingPath)}
-              className="flex-1 rounded-xl bg-destructive text-white hover:bg-destructive/90"
-            >
-              {deletingPath ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            },
+          },
+        ]}
+      />
     </div>
   );
 }

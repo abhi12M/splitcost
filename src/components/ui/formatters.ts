@@ -137,7 +137,7 @@ export function formatSummaryNameCore(name: string, unknownLabel = "Unknown"): s
   const maxFirstNameLength = secondName ? 11 : 10;
   const trimmedFirstName =
     firstName.length > maxFirstNameLength
-      ? `${firstName.slice(0, maxFirstNameLength)}...`
+      ? `${firstName.slice(0, maxFirstNameLength)}…`
       : firstName;
 
   if (!secondName) {

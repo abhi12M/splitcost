@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 
 import { isAuthorizedAdminRequest } from "@/lib/admin-auth";
+import { readJsonObject } from "@/lib/api/request";
+import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import {
   deleteBlogCategory,
   getBlogCategoryById,
@@ -40,10 +42,14 @@ export async function PUT(req: Request, { params }: RouteContext) {
   if (!isAuthorizedAdminRequest(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const parsed = await readJsonObject(req, {
+    allowedKeys: ["name", "slug", "description", "sort_order"],
+  });
+  if (!parsed.ok) return parsed.response;
   try {
-    const body = (await req.json()) as Partial<BlogCategoryInput>;
+    const body = parsed.data as Partial<BlogCategoryInput>;
     const category = await updateBlogCategory(params.id, body);
-    return NextResponse.json(category);
+    return successJson(category, SUCCESS_MESSAGES.blogCategoryUpdated);
   } catch (error: unknown) {
     console.error("updateBlogCategory error:", error);
     return NextResponse.json({ error: getErrorMessage(error) }, { status: 400 });
@@ -56,7 +62,7 @@ export async function DELETE(request: Request, { params }: RouteContext) {
   }
   try {
     await deleteBlogCategory(params.id);
-    return NextResponse.json({ ok: true });
+    return successJson({ ok: true }, SUCCESS_MESSAGES.blogCategoryDeleted);
   } catch (error: unknown) {
     console.error("deleteBlogCategory error:", error);
     return NextResponse.json({ error: getErrorMessage(error) }, { status: 400 });

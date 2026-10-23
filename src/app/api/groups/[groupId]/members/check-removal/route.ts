@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 
+import { isValidUUID } from "@/lib/api/expenseValidation";
+import { readJsonObject } from "@/lib/api/request";
+import { cleanName } from "@/lib/validations/names";
 import { supabaseAdmin } from "@/lib/supabase/server";
 
 async function isMemberInvolvedInGroupExpenses(groupId: string, userId: string) {
@@ -38,13 +41,29 @@ export async function POST(
   { params }: { params: { groupId: string } }
 ) {
   const groupId = params.groupId;
-  const body = await req.json();
+  const parsed = await readJsonObject(req, { allowedKeys: ["memberId", "memberName"] });
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
   const memberId = String(body?.memberId ?? "").trim();
-  const memberName = String(body?.memberName ?? "").trim();
+  const memberName = cleanName(String(body?.memberName ?? ""));
 
-  if (!groupId || (!memberId && !memberName)) {
+  if (!isValidUUID(groupId)) {
     return NextResponse.json(
-      { error: "Group id and member details are required." },
+      { error: "Invalid group ID" },
+      { status: 400 }
+    );
+  }
+
+  if (!memberId && !memberName) {
+    return NextResponse.json(
+      { error: "Member details are required." },
+      { status: 400 }
+    );
+  }
+
+  if (memberId && !isValidUUID(memberId)) {
+    return NextResponse.json(
+      { error: "Invalid member ID" },
       { status: 400 }
     );
   }

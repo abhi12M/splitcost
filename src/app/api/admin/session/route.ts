@@ -1,5 +1,7 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
+import { readJsonObject } from "@/lib/api/request";
+import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 
 const COOKIE_NAME = "splitcost_admin_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 8;
@@ -24,7 +26,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Admin authentication is not configured" }, { status: 503 });
   }
 
-  const body = await request.json().catch(() => null) as { loginId?: unknown; password?: unknown } | null;
+  const parsed = await readJsonObject(request, { allowedKeys: ["loginId", "password"] });
+  const body = parsed.ok ? parsed.data : null;
   if (typeof body?.loginId !== "string" || typeof body.password !== "string" || !safelyEqual(body.loginId, loginId) || !safelyEqual(body.password, password)) {
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
   }
@@ -32,7 +35,7 @@ export async function POST(request: Request) {
   const expiresAt = Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS;
   const payload = `admin.${expiresAt}`;
   const signature = createHmac("sha256", secret).update(payload).digest("base64url");
-  const response = NextResponse.json({ ok: true });
+  const response = successJson({ ok: true }, SUCCESS_MESSAGES.signedIn);
   response.cookies.set(COOKIE_NAME, `${payload}.${signature}`, {
     httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "strict", path: "/", maxAge: SESSION_TTL_SECONDS,
   });
@@ -40,7 +43,7 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE() {
-  const response = NextResponse.json({ ok: true });
+  const response = successJson({ ok: true }, SUCCESS_MESSAGES.signedOut);
   response.cookies.set(COOKIE_NAME, "", { httpOnly: true, path: "/", maxAge: 0 });
   return response;
 }

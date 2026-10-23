@@ -2,8 +2,8 @@
   "metadata": {
     "siteName": "SplitCost",
     "home": {
-      "title": "App para dividir despesas e controle de gastos em grupo",
-      "description": "O SplitCost é um app inteligente para dividir despesas, controlar contas compartilhadas, gerenciar pagamentos em grupo e organizar viagens ou despesas entre colegas de quarto."
+      "title": "App grátis para dividir despesas em grupo | SplitCost",
+      "description": "App grátis para dividir despesas: controle contas e pagamentos em grupo, divida viagens e gastos da casa e acerte as contas. Funciona offline e sem cadastro."
     },
     "notFound": {
       "title": "Página não encontrada",
@@ -23,11 +23,11 @@
     },
     "privacy": {
       "title": "Política de Privacidade",
-      "description": "Saiba como o SplitCost trata seus dados e sua privacidade."
+      "description": "Como o SplitCost coleta, armazena e protege os dados dos seus grupos e despesas, quais serviços usamos, como funciona o modo offline e suas escolhas."
     },
     "terms": {
       "title": "Termos de Serviço",
-      "description": "Leia os termos e condições de uso do SplitCost."
+      "description": "Os termos de uso do SplitCost, um controle de despesas grátis: o que o serviço faz, suas responsabilidades, limites de responsabilidade e mudanças."
     },
     "group": {
       "title": "Despesas do grupo",
@@ -41,7 +41,7 @@
     },
     "editGroup": {
       "title": "Editar grupo",
-      "description": "Edite o nome, a moeda e os membros deste grupo."
+      "description": "Edite o nome e os membros deste grupo."
     },
     "editExpense": {
       "title": "Editar despesa",
@@ -53,37 +53,37 @@
     },
     "compare": {
       "index": {
-        "title": "Comparar SplitCost — Alternativas ao Splitwise, Splid e Tricount",
+        "title": "Alternativas ao Splitwise, Splid e Tricount | SplitCost",
         "description": "Compare o SplitCost com Splitwise, Splid e Tricount. Veja as diferenças em divisão de contas, despesas em grupo e acompanhamento de pagamentos compartilhados."
       },
       "splitwise": {
-        "title": "SplitCost vs Splitwise: uma alternativa gratuita mais inteligente",
-        "description": "Cansado dos recursos pagos do Splitwise? Alternativa ao Splitwise para dividir contas, acompanhar despesas compartilhadas, acertar saldos e gerenciar gastos em grupo com facilidade."
+        "title": "SplitCost vs Splitwise: uma alternativa grátis e simples",
+        "description": "Cansado dos recursos pagos do Splitwise? Divida contas, acompanhe despesas compartilhadas e acerte saldos em grupo grátis com o SplitCost."
       },
       "splid": {
-        "title": "Cansado do Splid? Experimente esta poderosa alternativa ao Splid",
-        "description": "Precisa de uma alternativa ao Splid? O SplitCost ajuda você a acompanhar despesas, dividir contas e gerenciar custos compartilhados com uma plataforma simples e fácil de usar."
+        "title": "Cansado do Splid? Experimente esta alternativa ao Splid",
+        "description": "Precisa de uma alternativa ao Splid? O SplitCost ajuda a acompanhar despesas, dividir contas e gerenciar custos compartilhados de forma simples."
       },
       "tricount": {
-        "title": "A melhor alternativa ao Tricount para viagens e despesas em grupo",
-        "description": "Procurando uma alternativa ao Tricount? O SplitCost ajuda grupos a dividir despesas de viagem, acompanhar custos compartilhados, gerenciar saldos e acertar contas com facilidade."
+        "title": "A melhor alternativa ao Tricount para viagens e grupos",
+        "description": "Procurando uma alternativa ao Tricount? O SplitCost ajuda a dividir despesas de viagem, acompanhar custos compartilhados e acertar contas."
       }
     },
     "useCases": {
       "index": {
         "title": "Casos de uso — Divida despesas em viagens, repúblicas e mais",
-        "description": "Descubra como o SplitCost ajuda grupos de viagem, colegas de quarto, casais, amigos e equipes a dividir contas, acompanhar despesas compartilhadas e acertar saldos com justiça — grátis e sem cadastro."
+        "description": "Veja como o SplitCost ajuda viajantes, colegas de quarto, casais, amigos e equipes a dividir contas e acertar saldos. Grátis e sem cadastro."
       },
       "travel": {
-        "title": "Divisor de despesas de viagem — Divida os custos da viagem com amigos",
-        "description": "Divida despesas de viagem com justiça em viagens em grupo. Acompanhe hotéis, transporte, comida e atividades em um divisor de despesas de viagem gratuito. Sem cadastro."
+        "title": "Divisor de despesas de viagem: divida custos com amigos",
+        "description": "Divida despesas de viagens em grupo com justiça. Acompanhe hotéis, transporte, comida e atividades em um divisor gratuito. Sem cadastro."
       },
       "roommates": {
-        "title": "Controle de despesas entre colegas — Aluguel, contas e mercado",
+        "title": "Controle de despesas entre colegas: aluguel e contas",
         "description": "Gerencie custos compartilhados da casa com um controle de despesas gratuito. Divida aluguel, utilidades, compras e contas sem planilhas nem confusão."
       },
       "couples": {
-        "title": "Controle de despesas do casal — Gerenciem gastos compartilhados juntos",
+        "title": "Controle de despesas do casal: gastos a dois",
         "description": "Acompanhe gastos compartilhados como casal com um controle simples. Organize custos do dia a dia, assinaturas, jantares e viagens em um só lugar."
       },
       "friends": {
@@ -91,26 +91,33 @@
         "description": "Divida jantares, festas, shows e eventos com justiça entre amigos. Um divisor de contas gratuito que mantém cada pagamento compartilhado transparente."
       },
       "teams": {
-        "title": "Controle de despesas da equipe — Reembolsos e pagamentos compartilhados",
-        "description": "Organize reembolsos da equipe, despesas de clube e pagamentos de comunidade. Veja quem pagou o quê e acerte custos compartilhados com menos trabalho administrativo."
+        "title": "Controle de despesas da equipe: reembolsos e pagamentos",
+        "description": "Organize reembolsos da equipe, despesas de clube e pagamentos de comunidade. Veja quem pagou o quê e acerte custos com menos trabalho."
       }
     },
     "resources": {
       "index": {
-        "title": "Recursos sobre despesas compartilhadas — Guias para colegas de quarto e divisão de contas",
-        "description": "Guias selecionadas sobre dividir contas, acompanhar despesas compartilhadas e gerir custos entre colegas de quarto de forma justa. Artigos sobre divisão igual vs proporcional, aluguel e utilidades."
+        "title": "Guias de despesas compartilhadas para colegas de quarto",
+        "description": "Guias selecionados para dividir contas, acompanhar despesas compartilhadas e repartir aluguel e contas da casa de forma justa entre colegas."
       }
     },
     "softwareApplication": {
       "features": {
         "one": "Criar grupos de despesas compartilhadas",
-        "two": "Editar nome, moeda e membros do grupo",
+        "two": "Editar nome e membros do grupo",
         "three": "Registrar despesas com um ou vários pagadores",
         "four": "Dividir contas igualmente, por porcentagem ou com valores personalizados",
         "five": "Acompanhar saldos de viagens, repúblicas e eventos em grupo",
         "six": "Compartilhar links do grupo sem cadastro",
-        "seven": "Acertar saldos com pagamentos simplificados"
+        "seven": "Acertar saldos com pagamentos simplificados",
+        "eight": "Ver grupos e criar novos offline, com sincronização automática",
+        "nine": "Atualizações ao vivo para todo o grupo",
+        "ten": "Histórico de atividade de cada grupo e despesa"
       }
+    },
+    "groupActivity": {
+      "title": "Atividade do grupo",
+      "description": "Veja cada despesa, acerto e mudança de membros deste grupo."
     }
   },
   "layout": {
@@ -168,7 +175,7 @@
     "createGroup": "Criar um grupo",
     "trustFree": "100% grátis para começar",
     "trustNoCard": "Sem cartão de crédito",
-    "trustDevices": "Web e celular"
+    "trustDevices": "Funciona offline em qualquer dispositivo"
   },
   "landing": {
     "features": {
@@ -198,16 +205,32 @@
           "description": "Compartilhe links de grupo com amigos, colegas de quarto ou parceiros de viagem — eles entram em segundos."
         },
         "multiCurrency": {
-          "title": "Suporte a várias moedas",
-          "description": "Perfeito para viagens internacionais, colegas de quarto no exterior e pagamentos em grupo entre moedas."
+          "title": "156 moedas disponíveis",
+          "description": "Escolha a moeda do grupo entre 156 opções. Todas as despesas usam essa moeda, então os totais ficam claros para todos."
         },
         "receipts": {
           "title": "Recibos e anexos",
-          "description": "Adicione recibos, faturas ou capturas de tela para que cada despesa tenha comprovação clara."
+          "description": "Anexe uma foto do recibo ou uma captura do pagamento a qualquer despesa para que cada custo tenha comprovação clara."
         },
         "downloadReports": {
           "title": "Baixar relatórios de despesas",
           "description": "Exporte resumos de despesas em CSV para registros ou documentação fiscal."
+        },
+        "liveUpdates": {
+          "title": "Atualizações ao vivo",
+          "description": "Quando alguém adiciona ou edita uma despesa, todo o grupo vê na hora, sem precisar recarregar."
+        },
+        "activityHistory": {
+          "title": "Histórico de atividade",
+          "description": "Veja cada despesa, acerto e mudança de membros, e o que foi editado em cada despesa e quando."
+        },
+        "offline": {
+          "title": "Funciona offline",
+          "description": "Abra seus grupos sem internet e crie novos onde estiver. Os grupos novos sincronizam sozinhos quando você volta a ficar online."
+        },
+        "installApp": {
+          "title": "Instale no celular",
+          "description": "Adicione à tela inicial e abra como um app, sem baixar nada da loja de apps."
         }
       },
       "cta": {
@@ -460,7 +483,7 @@
     },
     "currencies": {
       "question": "O {appName} suporta moedas diferentes?",
-      "answer": "Sim. Você pode definir a moeda do grupo ao criar ou editar um grupo, o que torna o {appName} útil para viagens internacionais e pagamentos compartilhados entre moedas."
+      "answer": "Sim. Escolha entre 156 moedas ao criar um grupo. Cada grupo mantém uma moeda e todas as despesas dele a usam, então os saldos ficam consistentes. Para uma viagem ao exterior, basta escolher a moeda local."
     },
     "account": {
       "question": "Preciso criar uma conta para usar o {appName}?",
@@ -468,7 +491,7 @@
     },
     "attachments": {
       "question": "Posso enviar recibos ou anexos?",
-      "answer": "Sim. Você pode anexar recibos, faturas e capturas de pagamento para manter cada despesa organizada e fácil de verificar."
+      "answer": "Sim. Você pode anexar uma foto do recibo ou uma captura do pagamento a cada despesa para mantê-la organizada e fácil de verificar."
     },
     "splitMethods": {
       "question": "Como posso dividir despesas no {appName}?",
@@ -488,17 +511,30 @@
     },
     "mobile": {
       "question": "O {appName} é compatível com celular?",
-      "answer": "Sim. O {appName} é otimizado para celulares e tablets, para que você possa adicionar despesas e consultar saldos em qualquer lugar."
+      "answer": "Sim. O {appName} é otimizado para celulares e tablets, para que você possa adicionar despesas e consultar saldos em qualquer lugar. Você também pode adicioná-lo à tela inicial e abri-lo como um app, sem baixar nada da loja de apps."
     },
     "whoCanUse": {
       "question": "Quem pode usar o {appName}?",
       "answer": "O {appName} funciona bem para colegas de quarto, casais, grupos de viagem, amigos, equipes, eventos e qualquer pessoa que gerencie despesas compartilhadas."
+    },
+    "offline": {
+      "question": "O {appName} funciona offline?",
+      "answer": "Sim. Os grupos que você já abriu no seu dispositivo continuam disponíveis para consulta sem internet, e você pode criar grupos novos e adicionar despesas a eles offline. Eles sincronizam sozinhos quando você volta a ficar online. Alterar grupos já compartilhados, acertar contas e adicionar recibos exige conexão para que os saldos de todos fiquem corretos."
+    },
+    "activityHistory": {
+      "question": "Posso ver o que mudou em um grupo?",
+      "answer": "Sim. Cada grupo tem um histórico de atividade com cada despesa, acerto e mudança de membros e o horário em que aconteceu, e cada despesa mostra exatamente o que foi editado, como o valor, quem pagou ou a divisão. As mudanças feitas pelos outros aparecem na hora, sem recarregar."
+    },
+    "editConflicts": {
+      "question": "O que acontece se duas pessoas editarem a mesma despesa?",
+      "answer": "O {appName} avisa quando uma despesa ou um grupo muda enquanto você está editando. Você pode manter suas alterações ou mudar para a versão mais recente, para que nenhuma edição seja sobrescrita sem ninguém saber."
     }
   },
   "common": {
     "back": "Voltar",
     "cancel": "Cancelar",
     "ok": "OK",
+    "gotIt": "Entendi",
     "confirm": "Confirmar",
     "delete": "Excluir",
     "close": "Fechar",
@@ -510,14 +546,16 @@
     "loadingChart": "Carregando gráfico…",
     "whoops": "Ops!",
     "missingRequired": "Faltam dados obrigatórios",
+    "cannotSaveGroup": "Não é possível salvar o grupo",
+    "cannotSaveExpense": "Não é possível salvar a despesa",
     "required": "Obrigatório",
     "selectAtLeastOne": "Selecione pelo menos um",
     "selectAll": "Selecionar todos",
     "selectedCount": "{count} selecionados",
-    "creating": "Criando...",
-    "saving": "Salvando...",
-    "deleting": "Excluindo...",
-    "adding": "Adicionando...",
+    "creating": "Criando…",
+    "saving": "Salvando…",
+    "deleting": "Excluindo…",
+    "adding": "Adicionando…",
     "recording": "Registrando…",
     "paid": "pagou",
     "paysTo": "{from} paga a {to}",
@@ -543,7 +581,8 @@
     "morePages": "Mais páginas",
     "previousSlide": "Slide anterior",
     "nextSlide": "Próximo slide",
-    "breadcrumbMore": "Mais"
+    "breadcrumbMore": "Mais",
+    "dismissNotification": "Fechar notificação"
   },
   "groups": {
     "titleYour": "Seus grupos",
@@ -626,12 +665,20 @@
     "subjectPlaceholder": "Sobre o que é?",
     "messageLabel": "Mensagem",
     "messagePlaceholder": "Conte mais...",
-    "sending": "Enviando...",
+    "sending": "Enviando…",
     "sendMessage": "Enviar mensagem",
     "toastSuccessTitle": "Mensagem enviada!",
     "toastSuccessDescription": "Responderemos o mais rápido possível.",
     "toastErrorTitle": "Erro",
-    "toastErrorDescription": "Algo deu errado. Tente novamente."
+    "toastErrorDescription": "Algo deu errado. Tente novamente.",
+    "toastRateLimitDescription": "Você está enviando mensagens rápido demais. Aguarde um minuto e tente novamente.",
+    "errorNameRequired": "Digite seu nome.",
+    "errorEmailRequired": "Digite seu e-mail.",
+    "errorEmailInvalid": "Digite um e-mail válido, como voce@exemplo.com.",
+    "errorSubjectRequired": "Adicione um assunto.",
+    "errorMessageRequired": "Escreva sua mensagem.",
+    "errorTooShort": "Escreva pelo menos {min} caracteres para que possamos ajudar.",
+    "errorTooLong": "Use no máximo {max} caracteres."
   },
   "privacy": {
     "title": "Política de privacidade",
@@ -639,18 +686,18 @@
     "section1Title": "1. Informações que coletamos",
     "section1Intro": "O {appName} coleta as informações necessárias para criar e gerenciar grupos de despesas compartilhadas:",
     "section1Item1": "Nomes de grupo, nomes de membros e preferências de moeda",
-    "section1Item2": "Lançamentos de despesas como descrições, valores, pagadores e participantes",
-    "section1Item3": "Dados técnicos e de análise que nos ajudam a melhorar desempenho e usabilidade",
+    "section1Item2": "Lançamentos de despesas como descrições, valores, pagadores, participantes, notas e as imagens de recibos que você anexar",
+    "section1Item3": "Dados técnicos, como endereços IP, usados para manter o serviço seguro e evitar abusos, e dados de análise que nos ajudam a melhorar desempenho e usabilidade",
     "section2Title": "2. Como armazenamos seus dados",
-    "section2Body": "Dados de grupos e despesas podem ser armazenados localmente no seu dispositivo e em infraestrutura segura de terceiros para que links compartilhados funcionem entre dispositivos e sessões. Usamos salvaguardas técnicas razoáveis para proteger dados em trânsito e em repouso, mas nenhum sistema na internet pode ser garantido como totalmente seguro.",
+    "section2Body": "Dados de grupos e despesas são armazenados em infraestrutura segura de terceiros para que links compartilhados funcionem entre dispositivos e sessões. Para que o app possa abrir e funcionar sem internet, uma cópia dos seus grupos e das páginas que você visita também fica no armazenamento do navegador do seu dispositivo. Grupos criados offline ficam apenas nesse dispositivo até sincronizarem. Você pode remover essa cópia a qualquer momento limpando os dados do navegador para este site. Usamos salvaguardas técnicas razoáveis para proteger dados em trânsito e em repouso, mas nenhum sistema na internet pode ser garantido como totalmente seguro.",
     "section3Title": "3. Serviços de terceiros",
     "section3Intro": "Podemos usar serviços de terceiros que apoiam o produto, como:",
     "section3Item1": "Análise (Google Analytics)",
-    "section3Item2": "Provedores de hospedagem, banco de dados e infraestrutura",
+    "section3Item2": "Provedores de hospedagem, banco de dados, armazenamento de arquivos e infraestrutura de atualizações ao vivo",
     "section3Item3": "Ferramentas de e-mail e suporte quando você nos contata",
     "section3Outro": "Esses provedores podem processar dados técnicos ou de uso limitados em nosso nome, conforme descrito em suas próprias políticas de privacidade.",
     "section4Title": "4. Cookies",
-    "section4Body": "O {appName} pode usar cookies ou tecnologias semelhantes para análise, continuidade de sessão e funcionalidade do produto. Você pode gerenciar muitas dessas preferências nas configurações do navegador.",
+    "section4Body": "O {appName} pode usar cookies, armazenamento do navegador ou tecnologias semelhantes para análise, continuidade de sessão, acesso offline e funcionalidade do produto. Você pode gerenciar muitas dessas preferências nas configurações do navegador.",
     "section5Title": "5. Seus direitos",
     "section5Intro": "Dependendo da sua localização, você pode ter direito a:",
     "section5Item1": "Solicitar acesso aos dados associados ao seu uso do serviço",
@@ -662,7 +709,9 @@
     "section7Body": "Se tiver dúvidas sobre esta Política de Privacidade ou precisar de ajuda com seus dados, entre em contato pela página de Contato.",
     "jsonLdName": "Política de privacidade do {appName}",
     "breadcrumbHome": "Início",
-    "breadcrumbPrivacy": "Política de privacidade"
+    "breadcrumbPrivacy": "Política de privacidade",
+    "section1Item4": "Um histórico de mudanças de cada grupo, como quando despesas, acertos e membros foram adicionados, editados ou removidos",
+    "section3Item4": "Serviços de segurança e limite de requisições que processam endereços IP para evitar abusos"
   },
   "terms": {
     "title": "Termos de serviço",
@@ -670,7 +719,7 @@
     "section1Title": "1. Aceitação dos termos",
     "section1Body": "Ao acessar ou usar o {appName}, você concorda com estes Termos de Serviço. Se não concordar, deve parar de usar o serviço.",
     "section2Title": "2. Descrição do serviço",
-    "section2Body": "O {appName} é um rastreador de despesas na web que permite aos grupos criar registros de despesas compartilhadas, atribuir pagadores e participantes e revisar saldos. O serviço é fornecido \"no estado em que se encontra\" e \"conforme disponível\".",
+    "section2Body": "O {appName} é um rastreador de despesas na web que permite aos grupos criar registros de despesas compartilhadas, atribuir pagadores e participantes e revisar saldos. Alguns recursos funcionam offline, e grupos criados offline sincronizam quando o dispositivo volta a se conectar. O serviço é fornecido \"no estado em que se encontra\" e \"conforme disponível\".",
     "section3Title": "3. Responsabilidades do usuário",
     "section3Intro": "Você é responsável por:",
     "section3Item1": "A precisão dos dados de despesas que você insere",
@@ -693,7 +742,8 @@
     "section8Body": "Para dúvidas sobre estes termos, entre em contato pela página de Contato.",
     "jsonLdName": "Termos de serviço do {appName}",
     "breadcrumbHome": "Início",
-    "breadcrumbTerms": "Termos de serviço"
+    "breadcrumbTerms": "Termos de serviço",
+    "section4Item5": "Perda de grupos ou despesas salvos apenas no seu dispositivo antes de sincronizarem, por exemplo se os dados do navegador forem apagados"
   },
   "theme": {
     "appearance": "Aparência",
@@ -706,7 +756,7 @@
     "edit": "Editar",
     "delete": "Excluir",
     "cancel": "Cancelar",
-    "deleting": "Excluindo..."
+    "deleting": "Excluindo…"
   },
   "group": {
     "you": "Você",
@@ -724,21 +774,27 @@
     "groupNamePlaceholder": "ex.: Viagem Paris 2024",
     "enterName": "Digite o nome",
     "maxReached": "Máximo atingido",
-    "memberAlreadyAdded": "Membro já adicionado.",
+    "memberAlreadyAdded": "\"{name}\" já está neste grupo.",
+    "memberAlreadyAddedTitle": "Membro já adicionado",
+    "memberAlreadyInGroupTitle": "Membro já está no grupo",
+    "memberAlreadyInGroupDescription": "“{name}” já está neste grupo, então não será adicionado novamente.",
+    "pendingMemberTitle": "Membro não adicionado",
+    "pendingMemberDescription": "“{name}” ainda não foi adicionado. Se você salvar agora, este membro não será incluído no grupo.",
+    "keepEditing": "Continuar editando",
+    "saveWithoutMember": "Salvar mesmo assim",
     "membersLabel": "Membros:",
     "noneYet": "Nenhum ainda",
     "enterGroupNamePlaceholder": "Nome do grupo (ex.: Viagem a Goa)",
     "searchCurrency": "Buscar moeda...",
     "selectCurrency": "Selecionar moeda",
     "addMember": "Adicionar membro",
-    "maximumMembersReached": "Máximo de membros atingido",
     "maximumMembers": "Máximo de {max} membros",
+    "memberLimitReached": "Você atingiu o máximo de {max} membros para este grupo.",
+    "removeMemberToAdd": "Remova um membro para adicionar um novo.",
     "addPeople": "Adicionar pessoas",
     "editGroup": "Editar grupo",
     "saveGroup": "Salvar grupo",
     "memberCount": "{count, plural, one {# membro} other {# membros}}",
-    "getsBackCount": "{count} recebe",
-    "owesCount": "{count} deve",
     "newBadge": "Novo",
     "deleteGroup": "Excluir grupo",
     "deleteGroupHint": "Remove permanentemente este grupo e todas as despesas.",
@@ -748,8 +804,9 @@
     "memberName": "Nome do membro",
     "renameHint": "Alterações de nome são salvas ao salvar o grupo.",
     "removeMember": "Remover membro",
-    "removeMemberHint": "Somente se não estiver vinculado a nenhuma despesa.",
+    "removeMemberHint": "Este membro não está vinculado a nenhuma despesa e pode ser removido.",
     "removeMemberBlocked": "Este membro está em uma despesa e não pode ser removido.",
+    "removeMemberMinimum": "Este grupo precisa de pelo menos {min} membros. Adicione outro membro antes de remover alguém.",
     "validation": {
       "memberNameRequired": "O nome do membro é obrigatório.",
       "memberNameMax": "O nome não pode exceder {max} caracteres.",
@@ -757,7 +814,8 @@
       "groupNameMax": "O nome do grupo não pode exceder {max} caracteres.",
       "membersMin": "São necessários pelo menos {min} membros.",
       "membersMax": "Máximo de {max} membros permitidos."
-    }
+    },
+    "deleteGroupUnsettled": "{amount} ainda não foi acertado entre os membros."
   },
   "groupDetails": {
     "backToGroup": "Voltar ao grupo",
@@ -792,8 +850,8 @@
     "quickByPerson": "Por pessoa",
     "quickByCategory": "Por categoria",
     "quickNewest": "Recentes",
-    "quickHighest": "Maior $",
-    "quickLowest": "Menor $",
+    "quickHighest": "Maior",
+    "quickLowest": "Menor",
     "showingMatches": "Mostrando {count, plural, one {# resultado} other {# resultados}}",
     "clearSearch": "Limpar busca",
     "noExpensesFound": "Nenhuma despesa encontrada",
@@ -807,8 +865,6 @@
     "tabSettlements": "Acertos",
     "balances": "Saldos",
     "settledUp": "Quitado",
-    "getsBack": "Recebe",
-    "owesGroup": "Deve ao grupo",
     "addExpensesForSettlements": "Adicione despesas para ver acertos.",
     "allSettledForNow": "Tudo acertado por agora.",
     "settleUp": "Acertar",
@@ -856,7 +912,6 @@
     "exportCategory": "Categoria",
     "exportCost": "Custo",
     "exportCurrency": "Moeda",
-    "exportNetMeaning": "Valor líquido (+ recebe, - deve)",
     "exportTotalBalance": "Saldo total",
     "settlementBetween": "Acerto entre {from} e {to}",
     "loadingDashboard": "Carregando o painel do grupo",
@@ -864,8 +919,6 @@
     "shareSettlementTitle": "{name} · Resumo de acerto"
   },
   "editGroup": {
-    "getsBack": "Recebe",
-    "owes": "Deve",
     "settled": "Quitado",
     "memberAlreadyInGroup": "Este membro já está no grupo.",
     "memberCanBeRemoved": "Este membro pode ser removido do grupo.",
@@ -875,7 +928,7 @@
     "pleaseTryAgain": "Tente novamente.",
     "failedDelete": "Falha ao excluir o grupo",
     "groupUpdated": "Grupo atualizado",
-    "groupUpdatedDescription": "Detalhes e membros do grupo foram atualizados com sucesso.",
+    "groupUpdatedDescription": "Detalhes e membros do grupo foram atualizados.",
     "failedUpdate": "Falha ao atualizar o grupo",
     "couldNotSave": "Não foi possível salvar as alterações",
     "saveChanges": "Salvar alterações",
@@ -965,19 +1018,19 @@
     "adjustSplit": "Ajustar divisão",
     "selectOneToSplit": "Você deve selecionar pelo menos uma pessoa para dividir.",
     "all": "Todos",
-    "attachImage": "Anexar imagem (máx. {max})",
-    "addImage": "Adicionar imagem",
-    "imageSourceTitle": "Adicionar uma imagem",
+    "attachImage": "Anexar recibo (máx. {max})",
+    "addImage": "Adicionar recibo",
+    "imageSourceTitle": "Adicionar um recibo",
     "imageSourceDescription": "Tire uma foto ou escolha uma do seu dispositivo",
     "takePhoto": "Câmera",
     "chooseFromGallery": "Galeria",
-    "openAttachment": "Abrir anexo",
-    "addAttachment": "Adicionar anexo",
-    "replaceAttachment": "Substituir anexo",
-    "removeAttachment": "Remover anexo",
-    "attachedFile": "Arquivo anexado",
-    "deleteImageTitle": "Excluir imagem?",
-    "deleteImageDescription": "Isso removerá a imagem anexada desta despesa.",
+    "openAttachment": "Abrir recibo",
+    "addAttachment": "Adicionar recibo",
+    "replaceAttachment": "Substituir recibo",
+    "removeAttachment": "Remover recibo",
+    "attachedFile": "Arquivo do recibo",
+    "deleteImageTitle": "Excluir recibo?",
+    "deleteImageDescription": "Isso removerá o recibo desta despesa.",
     "validation": {
       "descriptionRequired": "Informe uma descrição.",
       "descriptionMax": "A descrição não pode exceder {max} caracteres.",
@@ -986,47 +1039,54 @@
     },
     "paidByTotalMismatch": "O total pago é {paid} mas a despesa é {total}. Ajuste os valores para continuar.",
     "splitTotalMismatch": "O total da divisão é {split} mas a despesa é {total}. Ajuste a divisão para continuar.",
-    "attachImageOnly": "Anexe um arquivo de imagem.",
-    "attachMaxSize": "O anexo deve ter {max} ou menos.",
+    "attachImageOnly": "O recibo deve ser um arquivo de imagem.",
+    "attachMaxSize": "O recibo deve ter {max} ou menos.",
     "unknown": "Desconhecido",
     "splitEquallyLabel": "Dividir igualmente",
     "splitByPercentage": "Dividir por porcentagem",
     "splitUnequally": "Dividir desigualmente",
     "settlementBalanced": "Este acerto já está balanceado.",
     "noOneOwes": "Ninguém deve nada.",
-    "uploadingAttachment": "Enviando anexo...",
-    "updatingAttachment": "Atualizando anexo...",
-    "deletingAttachment": "Excluindo anexo...",
-    "uploadAttachment": "Enviar anexo",
-    "deleteAttachment": "Excluir anexo",
+    "uploadingAttachment": "Enviando recibo…",
+    "updatingAttachment": "Atualizando recibo…",
+    "deletingAttachment": "Excluindo recibo…",
+    "uploadAttachment": "Enviar recibo",
+    "deleteAttachment": "Excluir recibo",
     "backToGroup": "Voltar ao grupo",
     "editExpenseAria": "Editar despesa",
     "deleteExpenseAria": "Excluir despesa",
-    "patchCategory": "Atualizar categoria",
-    "failedSaveAttachment": "Falha ao salvar o anexo",
+    "patchCategory": "Alterar categoria",
+    "failedSaveAttachment": "Falha ao salvar o recibo",
     "deleteExpenseTitle": "Excluir despesa?",
-    "deleteExpenseDescription": "Esta despesa e a imagem anexada serão removidas permanentemente.",
-    "expenseDate": "Data da despesa {date}",
-    "splitCount": "{count} divisão",
+    "deleteExpenseDescription": "Esta despesa e o recibo serão removidos permanentemente.",
+    "expenseDate": "{date}",
+    "splitCount": "{count, plural, one {Dividido com # pessoa} other {Dividido entre # pessoas}}",
     "addedOn": "Adicionado em {date}",
     "updatedOn": "Atualizado em {date}",
-    "paidLabel": "Pagou",
-    "owedLabel": "deve",
+    "paidLabel": "pagou",
+    "shareOf": "{isYou, select, true {<muted>Sua parte</muted>} other {<muted>Parte de</muted> {name}}}",
+    "settlementPaid": "{receiverIsYou, select, true {{payer} <muted>te pagou</muted>} other {{payer} <muted>pagou a</muted> {receiver}}}",
+    "paidForOne": "{receiverIsYou, select, true {{payer} <muted>pagou por você</muted>} other {{payer} <muted>pagou por</muted> {receiver}}}",
+    "expenseDateLabel": "Data da despesa",
+    "settlementDateLabel": "Data do acerto",
+    "deletedElsewhere": "Esta despesa foi excluída em outro lugar, então não está mais disponível.",
+    "deletedWhileEditing": "Esta despesa foi excluída em outro lugar enquanto você editava, então não pode ser atualizada. Você pode salvar suas alterações como uma nova despesa ou voltar ao grupo.",
+    "createAsNew": "Salvar como nova despesa",
     "splitCustomShort": "A divisão não soma {total}. Faltam {diff}.",
     "splitCustomOver": "A divisão não soma {total}. Sobram {diff}.",
     "splitPercentShort": "A divisão não soma 100%. Faltam {diff}%.",
     "splitPercentOver": "A divisão não soma 100%. Sobram {diff}%.",
     "perPerson": "por pessoa",
     "perPersonApprox": "por pessoa (aprox.)",
-    "attachedImageTitle": "Imagem anexada",
+    "attachedImageTitle": "Recibo",
     "previewNotAvailable": "Pré-visualização indisponível para este tipo de arquivo.",
     "amountOfLimit": "{allocated} de {limit}"
   },
   "comparePages": {
     "index": {
       "badge": "Comparar",
-      "title": "Encontre a melhor",
-      "titleHighlight": "alternativa",
+      "title": "Compare alternativas ao",
+      "titleHighlight": "Splitwise, Splid e Tricount",
       "description": "Veja como o {appName} se compara com os apps mais populares para dividir despesas. Comparativos honestos de recursos para escolher a ferramenta certa em viagens, repúblicas e contas em grupo.",
       "breadcrumbHome": "Início",
       "breadcrumbCompare": "Comparar",
@@ -1051,6 +1111,51 @@
         "title": "Experimente o {appName} grátis hoje",
         "description": "Crie um grupo em segundos e descubra por que equipes migram para um divisor de despesas mais simples.",
         "button": "Criar um grupo grátis"
+      },
+      "guide": {
+        "title": "O que procurar em um app para dividir despesas",
+        "intro": "Quase todo app para dividir despesas cobre o básico. Estas são as diferenças que decidem se o seu grupo vai usá-lo sem complicação.",
+        "items": {
+          "signup": {
+            "title": "Entrar sem criar conta",
+            "description": "Se cada membro precisa se cadastrar antes, alguns nunca fazem isso. Veja se dá para entrar por um link e começar a adicionar despesas na hora."
+          },
+          "freeFeatures": {
+            "title": "O que é grátis e o que é pago",
+            "description": "Alguns apps limitam despesas por dia ou deixam recibos, exportações ou moedas só na assinatura. Compare o que o seu grupo precisa com o plano grátis."
+          },
+          "splitting": {
+            "title": "Divisões flexíveis e vários pagadores",
+            "description": "Contas reais quase nunca são meio a meio. Procure divisões iguais, por porcentagem e personalizadas, e despesas pagas por mais de uma pessoa."
+          },
+          "currency": {
+            "title": "Uma moeda para viagens ao exterior",
+            "description": "Para viajar, confira se dá para escolher a moeda em que o grupo gasta, para que os saldos fiquem claros para todos."
+          },
+          "records": {
+            "title": "Recibos e exportações",
+            "description": "Fotos de recibos evitam discussões, e uma exportação CSV dá a tesoureiros e casas um registro fora do app."
+          },
+          "devices": {
+            "title": "Funciona onde o grupo estiver",
+            "description": "Veja se funciona no navegador, instala no celular e continua funcionando quando a conexão cai, para ninguém ficar de fora."
+          }
+        }
+      },
+      "faq": {
+        "title": "Perguntas sobre trocar de app",
+        "one": {
+          "question": "Qual é a melhor alternativa grátis ao Splitwise?",
+          "answer": "Depende do que o seu grupo precisa. O {appName} é grátis e sem cadastro, e inclui divisões flexíveis, vários pagadores, fotos de recibos e exportação CSV sem plano pago."
+        },
+        "two": {
+          "question": "Como levo meu grupo de outro app para o {appName}?",
+          "answer": "Crie um grupo com os mesmos membros e registre os saldos em aberto do app antigo, por exemplo como uma despesa paga por quem tem a receber, para os totais baterem. Daí em diante, adicione as despesas novas no {appName}."
+        },
+        "three": {
+          "question": "Posso testar o {appName} antes de trocar?",
+          "answer": "Sim. Criar um grupo leva segundos e não exige conta nem cartão, então você pode testar junto com o app atual até o grupo estar pronto para trocar."
+        }
       }
     },
     "shared": {
@@ -1132,10 +1237,10 @@
           }
         },
         "multiCurrency": {
-          "feature": "Grupos multimoeda",
+          "feature": "Escolher a moeda do grupo",
           "splitcost": "yes",
           "competitor": {
-            "splitwise": "Recurso Pro",
+            "splitwise": "yes",
             "splid": "yes",
             "tricount": "yes"
           }
@@ -1242,7 +1347,7 @@
         },
         "three": {
           "question": "Como o {appName} se compara ao Splitwise?",
-          "answer": "Tanto o {appName} quanto o Splitwise ajudam a dividir contas e acompanhar despesas compartilhadas. O {appName} foca em oferecer uma plataforma fácil de usar com acesso pelo navegador, divisões flexíveis, acesso compartilhado ao grupo e ferramentas pensadas para simplificar a gestão de despesas no dia a dia."
+          "answer": "Tanto o {appName} quanto o Splitwise ajudam a dividir contas e acompanhar despesas compartilhadas. O {appName} oferece acesso pelo navegador, divisões flexíveis, links de grupo compartilháveis, atualizações ao vivo para todo o grupo, histórico de atividade e acesso offline, tudo pensado para simplificar a gestão de despesas no dia a dia."
         },
         "four": {
           "question": "Preciso instalar um app para usar o {appName}?",
@@ -1320,7 +1425,7 @@
         },
         "four": {
           "question": "Quais recursos o {appName} oferece?",
-          "answer": "O {appName} inclui divisão de contas, acompanhamento de despesas compartilhadas, gestão de despesas em grupo, cálculo de saldos, controle de despesas de viagem, gestão de despesas de república, compartilhamento de orçamento doméstico e histórico e acerto de despesas."
+          "answer": "O {appName} inclui divisão de contas, acompanhamento de despesas compartilhadas, gestão de despesas em grupo, cálculo de saldos, controle de despesas de viagem, gestão de despesas de república, compartilhamento de orçamento doméstico, histórico e acerto de despesas, atualizações ao vivo do grupo e acesso offline."
         },
         "five": {
           "question": "Posso usar o {appName} para viagens em grupo e despesas compartilhadas?",
@@ -1387,7 +1492,7 @@
         },
         "three": {
           "question": "Como o {appName} se compara ao Tricount?",
-          "answer": "Tanto o {appName} quanto o Tricount ajudam a gerenciar despesas compartilhadas e dividir contas. O {appName} oferece acesso web, links de grupo compartilháveis, recibos anexados, exportação de despesas e opções de divisão flexíveis, facilitando a colaboração e o acompanhamento de qualquer lugar."
+          "answer": "Tanto o {appName} quanto o Tricount ajudam a gerenciar despesas compartilhadas e dividir contas. O {appName} oferece acesso web, links de grupo compartilháveis, recibos anexados, exportação de despesas, opções de divisão flexíveis, atualizações ao vivo do grupo e acesso offline, facilitando a colaboração e o acompanhamento de qualquer lugar."
         },
         "four": {
           "question": "Preciso instalar um app para usar o {appName}?",
@@ -1439,6 +1544,43 @@
         "title": "Pronto para dividir sua próxima despesa compartilhada?",
         "description": "Crie um grupo grátis em segundos e comece a acompanhar contas compartilhadas com o {appName}. Não precisa de conta.",
         "button": "Crie seu primeiro grupo"
+      },
+      "splits": {
+        "title": "Qual divisão combina com a sua despesa?",
+        "intro": "Cada grupo divide os custos do seu jeito. O {appName} deixa você escolher a divisão de cada despesa, então um mesmo grupo dá conta de todos estes casos.",
+        "items": {
+          "equal": {
+            "title": "Divisão igual",
+            "description": "Ideal quando todos aproveitam igualmente, como um táxi, o mercado ou um jantar em grupo com pratos compartilhados."
+          },
+          "percentage": {
+            "title": "Divisão por porcentagem",
+            "description": "Útil para proporções combinadas, como o aluguel pelo tamanho do quarto ou as contas da casa pela renda."
+          },
+          "custom": {
+            "title": "Valores personalizados",
+            "description": "Para contas em que cada um gastou diferente, como pedidos separados no restaurante ou ingressos com preços diferentes."
+          },
+          "multiplePayers": {
+            "title": "Vários pagadores",
+            "description": "Quando duas ou mais pessoas pagaram a mesma conta, como o sinal e o pagamento final de um aluguel de temporada."
+          }
+        }
+      },
+      "faq": {
+        "title": "Perguntas sobre grupos",
+        "one": {
+          "question": "Crio um grupo ou vários?",
+          "answer": "Crie um grupo por viagem, casa ou evento. Grupos separados deixam os saldos de cada um claros, e cada grupo usa uma só moeda, então uma viagem por vários países pode usar um grupo por moeda."
+        },
+        "two": {
+          "question": "Como convido pessoas para um grupo?",
+          "answer": "Compartilhe o link do grupo. Qualquer pessoa com o link pode abrir o grupo, adicionar despesas e ver os saldos sem criar conta, então compartilhe só com quem faz parte do grupo."
+        },
+        "three": {
+          "question": "O {appName} é grátis para todos os casos de uso?",
+          "answer": "Sim. Viagens, colegas de quarto, casais, amigos e equipes têm os mesmos recursos grátis, sem cartão nem cadastro."
+        }
       }
     },
     "shared": {
@@ -1455,7 +1597,8 @@
       "cta": {
         "title": "Comece a acompanhar despesas compartilhadas hoje",
         "button": "Criar um grupo grátis"
-      }
+      },
+      "relatedGuidesTitle": "Guias relacionados"
     },
     "travel": {
       "jsonLdName": "Divisor de despesas de viagem do {appName}",
@@ -1470,7 +1613,7 @@
         "description": "Viagens geram boas lembranças, mas custos compartilhados criam atrito quando ninguém sabe quem pagou o quê.",
         "one": {
           "title": "Planilhas falham na estrada",
-          "description": "Viagens multi-cidade, pagadores diferentes e reservas de última hora tornam o controle manual lento e sujeito a erros."
+          "description": "Viagens multi-cidade, pagadores diferentes, reservas de última hora e sinal fraco tornam o controle manual lento e sujeito a erros."
         },
         "two": {
           "title": "Confusão cambial acumula rápido",
@@ -1505,8 +1648,8 @@
           "description": "Transporte, hospedagem, comida e atividades em um só lugar, não em notas e chats espalhados."
         },
         "two": {
-          "title": "Pronto para várias moedas",
-          "description": "Defina a moeda do grupo para todos verem totais consistentes, mesmo quando pagamentos são em outras moedas."
+          "title": "A moeda da sua viagem",
+          "description": "Ao criar o grupo da viagem, escolha a moeda em que vocês vão gastar (há 156 disponíveis) para que todos vejam os totais na mesma moeda."
         },
         "three": {
           "title": "Recibos sempre anexados",
@@ -1514,7 +1657,7 @@
         },
         "four": {
           "title": "Saldos atualizados na hora",
-          "description": "Cada despesa atualiza os saldos do grupo automaticamente — sem recalcular após cada jantar ou passeio."
+          "description": "Cada despesa atualiza os saldos de todo o grupo na hora, sem recalcular após cada jantar ou passeio."
         }
       },
       "faq": {
@@ -1524,11 +1667,15 @@
         },
         "two": {
           "question": "Posso acompanhar despesas de viagem em moedas diferentes?",
-          "answer": "Sim. Defina a moeda do grupo ao criar a viagem. O {appName} ajuda o grupo a se manter organizado mesmo com pagamentos em dinheiro, moeda local ou cartão no exterior."
+          "answer": "Cada grupo de viagem usa uma moeda, escolhida entre 156 disponíveis. Escolha a que vocês mais vão usar, ou crie um grupo para cada país em uma viagem por vários países para que cada total fique claro."
         },
         "three": {
           "question": "Todos os viajantes precisam de conta?",
           "answer": "Não. Compartilhe o link do grupo e os companheiros podem ver e adicionar despesas sem todos se cadastrarem primeiro."
+        },
+        "four": {
+          "question": "Posso adicionar despesas da viagem sem internet?",
+          "answer": "Sim, com alguns limites. Os grupos de viagem que você já abriu continuam disponíveis para consulta offline, e você pode criar um grupo de viagem novo e adicionar despesas a ele sem conexão. Ele sincroniza quando você volta a ficar online. Editar um grupo já compartilhado, acertar contas e adicionar recibos exige internet."
         }
       },
       "cta": {
@@ -1588,7 +1735,7 @@
         },
         "three": {
           "title": "Histórico de pagamentos claro",
-          "description": "Veja quem pagou cada conta e como os saldos mudaram — útil para confiança e registros."
+          "description": "Veja quem pagou cada conta, além de um histórico de atividade com cada despesa, acerto e mudança. Útil para confiança e registros."
         },
         "four": {
           "title": "Exporte quando precisar de registros",
@@ -1662,7 +1809,7 @@
         },
         "two": {
           "title": "Histórico compartilhado transparente",
-          "description": "Ambos veem a mesma lista de despesas, divisões e saldos — sem totais escondidos."
+          "description": "Ambos veem a mesma lista de despesas, divisões e saldos, e as mudanças aparecem para os dois na hora."
         },
         "three": {
           "title": "Funciona no dia a dia e em viagens",
@@ -1814,7 +1961,7 @@
       "benefits": {
         "one": {
           "title": "Feito para responsabilidade compartilhada",
-          "description": "Cada membro vê o mesmo histórico de despesas, divisões e saldos."
+          "description": "Cada membro vê as mesmas despesas, divisões e saldos, além de um histórico de atividade com cada mudança e quando ela aconteceu."
         },
         "two": {
           "title": "Vários pagadores suportados",
@@ -1998,5 +2145,205 @@
         "general": "Geral"
       }
     }
+  },
+  "groupChanges": {
+    "addedOne": "{name} foi adicionado ao grupo em outro lugar.",
+    "addedTwo": "{first} e {second} foram adicionados ao grupo em outro lugar.",
+    "addedMany": "{first}, {second} e {count, plural, one {mais #} other {mais #}} foram adicionados ao grupo em outro lugar.",
+    "removedOne": "{name} foi removido do grupo em outro lugar.",
+    "removedTwo": "{first} e {second} foram removidos do grupo em outro lugar.",
+    "removedMany": "{first}, {second} e {count, plural, one {mais #} other {mais #}} foram removidos do grupo em outro lugar.",
+    "renamedOne": "Em outro lugar, {from} foi renomeado para {to}.",
+    "renamedTwo": "Em outro lugar, {from1} foi renomeado para {to1} e {from2} para {to2}.",
+    "renamedMany": "{first}, {second} e {count, plural, one {mais #} other {mais #}} foram renomeados em outro lugar.",
+    "view": "Ver",
+    "addedTitle": "Novos membros",
+    "addedDescription": "Estes membros foram adicionados ao grupo em outro lugar.",
+    "removedTitle": "Membros removidos",
+    "removedDescription": "Estes membros foram removidos do grupo em outro lugar.",
+    "renamedTitle": "Nomes atualizados",
+    "renamedDescription": "Estes membros foram renomeados em outro lugar.",
+    "groupRenamed": "Em outro lugar, o grupo foi renomeado de {from} para {to}.",
+    "deletedTitle": "Este grupo foi excluído",
+    "deletedDescription": "Ele foi excluído em outro lugar, então suas despesas não podem mais ser vistas nem alteradas.",
+    "goToMyGroups": "Ir para meus grupos"
+  },
+  "editConflict": {
+    "groupRealtimeTitle": "O grupo mudou enquanto você editava",
+    "groupRealtimeDescription": "Este grupo foi atualizado em outro lugar enquanto você editava. Mantenha suas alterações para continuar ou mude para a versão mais recente.",
+    "groupSaveTitle": "Suas alterações não foram salvas",
+    "groupSaveDescription": "Este grupo foi atualizado em outro lugar antes de você salvar. Salve suas alterações por cima ou descarte-as e carregue a versão mais recente.",
+    "expenseRealtimeTitle": "A despesa mudou enquanto você editava",
+    "expenseRealtimeDescription": "Esta despesa foi atualizada em outro lugar enquanto você editava. Mantenha suas alterações para continuar ou mude para a versão mais recente.",
+    "expenseSaveTitle": "Suas alterações não foram salvas",
+    "expenseSaveDescription": "Esta despesa foi atualizada em outro lugar antes de você salvar. Salve suas alterações por cima ou descarte-as e carregue a versão mais recente.",
+    "keepMine": "Manter minhas alterações",
+    "useLatest": "Usar a versão mais recente",
+    "saveMine": "Salvar minhas alterações",
+    "loadLatest": "Descartar e carregar a mais recente",
+    "categoryTitle": "Categoria alterada",
+    "categoryDescription": "Em outro lugar, a categoria desta despesa foi alterada para {current}. Você escolheu {mine}.",
+    "useCategory": "Usar {category}",
+    "applyCategory": "Aplicar {category}"
+  },
+  "receiptChanges": {
+    "removedTitle": "Recibo removido",
+    "removedDescription": "Este recibo foi removido em outro lugar.",
+    "replacedTitle": "Recibo substituído",
+    "replacedDescription": "Este recibo foi substituído em outro lugar. Abra-o para ver o novo.",
+    "addedTitle": "Recibo adicionado",
+    "addedDescription": "Um recibo foi adicionado a esta despesa em outro lugar.",
+    "replacedDialogTitle": "O recibo foi substituído",
+    "replacedDialogDescription": "Um novo recibo foi enviado em outro lugar enquanto você o excluía. Excluir o novo também ou mantê-lo?",
+    "keepNew": "Manter o novo recibo",
+    "deleteAnyway": "Excluir mesmo assim",
+    "changedTitle": "Recibo alterado",
+    "changedDescription": "Este recibo foi alterado em outro lugar. A alteração de recibo que você fez neste formulário foi mantida.",
+    "keptTitle": "Recibo mantido",
+    "keptDescription": "O recibo que você removeu foi substituído em outro lugar, então o mais recente foi mantido.",
+    "notCarriedOver": "O recibo original não pode ser levado para a nova despesa. Você pode anexá-lo novamente depois.",
+    "notSavedTitle": "Recibo não salvo",
+    "notSavedDescription": "Esta despesa foi excluída em outro lugar."
+  },
+  "balanceLabels": {
+    "getsBack": "Recebe",
+    "needsToPay": "Precisa pagar",
+    "getsBackCount": "{count} recebe",
+    "needsToPayCount": "{count} precisa pagar",
+    "exportNetMeaning": "Valor líquido (+ recebe, - precisa pagar)"
+  },
+  "toasts": {
+    "expenseAdded": "Despesa adicionada",
+    "expenseUpdated": "Despesa atualizada",
+    "expenseDeleted": "Despesa excluída",
+    "groupDeleted": "Grupo excluído",
+    "settled": "Acerto registrado",
+    "couldNotAddExpense": "Não foi possível adicionar a despesa",
+    "couldNotSaveExpense": "Não foi possível salvar a despesa",
+    "couldNotDeleteExpense": "Não foi possível excluir a despesa",
+    "couldNotCreateGroup": "Não foi possível criar o grupo",
+    "couldNotSettle": "Não foi possível registrar o acerto",
+    "settlementChanged": "Os saldos foram atualizados em outro lugar",
+    "settlementChangedHint": "Confira o novo valor e acerte novamente.",
+    "couldNotUploadImage": "Não foi possível enviar o recibo",
+    "couldNotRemoveImage": "Não foi possível remover o recibo",
+    "tryAgainHint": "Verifique sua conexão e tente novamente.",
+    "retry": "Tentar novamente"
+  },
+  "activity": {
+    "title": "Atividade",
+    "recent": "Atividade recente",
+    "viewAll": "Ver toda a atividade",
+    "pageTitle": "{group} · Atividade",
+    "filterAll": "Tudo",
+    "filterExpenses": "Despesas",
+    "filterSettlements": "Acertos",
+    "filterMembers": "Membros",
+    "today": "Hoje",
+    "yesterday": "Ontem",
+    "justNow": "Agora mesmo",
+    "loadMore": "Carregar mais",
+    "emptyTitle": "Nenhuma atividade ainda",
+    "emptyHint": "Despesas, acertos e mudanças de membros aparecerão aqui.",
+    "loadError": "Não foi possível carregar a atividade.",
+    "retry": "Tentar novamente",
+    "expenseAdded": "<b>{expense}</b> adicionada",
+    "expenseUpdated": "<b>{expense}</b> atualizada",
+    "expenseDeleted": "<b>{expense}</b> excluída · {amount}",
+    "deletedDetail": "Paga por {payers} · dividida entre {names}",
+    "settlementAdded": "<b>{from}</b> pagou <b>{to}</b> · {amount}",
+    "settlementDeleted": "Acerto <b>{from}</b> → <b>{to}</b> · {amount} removido",
+    "groupCreated": "Grupo criado · {count, plural, one {# membro} other {# membros}}",
+    "groupRenamed": "Grupo renomeado para <b>{name}</b>",
+    "memberAdded": "<b>{name}</b> foi adicionado ao grupo",
+    "memberRenamed": "<b>{from}</b> foi renomeado para <b>{to}</b>",
+    "memberRemoved": "<b>{name}</b> foi removido do grupo",
+    "history": "Histórico",
+    "showHistory": "Mostrar histórico",
+    "hideHistory": "Ocultar histórico",
+    "historyLastUpdated": "Atualizada {time}",
+    "historyUpdatedJustNow": "Atualizada agora mesmo",
+    "historyLastAdded": "Adicionada {time}",
+    "historyAddedJustNow": "Adicionada agora mesmo",
+    "historyCreated": "Despesa adicionada",
+    "historyCreatedSettlement": "Acerto registrado",
+    "historyLastRecorded": "Registrado {time}",
+    "historyRecordedJustNow": "Registrado agora mesmo",
+    "historyLoading": "Carregando alterações…",
+    "historyUpdated": "Atualizada",
+    "changeDescription": "Nome alterado de \"{from}\" para \"{to}\"",
+    "changeAmount": "Valor alterado de {from} para {to}",
+    "changePaidBy": "Pagador alterado de {from} para {to}",
+    "changePayerAmounts": "Valores pagos alterados",
+    "changeSplitType": "Divisão alterada de {from} para {to}",
+    "changeSplitAdded": "{name} foi adicionado à despesa",
+    "changeSplitRemoved": "{name} foi removido da despesa",
+    "changeShares": "Valores da divisão alterados",
+    "changeDate": "Data alterada de {from} para {to}",
+    "changeCategory": "Categoria alterada de {from} para {to}",
+    "attachmentAdded": "Recibo adicionado",
+    "attachmentReplaced": "Recibo substituído",
+    "attachmentRemoved": "Recibo removido",
+    "dayAtTime": "{day}, {time}",
+    "splitTypeEqual": "Igual",
+    "splitTypePercentage": "Porcentagem",
+    "splitTypeCustom": "Personalizada",
+    "changeShare": "A parte de {name} mudou de {from} para {to}",
+    "changeCategorySet": "Categoria definida como {category}",
+    "notesAdded": "Notas adicionadas",
+    "notesUpdated": "Notas atualizadas",
+    "notesRemoved": "Notas excluídas"
+  },
+  "offline": {
+    "statusOffline": "Offline",
+    "statusSyncing": "Sincronizando…",
+    "statusOnline": "Online",
+    "statusAttention": "Precisa de atenção",
+    "statusOfflineHint": "Grupos sincronizados ficam somente leitura até você voltar a ficar online. Você ainda pode criar grupos novos.",
+    "statusSyncingHint": "Enviando alterações ao servidor.",
+    "statusOnlineHint": "Tudo está salvo.",
+    "sheetTitle": "Conexão",
+    "lastSynced": "Última sincronização: {time}",
+    "needsAttention": "{count, plural, one {# grupo precisa de atenção} other {# grupos precisam de atenção}}",
+    "localGroupsTitle": "Grupos neste dispositivo",
+    "badgeDraft": "Não sincronizado",
+    "badgeSubmitting": "Sincronizando…",
+    "badgeUnknown": "Verificando…",
+    "badgeRejected": "Falha ao sincronizar",
+    "hintDraftOffline": "Salvo neste dispositivo. Sincroniza quando você voltar a ficar online.",
+    "hintDraftOnline": "Salvo neste dispositivo. Sincronizando em instantes.",
+    "hintSubmitting": "Enviando ao servidor.",
+    "hintUnknown": "Aguardando a confirmação do servidor. A edição fica pausada até lá.",
+    "hintRejected": "Falha ao sincronizar: {reason}. Corrija e ele sincronizará de novo.",
+    "bannerViewOnly": "Offline · somente leitura",
+    "bannerViewOnlyUpdated": "Offline · somente leitura · Atualizado em {time}",
+    "bannerLocalOffline": "Salvo apenas neste dispositivo. Sincroniza automaticamente quando você voltar a ficar online.",
+    "bannerLocalOnline": "Salvo apenas neste dispositivo. Sincronizando em instantes.",
+    "bannerSubmitting": "Sincronizando este grupo…",
+    "bannerUnknown": "Aguardando o servidor confirmar este grupo. A edição fica pausada até lá.",
+    "bannerRejected": "Falha ao sincronizar: {reason}. Corrija e ele sincronizará de novo.",
+    "wentOffline": "Você está offline. Ainda pode criar grupos novos.",
+    "groupCreatedLocal": "Grupo salvo neste dispositivo. Sincroniza quando você voltar a ficar online.",
+    "syncFailedToast": "Não foi possível sincronizar \"{name}\". Toque no ponto de status para ver o motivo.",
+    "blockedEditOffline": "Você está offline. Este grupo fica somente leitura até você voltar a ficar online.",
+    "blockedAttachmentOffline": "Recibos precisam de internet. Ficará disponível automaticamente quando você voltar a ficar online.",
+    "blockedAttachmentLocal": "Recibos ficam disponíveis quando este grupo for sincronizado.",
+    "blockedShareLocal": "O compartilhamento fica disponível quando este grupo for sincronizado.",
+    "blockedSettleOffline": "Acertar contas precisa de internet para usar saldos atualizados. Disponível quando você voltar a ficar online.",
+    "blockedDeleteGroupOffline": "Excluir um grupo precisa de internet. Disponível quando você voltar a ficar online.",
+    "blockedSyncing": "Este grupo está sincronizando. Você poderá editá-lo de novo em instantes.",
+    "activityAfterSync": "A atividade aparece depois que este grupo for sincronizado.",
+    "activityOffline": "A atividade precisa de internet. Ela carrega quando você voltar a ficar online.",
+    "unavailableTitle": "Indisponível offline",
+    "unavailableMessage": "Esta página ainda não está salva neste dispositivo. Abra-a uma vez online para usá-la offline.",
+    "offlinePageTitle": "Você está offline",
+    "offlinePageMessage": "Esta página ainda não está salva neste dispositivo. Seus grupos e os que você criar offline continuam disponíveis.",
+    "offlinePageAction": "Ir para meus grupos",
+    "receiptOffline": "Esta despesa tem um recibo. Ele aparece quando você voltar a ficar online.",
+    "droppedNotSaved": "A conexão caiu, então isso não foi salvo. Tente de novo quando voltar a ficar online.",
+    "droppedNotDeleted": "A conexão caiu, então nada foi excluído. Tente de novo quando voltar a ficar online.",
+    "droppedReceipt": "A conexão caiu, então o recibo não foi alterado. Tente de novo quando voltar a ficar online.",
+    "droppedReceiptAfterSave": "A despesa está salva, mas a conexão caiu antes do envio do recibo. Toque em Tentar novamente quando voltar a ficar online.",
+    "contactOffline": "Você está offline. Enviar uma mensagem precisa de internet. Sua mensagem fica aqui; envie quando voltar a ficar online."
   }
 }

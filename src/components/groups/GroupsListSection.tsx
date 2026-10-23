@@ -4,7 +4,7 @@ import { useRouter as useNextRouter } from "next/navigation";
 
 import { Link, useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Plus, Search, SlidersHorizontal, X } from "lucide-react";
 
 import {
@@ -30,7 +30,10 @@ import { formatDisplayDate, formatDisplayDateTime } from "@/components/ui/format
 import { formatCurrency } from "@/lib/avatar-utils";
 import { ADMIN_BASE_PATH, LOCAL_GROUPS_KEY } from "@/lib/constants";
 import { getEncryptedItem, setEncryptedItem } from "@/lib/localStorage";
-import { deleteGroup, GroupOverviewItemInterface, loadGroupsByIds } from "@/lib/storage";
+import { deleteGroup, GroupOverviewItemInterface, loadCachedMyGroups, loadMyGroups } from "@/lib/storage";
+import { LocalGroupBadge } from "@/components/sync/LocalGroupBadge";
+import { useLocalGroups } from "@/hooks/useOffline";
+import { LOCAL_GROUPS_CHANGED_EVENT } from "@/lib/offline/localGroups";
 
 type HomeGroup = GroupOverviewItemInterface & {
   totalExpenses?: number;
@@ -217,10 +220,20 @@ export function GroupsListSection({ adminMode = false }: { adminMode?: boolean }
     setSortBy("latest-activity");
   };
 
+  // Only the first load shows skeletons (`loading` starts true), and only when
+  // nothing is saved on this device yet; reloads swap the cards in place.
+  const showedSavedRef = useRef(false);
   const fetchGroups = useCallback(async () => {
-    setLoading(true);
-
     try {
+      if (!adminMode && !showedSavedRef.current) {
+        // Show the saved copy first (a quick local read), then ask the server.
+        const saved = await loadCachedMyGroups(getEncryptedItem<string[]>(LOCAL_GROUPS_KEY, []));
+        if (saved) {
+          showedSavedRef.current = true;
+          setGroups(saved);
+          setLoading(false);
+        }
+      }
       if (adminMode) {
         const res = await fetch("/api/groups", { cache: "no-store" });
         if (!res.ok) {
@@ -231,13 +244,18 @@ export function GroupsListSection({ adminMode = false }: { adminMode?: boolean }
         setGroups(allGroups);
       } else {
         const groupIds = getEncryptedItem<string[]>(LOCAL_GROUPS_KEY, []);
-        const loadedGroups = await loadGroupsByIds(groupIds);
+        const { groups: loadedGroups, fromServer } = await loadMyGroups(groupIds);
         setGroups(loadedGroups);
-        const validGroupIds = loadedGroups.map((group) => group.id);
-        setEncryptedItem(LOCAL_GROUPS_KEY, validGroupIds);
+        // Forget groups the server no longer has, but only on its word: offline
+        // the list comes from saved copies, which may simply be missing some.
+        if (fromServer) {
+          const validGroupIds = loadedGroups.map((group) => group.id);
+          setEncryptedItem(LOCAL_GROUPS_KEY, validGroupIds);
+        }
       }
     } catch {
-      setGroups([]);
+      // A failed refresh keeps the saved copy that is already on screen.
+      if (!showedSavedRef.current) setGroups([]);
     } finally {
       setLoading(false);
     }
@@ -246,6 +264,20 @@ export function GroupsListSection({ adminMode = false }: { adminMode?: boolean }
   useEffect(() => {
     void fetchGroups();
   }, [fetchGroups]);
+
+  // A local group was created, changed, synced or re-keyed: reload the cards.
+  useEffect(() => {
+    if (adminMode) return;
+    const reload = () => void fetchGroups();
+    window.addEventListener(LOCAL_GROUPS_CHANGED_EVENT, reload);
+    return () => window.removeEventListener(LOCAL_GROUPS_CHANGED_EVENT, reload);
+  }, [adminMode, fetchGroups]);
+
+  const localGroups = useLocalGroups();
+  const localStates = useMemo(
+    () => new Map(localGroups.map((record) => [record.id, record.state])),
+    [localGroups]
+  );
 
   const handleDeleteGroup = async (groupId: string) => {
     try {
@@ -452,7 +484,10 @@ export function GroupsListSection({ adminMode = false }: { adminMode?: boolean }
                         />
                       ) : null}
                     </div>
-                    <CardTitle className="mt-3">{group.name}</CardTitle>
+                    <CardTitle className="mt-3 flex items-center gap-2">
+                      <span className="min-w-0 truncate">{group.name}</span>
+                      {localStates.get(group.id) ? <LocalGroupBadge state={localStates.get(group.id)!} /> : null}
+                    </CardTitle>
                     {adminMode ? (
                       <div className="space-y-1 text-sm text-muted-foreground">
                         <p>{t("created", { date: formatDisplayDateTime(group.createdAt) })}</p>

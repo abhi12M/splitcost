@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { AnimatePresence, motion } from "framer-motion";
-import { Plus, X, Loader2 } from "lucide-react";
+import { AlertTriangle, Plus, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { MEMBERS_MAX, MEMBERS_MIN, MEMBER_NAME_MAX, GROUP_NAME_MAX } from "@/lib/validations/group.schema";
 import { createGroupSchemas } from "@/lib/validations/group.schema.i18n";
+import { isMemberNameAlreadyAdded, truncateMemberName } from "@/lib/validations/group-members";
+import { cleanName, isBlankName } from "@/lib/validations/names";
 import { CURRENCIES } from "@/constants";
 
 interface GroupFormProps {
@@ -51,6 +53,7 @@ export function GroupForm({ initialData, onSubmit, submitLabel, isSubmitting }: 
     memberExists?: string;
   }>({});
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const hasReachedMemberLimit = members.length >= MEMBERS_MAX;
 
   const validate = useCallback(() => {
     const result = GroupSchema.safeParse({ groupName, members });
@@ -80,7 +83,7 @@ export function GroupForm({ initialData, onSubmit, submitLabel, isSubmitting }: 
     setErrors(prev => ({
       ...prev,
       groupName:
-        !groupName.trim() && !hasSubmitted
+        isBlankName(groupName) && !hasSubmitted
           ? undefined
           : result.success
             ? undefined
@@ -89,9 +92,9 @@ export function GroupForm({ initialData, onSubmit, submitLabel, isSubmitting }: 
   }, [groupName, hasSubmitted]);
 
   useEffect(() => {
-    const trimmedMember = newMember.trim();
+    const cleanedMember = cleanName(newMember);
 
-    if (!trimmedMember) {
+    if (isBlankName(newMember)) {
       setErrors(prev => ({
         ...prev,
         memberName: undefined,
@@ -104,21 +107,29 @@ export function GroupForm({ initialData, onSubmit, submitLabel, isSubmitting }: 
     setErrors(prev => ({
       ...prev,
       memberName: memberResult.success ? undefined : memberResult.error.issues[0]?.message,
-      memberExists: members.includes(trimmedMember) ? t("memberAlreadyAdded") : undefined,
+      memberExists: isMemberNameAlreadyAdded(members, cleanedMember)
+        ? t("memberAlreadyAdded", { name: truncateMemberName(cleanedMember) })
+        : undefined,
     }));
   }, [newMember, members]);
 
   const handleAddMember = () => {
+    const cleanedMember = cleanName(newMember);
+    if (isBlankName(newMember) || hasReachedMemberLimit) return;
+
     const result = MemberNameSchema.safeParse(newMember);
     if (!result.success) {
       setErrors(prev => ({ ...prev, memberName: result.error.issues[0].message }));
       return;
     }
-    if (members.includes(newMember.trim())) {
-      setErrors(prev => ({ ...prev, memberExists: t("memberAlreadyAdded") }));
+    if (isMemberNameAlreadyAdded(members, cleanedMember)) {
+      setErrors(prev => ({
+        ...prev,
+        memberExists: t("memberAlreadyAdded", { name: truncateMemberName(cleanedMember) }),
+      }));
       return;
     }
-    setMembers([...members, newMember.trim()]);
+    setMembers([...members, cleanedMember]);
     setNewMember("");
     setErrors(prev => ({ ...prev, memberName: undefined, memberExists: undefined }));
   };
@@ -127,7 +138,7 @@ export function GroupForm({ initialData, onSubmit, submitLabel, isSubmitting }: 
     e.preventDefault();
     setHasSubmitted(true);
     if (!validate()) return;
-    await onSubmit({ name: groupName, currency, members });
+    await onSubmit({ name: cleanName(groupName), currency, members });
   };
 
   return (
@@ -146,7 +157,6 @@ export function GroupForm({ initialData, onSubmit, submitLabel, isSubmitting }: 
         />
         {errors.groupName && <span className="text-xs text-destructive">{errors.groupName}</span>}
       </div>
-
       <div className="space-y-2">
         <Label>{t("defaultCurrency")}</Label>
         <Select value={currency} onValueChange={setCurrency}>
@@ -164,26 +174,38 @@ export function GroupForm({ initialData, onSubmit, submitLabel, isSubmitting }: 
       <div className="space-y-3">
         <Label>{t("members")} <span className="text-destructive">*</span></Label>
         <div className="space-y-2">
-          <div className="flex gap-2">
-            <div className="flex-1 relative">
-              <Input
-                placeholder={members.length >= MEMBERS_MAX ? t("maxReached") : t("enterName")}
-                value={newMember}
-                onChange={(e) => setNewMember(e.target.value)}
-                disabled={members.length >= MEMBERS_MAX}
-                aria-invalid={Boolean(errors.memberName || errors.memberExists)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && newMember.trim()) {
-                    e.preventDefault();
-                    handleAddMember();
-                  }
-                }}
-              />
+          {hasReachedMemberLimit ? (
+            <div
+              role="status"
+              className="flex items-center gap-3 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-amber-950 dark:text-amber-100"
+            >
+              <AlertTriangle className="h-6 w-6 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden />
+              <p className="text-sm leading-5">
+                <span className="font-semibold">{t("memberLimitReached", { max: MEMBERS_MAX })}</span>{" "}
+                {t("removeMemberToAdd")}
+              </p>
             </div>
-            <Button type="button" variant="outline" size="icon" onClick={handleAddMember} disabled={!newMember.trim() || members.length >= MEMBERS_MAX}>
-              <Plus className="w-4 h-4" />
-            </Button>
-          </div>
+          ) : (
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Input
+                  placeholder={t("enterName")}
+                  value={newMember}
+                  onChange={(e) => setNewMember(e.target.value)}
+                  aria-invalid={Boolean(errors.memberName || errors.memberExists)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !isBlankName(newMember)) {
+                      e.preventDefault();
+                      handleAddMember();
+                    }
+                  }}
+                />
+              </div>
+              <Button type="button" variant="outline" size="icon" onClick={handleAddMember} disabled={isBlankName(newMember)}>
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
           {errors.members && <p className="text-xs text-destructive">{errors.members}</p>}
           {errors.memberName && <p className="text-xs text-destructive">{errors.memberName}</p>}
           {errors.memberExists && <p className="text-xs text-destructive">{errors.memberExists}</p>}

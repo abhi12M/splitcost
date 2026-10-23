@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import sharp from "sharp";
 
 import { isAuthorizedAdminRequest } from "@/lib/admin-auth";
+import { readFormData, readJsonObject } from "@/lib/api/request";
+import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import {
   buildAttachmentPayload,
@@ -211,7 +213,9 @@ export async function POST(req: Request) {
   if (!isAuthorizedAdminRequest(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const formData = await req.formData();
+  const form = await readFormData(req);
+  if (!form.ok) return form.response;
+  const formData = form.data;
   const file = formData.get("file");
 
   if (!(file instanceof File)) {
@@ -247,17 +251,20 @@ export async function POST(req: Request) {
       .from(MEDIA_BUCKET)
       .getPublicUrl(path);
 
-    return NextResponse.json({
-      media: {
-        path,
-        name: path.split("/").pop() ?? path,
-        url: data.publicUrl,
-        size: image.length,
-        mimeType: "image/webp",
-        updatedAt: new Date().toISOString(),
-        source: "admin",
+    return successJson(
+      {
+        media: {
+          path,
+          name: path.split("/").pop() ?? path,
+          url: data.publicUrl,
+          size: image.length,
+          mimeType: "image/webp",
+          updatedAt: new Date().toISOString(),
+          source: "admin",
+        },
       },
-    });
+      SUCCESS_MESSAGES.mediaUploaded
+    );
   } catch (error) {
     console.error("uploadAdminMedia error:", error);
     return NextResponse.json(
@@ -308,10 +315,9 @@ export async function PATCH(req: Request) {
   if (!isAuthorizedAdminRequest(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const { path, name } = (await req.json().catch(() => ({}))) as {
-    path?: string;
-    name?: string;
-  };
+  const patchParsed = await readJsonObject(req, { allowedKeys: ["path", "name"] });
+  if (!patchParsed.ok) return patchParsed.response;
+  const { path, name } = patchParsed.data as { path?: string; name?: string };
 
   if (!path || !name?.trim()) {
     return NextResponse.json(
@@ -355,24 +361,26 @@ export async function PATCH(req: Request) {
     );
   }
 
-  return NextResponse.json({
-    media: {
-      path: nextPath,
-      name: fileName,
-      url: versionedUrl,
-      updatedAt: new Date().toISOString(),
+  return successJson(
+    {
+      media: {
+        path: nextPath,
+        name: fileName,
+        url: versionedUrl,
+        updatedAt: new Date().toISOString(),
+      },
     },
-  });
+    SUCCESS_MESSAGES.mediaRenamed
+  );
 }
 
 export async function DELETE(req: Request) {
   if (!isAuthorizedAdminRequest(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const { path, paths } = (await req.json().catch(() => ({}))) as {
-    path?: string;
-    paths?: string[];
-  };
+  const delParsed = await readJsonObject(req, { allowedKeys: ["path", "paths"] });
+  if (!delParsed.ok) return delParsed.response;
+  const { path, paths } = delParsed.data as { path?: string; paths?: string[] };
   const mediaPaths = paths?.filter(Boolean) ?? (path ? [path] : []);
 
   if (!mediaPaths.length) {
@@ -387,5 +395,5 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
-  return NextResponse.json({ ok: true });
+  return successJson({ ok: true }, SUCCESS_MESSAGES.mediaDeleted);
 }

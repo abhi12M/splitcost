@@ -1,3 +1,13 @@
+import {
+  recordExpenseChanges,
+  recordExpenseDeleted,
+  recordExpenseEdited,
+} from "@/lib/activity/server/recordExpenseActivity";
+import { loadExpenseDetails, loadExpenseSnapshot } from "@/lib/activity/server/expenseSnapshots";
+import { isSettlement, SETTLEMENT_CATEGORY } from "@/lib/activity/expenseSnapshot";
+import { broadcastExpenseChange } from "@/lib/api/broadcastExpense";
+import { readJsonObject } from "@/lib/api/request";
+import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import {
   EXPENSE_CATEGORIES,
@@ -13,6 +23,19 @@ import {
   EXPENSE_NOTES_STORAGE_MAX,
   normalizeExpenseNotes,
 } from "@/lib/expenseNotes";
+import { validateExpenseDescription } from "@/lib/validations/expense.schema";
+import { resolveExpenseCurrency } from "@/lib/api/expenseCurrency";
+import { loadExpenseAttachmentValue, removeAttachmentFiles } from "@/lib/supabase/attachments";
+import {
+  isValidUUID,
+  validateAmount,
+  validateSplitType,
+  validateCategory,
+  validateExpenseDate,
+  validateParticipants,
+  validatePayers,
+  validateGroupMembership,
+} from "@/lib/api/expenseValidation";
 
 type ParticipantPayload = {
   userId: string;
@@ -51,12 +74,14 @@ type ExpenseDetailsRow = {
   date: string;
   created_at: string;
   updated_at: string | null;
+  revision: number;
   attachment_data_url: string | null;
   expense_participants: ExpenseParticipantRow[];
   groups: {
     id: string;
     name: string;
     currency: string;
+    revision: number;
     group_members: GroupMemberRow[];
   };
 };
@@ -66,7 +91,16 @@ export async function PUT(
   { params }: { params: { expenseId: string } }
 ) {
   const expenseId = params.expenseId;
-  const body = await req.json();
+  const parsed = await readJsonObject(req, {
+    allowedKeys: [
+      "groupId", "description", "notes", "amount", "currency",
+      "paidByUserId", "payers", "splitType", "category", "subcategory",
+      "date", "participants", "attachmentDataUrl", "expectedRevision",
+      "originSessionId",
+    ],
+  });
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
 
   const {
     groupId,
@@ -82,35 +116,71 @@ export async function PUT(
     date,
     participants,
     attachmentDataUrl,
+    expectedRevision,
+    originSessionId,
   } = body;
 
-  // 🔐 Basic validation / abuse protection
-  if (!groupId || !expenseId || !description || !amount) {
-    return NextResponse.json(
-      { error: "Invalid payload" },
-      { status: 400 }
-    );
+  const fail = (error: string) => NextResponse.json({ error }, { status: 400 });
+
+  if (!isValidUUID(groupId)) return fail("Invalid group ID");
+  if (!isValidUUID(expenseId)) return fail("Invalid expense ID");
+
+  const descriptionResult = validateExpenseDescription(description);
+  if (!descriptionResult.success) {
+    return NextResponse.json({ error: descriptionResult.error }, { status: 400 });
   }
 
-  if (participants?.length > 50) {
-    return NextResponse.json(
-      { error: "Too many participants" },
-      { status: 400 }
-    );
-  }
+  const amountError = validateAmount(amount);
+  if (amountError) return fail(amountError);
+
+  if (!Number.isSafeInteger(expectedRevision)) return fail("Invalid expected revision");
+
+  const hasSinglePayer = paidByUserId != null && paidByUserId !== "";
+  const hasMultiplePayers = Array.isArray(payers) && payers.length > 0;
+  if (!hasSinglePayer && !hasMultiplePayers) return fail("A payer is required");
+  if (hasSinglePayer && hasMultiplePayers) return fail("Cannot have both paidByUserId and payers");
+  if (hasSinglePayer && !isValidUUID(paidByUserId)) return fail("Invalid payer user ID");
+
+  const splitTypeError = validateSplitType(splitType);
+  if (splitTypeError) return fail(splitTypeError);
+
+  const categoryError = validateCategory(category, subcategory);
+  if (categoryError) return fail(categoryError);
+
+  const dateError = validateExpenseDate(date);
+  if (dateError) return fail(dateError);
+
+  const participantsError = validateParticipants(participants, splitType, amount);
+  if (participantsError) return fail(participantsError);
+
+  const payersError = validatePayers(payers, amount);
+  if (payersError) return fail(payersError);
 
   if (typeof notes === "string" && notes.length > EXPENSE_NOTES_STORAGE_MAX) {
-    return NextResponse.json({ error: "Notes are too long" }, { status: 400 });
+    return fail("Notes are too long");
   }
+
+  const currencyResult = await resolveExpenseCurrency(groupId, currency);
+  if (!currencyResult.ok) return currencyResult.response;
+
+  const membershipError = await validateGroupMembership(
+    groupId, paidByUserId, participants, payers ?? null,
+  );
+  if (membershipError) return fail(membershipError);
+
+  const session = typeof originSessionId === "string" ? originSessionId.slice(0, 128) : null;
+  // Read before saving: the save is revision-checked, so when it succeeds this
+  // is exactly the state it replaced.
+  const before = await loadExpenseSnapshot(expenseId);
 
   const { data, error } = await supabaseAdmin.rpc(
     "edit_expense",
     {
       p_group_id: groupId,
       p_expense_id: expenseId,
-      p_description: description,
+      p_description: descriptionResult.data,
       p_amount: amount,
-      p_currency: currency,
+      p_currency: currencyResult.currency,
       p_paid_by_user_id: paidByUserId || null,
       p_split_type: splitType,
       p_category: category,
@@ -123,11 +193,31 @@ export async function PUT(
       })),
       p_payers: payers || null,
       p_notes: typeof notes === "string" ? normalizeExpenseNotes(notes) || null : null,
+      p_expected_revision: expectedRevision,
     }
   );
 
   if (error || !data) {
     console.error("updateExpense error:", error);
+    if (error?.message === "EXPENSE_DELETED") {
+      return NextResponse.json({ code: "EXPENSE_DELETED", expenseId }, { status: 404 });
+    }
+    if (error?.message?.startsWith("EXPENSE_VERSION_CONFLICT:")) {
+      const latest = await supabaseAdmin
+        .from("expenses")
+        .select("revision")
+        .eq("id", expenseId)
+        .maybeSingle();
+      return NextResponse.json(
+        {
+          code: "EXPENSE_VERSION_CONFLICT",
+          expenseId,
+          expectedRevision,
+          currentRevision: latest.data?.revision ?? null,
+        },
+        { status: 409 }
+      );
+    }
     return NextResponse.json(
       { error: "Failed to update expense" },
       { status: 400 }
@@ -136,55 +226,89 @@ export async function PUT(
 
   const row = data[0];
 
-  return NextResponse.json({
-    id: row.id,
-    groupId: row.group_id,
-    description: row.description,
-    notes: row.notes,
-    amount: Number(row.amount),
-    currency: row.currency,
-    paidBy: {
-      id: row.paid_by_user_id,
-      name: row.paid_by_name,
+  const loaded = await loadExpenseDetails(expenseId);
+  const after = loaded?.snapshot ?? null;
+  if (before && after) await recordExpenseEdited(before, after, session);
+  broadcastExpenseChange({ event: "UPDATE", expenseId, groupId, originSessionId: session, revision: row.revision });
+
+  return successJson(
+    {
+      id: row.id,
+      groupId: row.group_id,
+      description: row.description,
+      notes: row.notes,
+      amount: Number(row.amount),
+      currency: row.currency,
+      paidBy: {
+        id: row.paid_by_user_id,
+        name: row.paid_by_name,
+      },
+      splitType: row.split_type,
+      category: row.category,
+      subcategory: row.subcategory,
+      date: String(row.date),
+      participants: row.participants,
+      attachmentDataUrl,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      revision: row.revision,
+      // The saved expense as the dashboard lists it (overrides the fields above
+      // that differ), so the client can show it at once.
+      ...loaded?.response,
     },
-    splitType: row.split_type,
-    category: row.category,
-    subcategory: row.subcategory,
-    date: String(row.date),
-    participants: row.participants,
-    attachmentDataUrl,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  });
+    row.category === SETTLEMENT_CATEGORY ? SUCCESS_MESSAGES.settlementUpdated : SUCCESS_MESSAGES.expenseUpdated
+  );
 }
 
 export async function DELETE(
-  _req: Request,
+  req: Request,
   { params }: { params: { expenseId: string } }
 ) {
   const expenseId = params.expenseId;
 
-  if (!expenseId) {
+  if (!isValidUUID(expenseId)) {
     return NextResponse.json(
-      { error: "Missing expenseId" },
+      { error: "Invalid expense ID" },
       { status: 400 }
     );
   }
 
-  const { error } = await supabaseAdmin
-    .from("expenses")
-    .delete()
-    .eq("id", expenseId);
+  const parsed2 = await readJsonObject(req, { allowedKeys: ["originSessionId"] });
+  const session = parsed2.ok && typeof parsed2.data.originSessionId === "string"
+    ? parsed2.data.originSessionId.slice(0, 128)
+    : null;
+  // The deleted expense's last state is what the activity entry shows.
+  const deleted = await loadExpenseSnapshot(expenseId);
+  // Read before deleting, while the row still says which file is its receipt.
+  const receipt = await loadExpenseAttachmentValue(expenseId).catch(() => null);
+  const { data, error } = await supabaseAdmin.rpc("delete_expense", {
+    p_expense_id: expenseId,
+  });
 
   if (error) {
     console.error("deleteExpense error:", error);
-    return NextResponse.json(
-      { error: "Failed to delete expense" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Failed to delete expense" }, { status: 400 });
   }
 
-  return NextResponse.json({ success: true });
+  // Nothing was deleted: someone else removed it first. The caller wanted it
+  // gone and it is, so this is a success. Their delete already recorded the
+  // activity and broadcast the change, so neither is repeated here.
+  if (!data) {
+    return successJson({ success: true, alreadyDeleted: true }, SUCCESS_MESSAGES.expenseDeleted);
+  }
+
+  // The receipt goes with its expense, whoever deleted it. When the expense was
+  // already gone (handled above), the delete that removed it did this.
+  await removeAttachmentFiles([receipt?.value], "removeDeletedExpenseReceipt");
+
+  if (deleted) {
+    await recordExpenseDeleted(deleted, session);
+    broadcastExpenseChange({ event: "DELETE", expenseId, groupId: deleted.groupId, originSessionId: session });
+  }
+  return successJson(
+    { success: true },
+    deleted && isSettlement(deleted) ? SUCCESS_MESSAGES.settlementDeleted : SUCCESS_MESSAGES.expenseDeleted
+  );
 }
 
 export async function PATCH(
@@ -193,16 +317,28 @@ export async function PATCH(
 ) {
   const expenseId = params.expenseId;
 
-  if (!expenseId) {
+  if (!isValidUUID(expenseId)) {
     return NextResponse.json(
-      { error: "Missing expenseId" },
+      { error: "Invalid expense ID" },
       { status: 400 }
     );
   }
 
-  const body = await req.json();
+  const parsed = await readJsonObject(req, {
+    allowedKeys: [
+      "category", "subcategory", "expectedCategory", "expectedSubcategory", "originSessionId",
+    ],
+  });
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
   const category = body?.category as CategoryKey | undefined;
   const subcategory = body?.subcategory as SubcategoryId | undefined;
+  // The category the user saw when picking; a different stored value means
+  // someone else changed it in the meantime.
+  const expectedCategory = body?.expectedCategory;
+  const expectedSubcategory = body?.expectedSubcategory;
+  const originSessionId =
+    typeof body?.originSessionId === "string" ? body.originSessionId.slice(0, 128) : null;
 
   if (!category || !subcategory) {
     return NextResponse.json(
@@ -223,38 +359,88 @@ export async function PATCH(
     );
   }
 
-  const { data, error } = await supabaseAdmin
-    .from("expenses")
-    .update({
-      category,
-      subcategory,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", expenseId)
-    .select(`
-      id,
-      group_id,
-      category,
-      subcategory,
-      updated_at
-    `)
-    .single();
-
-  if (error || !data) {
-    console.error("patchExpenseCategory error:", error);
+  if (validateCategory(expectedCategory, expectedSubcategory)) {
     return NextResponse.json(
-      { error: "Failed to update expense category" },
+      { error: "Invalid expected category" },
       { status: 400 }
     );
   }
 
-  return NextResponse.json({
-    id: data.id,
-    groupId: data.group_id,
-    category: data.category,
-    subcategory: data.subcategory,
-    updatedAt: data.updated_at,
+  const before = await loadExpenseSnapshot(expenseId);
+  const { data, error } = await supabaseAdmin.rpc("set_expense_category", {
+    p_expense_id: expenseId,
+    p_category: category,
+    p_subcategory: subcategory,
+    p_expected_category: expectedCategory as string,
+    p_expected_subcategory: expectedSubcategory as string,
   });
+
+  const row = data?.[0];
+
+  if (error?.message === "EXPENSE_DELETED") {
+    return NextResponse.json({ code: "EXPENSE_DELETED", expenseId }, { status: 404 });
+  }
+  if (error?.message === "EXPENSE_CATEGORY_CONFLICT") {
+    const latest = await supabaseAdmin
+      .from("expenses")
+      .select("category, subcategory")
+      .eq("id", expenseId)
+      .maybeSingle();
+    if (!latest.data) {
+      return NextResponse.json({ code: "EXPENSE_DELETED", expenseId }, { status: 404 });
+    }
+    return NextResponse.json(
+      {
+        code: "EXPENSE_CATEGORY_CONFLICT",
+        expenseId,
+        currentCategory: latest.data.category,
+        currentSubcategory: latest.data.subcategory,
+      },
+      { status: 409 }
+    );
+  }
+
+  if (error || !row) {
+    console.error("patchExpenseCategory error:", error);
+    const isProduction = process.env.NODE_ENV === "production";
+    return NextResponse.json(
+      {
+        error: isProduction
+          ? "We could not update the expense category. Please try again. If the problem persists, contact support."
+          : error?.message || "Failed to update expense category",
+        code: error?.code,
+        details: isProduction ? undefined : error?.details,
+      },
+      { status: 400 }
+    );
+  }
+
+  if (before && (before.category !== row.category || before.subcategory !== row.subcategory)) {
+    await recordExpenseChanges(
+      { ...before, category: row.category, subcategory: row.subcategory },
+      [
+        {
+          field: "category",
+          from: { category: before.category, subcategory: before.subcategory },
+          to: { category: row.category, subcategory: row.subcategory },
+        },
+      ],
+      originSessionId
+    );
+  }
+  broadcastExpenseChange({ event: "UPDATE", expenseId, groupId: row.group_id, originSessionId, revision: row.revision });
+
+  return successJson(
+    {
+      id: row.id,
+      groupId: row.group_id,
+      category: row.category,
+      subcategory: row.subcategory,
+      updatedAt: row.updated_at,
+      revision: row.revision,
+    },
+    SUCCESS_MESSAGES.categoryUpdated
+  );
 }
 
 export async function GET(
@@ -263,8 +449,8 @@ export async function GET(
 ) {
   const expenseId = params.expenseId;
 
-  if (!expenseId) {
-    return NextResponse.json(null, { status: 400 });
+  if (!isValidUUID(expenseId)) {
+    return NextResponse.json({ error: "Invalid expense ID" }, { status: 400 });
   }
 
   const { data, error } = await supabaseAdmin
@@ -282,6 +468,7 @@ export async function GET(
       date,
       created_at,
       updated_at,
+      revision,
       attachment_data_url,
       expense_participants (
         user_id,
@@ -292,6 +479,7 @@ export async function GET(
         id,
         name,
         currency,
+        revision,
         group_members (
           users (
             id,
@@ -340,6 +528,9 @@ export async function GET(
       id: expenseRow.groups.id,
       name: expenseRow.groups.name,
       currency: expenseRow.groups.currency,
+      // Lets the screen tell which realtime group changes this snapshot
+      // already includes (read in the same query as the members).
+      revision: expenseRow.groups.revision,
       members: expenseRow.groups.group_members.map((gm) => ({
         id: gm.users.id,
         name: gm.users.name,
@@ -362,6 +553,7 @@ export async function GET(
       date: expenseRow.date,
       createdAt: expenseRow.created_at,
       updatedAt: expenseRow.updated_at,
+      revision: expenseRow.revision,
       attachmentDataUrl,
       attachment: attachmentResolution.attachment,
       participants: expenseRow.expense_participants.map((p: ExpenseParticipantRow) => ({

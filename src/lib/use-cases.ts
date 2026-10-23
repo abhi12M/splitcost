@@ -42,6 +42,19 @@ const useCaseMetaBySlug: Record<
   },
 };
 
+/**
+ * Blog posts linked from each use-case page, in display order. Shown on the
+ * English pages only, since the blog is English-only; slugs with no
+ * published post are skipped.
+ */
+export const USE_CASE_RELATED_BLOG_SLUGS: Record<UseCaseSlug, readonly string[]> = {
+  travel: ["how-to-share-vacation-costs-when-plans-change", "shared-expense-multiple-payers"],
+  roommates: ["split-household-expenses-with-roommates", "what-are-shared-expenses"],
+  couples: ["what-are-shared-expenses", "check-shared-expenses-before-settling-up"],
+  friends: ["how-to-split-expenses-with-friends", "how-to-split-a-group-gift-fairly"],
+  teams: ["shared-expense-multiple-payers", "how-to-settle-group-expenses"],
+};
+
 export const USE_CASE_LIST: UseCaseMeta[] = USE_CASE_SLUGS.map((slug) => ({
   slug,
   ...useCaseMetaBySlug[slug],

@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
 import NextLink from "next/link";
 import { Link } from "@/i18n/navigation";
-import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Plus,
@@ -33,6 +32,7 @@ import {
 import { MobileGroupDashboard } from "@/components/group/MobileGroupDashboard";
 import { MobileGroupDashboardSkeleton } from "@/components/group/MobileGroupDashboardSkeleton";
 import { Layout } from "@/components/layout/Layout";
+import { ResourceNotFound } from "@/components/ResourceNotFound";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserAvatar, AvatarGroup } from "@/components/ui/UserAvatar";
@@ -57,31 +57,29 @@ import {
   GroupDashboardInterface,
   UserInterface,
 } from "@/lib/storage";
-import {
-  invalidateGroupDashboard,
-  useGroupDashboardQuery,
-} from "@/lib/queries";
+import { isDashboardExpense, withExpenseInList } from "@/lib/offline/cache";
+import { useGroupDashboard } from "@/lib/groupExpenseData";
+import { useGroupChanges, useGroupRealtime } from "@/hooks/useGroupRealtime";
+import { useGroupChangeNotices } from "@/components/group/GroupChangeNotices";
+import { GroupDeletedDialog } from "@/components/group/GroupDeletedDialog";
+import { applyGroupChangesToDashboard } from "@/lib/realtime/groupChanges";
+import { useActivitySignals } from "@/hooks/useActivitySignals";
+import { RecentActivityCard } from "@/components/activity/RecentActivityCard";
+import { useAttachmentUploadCompletion } from "@/lib/attachmentUploads";
 import { SingleSelect } from "@/components/ui/single-select";
-import { formatExpenseGroupHeaderTitle, toTitleCase } from "@/components/ui/formatters";
+import { formatDateForDB, formatExpenseGroupHeaderTitle, toTitleCase } from "@/components/ui/formatters";
 import { resolveCategoryDisplayLabel } from "@/lib/category-labels";
 import { shareOrCopy } from "@/lib/shareContent";
-import { isMobileViewportWidth, useDeviceType } from "@/hooks/useDeviceType";
+import { useDeviceType } from "@/hooks/useDeviceType";
 import { toast } from "@/hooks/use-toast";
 import { getEncryptedItem, setEncryptedItem } from "@/lib/localStorage";
 import { ADMIN_BASE_PATH, LOCAL_GROUPS_KEY } from "@/lib/constants";
-import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { SmartTooltip } from "@/components/ui/smartTooltip";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { GenericAlertDialog } from "@/components/ui/generic-alert-dialog";
+import { GuardedLink } from "@/components/sync/GuardedLink";
+import { OfflineBanner } from "@/components/sync/OfflineBanner";
+import { useGroupAccess, useOfflineFailureToast } from "@/hooks/useOffline";
 
 function ChartLoadingPlaceholder() {
   const tCommon = useTranslations("common");
@@ -354,99 +352,6 @@ function buildExpensesCsv(
     .join("\r\n");
 }
 
-function GroupResponsesSkeleton() {
-  return (
-    <Layout>
-      <div className="container space-y-5 py-5 sm:space-y-6 sm:py-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="flex flex-1 items-center gap-3">
-            <Skeleton className="h-9 w-9 shrink-0 rounded-md" />
-            <div className="min-w-0 flex-1 space-y-2">
-              <Skeleton className="h-7 w-48 max-w-full sm:h-8" />
-              <Skeleton className="h-4 w-36" />
-            </div>
-          </div>
-          <div className="flex justify-end gap-2">
-            <Skeleton className="h-9 w-20 rounded-md" />
-            <Skeleton className="h-9 w-20 rounded-md" />
-            <Skeleton className="hidden h-9 w-28 rounded-md sm:block" />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-[4.5rem] rounded-xl sm:h-[4.75rem]" />
-          ))}
-        </div>
-
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {/* LEFT COLUMN */}
-          <div className="lg:col-span-2 space-y-4">
-            {/* Filters */}
-            <div className="border rounded-lg p-4 space-y-3">
-              <Skeleton className="h-10 w-full" />
-              <div className="grid grid-cols-2 gap-3">
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-            </div>
-
-            {/* Expense list */}
-            <div className="border rounded-lg">
-              <div className="p-4 flex justify-between">
-                <Skeleton className="h-5 w-32" />
-                <Skeleton className="h-9 w-20" />
-              </div>
-
-              {Array.from({ length: 2 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="flex gap-3 p-4 border-t items-center"
-                >
-                  <Skeleton className="w-10 h-10 rounded-xl" />
-
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-3 w-1/3" />
-                    <Skeleton className="h-5 w-32" />
-                  </div>
-
-                  <Skeleton className="h-4 w-16" />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* RIGHT COLUMN */}
-          <div className="space-y-4">
-            {/* Balances */}
-            <div className="border rounded-lg p-4 space-y-3">
-              <Skeleton className="h-5 w-32" />
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="flex justify-between items-center">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-4 w-16" />
-                </div>
-              ))}
-            </div>
-
-            {/* Settlements */}
-            <div className="border rounded-lg p-4 space-y-3">
-              <Skeleton className="h-5 w-40" />
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="flex justify-between">
-                  <Skeleton className="h-4 w-40" />
-                  <Skeleton className="h-4 w-16" />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </Layout>
-  );
-}
-
 /* ======================================================
    COMPONENT
 ====================================================== */
@@ -458,16 +363,49 @@ export default function GroupResponsesPage({
   isAdminView?: boolean;
 }) {
   const t = useTranslations("groupDetails");
+  const tToasts = useTranslations("toasts");
   const tGroup = useTranslations("group");
   const tCommon = useTranslations("common");
   const tCategories = useTranslations("categories");
+  // "Gets back" / "Needs to pay": one set of words for every screen (messages: balanceLabels).
+  const tBalance = useTranslations("balanceLabels");
   const resolveCategoryLabel = useCallback(
     (key: string) => resolveCategoryDisplayLabel(tCategories, key, toTitleCase(key.replace(/_/g, " "))),
     [tCategories]
   );
   const youLabel = tGroup("you");
-  const queryClient = useQueryClient();
-  const dashboardQuery = useGroupDashboardQuery(groupId);
+  const { data: dashboard, loading, refresh, applyChange, applyRemoteExpenseChange } = useGroupDashboard(groupId);
+  const attachmentUploadVersion = useAttachmentUploadCompletion(groupId);
+  const access = useGroupAccess(groupId);
+  const showOfflineFailure = useOfflineFailureToast();
+
+  // Deleted in another session: block the screen with an explanation. Both
+  // the broadcast and the database delete event can report it.
+  const [groupDeleted, setGroupDeleted] = useState(false);
+
+  useGroupRealtime({
+    groupId,
+    onExpenseChange: applyRemoteExpenseChange,
+    onReconnect: () => {
+      void refresh();
+    },
+  });
+
+  // Member and group edits arrive with their full change, so apply them to the
+  // loaded dashboard (balances are derived from it) instead of refetching.
+  const changeNotices = useGroupChangeNotices();
+  useGroupChanges(
+    groupId,
+    (changes) => {
+      applyChange((prev) => applyGroupChangesToDashboard(prev, changes), changes.revision);
+      changeNotices.notify(changes);
+    },
+    () => setGroupDeleted(true)
+  );
+
+  useEffect(() => {
+    if (attachmentUploadVersion > 0) void refresh();
+  }, [attachmentUploadVersion, refresh]);
 
   const groupByOptions = useMemo(
     () => [
@@ -488,15 +426,29 @@ export default function GroupResponsesPage({
     [t]
   );
 
-  const group = dashboardQuery.data?.group ?? null;
-  const expenses = dashboardQuery.data?.expenses ?? [];
-  const loading = dashboardQuery.isPending;
+  const group = dashboard?.group ?? null;
+  const expenses = dashboard?.expenses ?? [];
+
+  // The tab title is rendered on the server with the name at load time; keep
+  // it in step when the group is renamed in another session.
+  const tMetadata = useTranslations("metadata.group");
+  const groupName = group?.name;
+  useEffect(() => {
+    if (isAdminView || !groupName) return;
+    document.title = tMetadata("titleWithName", { name: groupName });
+  }, [isAdminView, groupName, tMetadata]);
 
   const [viewerMemberId, setViewerMemberId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!groupId) return;
     let id = getGroupViewerMemberId(groupId);
+    // The chosen member may have been removed (e.g. in another session):
+    // forget them so the picker asks again instead of holding a stale id.
+    if (group && id && !group.members.some((member) => member.id === id)) {
+      clearGroupViewerMemberId(groupId);
+      id = null;
+    }
     if (group && !id && group.members.length === 1) {
       id = group.members[0].id;
       setGroupViewerMemberId(groupId, id);
@@ -538,15 +490,13 @@ export default function GroupResponsesPage({
 
   const device = useDeviceType();
 
-  // Track this group in the user's local "recent groups" list whenever the
-  // dashboard loads it. Independent from data fetching now that React Query
-  // owns the request lifecycle.
+  // Track this group in the user's local "recent groups" list once it loads.
   useEffect(() => {
-    if (!groupId || isAdminView || !dashboardQuery.data) return;
+    if (!groupId || isAdminView || !dashboard) return;
     const existingGroups = getEncryptedItem<string[]>(LOCAL_GROUPS_KEY, []);
     const updatedGroups = Array.from(new Set([groupId, ...existingGroups]));
     setEncryptedItem(LOCAL_GROUPS_KEY, updatedGroups);
-  }, [groupId, isAdminView, dashboardQuery.data]);
+  }, [groupId, isAdminView, dashboard]);
 
   /* ======================================================
      FILTER / SORT / GROUP
@@ -628,6 +578,34 @@ export default function GroupResponsesPage({
     [balances, members]
   );
 
+  const activitySignals = useActivitySignals(dashboard);
+
+  // An open settle confirmation holds the amount from when it was opened. If
+  // an expense change in another session alters that debt, confirming would
+  // record the old amount, so close it and say why. An unchanged debt keeps
+  // it open with the fresh row (new names after a rename, new position).
+  // Skipped while this screen is settling: its own reload removes the debt.
+  const settleStateRef = useRef({ settleConfirmation, settlingIndex, groupDeleted });
+  settleStateRef.current = { settleConfirmation, settlingIndex, groupDeleted };
+  useEffect(() => {
+    const { settleConfirmation: open, settlingIndex: settling, groupDeleted: deleted } = settleStateRef.current;
+    if (!open || settling !== null || deleted || !members) return;
+    const index = settlements.findIndex(
+      (s) => s.fromId === open.settlement.fromId && s.toId === open.settlement.toId
+    );
+    const current = settlements[index];
+    if (current && Math.abs(current.amount - open.settlement.amount) < 0.005) {
+      if (current !== open.settlement) setSettleConfirmation({ settlement: current, index });
+      return;
+    }
+    setSettleConfirmation(null);
+    toast({
+      title: tToasts("settlementChanged"),
+      description: tToasts("settlementChangedHint"),
+      variant: "warning",
+    });
+  }, [settlements, members, tToasts]);
+
   const totalExpenses = useMemo(
     () => expenses.reduce((s, e) => s + e.amount, 0),
     [expenses]
@@ -642,31 +620,26 @@ export default function GroupResponsesPage({
     [groupedExpenses]
   );
 
-  const isMobileGroupLoading = device === "mobile" || isMobileViewportWidth();
-
   if (loading) {
-    // SSR defaults to desktop in useDeviceType — use minimal skeleton so phones
-    // never flash the full-site GroupResponsesSkeleton (header + footer).
-    if (typeof window === "undefined" || isMobileGroupLoading) {
-      return (
-        <Layout variant="minimal">
-          <MobileGroupDashboardSkeleton />
-        </Layout>
-      );
-    }
-    return <GroupResponsesSkeleton />;
+    return (
+      <Layout variant="minimal">
+        <MobileGroupDashboardSkeleton />
+      </Layout>
+    );
   }
 
   if (!group) {
     return (
-      <Layout>
-        <div className="container py-12 text-center">
-          <p className="text-muted-foreground">{tCommon("groupNotFound")}</p>
-          <Button asChild className="mt-4">
-            <Link href="/">{tCommon("goHome")}</Link>
-          </Button>
-        </div>
-      </Layout>
+      <>
+        <ResourceNotFound
+          message={tCommon("groupNotFound")}
+          actionLabel={tCommon("goHome")}
+          actionHref="/"
+        />
+        {/* A deletion's cascading expense events can reload this screen to
+            "not found" before the explanation arrives; still show it. */}
+        <GroupDeletedDialog open={groupDeleted} />
+      </>
     );
   }
 
@@ -675,12 +648,15 @@ export default function GroupResponsesPage({
   type CopyType = "settlement" | "link";
 
   const shareGroupContent = async (type: CopyType) => {
+    // Both share a link to the group, which only works once it is on the server.
+    if (!access.check("share")) return;
     const settlementText = type === "settlement" ? getSettlementText() : "";
 
     if (type === "settlement" && !settlementText.trim()) {
       toast({
         title: t("nothingToShare"),
         description: t("nothingToShareHint"),
+        variant:'info',
       });
       return;
     }
@@ -708,12 +684,13 @@ export default function GroupResponsesPage({
           type === "link"
             ? t("copiedLinkHint")
             : t("copiedSettlementHint"),
+        variant: "success",
       });
     } else if (outcome === "failed") {
       toast({
         title: t("shareFailedTitle"),
         description: t("shareFailedHint"),
-        variant: "destructive",
+        variant: "error",
       });
     }
   };
@@ -747,6 +724,7 @@ export default function GroupResponsesPage({
       toast({
         title: t("nothingToExport"),
         description: search ? t("noSearchExport") : t("addBeforeExport"),
+        variant:'info',
       });
       return;
     }
@@ -758,7 +736,7 @@ export default function GroupResponsesPage({
       category: t("exportCategory"),
       cost: t("exportCost"),
       currency: t("exportCurrency"),
-      netMeaning: t("exportNetMeaning"),
+      netMeaning: tBalance("exportNetMeaning"),
       totalBalance: t("exportTotalBalance"),
     });
     const blob = new Blob([`\uFEFF${csv}`], {
@@ -766,7 +744,7 @@ export default function GroupResponsesPage({
     });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    const today = new Date().toISOString().split("T")[0];
+    const today = formatDateForDB(new Date());
 
     link.href = url;
     link.download = `${slugifyFilename(group.name)}-expenses-${today}.csv`;
@@ -778,6 +756,7 @@ export default function GroupResponsesPage({
     toast({
       title: t("exportReady"),
       description: t("exportReadyDescription", { count: exportExpenses.length }),
+      variant: "success",
     });
   };
 
@@ -785,6 +764,10 @@ export default function GroupResponsesPage({
     setlementData: ReturnType<typeof calculateSettlements>[number],
     index: number
   ) => {
+    if (!access.check("settle")) {
+      setSettleConfirmation(null);
+      return;
+    }
     try {
       setSettlingIndex(index);
       const data: ExpenseRequest = {
@@ -798,7 +781,9 @@ export default function GroupResponsesPage({
         currency: group.currency,
         paidByUserId: setlementData.fromId,
         splitType: "equal",
-        date: new Date().toISOString().split("T")[0],
+        // The local date, as the add form uses; toISOString() would give the
+        // UTC date, which is yesterday's for part of the night in India.
+        date: formatDateForDB(new Date()),
         participants: [
           {
             userId: setlementData.toId,
@@ -807,10 +792,21 @@ export default function GroupResponsesPage({
           }
         ]
       }
-      await addExpense(groupId!, data);
-      await invalidateGroupDashboard(queryClient, groupId!);
+      const settlement = await addExpense(groupId!, data);
+      // Show it at once from the saved expense; the reload below confirms it.
+      if (isDashboardExpense(settlement)) {
+        applyChange((prev) => (prev ? { ...prev, expenses: withExpenseInList(prev.expenses, settlement) } : prev));
+      }
+      void refresh();
+      toast({ message: tToasts("settled"), variant: "success" });
     } catch (error) {
-      // toast.error("Failed to delete expense");
+      if (showOfflineFailure(error)) return;
+      toast({
+        title: tToasts("couldNotSettle"),
+        description: tToasts("tryAgainHint"),
+        variant: "error",
+        action: { label: tToasts("retry"), callback: () => void handleSettle(setlementData, index) },
+      });
     } finally {
       setSettlingIndex(null);
     }
@@ -850,16 +846,21 @@ export default function GroupResponsesPage({
           settlingIndex={settlingIndex}
           settleConfirmation={settleConfirmation}
           setSettleConfirmation={setSettleConfirmation}
+          activityRefreshKey={activitySignals.refreshKey}
+          existingExpenseIds={activitySignals.existingExpenseIds}
           handleSettle={handleSettle}
           viewMode={viewMode}
           setViewMode={setViewMode}
           chartData={chartData}
           viewerMemberId={viewerMemberId}
           onViewerMemberIdChange={onViewerMemberIdChange}
+          access={access}
         />
       </Layout>
     );
   }
+
+  const blockEdit = () => access.check("edit");
 
   return (
     <Layout>
@@ -894,31 +895,34 @@ export default function GroupResponsesPage({
           </div>
           <div className="flex shrink-0 items-center justify-end gap-2 sm:justify-start">
             <Button variant="outline" size="sm" className="h-9 flex-1 sm:flex-initial" asChild>
-              <Link href={`/group/${groupId}/edit`}>
+              <GuardedLink href={`/group/${groupId}/edit`} allowed={access.can.edit} onBlocked={blockEdit}>
                 <Pencil className="h-4 w-4" />
                 <span className="sm:hidden">{tCommon("edit")}</span>
-              </Link>
+              </GuardedLink>
             </Button>
             <Button
               variant="outline"
               size="sm"
-              className="h-9 flex-1 sm:flex-initial"
+              className={cn("h-9 flex-1 sm:flex-initial", !access.can.share && "opacity-50")}
               type="button"
               title={t("shareGroupLink")}
               aria-label={t("shareGroupLink")}
+              aria-disabled={access.can.share ? undefined : true}
               onClick={() => shareGroupContent("link")}
             >
               <Share2 className="h-4 w-4" />
               <span className="sm:hidden">{tCommon("share")}</span>
             </Button>
             <Button asChild size="sm" className="hidden h-9 sm:inline-flex">
-              <Link href={`/group/${groupId}/add-expense`}>
+              <GuardedLink href={`/group/${groupId}/add-expense`} allowed={access.can.edit} onBlocked={blockEdit}>
                 <Plus className="h-4 w-4" />
                 {t("addExpense")}
-              </Link>
+              </GuardedLink>
             </Button>
           </div>
         </header>
+
+        <OfflineBanner groupId={groupId} access={access} />
 
         {/* Summary strip — matches dashboard-style overview */}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
@@ -1083,10 +1087,10 @@ export default function GroupResponsesPage({
 
                   {/* Add Button */}
                   <Button asChild size="sm">
-                    <Link href={`/group/${groupId}/add-expense`}>
+                    <GuardedLink href={`/group/${groupId}/add-expense`} allowed={access.can.edit} onBlocked={blockEdit}>
                       <Plus className="w-4 h-4" />
                       <span className="hidden sm:inline">{tCommon("add")}</span>
-                    </Link>
+                    </GuardedLink>
                   </Button>
                 </div>
 
@@ -1147,10 +1151,10 @@ export default function GroupResponsesPage({
                     </div>
 
                     <Button asChild size="sm" className="shrink-0">
-                      <Link href={`/group/${groupId}/add-expense`}>
+                      <GuardedLink href={`/group/${groupId}/add-expense`} allowed={access.can.edit} onBlocked={blockEdit}>
                         <Plus className="w-4 h-4" />
                         {t("addFirstExpense")}
-                      </Link>
+                      </GuardedLink>
                     </Button>
                   </div>
                 )}
@@ -1330,7 +1334,8 @@ export default function GroupResponsesPage({
                 {(expenses.length > 0 || settlements.length > 0) && (
                   <button
                     onClick={() => shareGroupContent("settlement")}
-                    className="p-2 rounded-md hover:bg-muted transition"
+                    className={cn("p-2 rounded-md hover:bg-muted transition", !access.can.share && "opacity-50")}
+                    aria-disabled={access.can.share ? undefined : true}
                     title={t("shareSettlement")}
                   >
                     <Share2 className="w-4 h-4 text-muted-foreground" />
@@ -1391,16 +1396,15 @@ export default function GroupResponsesPage({
                         <div className="flex justify-center pb-2">
                           <button
                             disabled={isLoading}
-                            onClick={() =>
-                              setSettleConfirmation({ settlement: s, index: i })
-                            }
-                            className={`
-              text-sm font-medium px-4 py-2 rounded-sm
-              bg-primary/10 text-primary
-              hover:bg-primary/20 transition
-              disabled:opacity-50 disabled:cursor-not-allowed
-              flex items-center gap-2
-            `}
+                            aria-disabled={access.can.settle ? undefined : true}
+                            onClick={() => {
+                              if (!access.check("settle")) return;
+                              setSettleConfirmation({ settlement: s, index: i });
+                            }}
+                            className={cn(
+                              "text-sm font-medium px-4 py-2 rounded-sm bg-primary/10 text-primary hover:bg-primary/20 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2",
+                              !access.can.settle && "opacity-50"
+                            )}
                           >
                             {isLoading && (
                               <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -1416,19 +1420,21 @@ export default function GroupResponsesPage({
               </CardContent>
             </Card>
 
-            <AlertDialog
+            <RecentActivityCard
+              groupId={groupId}
+              refreshKey={activitySignals.refreshKey}
+              existingExpenseIds={activitySignals.existingExpenseIds}
+            />
+
+            <GenericAlertDialog
               open={settleConfirmation !== null}
               onOpenChange={(open) => {
                 if (!open) setSettleConfirmation(null);
               }}
-            >
-              <AlertDialogContent className="max-w-[310px] rounded-2xl">
-                <AlertDialogHeader>
-                  <AlertDialogTitle className="text-lg">
-                    {t("recordSettlementTitle")}
-                  </AlertDialogTitle>
-                  <AlertDialogDescription className="text-xs">
-                    {settleConfirmation
+              title={t("recordSettlementTitle")}
+              titleClassName="text-lg"
+              descriptionClassName="text-xs"
+              description={<span>{settleConfirmation
                       ? t("recordSettlementDescriptionDesktop", {
                           from: memberDisplayNameForViewer(
                             settleConfirmation.settlement.fromId,
@@ -1445,45 +1451,41 @@ export default function GroupResponsesPage({
                             group.currency
                           ),
                         })
-                      : ""}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter className="flex-row gap-2 mt-4">
-                  <AlertDialogCancel className="flex-1 mt-0 rounded-xl border-none bg-muted hover:bg-muted/80">
-                    {tCommon("cancel")}
-                  </AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => {
+                      : ""}</span>}
+              contentClassName="max-w-[310px] rounded-2xl"
+              footerClassName="flex-row gap-2 mt-4"
+              actions={[
+                { label: tCommon("cancel"), type: "cancel", className: "flex-1 mt-0 border-none bg-muted hover:bg-muted/80" },
+                {
+                  label: tCommon("yesSettleUp"),
+                  className: "flex-1",
+                  onClick: () => {
                       if (!settleConfirmation) return;
                       handleSettle(
                         settleConfirmation.settlement,
                         settleConfirmation.index
                       );
-                    }}
-                    disabled={
-                      settleConfirmation
-                        ? settlingIndex === settleConfirmation.index
-                        : false
-                    }
-                    className="flex-1 rounded-xl"
-                  >
-                    {tCommon("yesSettleUp")}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+                  },
+                  disabled: settleConfirmation ? settlingIndex === settleConfirmation.index : false,
+                },
+              ]}
+            />
 
           </div>
         </div>
 
-        <Link
+        <GuardedLink
           href={`/group/${groupId}/add-expense`}
+          allowed={access.can.edit}
+          onBlocked={blockEdit}
           className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom,0px))] right-[max(1.25rem,env(safe-area-inset-right,0px))] z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition hover:bg-primary/92 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-[0.97] lg:hidden"
           aria-label={t("addExpense")}
         >
           <Plus className="h-7 w-7" strokeWidth={2.25} />
-        </Link>
+        </GuardedLink>
       </div>
+      {changeNotices.sheet}
+      <GroupDeletedDialog open={groupDeleted} />
     </Layout>
   );
 }

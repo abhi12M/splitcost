@@ -4,7 +4,17 @@ import { cn } from "@/lib/utils";
 
 export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> { }
 
-const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(({ className, ...props }, ref) => {
+const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
+  ({ className, onBlur, onChange, ...props }, ref) => {
+  const trimTextValueOnBlur = (event: React.FocusEvent<HTMLTextAreaElement>) => {
+    const trimmedValue = event.currentTarget.value.trim();
+    if (trimmedValue === event.currentTarget.value) return;
+
+    const valueSetter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")?.set;
+    valueSetter?.call(event.currentTarget, trimmedValue);
+    onChange?.(event as unknown as React.ChangeEvent<HTMLTextAreaElement>);
+  };
+
   return (
     <textarea
       className={cn(
@@ -19,6 +29,11 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(({ classNa
         className,
       )}
       ref={ref}
+      onBlur={(event) => {
+        trimTextValueOnBlur(event);
+        onBlur?.(event);
+      }}
+      onChange={onChange}
       {...props}
     />
   );

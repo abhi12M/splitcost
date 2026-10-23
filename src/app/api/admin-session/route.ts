@@ -7,15 +7,16 @@ import {
   isAuthorizedAdminRequest,
   verifyAdminCredentials,
 } from "@/lib/admin-auth";
+import { readJsonObject } from "@/lib/api/request";
+import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 
 export async function GET(request: Request) {
   return NextResponse.json({ authenticated: isAuthorizedAdminRequest(request) });
 }
 
 export async function POST(request: Request) {
-  const body = (await request.json().catch(() => null)) as
-    | { loginId?: unknown; password?: unknown }
-    | null;
+  const parsed = await readJsonObject(request, { allowedKeys: ["loginId", "password"] });
+  const body = parsed.ok ? parsed.data : null;
   const loginId = typeof body?.loginId === "string" ? body.loginId : "";
   const password = typeof body?.password === "string" ? body.password : "";
 
@@ -23,7 +24,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid admin credentials" }, { status: 401 });
   }
 
-  const response = NextResponse.json({ authenticated: true });
+  const response = successJson({ authenticated: true }, SUCCESS_MESSAGES.signedIn);
   response.cookies.set(
     ADMIN_SESSION_COOKIE,
     createAdminSessionToken(),
@@ -33,7 +34,7 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE() {
-  const response = NextResponse.json({ authenticated: false });
+  const response = successJson({ authenticated: false }, SUCCESS_MESSAGES.signedOut);
   response.cookies.set(ADMIN_SESSION_COOKIE, "", {
     ...getAdminSessionCookieOptions(),
     maxAge: 0,

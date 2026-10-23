@@ -16,6 +16,7 @@ import {
   ChevronRight,
   ChevronUp,
   Handshake,
+  History,
   Download,
   MoreHorizontal,
   Pencil,
@@ -74,16 +75,12 @@ import { resolveCategoryDisplayLabel } from "@/lib/category-labels";
 import { cn } from "@/lib/utils";
 import { ADMIN_BASE_PATH } from "@/lib/constants";
 import { useBackButtonClose } from "@/hooks/useBackButtonClose";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { GenericAlertDialog } from "@/components/ui/generic-alert-dialog";
+import { ActivityFeed } from "@/components/activity/ActivityFeed";
+import { GuardedLink } from "@/components/sync/GuardedLink";
+import { OfflineBanner } from "@/components/sync/OfflineBanner";
+import { SyncStatusButton } from "@/components/sync/SyncStatus";
+import type { GroupAccess } from "@/hooks/useOffline";
 
 const ExpenseChart = dynamic(() => import("@/components/group/ExpenseChart"), {
   ssr: false,
@@ -145,6 +142,12 @@ export type MobileGroupDashboardProps = {
   chartData: { name: string; value: number }[];
   viewerMemberId: string | null;
   onViewerMemberIdChange: (memberId: string | null) => void;
+  /** Changes whenever group data changes, to reload activity in the background. */
+  activityRefreshKey: string;
+  /** Expenses the activity feed can still open. */
+  existingExpenseIds: ReadonlySet<string>;
+  /** What can be changed right now (offline, or a group not synced yet). */
+  access: GroupAccess;
 };
 
 function groupTotal(list: GroupDashboardInterface["expenses"]) {
@@ -183,11 +186,18 @@ export function MobileGroupDashboard({
   chartData,
   viewerMemberId,
   onViewerMemberIdChange,
+  activityRefreshKey,
+  existingExpenseIds,
+  access,
 }: MobileGroupDashboardProps) {
+  const blockEdit = () => access.check("edit");
   const t = useTranslations("groupDetails");
   const tGroup = useTranslations("group");
   const tCommon = useTranslations("common");
   const tCategories = useTranslations("categories");
+  const tActivity = useTranslations("activity");
+  // "Gets back" / "Needs to pay": one set of words for every screen (messages: balanceLabels).
+  const tBalance = useTranslations("balanceLabels");
   const resolveCategoryLabel = useCallback(
     (key: string) => resolveCategoryDisplayLabel(tCategories, key),
     [tCategories]
@@ -286,9 +296,11 @@ export function MobileGroupDashboard({
               </Link>
             )}
           </Button>
-          <h1 className="min-w-0 flex-1 truncate text-base font-semibold tracking-tight">
+          <h1 className="min-w-0 truncate text-base font-semibold tracking-tight">
             {group.name}
           </h1>
+          <SyncStatusButton className="-ml-1 h-6 w-6" />
+          <div className="flex-1" aria-hidden />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon-sm" className="shrink-0" aria-label={t("groupMenu")}>
@@ -297,12 +309,18 @@ export function MobileGroupDashboard({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuItem asChild>
-                <Link href={`/group/${groupId}/edit`} className="flex items-center gap-2">
+                <GuardedLink
+                  href={`/group/${groupId}/edit`}
+                  allowed={access.can.edit}
+                  onBlocked={blockEdit}
+                  className="flex items-center gap-2"
+                >
                   <Pencil className="h-4 w-4" />
                   {t("editGroup")}
-                </Link>
+                </GuardedLink>
               </DropdownMenuItem>
               <DropdownMenuItem
+                className={cn(!access.can.share && "opacity-50")}
                 onClick={() => {
                   void copyLink("link");
                 }}
@@ -312,6 +330,7 @@ export function MobileGroupDashboard({
               </DropdownMenuItem>
               {settlements.length > 0 ? (
                 <DropdownMenuItem
+                  className={cn(!access.can.share && "opacity-50")}
                   onClick={() => {
                     void copyLink("settlement");
                   }}
@@ -433,6 +452,7 @@ export function MobileGroupDashboard({
             )}
           </div>
         </div>
+        <OfflineBanner groupId={groupId} access={access} className="mx-3 mb-2 sm:mx-4" />
       </header>
 
       <Tabs defaultValue="expenses" className="flex flex-1 flex-col px-0">
@@ -445,6 +465,7 @@ export function MobileGroupDashboard({
                 placeholder={t("searchExpenses")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                onBlur={(event) => setSearch(event.target.value.trim())}
                 aria-label={t("searchExpenses")}
               />
             </div>
@@ -697,8 +718,8 @@ export function MobileGroupDashboard({
                 Math.abs(bal) < 0.01
                   ? t("settledUp")
                   : bal > 0.01
-                    ? t("getsBack")
-                    : t("owesGroup");
+                    ? tBalance("getsBack")
+                    : tBalance("needsToPay");
               const displayName = memberDisplayNameForViewer(m.id, m.name, viewerMemberId, youLabel);
 
               return (
@@ -768,8 +789,12 @@ export function MobileGroupDashboard({
                           variant="default"
                           size="sm"
                           disabled={isLoading}
-                          className="font-semibold"
-                          onClick={() => setSettleConfirmation({ settlement: s, index: i })}
+                          aria-disabled={access.can.settle ? undefined : true}
+                          className={cn("font-semibold", !access.can.settle && "opacity-50")}
+                          onClick={() => {
+                            if (!access.check("settle")) return;
+                            setSettleConfirmation({ settlement: s, index: i });
+                          }}
                         >
                           {isLoading ? (
                             <span className="inline-flex items-center gap-2">
@@ -787,6 +812,10 @@ export function MobileGroupDashboard({
               })}
             </ul>
           )}
+        </TabsContent>
+
+        <TabsContent value="activity" className="mt-0 flex-1 px-3 pb-32 pt-3 focus-visible:outline-none sm:px-4">
+          <ActivityFeed groupId={groupId} refreshKey={activityRefreshKey} existingExpenseIds={existingExpenseIds} />
         </TabsContent>
 
         <nav
@@ -818,29 +847,35 @@ export function MobileGroupDashboard({
               <Handshake className="h-4 w-4 shrink-0" aria-hidden />
               <span className="whitespace-nowrap">{t("tabSettlements")}</span>
             </TabsTrigger>
+            <TabsTrigger
+              value="activity"
+              aria-label={tActivity("title")}
+              className="flex min-w-[4.25rem] flex-col items-center justify-center gap-0.5 rounded-xl px-3 py-2 text-[10px] font-semibold leading-tight text-muted-foreground transition-all hover:text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
+            >
+              <History className="h-4 w-4 shrink-0" aria-hidden />
+              <span className="whitespace-nowrap">{tActivity("title")}</span>
+            </TabsTrigger>
           </TabsList>
         </nav>
       </Tabs>
 
-      <Link
+      <GuardedLink
         href={`/group/${groupId}/add-expense`}
+        allowed={access.can.edit}
+        onBlocked={blockEdit}
         className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+5.75rem)] right-[max(1.25rem,env(safe-area-inset-right,0px))] z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition hover:bg-primary/92 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-[0.97]"
         aria-label={t("addExpense")}
       >
         <Plus className="h-7 w-7" strokeWidth={2.25} />
-      </Link>
+      </GuardedLink>
 
-      <AlertDialog
+      <GenericAlertDialog
         open={settleConfirmation !== null}
         onOpenChange={(open) => {
           if (!open) setSettleConfirmation(null);
         }}
-      >
-        <AlertDialogContent className="max-w-[min(100vw-2rem,22rem)] rounded-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-lg">{t("recordSettlementTitle")}</AlertDialogTitle>
-            <AlertDialogDescription className="text-sm">
-              {settleConfirmation
+        title={t("recordSettlementTitle")}
+        description={<span>{settleConfirmation
                 ? t("recordSettlementDescription", {
                     from: memberDisplayNameForViewer(
                       settleConfirmation.settlement.fromId,
@@ -859,25 +894,21 @@ export function MobileGroupDashboard({
                       group.currency
                     ),
                   })
-                : ""}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="mt-4 flex-row gap-2">
-            <AlertDialogCancel className="mt-0 flex-1 rounded-xl">{tCommon("cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              className="flex-1 rounded-xl"
-              disabled={settleConfirmation ? settlingIndex === settleConfirmation.index : false}
-              onClick={async () => {
+                : ""}</span>}
+        actions={[
+          { label: tCommon("cancel"), type: "cancel", className: "mt-0 flex-1" },
+          {
+            label: tCommon("confirm"),
+            className: "flex-1",
+            disabled: settleConfirmation ? settlingIndex === settleConfirmation.index : false,
+            onClick: async () => {
                 if (!settleConfirmation) return;
                 await handleSettle(settleConfirmation.settlement, settleConfirmation.index);
                 setSettleConfirmation(null);
-              }}
-            >
-              {tCommon("confirm")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            },
+          },
+        ]}
+      />
     </div>
   );
 }

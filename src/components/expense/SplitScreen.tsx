@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ArrowLeft, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -10,8 +10,7 @@ import { ExpenseParticipantsRequest, SplitType, UserInterface } from "@/lib/stor
 import { formatAmount, getCurrencyDifference, getRoundedDifference } from "../ui/formatters";
 import { useKeyboardLayout } from "@/hooks/useKeyboardOffset";
 import { useSwipeable } from "react-swipeable";
-import { toast } from "@/hooks/use-toast";
-import { ToastAction } from "@radix-ui/react-toast";
+import { GenericAlertDialog } from "../ui/generic-alert-dialog";
 import { InfoSheetButton } from "../ui/InfoSheetButton";
 import { getSplitInfoText } from "./expenseInfo";
 import { memberNameForViewer } from "@/lib/groupExpenseLabels";
@@ -304,6 +303,7 @@ export default function SplitScreen(props: SplitScreenProps) {
     const { onClose, amount, currency, members, viewerMemberId, initialParticipants, splitType, onConfirm } = props;
     const t = useTranslations("expense");
     const tCommon = useTranslations("common");
+    const [validationMessage, setValidationMessage] = useState<string | null>(null);
     const youLabel = useTranslations("group")("you");
     const { keyboardOffset } = useKeyboardLayout();
     const swipeHandlers = useSwipeable({
@@ -433,6 +433,64 @@ export default function SplitScreen(props: SplitScreenProps) {
         );
     }
 
+    // Keep the open screen in step with members changed in another session:
+    // removed members drop out, renamed ones show their new name, and added
+    // ones appear unselected. Values already entered for others are kept.
+    const syncedMembersRef = useRef(members);
+    useEffect(() => {
+        if (syncedMembersRef.current === members) return;
+        syncedMembersRef.current = members;
+
+        updateVM((prev) => {
+            const sync = <T extends BaseTabMember>(list: T[], blank: (m: UserInterface) => T): T[] => {
+                const byId = new Map(list.map((m) => [m.id, m]));
+                return members.map((m) => {
+                    const existing = byId.get(m.id);
+                    return existing ? { ...existing, name: m.name } : blank(m);
+                });
+            };
+
+            const equalTab = prev.tabs.find((t) => t.id === "equal") as EqualTabVM;
+            const equalMembers = sync(equalTab.members, (m) => ({
+                id: m.id,
+                name: m.name,
+                isSelected: false,
+                calculatedAmount: 0,
+            }));
+
+            const tabs = recalcEqualTab(prev, equalMembers).map((t): SplitTabVM => {
+                if (t.id === "custom") {
+                    const customMembers = sync(t.members, (m) => ({ id: m.id, name: m.name, value: null }));
+                    const total = customMembers.reduce((s, m) => s + (m.value || 0), 0);
+                    return {
+                        ...t,
+                        members: customMembers,
+                        footer: { selected: { totalValue: total, difference: getCurrencyDifference(amount || 0, total) } },
+                    };
+                }
+
+                if (t.id === "percentage") {
+                    const percentMembers = sync(t.members, (m) => ({
+                        id: m.id,
+                        name: m.name,
+                        value: null,
+                        calculatedAmount: 0,
+                    }));
+                    const total = percentMembers.reduce((s, m) => s + (m.value || 0), 0);
+                    return {
+                        ...t,
+                        members: percentMembers,
+                        footer: { selected: { totalValue: total, difference: getRoundedDifference(100, total) } },
+                    };
+                }
+
+                return t;
+            });
+
+            return { ...prev, tabs };
+        });
+    }, [members]);
+
     function toggleEqualMember(id: string) {
         updateVM((prev) => {
             const tab = prev.tabs.find((t) => t.id === "equal") as EqualTabVM;
@@ -540,14 +598,7 @@ export default function SplitScreen(props: SplitScreenProps) {
                     .map((m) => ({ userId: m.id, amount: m.calculatedAmount, percent: null })),
             };
             if (!data?.participants?.length) {
-                toast({
-                    title: tCommon("whoops"),
-                    description: t("selectOneToSplit"),
-                    position: "center",
-                    hideClose: true,
-                    duration: Infinity,
-                    action: <ToastAction altText={tCommon("ok")}>{tCommon("ok")}</ToastAction>,
-                });
+                setValidationMessage(t("selectOneToSplit"));
                 return;
             }
             return data;
@@ -574,14 +625,7 @@ export default function SplitScreen(props: SplitScreenProps) {
                     errMsg = t("splitCustomOver", { total: totalFormatted, diff: diffFormatted });
                 }
 
-                toast({
-                    title: tCommon("whoops"),
-                    description: errMsg,
-                    position: "center",
-                    hideClose: true,
-                    duration: Infinity,
-                    action: <ToastAction altText={tCommon("ok")}>{tCommon("ok")}</ToastAction>,
-                });
+                if (errMsg) setValidationMessage(errMsg);
                 return;
             }
             return data;
@@ -597,14 +641,7 @@ export default function SplitScreen(props: SplitScreenProps) {
                 errMsg = t("splitPercentOver", { diff: Math.abs(diff) });
             }
 
-            toast({
-                title: tCommon("whoops"),
-                description: errMsg,
-                position: "center",
-                hideClose: true,
-                duration: Infinity,
-                action: <ToastAction altText={tCommon("ok")}>{tCommon("ok")}</ToastAction>,
-            });
+            if (errMsg) setValidationMessage(errMsg);
             return;
         }
         const data:SplitResult = {
@@ -617,6 +654,7 @@ export default function SplitScreen(props: SplitScreenProps) {
     }
 
     return (
+        <>
         <div {...swipeHandlers} className="fixed inset-0 bg-background z-[60] flex flex-col">
 
             {/* Header */}
@@ -883,5 +921,13 @@ export default function SplitScreen(props: SplitScreenProps) {
                 })()}
             </div>
         </div>
+        <GenericAlertDialog
+            open={validationMessage !== null}
+            onOpenChange={(open) => !open && setValidationMessage(null)}
+            title={tCommon("whoops")}
+            messages={validationMessage ? [validationMessage] : []}
+            actions={[{ label: tCommon("gotIt"), onClick: () => setValidationMessage(null) }]}
+          />
+        </>
     );
 }

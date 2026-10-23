@@ -21,11 +21,13 @@ import { brandStyles, brandUseCaseAccent, landingSection } from "@/lib/brand-sty
 import { APP_NAME } from "@/lib/constants";
 import { getLocalizedCanonicalUrl } from "@/lib/seo-i18n";
 import { getBreadcrumbId, getWebPageId, getWebsiteId } from "@/lib/schema-identity";
+import { getPublishedBlogsBySlugs } from "@/lib/blog/queries";
 import { serializeStructuredDataForHtml } from "@/lib/blog/schema";
 import { RESOURCES_INDEX_PATH } from "@/lib/resources";
 import {
   USE_CASE_INDEX_PATH,
   USE_CASE_LIST,
+  USE_CASE_RELATED_BLOG_SLUGS,
   getUseCasePath,
   type UseCaseAccent,
   type UseCaseSlug,
@@ -73,7 +75,8 @@ const accentStyles: Record<
 const PAIN_POINT_KEYS = ["one", "two", "three"] as const;
 const STEP_KEYS = ["one", "two", "three", "four"] as const;
 const BENEFIT_KEYS = ["one", "two", "three", "four"] as const;
-const FAQ_KEYS = ["one", "two", "three"] as const;
+// "four" is optional; only some use cases have a fourth question.
+const FAQ_KEYS = ["one", "two", "three", "four"] as const;
 
 type UseCaseDetailPageProps = {
   locale: AppLocale;
@@ -92,10 +95,14 @@ export default async function UseCaseDetailPage({ locale, slug }: UseCaseDetailP
   const pagePath = getUseCasePath(slug);
   const pageUrl = getLocalizedCanonicalUrl(locale, pagePath);
 
-  const faqItems = FAQ_KEYS.map((key) => ({
+  const faqItems = FAQ_KEYS.filter((key) => t.has(`faq.${key}.question`)).map((key) => ({
     question: t(`faq.${key}.question`, { appName: APP_NAME }),
     answer: t(`faq.${key}.answer`, { appName: APP_NAME }),
   }));
+
+  // The blog is English-only, so other locales link to no guides.
+  const relatedGuides =
+    locale === "en" ? await getPublishedBlogsBySlugs(USE_CASE_RELATED_BLOG_SLUGS[slug]) : [];
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -322,6 +329,29 @@ export default async function UseCaseDetailPage({ locale, slug }: UseCaseDetailP
                 </details>
               ))}
             </div>
+
+            {relatedGuides.length > 0 ? (
+              <div className="mt-12">
+                <h2 className="text-center text-2xl font-bold text-foreground sm:text-3xl">
+                  {tShared("relatedGuidesTitle")}
+                </h2>
+                <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                  {relatedGuides.map((guide) => (
+                    <Link
+                      key={guide.slug}
+                      href={`/blog/${guide.slug}`}
+                      className="flex gap-3 rounded-xl border border-border/60 bg-card p-5 shadow-sm transition-shadow hover:shadow-md dark:border-border/80"
+                    >
+                      <BookOpen className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden />
+                      <div>
+                        <p className="font-semibold text-foreground">{guide.title}</p>
+                        <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{guide.excerpt}</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
         </section>
 

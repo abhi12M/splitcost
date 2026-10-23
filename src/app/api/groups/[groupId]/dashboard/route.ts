@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { isValidUUID } from "@/lib/api/expenseValidation"
 import { supabaseAdmin } from "@/lib/supabase/server"
 import { reconcileExpenseAttachmentReference } from "@/lib/supabase/attachments"
 
@@ -52,9 +53,18 @@ async function cleanMissingAttachmentReferences<T extends DashboardPayload>(
 }
 
 async function loadDashboard(groupId: string) {
-  if (!groupId) {
-    return NextResponse.json(null, { status: 400 })
+  if (!isValidUUID(groupId)) {
+    return NextResponse.json({ error: "Invalid group ID" }, { status: 400 })
   }
+
+  // Read the revision before the details: if a save lands in between, the
+  // editor holds newer data with an older revision, which only causes a
+  // harmless conflict, never a silent overwrite.
+  const { data: revisionRow } = await supabaseAdmin
+    .from("groups")
+    .select("revision")
+    .eq("id", groupId)
+    .maybeSingle()
 
   const { data, error } = await supabaseAdmin.rpc("load_group_details", {
     group_id: groupId,
@@ -64,7 +74,12 @@ async function loadDashboard(groupId: string) {
     return NextResponse.json(null, { status: 404 })
   }
 
-  return NextResponse.json(await cleanMissingAttachmentReferences(data))
+  const dashboard =
+    data.group && revisionRow
+      ? { ...data, group: { ...data.group, revision: revisionRow.revision } }
+      : data
+
+  return NextResponse.json(await cleanMissingAttachmentReferences(dashboard))
 }
 
 export async function GET(

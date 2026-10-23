@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 
 import { isAuthorizedAdminRequest } from "@/lib/admin-auth";
+import { readJsonObject } from "@/lib/api/request";
+import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import { createBlog, listAllBlogs } from "@/lib/blog/queries";
 import { normalizeBlogInput } from "@/lib/blog/input";
 
@@ -25,8 +27,16 @@ export async function GET(request: Request) {
 
 export async function POST(req: Request) {
   if (!isAuthorizedAdminRequest(req)) return unauthorized();
+  const parsed = await readJsonObject(req, {
+    maxBytes: 512_000,
+    allowedKeys: [
+      "title", "slug", "excerpt", "content", "cover_image", "cover_alt",
+      "category", "author", "status", "reading_time", "no_index", "is_featured",
+    ],
+  });
+  if (!parsed.ok) return parsed.response;
   try {
-    const payload = normalizeBlogInput(await req.json());
+    const payload = normalizeBlogInput(parsed.data);
     if (
       payload.status === "published" &&
       (!payload.title || !payload.slug || !payload.excerpt)
@@ -35,7 +45,7 @@ export async function POST(req: Request) {
     }
     const blog = await createBlog(payload);
     revalidatePath("/portal/x7k2p9/blogs");
-    return NextResponse.json(blog);
+    return successJson(blog, SUCCESS_MESSAGES.blogCreated);
   } catch (error: unknown) {
     console.error("createBlog error:", error);
     return NextResponse.json(

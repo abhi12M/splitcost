@@ -1,3 +1,9 @@
+import { getRealtimeOriginSessionId } from "@/lib/realtime/originSession";
+// A dropped connection then fails with an OfflineError (code "OFFLINE"), which
+// callers can tell apart from the server refusing the receipt.
+import { trackedFetch } from "@/lib/offline/network";
+import { patchCachedExpenseReceipt } from "@/lib/offline/cache";
+
 export const MAX_ATTACHMENT_SIZE_BYTES = 5 * 1024 * 1024;
 export const MAX_ATTACHMENT_SIZE_LABEL = "5 MB";
 export const EXPENSE_ATTACHMENT_BUCKET = "expense-attachments";
@@ -31,6 +37,15 @@ function mapAttachmentResponse(
     url: attachment.url,
     updatedAt: attachment.updatedAt,
   };
+}
+
+/** `code` says why a receipt call failed, e.g. EXPENSE_DELETED or ATTACHMENT_CHANGED. */
+export type ExpenseAttachmentError = Error & { code?: string };
+
+function attachmentError(payload: { error?: string; code?: string } | null, fallback: string) {
+  const error = new Error(payload?.error || payload?.code || fallback) as ExpenseAttachmentError;
+  error.code = payload?.code;
+  return error;
 }
 
 export function validateAttachmentFile(file: File): string | null {
@@ -79,14 +94,20 @@ export function revokeAttachmentObjectUrl(
   }
 }
 
+/**
+ * `expectedName` applies to a removal (`attachment` null): the receipt the user
+ * removed. If someone replaced it meanwhile, the newer one is left alone and
+ * the error's code is ATTACHMENT_CHANGED.
+ */
 export async function saveExpenseAttachment(
   expenseId: string,
-  attachment: ExpenseAttachment | null | undefined
+  attachment: ExpenseAttachment | null | undefined,
+  expectedName?: string
 ) {
   if (attachment === undefined) return null;
 
   if (attachment === null) {
-    await deleteExpenseAttachment(expenseId);
+    await deleteExpenseAttachment(expenseId, expectedName);
     return null;
   }
 
@@ -96,30 +117,44 @@ export async function saveExpenseAttachment(
 
   const formData = new FormData();
   formData.append("file", attachment.file);
+  formData.append("originSessionId", getRealtimeOriginSessionId());
 
-  const res = await fetch(`/api/expenses/${expenseId}/attachment`, {
+  const res = await trackedFetch(`/api/expenses/${expenseId}/attachment`, {
     method: "POST",
     body: formData,
   });
 
   if (!res.ok) {
     const payload = await res.json().catch(() => null);
-    throw new Error(payload?.error || "Failed to upload attachment");
+    throw attachmentError(payload, "Failed to upload attachment");
   }
 
   const payload = await res.json();
+  // Mark it in the saved copies so the dashboard's receipt marker is right at once.
+  await patchCachedExpenseReceipt(expenseId, true);
   return mapAttachmentResponse(payload);
 }
 
-export async function deleteExpenseAttachment(expenseId: string) {
-  const res = await fetch(`/api/expenses/${expenseId}/attachment`, {
+/**
+ * `expectedName` is the receipt the user saw. When someone has replaced it
+ * since, nothing is deleted and the error's code is ATTACHMENT_CHANGED. Leave
+ * it out to delete whatever receipt is there.
+ */
+export async function deleteExpenseAttachment(expenseId: string, expectedName?: string) {
+  const res = await trackedFetch(`/api/expenses/${expenseId}/attachment`, {
     method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      originSessionId: getRealtimeOriginSessionId(),
+      ...(expectedName ? { expectedName } : {}),
+    }),
   });
 
   if (!res.ok) {
     const payload = await res.json().catch(() => null);
-    throw new Error(payload?.error || "Failed to delete attachment");
+    throw attachmentError(payload, "Failed to delete attachment");
   }
+  await patchCachedExpenseReceipt(expenseId, false);
 }
 
 export function formatAttachmentSize(size: number) {

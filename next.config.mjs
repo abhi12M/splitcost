@@ -1,9 +1,74 @@
+import { execSync } from "node:child_process";
+import { createHash, randomUUID } from "node:crypto";
+import { readFileSync, readdirSync } from "node:fs";
+import withSerwistInit from "@serwist/next";
 import createNextIntlPlugin from "next-intl/plugin";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
+// Files in public/ the app needs offline: the logos (both themes) and the
+// icons. The large marketing images load on demand instead. Listed here
+// rather than through Serwist's `globPublicPatterns`, which it ignores once
+// `additionalPrecacheEntries` is set. Each revision is the file's hash, so a
+// changed file is fetched again.
+const OFFLINE_PUBLIC_FILE = /^(favicon.*|android-chrome-.*\.png|apple-touch-icon\.png|logo-.*\.png|placeholder\.svg)$/;
+const offlinePublicFiles = readdirSync("public")
+  .filter((name) => OFFLINE_PUBLIC_FILE.test(name))
+  .map((name) => ({
+    url: `/${name}`,
+    revision: createHash("md5").update(readFileSync(`public/${name}`)).digest("hex"),
+  }));
+
+// Builds public/sw.js from src/app/sw.ts: the app shell, the offline fallback
+// page (one per locale) and the files above are precached so the app opens
+// offline.
+const offlinePageRevision = randomUUID();
+const withSerwist = withSerwistInit({
+  swSrc: "src/app/sw.ts",
+  swDest: "public/sw.js",
+  // A reload when the connection returns would throw away unsaved forms; the
+  // app refreshes its data itself instead.
+  reloadOnOnline: false,
+  // Saves each page opened while online, including the first one, which loads
+  // before the service worker is in control and so would never be kept. Goes
+  // into the same "pages" cache the service worker serves offline pages from.
+  cacheOnNavigation: true,
+  // The service worker would serve stale code during development.
+  disable: process.env.NODE_ENV === "development",
+  additionalPrecacheEntries: [
+    ...offlinePublicFiles,
+    ...["en", "es", "pt", "hi"].map((locale) => ({
+      url: `/${locale}/offline`,
+      revision: offlinePageRevision,
+    })),
+  ],
+});
+
+// When the marketing pages' text last changed: the date of the last commit
+// touching it. The sitemap uses it as lastmod, so the date moves only when
+// the content does. Empty (no lastmod) when git isn't available.
+function getContentLastModified() {
+  try {
+    return execSync(
+      "git log -1 --format=%cI -- messages src/views src/components/landing src/lib/use-cases.ts src/lib/compare.ts src/lib/resources.ts",
+      { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }
+    ).trim();
+  } catch {
+    return "";
+  }
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Realtime runs in the browser. Expose only the public project URL and
+  // publishable key; the service-role key remains server-only.
+  env: {
+    NEXT_PUBLIC_SUPABASE_URL:
+      process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? process.env.NEXT_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_SUPABASE_PUBLISHABLE_KEY,
+    CONTENT_LAST_MODIFIED: getContentLastModified(),
+  },
   reactStrictMode: true,
   compress: true,
   poweredByHeader: false,
@@ -100,7 +165,7 @@ const nextConfig = {
           { key: "X-Frame-Options", value: "DENY" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
-          { key: "Content-Security-Policy", value: "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com; connect-src 'self' https://www.google-analytics.com https://*.supabase.co; font-src 'self' data:" },
+          { key: "Content-Security-Policy", value: "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com; connect-src 'self' https://www.google-analytics.com https://*.supabase.co wss://*.supabase.co; font-src 'self' data:" },
         ],
       },
       {
@@ -158,6 +223,16 @@ const nextConfig = {
         ],
       },
       {
+        // Browsers must always check for a new service worker.
+        source: "/sw.js",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-cache, no-store, must-revalidate",
+          },
+        ],
+      },
+      {
         source: "/manifest.webmanifest",
         headers: [
           {
@@ -179,4 +254,4 @@ const nextConfig = {
   },
 };
 
-export default withNextIntl(nextConfig);
+export default withSerwist(withNextIntl(nextConfig));

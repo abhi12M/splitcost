@@ -1,19 +1,10 @@
 "use client";
 
-import { ChangeEvent, useEffect, useRef, useState } from "react";
+import { ChangeEvent, createContext, useContext, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Camera, Images, ImagePlus, Loader2, Pencil, Trash2, X } from "lucide-react";
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { GenericAlertDialog } from "@/components/ui/generic-alert-dialog";
 import {
   Drawer,
   DrawerContent,
@@ -37,6 +28,18 @@ type ExpenseAttachmentControlProps = {
   compact?: boolean;
 };
 
+type AttachmentGuard = {
+  /** False while receipts can't be changed (offline, or a group not synced yet). */
+  allowed: boolean;
+  /** Returns whether changing the receipt is allowed, explaining why not otherwise. */
+  check: () => boolean;
+};
+
+const AttachmentGuardContext = createContext<AttachmentGuard | null>(null);
+
+/** Lets the screen hosting an expense form say when receipts can't be changed. */
+export const AttachmentGuardProvider = AttachmentGuardContext.Provider;
+
 export function ExpenseAttachmentControl({
   attachment,
   onChange,
@@ -44,6 +47,9 @@ export function ExpenseAttachmentControl({
 }: ExpenseAttachmentControlProps) {
   const t = useTranslations("expense");
   const tCommon = useTranslations("common");
+  const guard = useContext(AttachmentGuardContext);
+  const blocked = guard ? !guard.allowed : false;
+  const allowChange = () => (guard ? guard.check() : true);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState("");
@@ -92,8 +98,13 @@ export function ExpenseAttachmentControl({
   };
 
   const openSourcePicker = () => {
+    if (!allowChange()) return;
     setError("");
     setIsSourcePickerOpen(true);
+  };
+
+  const openDeleteConfirm = () => {
+    if (allowChange()) setIsDeleteConfirmOpen(true);
   };
 
   const chooseSource = (input: HTMLInputElement | null) => {
@@ -151,7 +162,7 @@ export function ExpenseAttachmentControl({
       </button>
       <button
         type="button"
-        onClick={() => setIsDeleteConfirmOpen(true)}
+        onClick={openDeleteConfirm}
         aria-label={t("removeAttachment")}
         className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-transparent text-foreground/70 transition-colors [-webkit-tap-highlight-color:transparent] hover:bg-transparent hover:text-foreground active:bg-transparent focus:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60 sm:hover:bg-muted"
         disabled={isReadingFile}
@@ -162,7 +173,10 @@ export function ExpenseAttachmentControl({
   );
 
   return (
-    <div className={cn("min-w-0", compact ? "shrink-0" : "w-full")}>
+    <div
+      className={cn("min-w-0", compact ? "shrink-0" : "w-full", blocked && "opacity-50")}
+      aria-disabled={blocked || undefined}
+    >
       <input
         ref={galleryInputRef}
         type="file"
@@ -238,7 +252,7 @@ export function ExpenseAttachmentControl({
           <button
             type="button"
             className="rounded-full p-1 text-muted-foreground hover:bg-background hover:text-foreground"
-            onClick={() => setIsDeleteConfirmOpen(true)}
+            onClick={openDeleteConfirm}
             aria-label={t("removeAttachment")}
             disabled={isReadingFile}
           >
@@ -302,31 +316,16 @@ export function ExpenseAttachmentControl({
         </DrawerContent>
       </Drawer>
 
-      <AlertDialog
+      <GenericAlertDialog
         open={isDeleteConfirmOpen}
         onOpenChange={setIsDeleteConfirmOpen}
-      >
-        <AlertDialogContent className="max-w-[290px] rounded-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-lg">{t("deleteImageTitle")}</AlertDialogTitle>
-            <AlertDialogDescription className="text-xs">
-              {t("deleteImageDescription")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="mt-4 flex-row gap-2">
-            <AlertDialogCancel className="mt-0 flex-1 rounded-xl border-none bg-muted hover:bg-muted/80">
-              {tCommon("cancel")}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={clearAttachment}
-              disabled={isReadingFile}
-              className="flex-1 rounded-xl bg-destructive text-white hover:bg-destructive/90"
-            >
-              {tCommon("delete")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        title={t("deleteImageTitle")}
+        description={t("deleteImageDescription")}
+        actions={[
+          { label: tCommon("cancel"), type: "cancel", className: "mt-0 flex-1 border-none bg-muted hover:bg-muted/80" },
+          { label: tCommon("delete"), onClick: clearAttachment, disabled: isReadingFile, className: "flex-1 bg-destructive text-white hover:bg-destructive/90" },
+        ]}
+      />
     </div>
   );
 }

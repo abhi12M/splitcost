@@ -53,6 +53,7 @@ export function BlogFilters({
         <input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
+          onBlur={(event) => setQuery(event.target.value.trim())}
           placeholder="Search guides, topics, or keywords..."
           aria-label="Search guides"
           className="h-12 w-full rounded-xl border border-border bg-card pl-11 pr-4 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"

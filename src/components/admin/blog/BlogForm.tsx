@@ -19,16 +19,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { BlogTableOfContents } from "@/components/blog/BlogTableOfContents";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { GenericAlertDialog } from "@/components/ui/generic-alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -390,7 +381,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
         publishedWindow?.close();
         setSaveStatus("error");
         toast({
-          variant: "destructive",
+          variant: "error",
           title: nextStatus === "published" ? "Unable to publish blog" : "Unable to save draft",
           description: saveError instanceof Error ? saveError.message : "Unable to save blog",
         });
@@ -413,11 +404,11 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
         throw new Error(data?.error ?? "Unable to delete blog post");
       }
 
-      toast({ title: "Blog post deleted" });
+      toast({ title: "Blog post deleted", variant:'success',});
       router.replace(`${ADMIN_BASE_PATH}/blogs?updated=${Date.now()}`);
     } catch (deleteError) {
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Unable to delete blog post",
         description: deleteError instanceof Error ? deleteError.message : "Unable to delete blog post",
       });
@@ -470,7 +461,7 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
         markDirty();
       } catch (uploadError) {
         toast({
-          variant: "destructive",
+          variant: "error",
           title: "Unable to upload cover image",
           description: uploadError instanceof Error ? uploadError.message : "Unable to upload cover image",
         });
@@ -525,52 +516,40 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
   return (
     <TooltipProvider>
       <BlogPreviewDialog blog={previewBlog} open={previewOpen} onOpenChange={setPreviewOpen} />
-      <AlertDialog open={publishConfirmOpen} onOpenChange={setPublishConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Publish blog post?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {blogStatus === "published"
-                ? "This will make your latest changes publicly visible."
-                : "This will make this blog post publicly visible."}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={saving}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={saving}
-              onClick={() => {
+      <GenericAlertDialog
+        open={publishConfirmOpen}
+        onOpenChange={setPublishConfirmOpen}
+        title="Publish blog post?"
+        description={blogStatus === "published" ? "This will make your latest changes publicly visible." : "This will make this blog post publicly visible."}
+        actions={[
+          { label: "Cancel", type: "cancel", disabled: saving },
+          {
+            label: saving ? "Publishing..." : "Publish",
+            disabled: saving,
+            onClick: () => {
                 setPublishConfirmOpen(false);
                 void saveBlog("published", { openPublishedInNewTab: true });
-              }}
-            >
-              {saving ? "Publishing..." : "Publish"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete blog post?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {`Delete "${title.trim() || "this blog post"}". This permanently deletes the blog post.`}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={saving}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={saving}
-              onClick={() => {
+            },
+          },
+        ]}
+      />
+      <GenericAlertDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title="Delete blog post?"
+        description={`Delete "${title.trim() || "this blog post"}". This permanently deletes the blog post.`}
+        actions={[
+          { label: "Cancel", type: "cancel", disabled: saving },
+          {
+            label: saving ? "Deleting..." : "Delete",
+            disabled: saving,
+            onClick: () => {
                 setDeleteConfirmOpen(false);
                 void deleteBlog();
-              }}
-            >
-              {saving ? "Deleting..." : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            },
+          },
+        ]}
+      />
       <BlogEditorShell
         footer={footer}
         saveStatus={saveStatus}

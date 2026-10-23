@@ -1,5 +1,6 @@
 import {
   ArrowRight,
+  ChevronRight,
   Heart,
   Home,
   Luggage,
@@ -35,6 +36,9 @@ const iconBySlug: Record<UseCaseSlug, LucideIcon> = {
   friends: Users,
   teams: Network,
 };
+
+const SPLIT_KEYS = ["equal", "percentage", "custom", "multiplePayers"] as const;
+const FAQ_KEYS = ["one", "two", "three"] as const;
 
 type UseCasesIndexPageProps = {
   locale: AppLocale;
@@ -80,11 +84,32 @@ export default async function UseCasesIndexPage({ locale }: UseCasesIndexPagePro
     })),
   };
 
+  const faqItems = FAQ_KEYS.map((key) => ({
+    question: t(`faq.${key}.question`, { appName: APP_NAME }),
+    answer: t(`faq.${key}.answer`, { appName: APP_NAME }),
+  }));
+
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "@id": `${pageUrl}#faq`,
+    url: pageUrl,
+    mainEntity: faqItems.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: { "@type": "Answer", text: faq.answer },
+    })),
+  };
+
   return (
     <Layout>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: serializeStructuredDataForHtml(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeStructuredDataForHtml(faqJsonLd) }}
       />
 
       <section className={cn(landingSection.default, landingSection.padding)}>
@@ -146,7 +171,48 @@ export default async function UseCasesIndexPage({ locale }: UseCasesIndexPagePro
             })}
           </div>
 
-          <div className={cn("mt-10 p-6 text-center sm:mt-12 sm:p-8", brandStyles.ctaPanel)}>
+          <div className="mx-auto mt-16 max-w-3xl">
+            <h2 className="text-center text-2xl font-bold text-foreground sm:text-3xl">
+              {t("splits.title")}
+            </h2>
+            <p className="mx-auto mt-3 max-w-2xl text-pretty text-center text-sm text-muted-foreground sm:text-base">
+              {t("splits.intro", { appName: APP_NAME })}
+            </p>
+            <div className="mt-8 grid gap-4 sm:grid-cols-2">
+              {SPLIT_KEYS.map((key) => (
+                <div
+                  key={key}
+                  className="rounded-xl border border-border/60 bg-card p-5 shadow-sm dark:border-border/80"
+                >
+                  <h3 className="font-semibold text-foreground">{t(`splits.items.${key}.title`)}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    {t(`splits.items.${key}.description`)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mx-auto mt-16 max-w-3xl">
+            <h2 className="text-center text-2xl font-bold text-foreground sm:text-3xl">
+              {t("faq.title")}
+            </h2>
+            <div className="mt-8 divide-y divide-border rounded-2xl border border-border/60 bg-card dark:border-border/80">
+              {faqItems.map((faq) => (
+                <details key={faq.question} className="group px-5 py-4 sm:px-6">
+                  <summary className="cursor-pointer list-none font-semibold text-foreground marker:content-none [&::-webkit-details-marker]:hidden">
+                    <span className="flex items-start justify-between gap-4">
+                      {faq.question}
+                      <ChevronRight className="mt-1 h-4 w-4 shrink-0 transition-transform group-open:rotate-90" aria-hidden />
+                    </span>
+                  </summary>
+                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{faq.answer}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+
+          <div className={cn("mt-16 p-6 text-center sm:p-8", brandStyles.ctaPanel)}>
             <h2 className="text-balance text-xl font-extrabold tracking-tight text-foreground sm:text-2xl">
               {t("cta.title")}
             </h2>

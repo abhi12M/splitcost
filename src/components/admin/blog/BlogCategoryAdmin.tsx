@@ -3,16 +3,7 @@
 import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { GenericAlertDialog } from "@/components/ui/generic-alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -60,7 +51,7 @@ export function BlogCategoryAdmin() {
       setCategories(data);
     } catch (error) {
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Unable to load categories",
         description: error instanceof Error ? error.message : "Unable to load categories",
       });
@@ -108,7 +99,7 @@ export function BlogCategoryAdmin() {
 
     if (!payload.name) {
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Category name is required",
       });
       return;
@@ -145,10 +136,11 @@ export function BlogCategoryAdmin() {
       toast({
         title: editingId ? "Category updated" : "Category created",
         description: saved.name,
+        variant:'success',
       });
     } catch (error) {
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Unable to save category",
         description: error instanceof Error ? error.message : "Unable to save category",
       });
@@ -172,11 +164,12 @@ export function BlogCategoryAdmin() {
       toast({
         title: "Category deleted",
         description: deleteTarget.name,
+        variant:'success',
       });
       setDeleteTarget(null);
     } catch (error) {
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Unable to delete category",
         description: error instanceof Error ? error.message : "Unable to delete category",
       });
@@ -317,30 +310,23 @@ export function BlogCategoryAdmin() {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete category?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {deleteTarget
-                ? `Delete "${deleteTarget.name}". This only works if no blog posts use this category.`
-                : null}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={deleting}
-              onClick={(event) => {
+      <GenericAlertDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Delete category?"
+        description={deleteTarget ? `Delete "${deleteTarget.name}". This only works if no blog posts use this category.` : undefined}
+        actions={[
+          { label: "Cancel", type: "cancel", disabled: deleting },
+          {
+            label: deleting ? "Deleting..." : "Delete",
+            disabled: deleting,
+            onClick: (event) => {
                 event.preventDefault();
                 void confirmDelete();
-              }}
-            >
-              {deleting ? "Deleting..." : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            },
+          },
+        ]}
+      />
     </div>
   );
 }

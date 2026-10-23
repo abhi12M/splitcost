@@ -5,12 +5,15 @@ import {
   Download,
   FileText,
   Globe,
+  History,
   Info,
   Luggage,
   PieChart,
+  RefreshCw,
   Smartphone,
   User,
   Users,
+  WifiOff,
   type LucideIcon,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -42,6 +45,9 @@ const faqIcons: Record<FaqKey, LucideIcon> = {
   travel: Luggage,
   export: Download,
   mobile: Smartphone,
+  offline: WifiOff,
+  activityHistory: History,
+  editConflicts: RefreshCw,
   whoCanUse: Users,
 };
 

@@ -68,6 +68,7 @@ export default async function PrivacyPage({ locale }: PrivacyPageProps) {
                 <li>{t("section1Item1")}</li>
                 <li>{t("section1Item2")}</li>
                 <li>{t("section1Item3")}</li>
+                <li>{t("section1Item4")}</li>
               </ul>
             </section>
 
@@ -87,6 +88,7 @@ export default async function PrivacyPage({ locale }: PrivacyPageProps) {
                 <li>{t("section3Item1")}</li>
                 <li>{t("section3Item2")}</li>
                 <li>{t("section3Item3")}</li>
+                <li>{t("section3Item4")}</li>
               </ul>
               <p>{t("section3Outro")}</p>
             </section>

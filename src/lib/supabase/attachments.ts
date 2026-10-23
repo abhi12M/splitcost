@@ -97,21 +97,90 @@ export async function getExpenseAttachmentPath(expenseId: string) {
   return getStoragePathFromValue(data?.attachment_data_url);
 }
 
-export async function setExpenseAttachmentPath(
-  expenseId: string,
-  attachmentPath: string | null
+/**
+ * Removes receipt files from storage. Best effort: nothing points at these
+ * files any more, so one that can't be removed is only left unused and must
+ * not fail the request that got here.
+ */
+export async function removeAttachmentFiles(
+  values: Array<string | null | undefined>,
+  label: string
 ) {
-  const { error } = await supabaseAdmin
+  const paths = [
+    ...new Set(
+      values
+        .map((value) => getStoragePathFromValue(value))
+        .filter((path): path is string => Boolean(path))
+    ),
+  ];
+
+  for (let start = 0; start < paths.length; start += 100) {
+    const { error } = await supabaseAdmin.storage
+      .from(EXPENSE_ATTACHMENT_BUCKET)
+      .remove(paths.slice(start, start + 100));
+    if (error) console.error(`${label} error:`, error);
+  }
+}
+
+/** The receipt value as stored, and whether the expense still exists at all. */
+export async function loadExpenseAttachmentValue(expenseId: string) {
+  const { data, error } = await supabaseAdmin
     .from("expenses")
-    .update({
-      attachment_data_url: attachmentPath,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", expenseId);
+    .select("attachment_data_url")
+    .eq("id", expenseId)
+    .maybeSingle();
 
   if (error) {
     throw error;
   }
+
+  return { exists: Boolean(data), value: data?.attachment_data_url ?? null };
+}
+
+/**
+ * Points the expense at a newly uploaded receipt and returns the receipt it
+ * replaced. Throws a "EXPENSE_DELETED" error when the expense is gone.
+ */
+export async function replaceExpenseAttachment(
+  expenseId: string,
+  attachmentPath: string
+) {
+  const { data, error } = await supabaseAdmin.rpc("replace_expense_attachment", {
+    p_expense_id: expenseId,
+    p_attachment_path: attachmentPath,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return { previousPath: getStoragePathFromValue(data?.[0]?.previous_path) };
+}
+
+/**
+ * Removes the expense's receipt and returns the one it removed. With
+ * `expectedValue` (the stored value the caller saw) a receipt that has been
+ * replaced since is left alone and an "ATTACHMENT_CHANGED" error is thrown.
+ * `exists` is false when the expense is already gone: nothing to remove.
+ */
+export async function clearExpenseAttachment(
+  expenseId: string,
+  expectedValue?: string | null
+) {
+  const { data, error } = await supabaseAdmin.rpc("clear_expense_attachment", {
+    p_expense_id: expenseId,
+    p_expected_path: expectedValue ?? null,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  const row = data?.[0];
+  return {
+    exists: Boolean(row),
+    previousPath: getStoragePathFromValue(row?.previous_path),
+  };
 }
 
 async function getStoredFile(path: string) {
@@ -138,12 +207,23 @@ async function getStoredFile(path: string) {
   ) || null;
 }
 
+// Repairs a reference to a file that no longer exists. A quiet fix: it is not a
+// change anyone made, so it touches neither the revision nor the update time,
+// and it only applies if the expense still holds the same value, so a receipt
+// uploaded in the meantime is never cleared.
 async function clearMissingExpenseAttachmentPath(
   expenseId: string,
-  path: string
+  path: string,
+  storedValue: string
 ) {
   try {
-    await setExpenseAttachmentPath(expenseId, null);
+    const { error } = await supabaseAdmin
+      .from("expenses")
+      .update({ attachment_data_url: null })
+      .eq("id", expenseId)
+      .eq("attachment_data_url", storedValue);
+
+    if (error) throw error;
   } catch (error) {
     console.error("clearMissingExpenseAttachmentPath error:", {
       expenseId,
@@ -173,7 +253,7 @@ export async function reconcileExpenseAttachmentReference(
     const file = await getStoredFile(path);
 
     if (!file) {
-      await clearMissingExpenseAttachmentPath(expenseId, path);
+      await clearMissingExpenseAttachmentPath(expenseId, path, value ?? path);
       return { status: "missing", path };
     }
 
@@ -260,7 +340,7 @@ export async function resolveExpenseAttachmentPayload(
     };
   } catch (error) {
     if (isMissingExpenseAttachmentError(error)) {
-      await clearMissingExpenseAttachmentPath(expenseId, error.path);
+      await clearMissingExpenseAttachmentPath(expenseId, error.path, value ?? error.path);
       return {
         status: "missing",
         path: error.path,

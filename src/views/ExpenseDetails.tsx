@@ -4,7 +4,6 @@ import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { Link, useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
-import { useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
   ArrowLeft,
@@ -13,6 +12,7 @@ import {
   Check,
   ChevronDown,
   FileText,
+  ImageOff,
   ImagePlus,
   Images,
   Loader2,
@@ -23,16 +23,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { GenericAlertDialog } from "@/components/ui/generic-alert-dialog";
 import {
   Drawer,
   DrawerContent,
@@ -45,13 +36,17 @@ import {
   getCategoryIcon,
   EXPENSE_CATEGORIES,
   type CategoryKey,
+  type SubcategoryId,
 } from "@/components/icons/CategoryIcons";
 import {
   deleteExpense,
   EditExpenseInterface,
+  isGroupDeleted,
   patchExpenseCategory,
   ExpenseParticipantsRequest,
 } from "@/lib/storage";
+import { GroupDeletedDialog } from "@/components/group/GroupDeletedDialog";
+import { ExpenseNotFound } from "@/components/expense/ExpenseNotFound";
 import {
   formatAmount,
   formatDisplayDate,
@@ -60,18 +55,21 @@ import {
 import {
   deleteExpenseAttachment,
   ExpenseAttachment,
+  MAX_ATTACHMENT_SIZE_LABEL,
   readExpenseAttachmentFile,
   revokeAttachmentObjectUrl,
   saveExpenseAttachment,
   validateAttachmentFile,
 } from "@/lib/expenseAttachments";
-import {
-  evictExpense,
-  invalidateGroupDashboard,
-  patchExpenseAttachmentInDashboard,
-  queryKeys,
-  useExpenseQuery,
-} from "@/lib/queries";
+import { useExpense } from "@/lib/groupExpenseData";
+import { ExpenseHistory } from "@/components/activity/ExpenseHistory";
+import { UserAvatar } from "@/components/ui/UserAvatar";
+import { deleteCachedExpense } from "@/lib/offline/cache";
+import { useExpenseRealtime, useGroupChanges } from "@/hooks/useGroupRealtime";
+import { useGroupChangeNotices } from "@/components/group/GroupChangeNotices";
+import { useReceiptChangeNotice } from "@/components/expense/useReceiptChangeNotice";
+import { applyGroupChangesToGroup } from "@/lib/realtime/groupChanges";
+import type { ReceiptChange } from "@/lib/realtime/expenseChanges";
 import { getGroupViewerMemberId } from "@/lib/groupViewer";
 import { memberNameForViewer } from "@/lib/groupExpenseLabels";
 import { formatSummaryName } from "@/components/ui/formatters";
@@ -82,19 +80,27 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { SingleSelect } from "@/components/ui/single-select";
 import { hasExpenseNotesContent, sanitizeExpenseNotes } from "@/lib/expenseNotes";
-import { clearCachedExpense } from "@/lib/expenseCache";
 import { useBackButtonClose } from "@/hooks/useBackButtonClose";
+import { toast } from "@/hooks/use-toast";
+import { ResourceNotFound } from "@/components/ResourceNotFound";
+import { getTranslatedSubcategoryLabel, resolveCategoryDisplayLabel } from "@/lib/category-labels";
+import { GuardedLink } from "@/components/sync/GuardedLink";
+import { OfflineBanner } from "@/components/sync/OfflineBanner";
+import { SyncStatusButton } from "@/components/sync/SyncStatus";
+import { useGroupAccess, useOfflineFailureToast } from "@/hooks/useOffline";
+import { cn } from "@/lib/utils";
 
 function memberName(
   members: EditExpenseInterface["group"]["members"],
   userId: string | null,
   viewerMemberId: string | null,
-  unknownLabel: string
+  unknownLabel: string,
+  youLabel?: string
 ) {
   if (!userId) return unknownLabel;
   const m = members.find((member) => member.id === userId);
   if (!m) return unknownLabel;
-  return memberNameForViewer(m.id, m.name, viewerMemberId);
+  return memberNameForViewer(m.id, m.name, viewerMemberId, youLabel);
 }
 
 function getDateTimeMs(date?: string | Date | null) {
@@ -259,38 +265,30 @@ export default function ExpenseDetailsPage({
   expenseId: string;
 }) {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const t = useTranslations("expense");
+  const tToasts = useTranslations("toasts");
   const tCommon = useTranslations("common");
+  const tConflict = useTranslations("editConflict");
+  const tReceipt = useTranslations("receiptChanges");
+  const tCategories = useTranslations("categories");
+  const tOffline = useTranslations("offline");
+  // The same translated word for "you" as the dashboard uses.
+  const youLabel = useTranslations("group")("you");
   const attachmentGalleryInputRef = useRef<HTMLInputElement>(null);
   const attachmentCameraInputRef = useRef<HTMLInputElement>(null);
 
-  // React Query owns expense fetching. With initialData hydrated from the
-  // session cache and a 30s staleTime, navigating view -> edit (or vice
-  // versa) inside that window reuses the cached data and fires zero new
-  // requests. After a save we invalidate the key so the next mount refetches.
-  const expenseQuery = useExpenseQuery(expenseId);
-  const details = expenseQuery.data ?? null;
-  const loading = expenseQuery.isPending;
+  const { data: details, loading, refresh, setData: setDetails, applyChange } = useExpense(expenseId);
+  const access = useGroupAccess(groupId);
+  const showOfflineFailure = useOfflineFailureToast();
+  const openAttachmentSource = () => {
+    if (access.check("attachment")) setIsAttachmentSourceOpen(true);
+  };
 
   const [viewerMemberId, setViewerMemberId] = useState<string | null>(null);
   useEffect(() => {
     setViewerMemberId(getGroupViewerMemberId(groupId));
   }, [groupId]);
 
-  // `removeQueries` while `useExpenseQuery` is still subscribed triggers an
-  // automatic refetch → GET /api/expenses/:id → 404 after delete. Defer
-  // eviction until this component unmounts so no observer asks for data.
-  const evictExpenseAfterUnmountRef = useRef<string | null>(null);
-  useEffect(() => {
-    return () => {
-      const id = evictExpenseAfterUnmountRef.current;
-      if (id && id === expenseId) {
-        evictExpense(queryClient, id);
-        evictExpenseAfterUnmountRef.current = null;
-      }
-    };
-  }, [expenseId, queryClient]);
   const [attachmentOverride, setAttachmentOverride] =
     useState<ExpenseAttachment | null | undefined>(undefined);
   // Tracks any attachment save kicked off in the background by the Add /
@@ -314,13 +312,9 @@ export default function ExpenseDetailsPage({
     ? pendingUpload.intent
     : cachedAttachment;
 
-  // Mutating the attachment also has to update the React Query cache,
-  // otherwise the next page that reads the same query (e.g. the edit page)
-  // would render with the stale attachment value.
   const setAttachment = (next: ExpenseAttachment | null) => {
     setAttachmentOverride(next);
-    queryClient.setQueryData<EditExpenseInterface | null>(
-      queryKeys.expense(expenseId),
+    setDetails(
       (current) =>
         current
           ? {
@@ -335,25 +329,141 @@ export default function ExpenseDetailsPage({
             }
           : current
     );
-    patchExpenseAttachmentInDashboard(
-      queryClient,
-      groupId,
-      expenseId,
-      Boolean(next)
-    );
-    void invalidateGroupDashboard(queryClient, groupId);
   };
 
   const [isDeletingExpense, setIsDeletingExpense] = useState(false);
   const [isUpdatingCategory, setIsUpdatingCategory] = useState(false);
+  // Someone else changed the category between this screen loading and the
+  // user's pick: `mine` is what they picked, `current` what is stored now.
+  type CategoryConflict = {
+    mine: { category: CategoryKey; subcategory: string };
+    current: { category: CategoryKey; subcategory: string };
+  };
+  const [categoryConflict, setCategoryConflict] = useState<CategoryConflict | null>(null);
+  // Mirrors the state synchronously: a dialog button's click is followed by
+  // onOpenChange(false) in the same event, and only the first may resolve it.
+  const categoryConflictRef = useRef<CategoryConflict | null>(null);
+  const openCategoryConflict = (conflict: CategoryConflict) => {
+    categoryConflictRef.current = conflict;
+    setCategoryConflict(conflict);
+  };
+  const takeCategoryConflict = () => {
+    const conflict = categoryConflictRef.current;
+    categoryConflictRef.current = null;
+    setCategoryConflict(null);
+    return conflict;
+  };
+  // Keeps the dialog's wording steady while it animates closed.
+  const shownCategoryConflictRef = useRef<CategoryConflict | null>(null);
+  if (categoryConflict) shownCategoryConflictRef.current = categoryConflict;
+  const shownCategoryConflict = shownCategoryConflictRef.current;
+  // Names a side of the conflict; when both are in the same category only the
+  // subcategory tells them apart.
+  const conflictCategoryLabel = (side: "mine" | "current") => {
+    if (!shownCategoryConflict) return "";
+    const { category, subcategory } = shownCategoryConflict[side];
+    const other = shownCategoryConflict[side === "mine" ? "current" : "mine"];
+    return category === other.category && category in EXPENSE_CATEGORIES
+      ? getTranslatedSubcategoryLabel(tCategories, category, subcategory as SubcategoryId)
+      : resolveCategoryDisplayLabel(tCategories, category);
+  };
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [isAttachmentSourceOpen, setIsAttachmentSourceOpen] = useState(false);
   const [isExpenseDeleteConfirmOpen, setIsExpenseDeleteConfirmOpen] = useState(false);
   const [isAttachmentDeleteConfirmOpen, setIsAttachmentDeleteConfirmOpen] = useState(false);
   const [attachmentSpinnerMessage, setAttachmentSpinnerMessage] = useState("");
+  const [deletedOpen, setDeletedOpen] = useState(false);
+  // Someone replaced the receipt the user was deleting: the delete dialog then
+  // asks whether to delete the new one too. It is the same dialog, not a second
+  // one, because closing one dialog while opening another in the same moment
+  // fights over the Back-button history and closes the new one at once.
+  const [receiptReplaced, setReceiptReplaced] = useState(false);
+  // Keeps the dialog's wording steady while it animates closed.
+  const shownReceiptReplacedRef = useRef(false);
+  if (isAttachmentDeleteConfirmOpen) shownReceiptReplacedRef.current = receiptReplaced;
+  // This tab removed the receipt, so if someone adds a new one right after, the
+  // user is told (otherwise a receipt appearing explains itself).
+  const deletedReceiptHereRef = useRef(false);
+  const noticeReceiptChange = useReceiptChangeNotice();
 
   useBackButtonClose(isAttachmentSourceOpen, () =>
     setIsAttachmentSourceOpen(false)
+  );
+
+  // The whole group was deleted; replaces the expense-level "deleted" dialog.
+  const [groupDeleted, setGroupDeleted] = useState(false);
+  const showGroupDeleted = () => {
+    setGroupDeleted(true);
+    setDeletedOpen(false);
+  };
+
+  // Set while this tab is deleting the expense, so the broadcast of that delete
+  // (ours, or one from someone deleting it at the same moment) doesn't open the
+  // "Expense deleted" dialog on top of the toast and the move back to the group.
+  const isOwnDeleteRef = useRef(false);
+
+  // The receipt was changed in another session: say what happened to whatever
+  // the user is looking at or about to delete. The refetch in the handler below
+  // brings in the latest receipt itself.
+  const handleRemoteReceiptChange = (receipt: ReceiptChange) => {
+    if (receipt === "removed") {
+      // Nothing left to view or delete.
+      setIsViewerOpen(false);
+      setIsAttachmentDeleteConfirmOpen(false);
+      noticeReceiptChange("removed");
+      return;
+    }
+    if (receipt === "replaced") {
+      if (isAttachmentDeleteConfirmOpen) {
+        // The receipt being deleted is no longer the one stored.
+        setReceiptReplaced(true);
+      } else {
+        // Don't swap the image under someone zooming into it: close the viewer
+        // and let them reopen the new one.
+        setIsViewerOpen(false);
+        noticeReceiptChange("replaced");
+      }
+      return;
+    }
+    if (deletedReceiptHereRef.current) {
+      deletedReceiptHereRef.current = false;
+      noticeReceiptChange("added");
+    }
+  };
+
+  useExpenseRealtime(expenseId, (event, _revision, receipt) => {
+    if (event === "DELETE") {
+      if (isOwnDeleteRef.current) return;
+      // Deleting a group deletes its expenses too; check which one happened.
+      void isGroupDeleted(groupId).then((gone) => {
+        if (gone) {
+          showGroupDeleted();
+          return;
+        }
+        // Drop it from the saved dashboard too, so going back doesn't list it.
+        void deleteCachedExpense(expenseId);
+        setDeletedOpen(true);
+      });
+      return;
+    }
+    // Drop any locally-set attachment override so a remote change (e.g. the
+    // image being deleted from another tab) isn't masked by a stale local
+    // value once the refetch below lands.
+    setAttachmentOverride(undefined);
+    void refresh();
+    if (receipt) handleRemoteReceiptChange(receipt);
+  });
+
+  // Names on this screen come from the group's member list, so a member or
+  // group edit is applied to it in place instead of refetching.
+  const changeNotices = useGroupChangeNotices();
+  useGroupChanges(
+    groupId,
+    (changes) => {
+      applyChange((prev) => ({ ...prev, group: applyGroupChangesToGroup(prev.group, changes) }), changes.revision);
+      changeNotices.notify(changes);
+    },
+    showGroupDeleted
   );
 
   const headerIconButtonClass =
@@ -361,6 +471,7 @@ export default function ExpenseDetailsPage({
 
   const handleDeleteExpense = async () => {
     setIsDeletingExpense(true);
+    isOwnDeleteRef.current = true;
     try {
       // If a background upload is still in flight there's no point letting
       // it finish (we're about to delete the expense). Drop the local
@@ -368,22 +479,26 @@ export default function ExpenseDetailsPage({
       // its own; the server-side cascade on expense delete handles cleanup.
       dismissAttachmentUpload(expenseId);
 
-      // Only call delete-attachment if the SERVER actually has one.
-      // `cachedAttachment` reflects the React Query cache (i.e. server
-      // state), whereas `attachment` may be a local pending preview.
-      if (cachedAttachment) {
-        try {
-          await deleteExpenseAttachment(expenseId);
-        } catch (error) {
-          // The attachment may already be gone (e.g. background delete
-          // raced ahead). Swallow so we still get to delete the expense.
-          console.error("delete attachment failed during expense delete:", error);
-        }
-      }
-      await deleteExpense(expenseId);
-      evictExpenseAfterUnmountRef.current = expenseId;
-      invalidateGroupDashboard(queryClient, groupId);
+      // The server removes the receipt file along with the expense. Removing it
+      // here first would tell everyone else viewing the expense "receipt
+      // removed", and their page would reload into "not found" before the
+      // "Expense deleted" notice could show.
+      // deleteExpense reports failure as `false`; a failed delete must not
+      // navigate away as if it had worked.
+      if (!(await deleteExpense(expenseId))) throw new Error("Failed to delete expense");
+      toast({ message: tToasts("expenseDeleted"), variant: "destructive" });
       router.push(`/group/${groupId}`);
+    } catch (error) {
+      // Still here, so the expense may still exist: let later deletes be reported.
+      isOwnDeleteRef.current = false;
+      if (showOfflineFailure(error, tOffline("droppedNotDeleted"))) return;
+      console.error("delete expense failed:", error);
+      toast({
+        title: tToasts("couldNotDeleteExpense"),
+        description: tToasts("tryAgainHint"),
+        variant: "error",
+        action: { label: tToasts("retry"), callback: () => void handleDeleteExpense() },
+      });
     } finally {
       setIsDeletingExpense(false);
       setIsExpenseDeleteConfirmOpen(false);
@@ -399,9 +514,21 @@ export default function ExpenseDetailsPage({
 
     const validationError = validateAttachmentFile(file);
     if (validationError) {
+      // Say why nothing happened instead of silently ignoring the pick.
+      toast({
+        message: file.type.startsWith("image/")
+          ? t("attachMaxSize", { max: MAX_ATTACHMENT_SIZE_LABEL })
+          : t("attachImageOnly"),
+        variant: "error",
+      });
       return;
     }
 
+    await uploadAttachmentFile(file);
+  };
+
+  /** Uploads a picked image; kept separate so a failed upload can retry the same file. */
+  const uploadAttachmentFile = async (file: File) => {
     setAttachmentSpinnerMessage(
       attachment ? t("updatingAttachment") : t("uploadingAttachment")
     );
@@ -415,8 +542,21 @@ export default function ExpenseDetailsPage({
       );
       setAttachment(savedAttachment);
       setIsViewerOpen(false);
+      deletedReceiptHereRef.current = false;
     } catch (error) {
+      if ((error as { code?: string }).code === "EXPENSE_DELETED") {
+        // The expense was deleted while the image uploaded: retrying can't help.
+        void isGroupDeleted(groupId).then((gone) => (gone ? showGroupDeleted() : setDeletedOpen(true)));
+        return;
+      }
+      if (showOfflineFailure(error, tOffline("droppedReceipt"))) return;
       console.error("save attachment failed:", error);
+      toast({
+        title: tToasts("couldNotUploadImage"),
+        description: tToasts("tryAgainHint"),
+        variant: "error",
+        action: { label: tToasts("retry"), callback: () => void uploadAttachmentFile(file) },
+      });
     } finally {
       // The server returns its own signed URL, so the local blob URL is no
       // longer needed and must be released to avoid leaking the underlying
@@ -426,16 +566,33 @@ export default function ExpenseDetailsPage({
     }
   };
 
-  const handleDeleteAttachment = async () => {
+  /**
+   * Deletes the receipt the user is looking at. If someone has replaced it in
+   * the meantime the server leaves their newer one alone and the user is asked
+   * whether to delete that too; `deleteNewer` answers yes.
+   */
+  const deleteReceipt = async (deleteNewer: boolean) => {
     setIsAttachmentDeleteConfirmOpen(false);
+    setReceiptReplaced(false);
     setAttachmentSpinnerMessage(t("deletingAttachment"));
 
     try {
-      await deleteExpenseAttachment(expenseId);
+      await deleteExpenseAttachment(expenseId, deleteNewer ? undefined : cachedAttachment?.name);
+      deletedReceiptHereRef.current = true;
       setAttachment(null);
       setIsViewerOpen(false);
     } catch (error) {
+      if ((error as { code?: string }).code === "ATTACHMENT_CHANGED") {
+        // Show the newer receipt behind the question.
+        setAttachmentOverride(undefined);
+        void refresh();
+        setReceiptReplaced(true);
+        setIsAttachmentDeleteConfirmOpen(true);
+        return;
+      }
+      if (showOfflineFailure(error, tOffline("droppedReceipt"))) return;
       console.error("delete attachment failed:", error);
+      toast({ title: tToasts("couldNotRemoveImage"), description: tToasts("tryAgainHint"), variant: "error" });
     } finally {
       setAttachmentSpinnerMessage("");
     }
@@ -443,44 +600,90 @@ export default function ExpenseDetailsPage({
 
 
 
+  /** `expected` is the category the pick replaces; defaults to what is on screen. */
   const handleCategoryPatch = async (
     category: CategoryKey,
-    subcategory: string
+    subcategory: string,
+    expected = details
+      ? { category: details.expense.category, subcategory: details.expense.subcategory }
+      : null
   ) => {
-    if (!details) return;
+    if (!details || !expected) return;
 
     setIsUpdatingCategory(true);
 
-    const updatedExpense = await patchExpenseCategory(
-      expenseId,
-      category,
-      subcategory
-    );
-
-    if (updatedExpense) {
-      // Update the React Query cache in place so the page reflects the new
-      // category/subcategory immediately and the dashboard refetch (kicked
-      // off below) is the only network call this action makes.
-      queryClient.setQueryData<EditExpenseInterface | null>(
-        queryKeys.expense(expenseId),
-        (current) =>
-          current
-            ? {
-                ...current,
-                expense: {
-                  ...current.expense,
-                  category: updatedExpense.category,
-                  subcategory: updatedExpense.subcategory,
-                  updatedAt: updatedExpense.updatedAt,
-                },
-              }
-            : current
+    try {
+      const updatedExpense = await patchExpenseCategory(
+        expenseId,
+        category,
+        subcategory,
+        expected
       );
-      clearCachedExpense(expenseId);
-      invalidateGroupDashboard(queryClient, groupId);
-    }
 
-    setIsUpdatingCategory(false);
+      if (updatedExpense) {
+        // Keep the category selection in the currently displayed detail data.
+        setDetails(
+          (current) =>
+            current
+              ? {
+                  ...current,
+                  expense: {
+                    ...current.expense,
+                    category: updatedExpense.category,
+                    subcategory: updatedExpense.subcategory,
+                    updatedAt: updatedExpense.updatedAt,
+                    revision: updatedExpense.revision ?? current.expense.revision,
+                  },
+                }
+              : current
+        );
+      }
+    } catch (error) {
+      const failure = error as {
+        code?: string;
+        payload?: { currentCategory?: CategoryKey; currentSubcategory?: string };
+      };
+      if (failure.code === "EXPENSE_CATEGORY_CONFLICT" && failure.payload?.currentCategory) {
+        openCategoryConflict({
+          mine: { category, subcategory },
+          current: {
+            category: failure.payload.currentCategory,
+            subcategory: failure.payload.currentSubcategory ?? "general",
+          },
+        });
+        return;
+      }
+      if (failure.code === "EXPENSE_DELETED") {
+        // Deleting a group deletes its expenses too; check which one happened.
+        void isGroupDeleted(groupId).then((gone) => (gone ? showGroupDeleted() : setDeletedOpen(true)));
+        return;
+      }
+      if (showOfflineFailure(error)) return;
+      const message = error instanceof Error ? error.message : "Failed to update expense category";
+      const isProduction = process.env.NODE_ENV === "production";
+      toast({
+        title: isProduction ? "Could not update category" : "Category update failed",
+        description: isProduction
+          ? "Please try again. If the problem persists, contact support."
+          : message,
+        variant: "error",
+      });
+    } finally {
+      setIsUpdatingCategory(false);
+    }
+  };
+
+  // "Use Travel" (or dismissing): show what is stored now.
+  const handleUseCurrentCategory = () => {
+    if (!takeCategoryConflict()) return;
+    void refresh();
+  };
+
+  // "Apply Shopping": pick again, this time knowingly replacing the stored one.
+  const handleApplyMyCategory = () => {
+    const conflict = takeCategoryConflict();
+    if (!conflict) return;
+    void handleCategoryPatch(conflict.mine.category, conflict.mine.subcategory, conflict.current);
   };
 
   const participantRows = useMemo(() => {
@@ -488,22 +691,25 @@ export default function ExpenseDetailsPage({
 
     return details.expense.participants.map((participant: ExpenseParticipantsRequest) => ({
       ...participant,
-      name: memberName(details.group.members, participant.userId, viewerMemberId, t("unknown")),
+      name: memberName(details.group.members, participant.userId, viewerMemberId, t("unknown"), youLabel),
     }));
-  }, [details, viewerMemberId, t]);
+  }, [details, viewerMemberId, t, youLabel]);
 
   if (loading) {
     return <ExpenseDetailsSkeleton />;
   }
 
   if (!details) {
+    return <ExpenseNotFound groupId={groupId} loading={<ExpenseDetailsSkeleton />} />;
+  }
+
+  if (details.group.id !== groupId) {
     return (
-      <div className="flex h-dvh flex-col items-center justify-center gap-3 bg-background">
-        <p className="text-sm text-muted-foreground">{tCommon("expenseNotFound")}</p>
-        <Button asChild>
-          <Link href={`/group/${groupId}`}>{t("backToGroup")}</Link>
-        </Button>
-      </div>
+      <ResourceNotFound
+        message={tCommon("groupNotFound")}
+        actionLabel={tCommon("goHome")}
+        actionHref="/"
+      />
     );
   }
 
@@ -521,13 +727,13 @@ export default function ExpenseDetailsPage({
   const payers = expense.payers?.length
     ? expense.payers.map((payer) => ({
         userId: payer.userId,
-        name: memberName(group.members, payer.userId, viewerMemberId, t("unknown")),
+        name: memberName(group.members, payer.userId, viewerMemberId, t("unknown"), youLabel),
         amount: payer.amount,
       }))
     : [
         {
           userId: expense.paidByUserId,
-          name: memberName(group.members, expense.paidByUserId, viewerMemberId, t("unknown")),
+          name: memberName(group.members, expense.paidByUserId, viewerMemberId, t("unknown"), youLabel),
           amount: expense.amount,
         },
       ];
@@ -542,7 +748,21 @@ export default function ExpenseDetailsPage({
     name: formatSummaryName(participant.name),
     amount: Number(participant.amount) || 0,
   }));
+  // One payer and one person in the split is common (settle up, paying for or
+  // lending to someone, or an expense just for yourself): say it in one line
+  // instead of a split. Anything with more of either shows the full split card.
+  const hasOneOfEach = payers.length === 1 && owedRows.length === 1;
+  const isPaidForOne = hasOneOfEach && payers[0].userId !== owedRows[0].userId;
+  const isPaidForSelf = hasOneOfEach && payers[0].userId === owedRows[0].userId;
+  // With nobody or just one person in the split there is nothing to split, so
+  // the "Split between N people" chip and the "Split equally" line would only
+  // be noise.
+  const hideSplit = owedRows.length <= 1;
+  const receiverIsViewer = Boolean(viewerMemberId && owedRows[0]?.userId === viewerMemberId);
   const isImageAttachment = attachment?.type.startsWith("image/");
+  // The expense has a receipt, but its (short-lived) link isn't saved on the
+  // device, so offline it can't be shown. Say so rather than look receipt-less.
+  const receiptUnavailable = !attachment && !pendingUpload && Boolean(expense.attachmentDataUrl);
   const safeNotes = expense.notes ? sanitizeExpenseNotes(expense.notes) : "";
   const hasNotes = hasExpenseNotesContent(safeNotes);
   const createdAtLabel = getDateTimeMs(expense.createdAt) !== null
@@ -554,16 +774,19 @@ export default function ExpenseDetailsPage({
   )
     ? formatDisplayDateTime(expense.updatedAt)
     : "";
-  const attachmentActionButtonClass =
-    "inline-flex h-10 w-10 items-center justify-center rounded-full bg-transparent text-foreground/70 transition-colors [-webkit-tap-highlight-color:transparent] hover:bg-transparent hover:text-foreground active:bg-transparent focus:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60 sm:hover:bg-muted";
+  const attachmentActionButtonClass = cn(
+    "inline-flex h-10 w-10 items-center justify-center rounded-full bg-transparent text-foreground/70 transition-colors [-webkit-tap-highlight-color:transparent] hover:bg-transparent hover:text-foreground active:bg-transparent focus:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60 sm:hover:bg-muted",
+    !access.can.attachment && "opacity-50"
+  );
   const attachmentActionsDisabled =
     Boolean(attachmentSpinnerMessage) || isAttachmentUploading;
   const attachmentActions = (
     <>
       <button
         type="button"
-        onClick={() => setIsAttachmentSourceOpen(true)}
+        onClick={openAttachmentSource}
         aria-label={attachment ? t("replaceAttachment") : t("uploadAttachment")}
+        aria-disabled={access.can.attachment ? undefined : true}
         className={attachmentActionButtonClass}
         disabled={attachmentActionsDisabled}
       >
@@ -576,8 +799,11 @@ export default function ExpenseDetailsPage({
       {attachment && (
         <button
           type="button"
-          onClick={() => setIsAttachmentDeleteConfirmOpen(true)}
+          onClick={() => {
+            if (access.check("attachment")) setIsAttachmentDeleteConfirmOpen(true);
+          }}
           aria-label={t("deleteAttachment")}
+          aria-disabled={access.can.attachment ? undefined : true}
           className={attachmentActionButtonClass}
           disabled={attachmentActionsDisabled}
         >
@@ -657,29 +883,38 @@ export default function ExpenseDetailsPage({
               <ArrowLeft className="h-5 w-5" />
             </Link>
             <div className="flex items-center gap-1 text-foreground/70">
-              {!attachment && (
+              {/* As big as the header's other buttons, so it needs no wider tap area
+                  (which would overlap the button next to it). */}
+              <SyncStatusButton className="h-10 w-10 before:hidden" />
+              {!attachment && !receiptUnavailable && (
                 <button
                   type="button"
-                  onClick={() => setIsAttachmentSourceOpen(true)}
+                  onClick={openAttachmentSource}
                   aria-label={t("uploadAttachment")}
-                  className={headerIconButtonClass}
+                  aria-disabled={access.can.attachment ? undefined : true}
+                  className={cn(headerIconButtonClass, !access.can.attachment && "opacity-50")}
                   disabled={attachmentActionsDisabled}
                 >
                   <ImagePlus className="h-5 w-5" />
                 </button>
               )}
-              <Link
+              <GuardedLink
                 href={`/group/${groupId}/edit-expense/${expenseId}`}
+                allowed={access.can.edit}
+                onBlocked={() => access.check("edit")}
                 aria-label={t("editExpenseAria")}
                 className={headerIconButtonClass}
               >
                 <Pencil className="h-5 w-5" />
-              </Link>
+              </GuardedLink>
               <button
                 type="button"
-                onClick={() => setIsExpenseDeleteConfirmOpen(true)}
+                onClick={() => {
+                  if (access.check("edit")) setIsExpenseDeleteConfirmOpen(true);
+                }}
                 aria-label={t("deleteExpenseAria")}
-                className={headerIconButtonClass}
+                aria-disabled={access.can.edit ? undefined : true}
+                className={cn(headerIconButtonClass, !access.can.edit && "opacity-50")}
                 disabled={isDeletingExpense}
               >
                 {isDeletingExpense ? (
@@ -706,9 +941,9 @@ export default function ExpenseDetailsPage({
                     })),
                   }))}
                   value={{ groupId: expense.category, itemId: expense.subcategory }}
-                  onSelect={(groupId, itemId) =>
-                    handleCategoryPatch(groupId as CategoryKey, itemId)
-                  }
+                  onSelect={(groupId, itemId) => {
+                    if (access.check("edit")) void handleCategoryPatch(groupId as CategoryKey, itemId);
+                  }}
                   inputPlaceholder={t("searchCategory")}
                   fullscreenOnMobile
                   disabled={isUpdatingCategory}
@@ -742,6 +977,7 @@ export default function ExpenseDetailsPage({
         </header>
 
         <main className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4 pt-10">
+          <OfflineBanner groupId={groupId} access={access} className="shrink-0" />
           <section className="shrink-0">
             <div className="flex items-start gap-3">
               {attachment && (
@@ -785,6 +1021,19 @@ export default function ExpenseDetailsPage({
                   </div>
                 </button>
               )}
+              {receiptUnavailable && (
+                <button
+                  type="button"
+                  className="mt-1 block shrink-0"
+                  aria-label={tOffline("receiptOffline")}
+                  title={tOffline("receiptOffline")}
+                  onClick={() => toast({ message: tOffline("receiptOffline"), variant: "info", duration: 3_000 })}
+                >
+                  <div className="flex h-14 w-14 items-center justify-center rounded-sm border border-dashed bg-muted/50">
+                    <ImageOff className="h-6 w-6 text-muted-foreground" aria-hidden />
+                  </div>
+                </button>
+              )}
 
               <div className="min-w-0 flex-1">
                 <p className="whitespace-pre-wrap break-words text-2xl font-semibold leading-tight [overflow-wrap:anywhere]">
@@ -794,30 +1043,55 @@ export default function ExpenseDetailsPage({
                   {formatAmount(expense.amount, expense.currency)}
                 </p>
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-1">
-                    <CalendarDays className="h-3.5 w-3.5" />
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1">
+                    <CalendarDays className="h-3.5 w-3.5" aria-hidden />
+                    <span className="sr-only">{isSettlementExpense ? t("settlementDateLabel") : t("expenseDateLabel")}</span>
                     {t("expenseDate", { date: formatDisplayDate(expense.date) })}
                   </span>
-                  <span className="inline-flex items-center gap-1">
-                    <Users className="h-3.5 w-3.5" />
-                    {t("splitCount", { count: participantRows.length })}
-                  </span>
+                  {hideSplit ? null : (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1">
+                      <Users className="h-3.5 w-3.5" />
+                      {t("splitCount", { count: participantRows.length })}
+                    </span>
+                  )}
                 </div>
-                <div className="mt-2 space-y-1 text-xs text-muted-foreground">
-                  {createdAtLabel ? <p>{t("addedOn", { date: createdAtLabel })}</p> : null}
-                  {updatedAtLabel ? <p>{t("updatedOn", { date: updatedAtLabel })}</p> : null}
-                </div>
+                {/* A group that so far lives only on this device has no history to open. */}
+                {access.isLocal ? (
+                  <div className="mt-2 space-y-1 text-xs text-muted-foreground">
+                    {createdAtLabel ? <p>{t("addedOn", { date: createdAtLabel })}</p> : null}
+                    {updatedAtLabel ? <p>{t("updatedOn", { date: updatedAtLabel })}</p> : null}
+                  </div>
+                ) : null}
               </div>
             </div>
           </section>
 
           <section className="grid shrink-0 gap-3 overflow-visible md:grid-cols-[1fr_0.85fr]">
             <div className="h-auto overflow-visible rounded-lg border bg-card p-4">
+              {isPaidForOne ? (
+                // One person paid for one other person: say so in a line, without a split.
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-2.5 text-sm">
+                    <UserAvatar name={payers[0].name} size="sm" disableMobileTooltip />
+                    {/* Wraps rather than truncates: the end of the sentence is who it was for. */}
+                    <span className="min-w-0 break-words font-medium leading-snug">
+                      {t.rich(isSettlementExpense ? "settlementPaid" : "paidForOne", {
+                        payer: formatSummaryName(payers[0].name),
+                        receiver: owedRows[0].name,
+                        receiverIsYou: String(receiverIsViewer),
+                        muted: (chunks) => <span className="font-normal text-muted-foreground">{chunks}</span>,
+                      })}
+                    </span>
+                  </div>
+                  <span className="shrink-0 font-medium">{formatAmount(payers[0].amount, expense.currency)}</span>
+                </div>
+              ) : (
               <div className="space-y-4">
                 <div className="space-y-3">
                   {payers.map((payer) => (
                     <div key={`payer-${payer.userId}`} className="flex items-center justify-between">
-                      <div className="flex min-w-0 items-center gap-2 text-sm">
+                      <div className="flex min-w-0 items-center gap-2.5 text-sm">
+                        <UserAvatar name={payer.name} size="sm" disableMobileTooltip />
                         <span className="truncate font-medium">
                           {formatSummaryName(payer.name)}{" "}
                           <span className="font-normal text-muted-foreground">{t("paidLabel")}</span>
@@ -829,19 +1103,21 @@ export default function ExpenseDetailsPage({
                     </div>
                   ))}
 
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Users className="h-4 w-4" />
-                    {expense.splitType === "equal"
-                      ? t("splitEquallyLabel")
-                      : expense.splitType === "percentage"
-                        ? t("splitByPercentage")
-                        : t("splitUnequally")}
-                  </div>
+                  {hideSplit ? null : (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Users className="h-4 w-4" />
+                      {expense.splitType === "equal"
+                        ? t("splitEquallyLabel")
+                        : expense.splitType === "percentage"
+                          ? t("splitByPercentage")
+                          : t("splitUnequally")}
+                    </div>
+                  )}
                 </div>
 
-                <div className="h-px bg-border" />
+                {isPaidForSelf ? null : <div className="h-px bg-border" />}
 
-                <div className="space-y-3">
+                <div className={cn("space-y-3", isPaidForSelf && "hidden")}>
                   {owedRows.length > 0 ? (
                     owedRows.map((participant) => (
                       <div
@@ -850,8 +1126,11 @@ export default function ExpenseDetailsPage({
                       >
                         <div className="flex min-w-0 items-center gap-2 text-sm">
                           <span className="truncate font-medium">
-                            {participant.name}{" "}
-                            <span className="font-normal text-muted-foreground">{t("owedLabel")}</span>
+                            {t.rich("shareOf", {
+                              name: participant.name,
+                              isYou: String(Boolean(viewerMemberId && participant.userId === viewerMemberId)),
+                              muted: (chunks) => <span className="font-normal text-muted-foreground">{chunks}</span>,
+                            })}
                           </span>
                         </div>
                         <span className="shrink-0 text-sm font-medium">
@@ -889,6 +1168,7 @@ export default function ExpenseDetailsPage({
                   </>
                 )} */}
               </div>
+              )}
             </div>
 
           </section>
@@ -906,6 +1186,19 @@ export default function ExpenseDetailsPage({
             </section>
           )}
 
+          {!access.isLocal && <ExpenseHistory
+            expenseId={expenseId}
+            currency={expense.currency}
+            createdAt={expense.createdAt}
+            isSettlement={isSettlementExpense}
+            // Shows at once, before the history loads (and offline).
+            updatedAt={updatedAtLabel ? expense.updatedAt : null}
+            // Receipt changes don't bump revision/updatedAt, so key on the saved attachment too.
+            refreshKey={`${expense.revision ?? ""}|${expense.updatedAt ?? ""}|${
+              cachedAttachment?.updatedAt ?? "none"
+            }`}
+          />}
+
         </main>
 
         <ExpenseAttachmentViewer
@@ -914,62 +1207,92 @@ export default function ExpenseDetailsPage({
           onOpenChange={setIsViewerOpen}
           actions={attachmentActions}
         />
-        <AlertDialog
+        <GenericAlertDialog
           open={isAttachmentDeleteConfirmOpen}
-          onOpenChange={setIsAttachmentDeleteConfirmOpen}
-        >
-          <AlertDialogContent className="max-w-[290px] rounded-2xl">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="text-lg">{t("deleteImageTitle")}</AlertDialogTitle>
-              <AlertDialogDescription className="text-xs">
-                {t("deleteImageDescription")}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter className="mt-4 flex-row gap-2">
-              <AlertDialogCancel className="mt-0 flex-1 rounded-xl border-none bg-muted hover:bg-muted/80">
-                {tCommon("cancel")}
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDeleteAttachment}
-                disabled={Boolean(attachmentSpinnerMessage)}
-                className="flex-1 rounded-xl bg-destructive text-white hover:bg-destructive/90"
-              >
-                {tCommon("delete")}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-        <AlertDialog
+          onOpenChange={(open) => {
+            setIsAttachmentDeleteConfirmOpen(open);
+            if (!open) setReceiptReplaced(false);
+          }}
+          title={shownReceiptReplacedRef.current ? tReceipt("replacedDialogTitle") : t("deleteImageTitle")}
+          description={shownReceiptReplacedRef.current ? tReceipt("replacedDialogDescription") : t("deleteImageDescription")}
+          actions={
+            shownReceiptReplacedRef.current
+              ? [
+                  { label: tReceipt("keepNew"), type: "cancel", className: "mt-0 flex-1 border-none bg-muted hover:bg-muted/80" },
+                  { label: tReceipt("deleteAnyway"), onClick: () => void deleteReceipt(true), variant: "destructive", className: "flex-1" },
+                ]
+              : [
+                  { label: tCommon("cancel"), type: "cancel", className: "mt-0 flex-1 border-none bg-muted hover:bg-muted/80" },
+                  { label: tCommon("delete"), onClick: () => void deleteReceipt(false), disabled: Boolean(attachmentSpinnerMessage), variant: "destructive", className: "flex-1" },
+                ]
+          }
+        />
+        <GenericAlertDialog
           open={isExpenseDeleteConfirmOpen}
           onOpenChange={setIsExpenseDeleteConfirmOpen}
-        >
-          <AlertDialogContent className="max-w-[290px] rounded-2xl">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="text-lg">{t("deleteExpenseTitle")}</AlertDialogTitle>
-              <AlertDialogDescription className="text-xs">
-                {t("deleteExpenseDescription")}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter className="mt-4 flex-row gap-2">
-              <AlertDialogCancel className="mt-0 flex-1 rounded-xl border-none bg-muted hover:bg-muted/80">
-                {tCommon("cancel")}
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDeleteExpense}
-                disabled={isDeletingExpense}
-                className="flex-1 rounded-xl bg-destructive text-white hover:bg-destructive/90"
-              >
-                {isDeletingExpense ? tCommon("deleting") : tCommon("delete")}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+          title={t("deleteExpenseTitle")}
+          description={t("deleteExpenseDescription")}
+          actions={[
+            { label: tCommon("cancel"), type: "cancel", className: "mt-0 flex-1 border-none bg-muted hover:bg-muted/80" },
+            { label: isDeletingExpense ? tCommon("deleting") : tCommon("delete"), onClick: handleDeleteExpense, disabled: isDeletingExpense, variant: "destructive", className: "flex-1" },
+          ]}
+        />
+        <GenericAlertDialog
+          open={deletedOpen}
+          aboveOverlays
+          onOpenChange={setDeletedOpen}
+          title={tToasts("expenseDeleted")}
+          description={t("deletedElsewhere")}
+          actions={[]}
+          footer={
+            <Button asChild variant="outline" className="w-full rounded-xl">
+              <Link href={`/group/${groupId}`}>{t("backToGroup")}</Link>
+            </Button>
+          }
+        />
       </div>
       <Spinner
         show={Boolean(attachmentSpinnerMessage)}
         className="z-[100]"
         message={attachmentSpinnerMessage}
       />
+      <GenericAlertDialog
+        open={Boolean(categoryConflict)}
+        aboveOverlays
+        onOpenChange={(open) => {
+          if (!open) handleUseCurrentCategory();
+        }}
+        title={tConflict("categoryTitle")}
+        description={
+          shownCategoryConflict
+            ? tConflict("categoryDescription", {
+                current: conflictCategoryLabel("current"),
+                mine: conflictCategoryLabel("mine"),
+              })
+            : ""
+        }
+        actions={
+          shownCategoryConflict
+            ? [
+                {
+                  label: tConflict("useCategory", {
+                    category: conflictCategoryLabel("current"),
+                  }),
+                  type: "cancel",
+                  onClick: handleUseCurrentCategory,
+                },
+                {
+                  label: tConflict("applyCategory", {
+                    category: conflictCategoryLabel("mine"),
+                  }),
+                  onClick: handleApplyMyCategory,
+                },
+              ]
+            : []
+        }
+      />
+      {changeNotices.sheet}
+      <GroupDeletedDialog open={groupDeleted} />
     </div>
   );
 }

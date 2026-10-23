@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 
 import { BlogViewTracker } from "@/components/blog/BlogViewTracker";
@@ -38,21 +38,18 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { locale: localeParam, slug } = await params;
   const locale = await resolveLocaleParam({ locale: localeParam });
 
-  // Articles are only available in English. Do not expose indexable metadata
-  // for locale variants that render a 404 in the page component.
-  if (locale !== "en") {
-    return { robots: { index: false, follow: false } };
-  }
+  // Articles are only available in English. Missing articles and other
+  // locales get the not-found page's noindex metadata and a real 404 status,
+  // rather than the layout's defaults.
+  if (locale !== "en") notFound();
 
   const blog = await getBlogBySlug(slug);
   if (!blog) {
-    if (locale === "en") {
-      const redirectSlug = await getPublishedBlogRedirectSlug(slug);
-      if (redirectSlug) {
-        redirect(`/en/blog/${encodeURIComponent(redirectSlug)}`);
-      }
+    const redirectSlug = await getPublishedBlogRedirectSlug(slug);
+    if (redirectSlug) {
+      permanentRedirect(`/en/blog/${encodeURIComponent(redirectSlug)}`);
     }
-    return {};
+    notFound();
   }
 
   const canonicalUrl = getCanonicalUrl(`/${locale}/blog/${blog.slug}`);
@@ -107,7 +104,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
   if (!blog) {
     const redirectSlug = await getPublishedBlogRedirectSlug(resolved.slug);
     if (redirectSlug) {
-      redirect(`/en/blog/${encodeURIComponent(redirectSlug)}`);
+      permanentRedirect(`/en/blog/${encodeURIComponent(redirectSlug)}`);
     }
     notFound();
   }

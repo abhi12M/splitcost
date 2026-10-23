@@ -1,4 +1,4 @@
-import { ArrowRight, Scale, Sparkles } from "lucide-react";
+import { ArrowRight, ChevronRight, Scale, Sparkles } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { Layout } from "@/components/layout/Layout";
@@ -17,6 +17,9 @@ import { getLocalizedCanonicalUrl } from "@/lib/seo-i18n";
 import { getBreadcrumbId, getWebPageId, getWebsiteId } from "@/lib/schema-identity";
 import { serializeStructuredDataForHtml } from "@/lib/blog/schema";
 import { cn } from "@/lib/utils";
+
+const GUIDE_KEYS = ["signup", "freeFeatures", "splitting", "currency", "records", "devices"] as const;
+const FAQ_KEYS = ["one", "two", "three"] as const;
 
 type CompareIndexPageProps = {
   locale: AppLocale;
@@ -64,11 +67,32 @@ export default async function CompareIndexPage({ locale }: CompareIndexPageProps
     })),
   };
 
+  const faqItems = FAQ_KEYS.map((key) => ({
+    question: t(`faq.${key}.question`, { appName: APP_NAME }),
+    answer: t(`faq.${key}.answer`, { appName: APP_NAME }),
+  }));
+
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "@id": `${pageUrl}#faq`,
+    url: pageUrl,
+    mainEntity: faqItems.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: { "@type": "Answer", text: faq.answer },
+    })),
+  };
+
   return (
     <Layout>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: serializeStructuredDataForHtml(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeStructuredDataForHtml(faqJsonLd) }}
       />
 
       <section className={cn(landingSection.default, landingSection.padding)}>
@@ -118,7 +142,48 @@ export default async function CompareIndexPage({ locale }: CompareIndexPageProps
             ))}
           </div>
 
-          <div className={cn("mx-auto mt-10 max-w-3xl p-6 text-center sm:mt-12 sm:p-8", brandStyles.ctaPanel)}>
+          <div className="mx-auto mt-16 max-w-4xl">
+            <h2 className="text-center text-2xl font-bold text-foreground sm:text-3xl">
+              {t("guide.title")}
+            </h2>
+            <p className="mx-auto mt-3 max-w-2xl text-pretty text-center text-sm text-muted-foreground sm:text-base">
+              {t("guide.intro")}
+            </p>
+            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {GUIDE_KEYS.map((key) => (
+                <div
+                  key={key}
+                  className="rounded-xl border border-border/60 bg-card p-5 shadow-sm dark:border-border/80"
+                >
+                  <h3 className="font-semibold text-foreground">{t(`guide.items.${key}.title`)}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    {t(`guide.items.${key}.description`)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mx-auto mt-16 max-w-3xl">
+            <h2 className="text-center text-2xl font-bold text-foreground sm:text-3xl">
+              {t("faq.title")}
+            </h2>
+            <div className="mt-8 divide-y divide-border rounded-2xl border border-border/60 bg-card dark:border-border/80">
+              {faqItems.map((faq) => (
+                <details key={faq.question} className="group px-5 py-4 sm:px-6">
+                  <summary className="cursor-pointer list-none font-semibold text-foreground marker:content-none [&::-webkit-details-marker]:hidden">
+                    <span className="flex items-start justify-between gap-4">
+                      {faq.question}
+                      <ChevronRight className="mt-1 h-4 w-4 shrink-0 transition-transform group-open:rotate-90" aria-hidden />
+                    </span>
+                  </summary>
+                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{faq.answer}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+
+          <div className={cn("mx-auto mt-16 max-w-3xl p-6 text-center sm:p-8", brandStyles.ctaPanel)}>
             <h2 className="text-balance text-xl font-extrabold tracking-tight text-foreground sm:text-2xl">
               {t("cta.title", { appName: APP_NAME })}
             </h2>
