@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { listGroupActivity } from "@/lib/activity/server/activityStore";
+import { errorJson } from "@/lib/api/errors";
 import { isActivityFilter, type ActivityCursor } from "@/lib/activity/types";
 
 const DEFAULT_LIMIT = 20;
@@ -31,6 +32,6 @@ export async function GET(req: Request, { params }: { params: { groupId: string 
     return NextResponse.json(page, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("listGroupActivity error:", error);
-    return NextResponse.json({ error: "Failed to load activity" }, { status: 500 });
+    return errorJson("Failed to load activity", 500, error);
   }
 }

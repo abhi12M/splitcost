@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { errorJson } from "@/lib/api/errors";
 import { readJsonObject } from "@/lib/api/request";
 import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import { getContactEmail } from "@/lib/contact-email";
@@ -48,19 +49,13 @@ export async function POST(req: Request) {
         // Resend reports a refused email in `error` instead of throwing.
         if (error) {
             console.error("Contact email was not sent:", error);
-            return Response.json(
-                { success: false, error: "Failed to send email" },
-                { status: 500 }
-            );
+            return errorJson("Failed to send email", 500, error, { success: false });
         }
 
         return successJson({ success: true, data }, SUCCESS_MESSAGES.contactSent);
 
     } catch (error) {
         console.error("Contact email failed:", error);
-        return Response.json(
-            { success: false, error: "Failed to send email" },
-            { status: 500 }
-        );
+        return errorJson("Failed to send email", 500, error, { success: false });
     }
 }

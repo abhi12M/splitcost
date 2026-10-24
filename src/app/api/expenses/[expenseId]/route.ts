@@ -6,6 +6,7 @@ import {
 import { loadExpenseDetails, loadExpenseSnapshot } from "@/lib/activity/server/expenseSnapshots";
 import { isSettlement, SETTLEMENT_CATEGORY } from "@/lib/activity/expenseSnapshot";
 import { broadcastExpenseChange } from "@/lib/api/broadcastExpense";
+import { errorJson } from "@/lib/api/errors";
 import { readJsonObject } from "@/lib/api/request";
 import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import { supabaseAdmin } from "@/lib/supabase/server";
@@ -218,10 +219,7 @@ export async function PUT(
         { status: 409 }
       );
     }
-    return NextResponse.json(
-      { error: "Failed to update expense" },
-      { status: 400 }
-    );
+    return errorJson("Failed to update expense", 400, error);
   }
 
   const row = data[0];
@@ -287,7 +285,7 @@ export async function DELETE(
 
   if (error) {
     console.error("deleteExpense error:", error);
-    return NextResponse.json({ error: "Failed to delete expense" }, { status: 400 });
+    return errorJson("Failed to delete expense", 400, error);
   }
 
   // Nothing was deleted: someone else removed it first. The caller wanted it
@@ -402,16 +400,11 @@ export async function PATCH(
 
   if (error || !row) {
     console.error("patchExpenseCategory error:", error);
-    const isProduction = process.env.NODE_ENV === "production";
-    return NextResponse.json(
-      {
-        error: isProduction
-          ? "We could not update the expense category. Please try again. If the problem persists, contact support."
-          : error?.message || "Failed to update expense category",
-        code: error?.code,
-        details: isProduction ? undefined : error?.details,
-      },
-      { status: 400 }
+    return errorJson(
+      "We could not update the expense category. Please try again. If the problem persists, contact support.",
+      400,
+      error ?? "Expense category was not updated",
+      { code: error?.code }
     );
   }
 

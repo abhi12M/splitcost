@@ -1,4 +1,5 @@
 import { recordGroupChanges } from "@/lib/activity/server/recordGroupActivity";
+import { errorJson } from "@/lib/api/errors";
 import { readJsonObject } from "@/lib/api/request";
 import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import { isValidUUID } from "@/lib/api/expenseValidation";
@@ -152,10 +153,6 @@ export async function GET(
     })),
   });
 }
-
-type UpdateGroupError = {
-  message?: string;
-};
 
 function groupVersionConflict(groupId: string, expectedRevision: number, currentRevision: number | null) {
   return NextResponse.json(
@@ -452,10 +449,7 @@ export async function PUT(
     );
   } catch (error) {
     console.error("updateGroup error:", error);
-    return NextResponse.json(
-      { error: (error as UpdateGroupError)?.message || "Failed to update group" },
-      { status: 400 }
-    );
+    return errorJson("Failed to update group", 400, error);
   }
 }
 
@@ -487,7 +481,8 @@ export async function DELETE(
   );
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    console.error("deleteGroup error:", error);
+    return errorJson("Failed to delete group", 400, error);
   }
 
   await removeAttachmentFiles(

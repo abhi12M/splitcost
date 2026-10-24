@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import sharp from "sharp";
 
 import { isAuthorizedAdminRequest } from "@/lib/admin-auth";
+import { errorJson } from "@/lib/api/errors";
 import { readFormData, readJsonObject } from "@/lib/api/request";
 import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import { supabaseAdmin } from "@/lib/supabase/server";
@@ -202,10 +203,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ media });
   } catch (error) {
     console.error("listAdminMedia error:", error);
-    return NextResponse.json(
-      { error: "Unable to load media" },
-      { status: 500 }
-    );
+    return errorJson("Unable to load media", 500, error);
   }
 }
 
@@ -244,7 +242,8 @@ export async function POST(req: Request) {
       });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      console.error("uploadAdminMedia storage error:", error);
+      return errorJson("Unable to upload image", 400, error);
     }
 
     const { data } = supabaseAdmin.storage
@@ -267,10 +266,7 @@ export async function POST(req: Request) {
     );
   } catch (error) {
     console.error("uploadAdminMedia error:", error);
-    return NextResponse.json(
-      { error: "Unable to process image" },
-      { status: 400 }
-    );
+    return errorJson("Unable to process image", 400, error);
   }
 }
 
@@ -347,7 +343,8 @@ export async function PATCH(req: Request) {
     .move(path, nextPath);
 
   if (moveError) {
-    return NextResponse.json({ error: moveError.message }, { status: 400 });
+    console.error("renameAdminMedia move error:", moveError);
+    return errorJson("Unable to rename the file", 400, moveError);
   }
 
   try {
@@ -355,10 +352,7 @@ export async function PATCH(req: Request) {
   } catch (error) {
     await supabaseAdmin.storage.from(MEDIA_BUCKET).move(nextPath, path);
     console.error("renameAdminMedia references error:", error);
-    return NextResponse.json(
-      { error: "Unable to update blog references for the renamed file" },
-      { status: 500 }
-    );
+    return errorJson("Unable to update blog references for the renamed file", 500, error);
   }
 
   return successJson(
@@ -392,7 +386,8 @@ export async function DELETE(req: Request) {
     .remove(mediaPaths);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    console.error("deleteAdminMedia error:", error);
+    return errorJson("Unable to delete media", 400, error);
   }
 
   return successJson({ ok: true }, SUCCESS_MESSAGES.mediaDeleted);

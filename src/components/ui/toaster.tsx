@@ -14,6 +14,7 @@ import {
   ToastViewport,
 } from "@/components/ui/toast";
 import { toastVariantConfig } from "@/components/ui/toast-config";
+import { installDevApiErrorCapture } from "@/lib/devApiErrors";
 import { cn } from "@/lib/utils";
 
 // Display manager: reads active toast data, combines it with UI pieces, and renders it on screen.
@@ -33,9 +34,33 @@ const positionClasses = {
   center: "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
 }
 
+// Development only: copies the exact error a toast is showing. Plain English, as
+// it never appears in production.
+function CopyErrorButton({ text }: { text: string }) {
+  const [copied, setCopied] = React.useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2_000);
+    } catch {
+      // Clipboard blocked: the text is still selectable in the toast.
+    }
+  };
+  return (
+    <button type="button" className={cn(toastActionClassName, ACTION_LAYOUT)} onClick={() => void copy()}>
+      {copied ? "Copied" : "Copy error"}
+    </button>
+  );
+}
+
 export function Toaster() {
   const tCommon = useTranslations("common");
   const { toasts, dismiss } = useToast();
+
+  React.useEffect(() => {
+    installDevApiErrorCapture();
+  }, []);
   // Every open toast that a tap elsewhere should close (problems and realtime
   // notices opt out), so one tap clears them all rather than one per tap.
   const closableIds = toasts
@@ -82,7 +107,7 @@ export function Toaster() {
         // z-[105]: above every full-screen layer (the mobile notes screen is
         // z-[100]) and below dialogs raised over them (z-[110]).
         <ToastViewport key={pos} className={`${positionClasses[pos]} z-[105]`}>
-          {items.map(({ id, title, description, message, action, dismissible, closeOnOutsideClick: _closeOnOutsideClick, dedupeKey: _dedupeKey, renewKey, icon, customColor, variant = "info", ...props }) => {
+          {items.map(({ id, title, description, message, action, dismissible, closeOnOutsideClick: _closeOnOutsideClick, dedupeKey: _dedupeKey, copyText, renewKey, icon, customColor, variant = "info", ...props }) => {
             // Combine the stored toast data with the variant's shared visual rules.
             const config = toastVariantConfig[variant];
             // A component icon may be a plain function or a forwardRef/memo object
@@ -147,6 +172,7 @@ export function Toaster() {
                     {callbackAction.label}
                   </ToastAction>
                 ) : legacyAction}
+                {copyText ? <CopyErrorButton text={copyText} /> : null}
                 {shouldShowClose && <ToastClose aria-label={tCommon("dismissNotification")} />}
               </Toast>
             );

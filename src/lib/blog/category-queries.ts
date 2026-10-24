@@ -1,3 +1,4 @@
+import { UserFacingError } from "@/lib/api/errors";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import type { BlogCategory, BlogCategoryInput, BlogCategoryWithCount } from "./categories";
 import { slugify } from "./utils";
@@ -84,7 +85,7 @@ export async function createBlogCategory(input: BlogCategoryInput): Promise<Blog
   const description = input.description?.trim() ?? "";
 
   if (!name || !slug) {
-    throw new Error("Category name is required");
+    throw new UserFacingError("Category name is required");
   }
 
   const { data, error } = await supabaseAdmin
@@ -108,7 +109,7 @@ export async function updateBlogCategory(
 ): Promise<BlogCategory> {
   const existing = await getBlogCategoryById(id);
   if (!existing) {
-    throw new Error("Category not found");
+    throw new UserFacingError("Category not found");
   }
 
   const nextName = input.name?.trim() ?? existing.name;
@@ -116,7 +117,7 @@ export async function updateBlogCategory(
   const nextDescription = input.description?.trim() ?? existing.description;
 
   if (!nextName || !nextSlug) {
-    throw new Error("Category name is required");
+    throw new UserFacingError("Category name is required");
   }
 
   const { data, error } = await supabaseAdmin
@@ -147,12 +148,12 @@ export async function updateBlogCategory(
 export async function deleteBlogCategory(id: string): Promise<void> {
   const existing = await getBlogCategoryById(id);
   if (!existing) {
-    throw new Error("Category not found");
+    throw new UserFacingError("Category not found");
   }
 
   const blogCount = await countBlogsInCategory(existing.name);
   if (blogCount > 0) {
-    throw new Error(`Cannot delete category used by ${blogCount} blog post(s)`);
+    throw new UserFacingError(`Cannot delete category used by ${blogCount} blog post(s)`);
   }
 
   const { error } = await supabaseAdmin.from("blog_categories").delete().eq("id", id);

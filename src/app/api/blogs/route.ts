@@ -2,18 +2,11 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 
 import { isAuthorizedAdminRequest } from "@/lib/admin-auth";
+import { failureJson } from "@/lib/api/errors";
 import { readJsonObject } from "@/lib/api/request";
 import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import { createBlog, listAllBlogs } from "@/lib/blog/queries";
 import { normalizeBlogInput } from "@/lib/blog/input";
-
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error) return error.message;
-  if (typeof error === "object" && error && "message" in error && typeof error.message === "string") {
-    return error.message;
-  }
-  return "Failed to create blog";
-}
 
 function unauthorized() {
   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -48,9 +41,6 @@ export async function POST(req: Request) {
     return successJson(blog, SUCCESS_MESSAGES.blogCreated);
   } catch (error: unknown) {
     console.error("createBlog error:", error);
-    return NextResponse.json(
-      { error: getErrorMessage(error) },
-      { status: 400 }
-    );
+    return failureJson(error, "Failed to create blog", 400);
   }
 }
