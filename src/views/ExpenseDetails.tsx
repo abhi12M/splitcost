@@ -87,7 +87,7 @@ import { getTranslatedSubcategoryLabel, resolveCategoryDisplayLabel } from "@/li
 import { GuardedLink } from "@/components/sync/GuardedLink";
 import { OfflineBanner } from "@/components/sync/OfflineBanner";
 import { SyncStatusButton } from "@/components/sync/SyncStatus";
-import { useGroupAccess, useOfflineFailureToast } from "@/hooks/useOffline";
+import { useGroupAccess, useOfflineFailureToast, useOnline } from "@/hooks/useOffline";
 import { cn } from "@/lib/utils";
 
 function memberName(
@@ -277,7 +277,8 @@ export default function ExpenseDetailsPage({
   const attachmentGalleryInputRef = useRef<HTMLInputElement>(null);
   const attachmentCameraInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: details, loading, refresh, setData: setDetails, applyChange } = useExpense(expenseId);
+  const { data: details, loading, refresh, setData: setDetails, applyChange, fromCache } = useExpense(expenseId);
+  const online = useOnline();
   const access = useGroupAccess(groupId);
   const showOfflineFailure = useOfflineFailureToast();
   const openAttachmentSource = () => {
@@ -765,6 +766,14 @@ export default function ExpenseDetailsPage({
   // The expense has a receipt, but its (short-lived) link isn't saved on the
   // device, so offline it can't be shown. Say so rather than look receipt-less.
   const receiptUnavailable = !attachment && !pendingUpload && Boolean(expense.attachmentDataUrl);
+  // Online, the saved copy has no link yet while the server is still being
+  // asked; after it answered without one, it's worth another try.
+  const receiptLoading = receiptUnavailable && online && fromCache;
+  const receiptMessage = !online
+    ? tOffline("receiptOffline")
+    : receiptLoading
+      ? tOffline("receiptLoading")
+      : tOffline("receiptRetry");
   const safeNotes = expense.notes ? sanitizeExpenseNotes(expense.notes) : "";
   const hasNotes = hasExpenseNotesContent(safeNotes);
   const createdAtLabel = getDateTimeMs(expense.createdAt) !== null
@@ -1028,12 +1037,19 @@ export default function ExpenseDetailsPage({
                 <button
                   type="button"
                   className="mt-1 block shrink-0"
-                  aria-label={tOffline("receiptOffline")}
-                  title={tOffline("receiptOffline")}
-                  onClick={() => toast({ message: tOffline("receiptOffline"), variant: "info", duration: 3_000 })}
+                  aria-label={receiptMessage}
+                  title={receiptMessage}
+                  onClick={() => {
+                    if (online && !receiptLoading) void refresh();
+                    toast({ message: receiptMessage, variant: "info", duration: 3_000 });
+                  }}
                 >
                   <div className="flex h-14 w-14 items-center justify-center rounded-sm border border-dashed bg-muted/50">
-                    <ImageOff className="h-6 w-6 text-muted-foreground" aria-hidden />
+                    {receiptLoading ? (
+                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" aria-hidden />
+                    ) : (
+                      <ImageOff className="h-6 w-6 text-muted-foreground" aria-hidden />
+                    )}
                   </div>
                 </button>
               )}

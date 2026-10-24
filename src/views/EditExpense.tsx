@@ -227,9 +227,10 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
           return;
         }
         if (showOfflineFailure(error)) return;
+        console.error("add expense failed:", error);
         saveErrorToastRef.current = toast({
           title: tToasts("couldNotAddExpense"),
-          description: tToasts("tryAgainHint"),
+          description: tToasts((error as { status?: number }).status === 400 ? "checkDetailsHint" : "tryAgainHint"),
           variant: "error",
         }).dismiss;
       }
@@ -266,7 +267,7 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
       toast({ message: tToasts("expenseUpdated"), variant: "success" });
       router.push(`/group/${groupId}`);
     } catch (error) {
-      const failure = error as { code?: string; payload?: { currentRevision?: number } };
+      const failure = error as { code?: string; status?: number; payload?: { currentRevision?: number } };
       if (failure.code === "EXPENSE_DELETED") {
         // Reaching here means the user clicked Save — proof they have
         // changes worth keeping — so offer to recreate them, unless the
@@ -278,9 +279,10 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
         // The connection dropped mid-save; the edits stay in the form.
       } else {
         // Anything else: say so and stay on the filled form to try again.
+        console.error("save expense failed:", error);
         saveErrorToastRef.current = toast({
           title: tToasts("couldNotSaveExpense"),
-          description: tToasts("tryAgainHint"),
+          description: tToasts(failure.status === 400 ? "checkDetailsHint" : "tryAgainHint"),
           variant: "error",
         }).dismiss;
       }

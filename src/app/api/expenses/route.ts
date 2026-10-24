@@ -52,7 +52,9 @@ export async function POST(req: Request) {
     requestId,
   } = body;
 
-  const fail = (error: string) => NextResponse.json({ error }, { status: 400 });
+  // The message is already written for people; passing it as the cause too
+  // lets development show it in the toast like every other API failure.
+  const fail = (error: string) => errorJson(error, 400, error);
 
   if (!isValidUUID(groupId)) return fail("Invalid group ID");
   // Optional: retries of one add send the same id, so it is only added once.
@@ -60,7 +62,7 @@ export async function POST(req: Request) {
 
   const descriptionResult = validateExpenseDescription(description);
   if (!descriptionResult.success) {
-    return NextResponse.json({ error: descriptionResult.error }, { status: 400 });
+    return fail(descriptionResult.error);
   }
 
   const amountError = validateAmount(amount);

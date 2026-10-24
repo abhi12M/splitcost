@@ -91,6 +91,7 @@ export const ExpenseForm = forwardRef<ExpenseFormHandle, ExpenseFormProps>(funct
         descriptionRequired: t("validation.descriptionRequired"),
         descriptionMax: t("validation.descriptionMax", { max: EXPENSE_DESCRIPTION_MAX }),
         amountRequired: t("validation.amountRequired"),
+        amountPositive: t("validation.amountPositive"),
         paidByRequired: t("validation.paidByRequired"),
       }),
     [t]

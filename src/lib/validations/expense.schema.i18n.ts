@@ -7,6 +7,7 @@ export type ExpenseValidationMessages = {
   descriptionRequired: string;
   descriptionMax: string;
   amountRequired: string;
+  amountPositive: string;
   paidByRequired: string;
 };
 
@@ -20,7 +21,11 @@ export function createExpenseSchema(messages: ExpenseValidationMessages) {
       }),
       paidByUserId: z.string().optional(),
       isMultiplePayers: z.boolean().optional(),
-      amount: z.string().nonempty(messages.amountRequired).transform(Number),
+      amount: z
+        .string()
+        .nonempty(messages.amountRequired)
+        .refine((value) => Number(value) > 0, messages.amountPositive)
+        .transform(Number),
     })
     .refine(
       (data) => {

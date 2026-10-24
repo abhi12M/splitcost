@@ -1035,6 +1035,7 @@
       "descriptionRequired": "Informe uma descrição.",
       "descriptionMax": "A descrição não pode exceder {max} caracteres.",
       "amountRequired": "Informe um valor.",
+      "amountPositive": "O valor deve ser maior que zero.",
       "paidByRequired": "Selecione quem pagou."
     },
     "paidByTotalMismatch": "O total pago é {paid} mas a despesa é {total}. Ajuste os valores para continuar.",
@@ -2228,7 +2229,7 @@
     "couldNotUploadImage": "Não foi possível enviar o recibo",
     "couldNotRemoveImage": "Não foi possível remover o recibo",
     "tryAgainHint": "Verifique sua conexão e tente novamente.",
-    "retry": "Tentar novamente"
+    "checkDetailsHint": "Confira os dados informados e tente novamente.",    "retry": "Tentar novamente"
   },
   "activity": {
     "title": "Atividade",
@@ -2340,6 +2341,8 @@
     "offlinePageMessage": "Esta página ainda não está salva neste dispositivo. Seus grupos e os que você criar offline continuam disponíveis.",
     "offlinePageAction": "Ir para meus grupos",
     "receiptOffline": "Esta despesa tem um recibo. Ele aparece quando você voltar a ficar online.",
+    "receiptLoading": "Carregando o recibo…",
+    "receiptRetry": "Não foi possível carregar o recibo. Tentando novamente…",
     "droppedNotSaved": "A conexão caiu, então isso não foi salvo. Tente de novo quando voltar a ficar online.",
     "droppedNotDeleted": "A conexão caiu, então nada foi excluído. Tente de novo quando voltar a ficar online.",
     "droppedReceipt": "A conexão caiu, então o recibo não foi alterado. Tente de novo quando voltar a ficar online.",

@@ -121,14 +121,16 @@ export async function PUT(
     originSessionId,
   } = body;
 
-  const fail = (error: string) => NextResponse.json({ error }, { status: 400 });
+  // The message is already written for people; passing it as the cause too
+  // lets development show it in the toast like every other API failure.
+  const fail = (error: string) => errorJson(error, 400, error);
 
   if (!isValidUUID(groupId)) return fail("Invalid group ID");
   if (!isValidUUID(expenseId)) return fail("Invalid expense ID");
 
   const descriptionResult = validateExpenseDescription(description);
   if (!descriptionResult.success) {
-    return NextResponse.json({ error: descriptionResult.error }, { status: 400 });
+    return fail(descriptionResult.error);
   }
 
   const amountError = validateAmount(amount);

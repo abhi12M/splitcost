@@ -96,9 +96,11 @@ export default function AddExpensePage({ groupId }: { groupId: string }) {
       // The connection dropped mid-save: the form stays filled for a retry.
       if (showOfflineFailure(error)) return;
       // Stay on the filled form so the user can tap Add again.
+      console.error("add expense failed:", error);
+      // A 400 means the server refused the details, not that the connection failed.
       saveErrorToastRef.current = toast({
         title: tToasts("couldNotAddExpense"),
-        description: tToasts("tryAgainHint"),
+        description: tToasts((error as { status?: number }).status === 400 ? "checkDetailsHint" : "tryAgainHint"),
         variant: "error",
       }).dismiss;
     }

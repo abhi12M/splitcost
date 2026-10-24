@@ -87,6 +87,7 @@ const ExpenseFormMobile = forwardRef<ExpenseFormMobileHandle, Props>(function Ex
         descriptionRequired: t("validation.descriptionRequired"),
         descriptionMax: t("validation.descriptionMax", { max: EXPENSE_DESCRIPTION_MAX }),
         amountRequired: t("validation.amountRequired"),
+        amountPositive: t("validation.amountPositive"),
         paidByRequired: t("validation.paidByRequired"),
       }),
     [t]

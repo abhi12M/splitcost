@@ -442,8 +442,9 @@ export async function addExpense(
   if (!res.ok) {
     const payload = await res.json().catch(() => null);
     // `code` lets callers tell e.g. GROUP_NOT_FOUND apart from other failures.
-    const error = new Error(payload?.error || "Failed to add expense") as Error & { code?: string };
+    const error = new Error(payload?.error || "Failed to add expense") as Error & { code?: string; status?: number };
     error.code = payload?.code;
+    error.status = res.status;
     throw error;
   }
 
@@ -499,8 +500,9 @@ export async function updateExpense(
 
   if (!res.ok) {
     const payload = await res.json().catch(() => null);
-    const error = new Error(payload?.code || "Failed to update expense") as Error & { code?: string; payload?: unknown };
+    const error = new Error(payload?.code || "Failed to update expense") as Error & { code?: string; payload?: unknown; status?: number };
     error.code = payload?.code;
+    error.status = res.status;
     error.payload = payload;
     throw error;
   }
