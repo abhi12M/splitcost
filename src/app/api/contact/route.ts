@@ -1,6 +1,7 @@
 import { Resend } from "resend";
 import { readJsonObject } from "@/lib/api/request";
 import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
+import { getContactEmail } from "@/lib/contact-email";
 import { validateContactInput } from "@/lib/validations/contact";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -25,11 +26,12 @@ export async function POST(req: Request) {
         return Response.json({ success: false, error: input.error, fields: input.fields }, { status: 400 });
     }
     const { name, email, subject, message } = input.data;
+    const contactEmail = getContactEmail();
 
     try {
         const { data, error } = await resend.emails.send({
-            from: 'onboarding@resend.dev',
-            to: 'contact@splitcost.in',
+            from: `SplitCost Contact <${contactEmail}>`,
+            to: contactEmail,
             replyTo: email,
             subject,
             html: `

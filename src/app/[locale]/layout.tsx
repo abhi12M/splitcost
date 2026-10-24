@@ -27,6 +27,7 @@ import {
 } from "@/lib/seo";
 import { getLocalizedCanonicalUrl } from "@/lib/seo-i18n";
 import { getOrganizationId, getWebsiteId } from "@/lib/schema-identity";
+import { getContactEmail } from "@/lib/contact-email";
 
 const siteUrl = getSiteUrl();
 
@@ -136,7 +137,7 @@ export default async function LocaleLayout({
       contactPoint: {
         "@type": "ContactPoint",
         contactType: "customer support",
-        email: "contact@splitcost.in",
+        email: getContactEmail(),
         url: getLocalizedCanonicalUrl(locale as AppLocale, "/contact"),
       },
     },
