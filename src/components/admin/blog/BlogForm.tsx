@@ -175,9 +175,8 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
   const [showSettings, setShowSettings] = useState(true);
   const [activeTocId, setActiveTocId] = useState<string>();
   const [saving, setSaving] = useState(false);
-  // A newly created draft redirects to its edit URL after the first autosave.
-  // That page load already has persisted data, so keep the saved indicators
-  // visible instead of briefly resetting them to "Ready".
+  // A reload of a draft's edit URL starts with persisted data, so show the
+  // saved indicators instead of briefly showing "Ready".
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">(
     blog ? "saved" : "idle"
   );
@@ -373,7 +372,10 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
             router.replace(publishedPath);
           }
         } else if (!blogId) {
-          router.replace(`${ADMIN_BASE_PATH}/blogs/edit/${saved.id}`);
+          // Only the address changes. A router navigation would remount the
+          // editor on the edit page, resetting the cursor and dropping any
+          // typing done while the save was in flight.
+          window.history.replaceState(null, "", `${ADMIN_BASE_PATH}/blogs/edit/${saved.id}`);
         }
 
         return saved;
