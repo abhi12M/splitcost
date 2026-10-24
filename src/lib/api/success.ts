@@ -23,6 +23,7 @@ export const SUCCESS_MESSAGES = {
   blogCreated: "Blog created",
   blogUpdated: "Blog updated",
   blogDeleted: "Blog deleted",
+  blogDraftDiscarded: "Draft changes discarded",
   blogCategoryCreated: "Category created",
   blogCategoryUpdated: "Category updated",
   blogCategoryDeleted: "Category deleted",

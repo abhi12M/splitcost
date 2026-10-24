@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Edit, Plus, Trash2 } from "lucide-react";
+import { Edit, ExternalLink, Eye, Plus, Trash2, Undo2 } from "lucide-react";
 import { type MouseEvent, useEffect, useState } from "react";
 
 import type { BlogAdminListItem } from "@/lib/blog/types";
@@ -53,6 +53,8 @@ export function BlogAdminList({ blogs }: { blogs: BlogAdminListItem[] }) {
   const [visibleBlogs, setVisibleBlogs] = useState(blogs);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<BlogAdminListItem | null>(null);
+  const [discardingId, setDiscardingId] = useState<string | null>(null);
+  const [discardTarget, setDiscardTarget] = useState<BlogAdminListItem | null>(null);
 
   useEffect(() => {
     setVisibleBlogs(blogs);
@@ -99,6 +101,33 @@ export function BlogAdminList({ blogs }: { blogs: BlogAdminListItem[] }) {
     }
   };
 
+  const handleDiscardDraft = async (id: string) => {
+    setDiscardingId(id);
+    try {
+      const response = await fetch(`/api/blogs/${id}/draft`, { method: "DELETE" });
+
+      if (!response.ok) {
+        const result = (await response.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(result?.error ?? "Failed to discard draft changes");
+      }
+
+      toast({ title: "Draft changes discarded", variant: "success" });
+      setVisibleBlogs((currentBlogs) =>
+        currentBlogs.map((blog) => (blog.id === id ? { ...blog, has_draft_changes: false } : blog))
+      );
+      router.refresh();
+    } catch (error) {
+      toast({
+        title: "Unable to discard draft changes",
+        description: error instanceof Error ? error.message : "Please try again.",
+        variant: "error",
+      });
+    } finally {
+      setDiscardingId(null);
+      setDiscardTarget(null);
+    }
+  };
+
   return (
     <Card>
       <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -138,6 +167,30 @@ export function BlogAdminList({ blogs }: { blogs: BlogAdminListItem[] }) {
                   <TableCell className="whitespace-nowrap tabular-nums">{formatBlogDateTime(blog.created_at)}</TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-2">
+                      {blog.status === "published" ? (
+                        <Button asChild size="icon" variant="outline" aria-label="View published blog" title="View published blog">
+                          <Link
+                            href={`/en/blog/${encodeURIComponent(blog.slug)}`}
+                            prefetch={false}
+                            target="_blank"
+                            rel="noopener"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                      ) : null}
+                      {blog.status !== "published" || blog.has_draft_changes ? (
+                        <Button asChild size="icon" variant="outline" aria-label="Preview blog" title="Preview blog">
+                          <Link
+                            href={`${ADMIN_BASE_PATH}/blogs/preview/${blog.id}`}
+                            prefetch={false}
+                            target="_blank"
+                            rel="noopener"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                      ) : null}
                       <Button asChild size="icon" variant="outline" aria-label="Edit blog">
                         <Link
                           href={`${ADMIN_BASE_PATH}/blogs/edit/${blog.id}`}
@@ -147,6 +200,18 @@ export function BlogAdminList({ blogs }: { blogs: BlogAdminListItem[] }) {
                           <Edit className="h-4 w-4" />
                         </Link>
                       </Button>
+                      {blog.status === "published" && blog.has_draft_changes ? (
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          aria-label="Discard draft changes"
+                          title="Discard draft changes"
+                          disabled={discardingId === blog.id}
+                          onClick={() => setDiscardTarget(blog)}
+                        >
+                          <Undo2 className="h-4 w-4" />
+                        </Button>
+                      ) : null}
                       <Button
                         size="icon"
                         variant="outline"
@@ -172,6 +237,23 @@ export function BlogAdminList({ blogs }: { blogs: BlogAdminListItem[] }) {
         )}
       </CardContent>
 
+      <GenericAlertDialog
+        open={Boolean(discardTarget)}
+        onOpenChange={(open) => !open && setDiscardTarget(null)}
+        title="Discard draft changes?"
+        description={discardTarget ? `Discard the unpublished changes to "${discardTarget.title}". The published post stays as it is.` : undefined}
+        actions={[
+          { label: "Cancel", type: "cancel", disabled: Boolean(discardingId) },
+          {
+            label: discardingId ? "Discarding..." : "Discard draft",
+            disabled: Boolean(discardingId),
+            onClick: (event) => {
+                event.preventDefault();
+                if (discardTarget) void handleDiscardDraft(discardTarget.id);
+            },
+          },
+        ]}
+      />
       <GenericAlertDialog
         open={Boolean(deleteTarget)}
         onOpenChange={(open) => !open && setDeleteTarget(null)}

@@ -260,12 +260,12 @@ export async function getBlogById(id: string): Promise<Blog | null> {
 
   if (draftError) {
     console.error("getBlogById draft error:", draftError);
-    return blog as Blog;
+    return { ...blog, published_slug: blog.slug } as Blog;
   }
 
   return draft
-    ? ({ ...blog, ...draft, has_draft_changes: true } as Blog)
-    : (blog as Blog);
+    ? ({ ...blog, ...draft, published_slug: blog.slug, has_draft_changes: true } as Blog)
+    : ({ ...blog, published_slug: blog.slug } as Blog);
 }
 
 export async function createBlog(input: BlogInput): Promise<Blog> {
@@ -343,6 +343,17 @@ export async function updateBlog(id: string, input: BlogInput): Promise<Blog> {
 export async function deleteBlog(id: string) {
   const { error } = await supabaseAdmin.from("blogs").delete().eq("id", id);
   if (error) throw error;
+}
+
+/** Drops the unpublished revision of a published post. Returns false when there was none. */
+export async function discardBlogDraft(id: string): Promise<boolean> {
+  const { data, error } = await supabaseAdmin
+    .from("blog_drafts")
+    .delete()
+    .eq("blog_id", id)
+    .select("blog_id");
+  if (error) throw error;
+  return (data ?? []).length > 0;
 }
 
 export async function recordBlogView(id: string): Promise<boolean> {

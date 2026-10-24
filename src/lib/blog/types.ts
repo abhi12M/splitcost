@@ -20,6 +20,8 @@ export type Blog = {
   updated_at: string;
   /** Admin-only indicator that the published row has an unpublished revision. */
   has_draft_changes?: boolean;
+  /** Admin-only: the live address of a published post, which an unpublished revision may have changed in `slug`. */
+  published_slug?: string;
 };
 
 export type BlogInput = {

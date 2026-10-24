@@ -48,7 +48,6 @@ import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { BlogEditor } from "./BlogEditor";
 import { BlogEditorShell } from "./BlogEditorShell";
-import { BlogPreviewDialog } from "./BlogPreviewDialog";
 
 const TITLE_MAX = 60;
 const DESCRIPTION_MAX = 160;
@@ -159,6 +158,9 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
   const router = useRouter();
   const [blogId, setBlogId] = useState(blog?.id ?? "");
   const [blogStatus, setBlogStatus] = useState<BlogStatus>(blog?.status ?? "draft");
+  const [publishedSlug, setPublishedSlug] = useState(
+    blog?.status === "published" ? blog.published_slug ?? blog.slug : ""
+  );
   const [title, setTitle] = useState(blog?.title ?? "");
   const [slug, setSlug] = useState(blog?.slug ?? "");
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(Boolean(blog?.slug));
@@ -183,13 +185,24 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(blog ? new Date(blog.updated_at) : null);
   const [isDirty, setIsDirty] = useState(false);
   const [schemaCopied, setSchemaCopied] = useState(false);
-  const [previewOpen, setPreviewOpen] = useState(false);
   const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false);
   const [hasDraftChanges, setHasDraftChanges] = useState(Boolean(blog?.has_draft_changes));
   const [slugCopied, setSlugCopied] = useState(false);
   const [uploadingImageKind, setUploadingImageKind] = useState<"cover" | "inline" | null>(null);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Saves run one at a time, and read the id from a ref, so a save that starts
+  // while the first one is in flight updates that post instead of creating a
+  // second one.
+  const blogIdRef = useRef(blog?.id ?? "");
+  const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
+  // Counts edits, so a save only clears the unsaved flag when nothing changed
+  // while it was in flight.
+  const editVersionRef = useRef(0);
+  // Set when the page is about to reload on purpose, so the unsaved-changes
+  // prompt does not ask about edits that are being discarded.
+  const skipLeaveWarningRef = useRef(false);
   const editorContainerRef = useRef<HTMLDivElement>(null);
 
   const readingTime = useMemo(() => estimateReadingTime(content), [content]);
@@ -223,34 +236,12 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
   );
   const schemaJson = useMemo(() => formatStructuredData(generatedSchema), [generatedSchema]);
 
-  const previewBlog = useMemo<Blog>(
-    () => ({
-      id: blogId || "",
-      title: title.trim(),
-      slug: slugify(slug || title),
-      excerpt: excerpt.trim(),
-      content,
-      cover_image: coverImage || null,
-      cover_alt: coverAlt.trim() || null,
-      category,
-      author: author.trim() || "SplitCost Team",
-      status: blogStatus,
-      published_at: blog?.published_at ?? null,
-      reading_time: readingTime,
-      no_index: noIndex,
-      is_featured: isFeatured,
-      views: blog?.views ?? 0,
-      created_at: blog?.created_at ?? new Date().toISOString(),
-      updated_at: blog?.updated_at ?? new Date().toISOString(),
-    }),
-    [author, blog?.created_at, blog?.published_at, blog?.updated_at, blog?.views, blogId, blogStatus, category, content, coverAlt, coverImage, excerpt, isFeatured, noIndex, readingTime, slug, title]
-  );
-
   const savedLabel = lastSavedAt
     ? `Saved ${formatDistanceToNow(lastSavedAt, { addSuffix: true })}`
     : "Saved";
 
   const markDirty = useCallback(() => {
+    editVersionRef.current += 1;
     setIsDirty(true);
     setSaveStatus("idle");
   }, []);
@@ -332,15 +323,24 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
       setSaveStatus("saving");
 
       const payload = buildPayload(nextStatus);
+      const savedEditVersion = editVersionRef.current;
       const publishedWindow =
         nextStatus === "published" && options?.openPublishedInNewTab
           ? window.open("about:blank", "_blank")
           : null;
       if (publishedWindow) publishedWindow.opener = null;
 
+      const previousSave = saveQueueRef.current;
+      let finishSave: () => void = () => undefined;
+      saveQueueRef.current = new Promise<void>((resolve) => {
+        finishSave = resolve;
+      });
+
       try {
-        const response = await fetch(blogId ? `/api/blogs/${blogId}` : "/api/blogs", {
-          method: blogId ? "PUT" : "POST",
+        await previousSave;
+        const currentId = blogIdRef.current;
+        const response = await fetch(currentId ? `/api/blogs/${currentId}` : "/api/blogs", {
+          method: currentId ? "PUT" : "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
@@ -354,24 +354,32 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
         }
 
         const saved = (await response.json()) as Blog;
+        blogIdRef.current = saved.id;
         setBlogId(saved.id);
         setBlogStatus(saved.status);
         setLastSavedAt(new Date(saved.updated_at));
-        setIsDirty(false);
-        setSaveStatus("saved");
+        // An edit made while this save was in flight is not in it, so it stays
+        // unsaved and the autosave timer for it keeps running.
+        if (editVersionRef.current === savedEditVersion) {
+          setIsDirty(false);
+          setSaveStatus("saved");
+        } else {
+          setSaveStatus("idle");
+        }
         if (nextStatus === "draft" && blogStatus === "published") {
           setHasDraftChanges(true);
         }
 
         if (nextStatus === "published") {
           setHasDraftChanges(false);
+          setPublishedSlug(saved.slug);
           const publishedPath = `/en/blog/${encodeURIComponent(saved.slug)}`;
           if (options?.openPublishedInNewTab && publishedWindow) {
             publishedWindow.location.replace(publishedPath);
           } else {
             router.replace(publishedPath);
           }
-        } else if (!blogId) {
+        } else if (!currentId) {
           // Only the address changes. A router navigation would remount the
           // editor on the edit page, resetting the cursor and dropping any
           // typing done while the save was in flight.
@@ -389,10 +397,11 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
         });
         return null;
       } finally {
+        finishSave();
         if (!options?.silent) setSaving(false);
       }
     },
-    [blogId, blogStatus, buildPayload, router]
+    [blogStatus, buildPayload, router]
   );
 
   const deleteBlog = useCallback(async () => {
@@ -418,6 +427,37 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
       setSaving(false);
     }
   }, [blogId, router]);
+
+  const discardDraftChanges = useCallback(async () => {
+    const id = blogIdRef.current;
+    if (!id) return;
+
+    // Stop autosave, and let any save already started finish first, so it
+    // cannot recreate the draft after it is removed.
+    setSaving(true);
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    await saveQueueRef.current;
+
+    try {
+      const response = await fetch(`/api/blogs/${id}/draft`, { method: "DELETE" });
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error ?? "Unable to discard draft changes");
+      }
+
+      // The editor fields are filled once from the page data, so reload to
+      // show the published content.
+      skipLeaveWarningRef.current = true;
+      window.location.assign(`${ADMIN_BASE_PATH}/blogs/edit/${id}?updated=${Date.now()}`);
+    } catch (discardError) {
+      setSaving(false);
+      toast({
+        variant: "error",
+        title: "Unable to discard draft changes",
+        description: discardError instanceof Error ? discardError.message : "Unable to discard draft changes",
+      });
+    }
+  }, []);
 
   const uploadBlogImage = useCallback(
     async (file: File, kind: "cover" | "inline") => {
@@ -487,9 +527,42 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
-  }, [blogId, content, coverAlt, coverImage, excerpt, isDirty, isFeatured, noIndex, saveBlog, saving, slug, title]);
+  }, [author, blogId, category, content, coverAlt, coverImage, excerpt, isDirty, isFeatured, noIndex, saveBlog, saving, slug, title]);
 
-  const handlePreview = () => setPreviewOpen(true);
+  useEffect(() => {
+    if (!isDirty) return undefined;
+
+    // Closing or reloading the tab before the autosave runs would lose the
+    // edit; the browser shows its own generic "Leave site?" prompt.
+    const warnBeforeLeaving = (event: BeforeUnloadEvent) => {
+      if (skipLeaveWarningRef.current) return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warnBeforeLeaving);
+    return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
+  }, [isDirty]);
+
+  const handlePreview = useCallback(async () => {
+    // Opened synchronously so the popup blocker allows it; the address is set
+    // once the latest edits are saved, since the preview reads the saved draft.
+    const previewWindow = window.open("about:blank", "_blank");
+    if (previewWindow) previewWindow.opener = null;
+
+    let previewId = blogId;
+    if (!previewId || isDirty) {
+      if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+      previewId = (await saveBlog("draft", { silent: true }))?.id ?? "";
+    }
+
+    if (!previewId) {
+      previewWindow?.close();
+      return;
+    }
+    const previewPath = `${ADMIN_BASE_PATH}/blogs/preview/${previewId}`;
+    if (previewWindow) previewWindow.location.replace(previewPath);
+    else window.open(previewPath, "_blank", "noopener");
+  }, [blogId, isDirty, saveBlog]);
 
   const footer = (
     <div className="flex min-w-0 flex-col gap-2 px-4 py-2 text-xs text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-4 sm:gap-y-2 sm:px-6">
@@ -517,7 +590,6 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
 
   return (
     <TooltipProvider>
-      <BlogPreviewDialog blog={previewBlog} open={previewOpen} onOpenChange={setPreviewOpen} />
       <GenericAlertDialog
         open={publishConfirmOpen}
         onOpenChange={setPublishConfirmOpen}
@@ -552,12 +624,36 @@ export function BlogForm({ blog }: { blog?: Blog | null }) {
           },
         ]}
       />
+      <GenericAlertDialog
+        open={discardConfirmOpen}
+        onOpenChange={setDiscardConfirmOpen}
+        title="Discard draft changes?"
+        description={`Discard the unpublished changes to "${title.trim() || "this blog post"}", including any unsaved edits. The published post stays as it is.`}
+        actions={[
+          { label: "Cancel", type: "cancel", disabled: saving },
+          {
+            label: saving ? "Discarding..." : "Discard draft",
+            disabled: saving,
+            onClick: (event) => {
+                event.preventDefault();
+                setDiscardConfirmOpen(false);
+                void discardDraftChanges();
+            },
+          },
+        ]}
+      />
       <BlogEditorShell
         footer={footer}
         saveStatus={saveStatus}
         savedLabel={savedLabel}
         blogStatus={blogStatus}
         hasDraftChanges={hasDraftChanges}
+        publishedPath={publishedSlug ? `/en/blog/${encodeURIComponent(publishedSlug)}` : undefined}
+        onDiscardDraft={
+          blogId && blogStatus === "published" && hasDraftChanges
+            ? () => setDiscardConfirmOpen(true)
+            : undefined
+        }
         onPreview={slug || title ? handlePreview : undefined}
         onSaveDraft={() => void saveBlog("draft")}
         onPublish={() => setPublishConfirmOpen(true)}
