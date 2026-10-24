@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { recordGroupCreated } from "@/lib/activity/server/recordGroupActivity";
+import { errorJson } from "@/lib/api/errors";
 import { readJsonObject } from "@/lib/api/request";
 import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import { supabaseAdmin } from "@/lib/supabase/server";
@@ -13,7 +14,7 @@ export async function GET() {
 
   if (error) {
     console.error("loadGroups error:", error);
-    return NextResponse.json({ error: "Failed to load groups" }, { status: 400 });
+    return errorJson("Failed to load groups", 400, error);
   }
 
   return NextResponse.json(data ?? []);
@@ -47,10 +48,7 @@ export async function POST(req: Request) {
 
   if (error) {
     console.error("createGroup error:", error);
-    return NextResponse.json(
-      { error: "Failed to create group" },
-      { status: 400 }
-    );
+    return errorJson("Failed to create group", 400, error);
   }
 
   const createdId = (data as { id?: unknown } | null)?.id;

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { listExpenseActivity } from "@/lib/activity/server/activityStore";
+import { errorJson } from "@/lib/api/errors";
 
 const UUID = /^[0-9a-f-]{36}$/i;
 
@@ -15,6 +16,6 @@ export async function GET(_req: Request, { params }: { params: { expenseId: stri
     return NextResponse.json({ events }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("listExpenseActivity error:", error);
-    return NextResponse.json({ error: "Failed to load activity" }, { status: 500 });
+    return errorJson("Failed to load activity", 500, error);
   }
 }

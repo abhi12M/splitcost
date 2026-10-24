@@ -2021,6 +2021,7 @@
       "descriptionRequired": "Enter a description.",
       "descriptionMax": "Description can't exceed {max} characters.",
       "amountRequired": "Enter an amount.",
+      "amountPositive": "Amount must be greater than zero.",
       "paidByRequired": "Select who paid."
     },
     "paidByTotalMismatch": "Paid by total is {paid} but expense is {total}. Adjust the paid by amounts to continue.",
@@ -2230,7 +2231,7 @@
     "couldNotUploadImage": "Couldn't upload the receipt",
     "couldNotRemoveImage": "Couldn't remove the receipt",
     "tryAgainHint": "Check your connection and try again.",
-    "retry": "Retry"
+    "checkDetailsHint": "Check the details you entered and try again.",    "retry": "Retry"
   },
   "activity": {
     "title": "Activity",
@@ -2342,6 +2343,8 @@
     "offlinePageMessage": "This page isn't saved on this device yet. Your groups and any you create offline are still available.",
     "offlinePageAction": "Go to my groups",
     "receiptOffline": "This expense has a receipt. It will show when you're back online.",
+    "receiptLoading": "Loading the receipt…",
+    "receiptRetry": "Couldn't load the receipt. Trying again…",
     "droppedNotSaved": "The connection dropped, so this wasn't saved. Try again when you're back online.",
     "droppedNotDeleted": "The connection dropped, so nothing was deleted. Try again when you're back online.",
     "droppedReceipt": "The connection dropped, so the receipt wasn't changed. Try again when you're back online.",

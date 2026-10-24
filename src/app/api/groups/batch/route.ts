@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { errorJson } from "@/lib/api/errors";
 import { isValidUUID } from "@/lib/api/expenseValidation";
 import { readJsonObject } from "@/lib/api/request";
 import { supabaseAdmin } from "@/lib/supabase/server";
@@ -33,7 +34,7 @@ export async function POST(req: Request) {
 
   if (error) {
     console.error("loadGroupsByIds error:", error);
-    return NextResponse.json([], { status: 500 });
+    return errorJson("Failed to load groups", 500, error);
   }
 
   return NextResponse.json(data ?? []);

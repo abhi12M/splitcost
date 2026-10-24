@@ -18,6 +18,7 @@ import {
   validatePayers,
   validateSplitType,
 } from "@/lib/api/expenseValidation";
+import { errorJson } from "@/lib/api/errors";
 import { readJsonObject } from "@/lib/api/request";
 import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import { EXPENSE_NOTES_STORAGE_MAX, normalizeExpenseNotes } from "@/lib/expenseNotes";
@@ -268,7 +269,7 @@ export async function POST(req: Request) {
     // An id already in use (the import's own, or a member's / expense's).
     if (error.message?.includes("IMPORT_CONFLICT") || error.code === "23505") return conflict();
     console.error("importLocalGroup error:", error);
-    return NextResponse.json({ error: "Failed to import group" }, { status: 500 });
+    return errorJson("Failed to import group", 500, error);
   }
 
   const status = data === "already_imported" ? "already_imported" : "created";

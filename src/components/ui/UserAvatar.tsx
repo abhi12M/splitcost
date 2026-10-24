@@ -144,6 +144,15 @@ export function AvatarGroup({
         ))}
 
         {overflow > 0 && (
+          // Swallow clicks (incl. the portaled popover, which bubbles through the React tree)
+          // so a parent card/link doesn't navigate.
+          <span
+            className="inline-flex"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+          >
           <SingleSelect
             items={overflowNames.map((m, i) => ({
               id: m,
@@ -159,12 +168,12 @@ export function AvatarGroup({
                   sizeClasses[effectiveSize]
                 )}
                 aria-label={`View ${overflow} more members`}
-                onClick={(e) => e.stopPropagation()}
               >
                 +{overflow}
               </button>
             }
           />
+          </span>
         )}
       </div>
 

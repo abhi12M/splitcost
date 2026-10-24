@@ -6,6 +6,7 @@ import type {
   ToastProps,
 } from "@/components/ui/toast";
 import { type ToastIconName, type ToastVariant, toastVariantConfig } from "@/components/ui/toast-config";
+import { takeRecentApiError } from "@/lib/devApiErrors";
 
 // Toast state manager: `toast({ ... })` adds data here; <Toaster /> reads and displays it.
 // 4 fits one realtime group save, which can show up to four notices at once
@@ -42,7 +43,12 @@ type ToasterToast = Omit<ToastProps, "variant"> & {
   position?: "center" | "top-right" | "bottom-right" | "top-center" | "bottom-center"
   customColor?: ToastCustomColor;
   icon?: React.ReactNode | React.ElementType | ToastIconName;
+  /** Development only: the exact error behind this toast, offered through a Copy button. */
+  copyText?: string;
 };
+
+// How long a toast that carries the exact error stays up, so it can be read and copied.
+const DEBUG_TOAST_DURATION = 30_000;
 
 const actionTypes = {
   ADD_TOAST: "ADD_TOAST",
@@ -177,6 +183,17 @@ function getDedupeKey(variant: ToastVariant, props: ToastOptions): string | unde
 
 function toast({ ...props }: ToastOptions) {
   const variant = props.variant ?? "info";
+
+  // Development: an error toast right after a failed API call shows that
+  // call's exact error, with a way to copy it. Production keeps the friendly text.
+  const apiError = variant === "error" ? takeRecentApiError() : null;
+  if (apiError) {
+    if (props.message !== undefined) props.message = apiError.message;
+    else props.description = apiError.message;
+    props.copyText = apiError.copyText;
+    props.duration ??= DEBUG_TOAST_DURATION;
+  }
+
   const config = toastVariantConfig[variant];
   const dedupeKey = getDedupeKey(variant, props);
 

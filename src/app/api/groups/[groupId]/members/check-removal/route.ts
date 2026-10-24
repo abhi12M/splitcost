@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { errorJson } from "@/lib/api/errors";
 import { isValidUUID } from "@/lib/api/expenseValidation";
 import { readJsonObject } from "@/lib/api/request";
 import { cleanName } from "@/lib/validations/names";
@@ -87,10 +88,7 @@ export async function POST(
 
   if (memberError) {
     console.error("checkMemberRemoval member lookup error:", memberError);
-    return NextResponse.json(
-      { error: "Failed to validate member removal." },
-      { status: 400 }
-    );
+    return errorJson("Failed to validate member removal.", 400, memberError);
   }
 
   if (!member) {
@@ -111,9 +109,6 @@ export async function POST(
     });
   } catch (error) {
     console.error("checkMemberRemoval error:", error);
-    return NextResponse.json(
-      { error: "Failed to validate member removal." },
-      { status: 400 }
-    );
+    return errorJson("Failed to validate member removal.", 400, error);
   }
 }

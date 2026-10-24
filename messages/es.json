@@ -1035,6 +1035,7 @@
       "descriptionRequired": "Introduce una descripción.",
       "descriptionMax": "La descripción no puede superar {max} caracteres.",
       "amountRequired": "Introduce un importe.",
+      "amountPositive": "El importe debe ser mayor que cero.",
       "paidByRequired": "Selecciona quién pagó."
     },
     "paidByTotalMismatch": "El total pagado es {paid} pero el gasto es {total}. Ajusta los importes para continuar.",
@@ -2228,7 +2229,7 @@
     "couldNotUploadImage": "No se pudo subir el recibo",
     "couldNotRemoveImage": "No se pudo quitar el recibo",
     "tryAgainHint": "Revisa tu conexión e inténtalo de nuevo.",
-    "retry": "Reintentar"
+    "checkDetailsHint": "Revisa los datos que introdujiste e inténtalo de nuevo.",    "retry": "Reintentar"
   },
   "activity": {
     "title": "Actividad",
@@ -2340,6 +2341,8 @@
     "offlinePageMessage": "Esta página aún no está guardada en este dispositivo. Tus grupos y los que crees sin conexión siguen disponibles.",
     "offlinePageAction": "Ir a mis grupos",
     "receiptOffline": "Este gasto tiene un recibo. Se mostrará cuando vuelvas a estar en línea.",
+    "receiptLoading": "Cargando el recibo…",
+    "receiptRetry": "No se pudo cargar el recibo. Reintentando…",
     "droppedNotSaved": "Se perdió la conexión, así que no se guardó. Inténtalo de nuevo cuando vuelvas a estar en línea.",
     "droppedNotDeleted": "Se perdió la conexión, así que no se eliminó nada. Inténtalo de nuevo cuando vuelvas a estar en línea.",
     "droppedReceipt": "Se perdió la conexión, así que el recibo no cambió. Inténtalo de nuevo cuando vuelvas a estar en línea.",

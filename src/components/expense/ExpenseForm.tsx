@@ -45,6 +45,8 @@ interface ExpenseFormProps {
   initialData?: ExpenseFormInterface;
   initialAttachment?: ExpenseAttachment | null;
   onSubmit: (data: ExpenseRequest) => void;
+  /** Asked before validating on save; false (having explained why) stops the save. */
+  canSubmit?: () => boolean;
   submitLabel: string;
 }
 
@@ -75,6 +77,7 @@ export const ExpenseForm = forwardRef<ExpenseFormHandle, ExpenseFormProps>(funct
   initialData,
   initialAttachment = null,
   onSubmit,
+  canSubmit,
   submitLabel,
 }, ref) {
   const t = useTranslations("expense");
@@ -88,6 +91,7 @@ export const ExpenseForm = forwardRef<ExpenseFormHandle, ExpenseFormProps>(funct
         descriptionRequired: t("validation.descriptionRequired"),
         descriptionMax: t("validation.descriptionMax", { max: EXPENSE_DESCRIPTION_MAX }),
         amountRequired: t("validation.amountRequired"),
+        amountPositive: t("validation.amountPositive"),
         paidByRequired: t("validation.paidByRequired"),
       }),
     [t]
@@ -361,6 +365,7 @@ export const ExpenseForm = forwardRef<ExpenseFormHandle, ExpenseFormProps>(funct
   );
 
   const submitForm = () => {
+    if (canSubmit && !canSubmit()) return;
     setHasSubmitted(true);
     const isValid = validate();
     if (!isValid) return; // STOP submit

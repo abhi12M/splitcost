@@ -336,7 +336,9 @@ export function GroupFormMobile({
             label: t("keepEditing"),
             type: "cancel",
             className: "mt-0",
-            onClick: () => requestAnimationFrame(() => memberInputRef.current?.focus()),
+            onClick: () => {
+              requestAnimationFrame(() => memberInputRef.current?.focus());
+            },
           },
           { label: t("saveWithoutMember"), onClick: () => void submitGroup() },
         ]}

@@ -12,6 +12,7 @@ import { useOnline } from "@/hooks/useOffline";
 import { isOfflineError, isOnline, trackedFetch } from "@/lib/offline/network";
 import { brandStyles } from "@/lib/brand-styles";
 import { APP_NAME } from "@/lib/constants";
+import { getContactEmail } from "@/lib/contact-email";
 import { cn } from "@/lib/utils";
 import {
   cleanContactInput,
@@ -32,6 +33,7 @@ import { Textarea } from "@/components/ui/textarea";
 // The unsent message, kept for this tab so a reload (e.g. while offline)
 // doesn't lose it. Cleared once the message is sent.
 const DRAFT_KEY = "splitcost:contact-draft";
+const contactEmail = getContactEmail();
 const EMPTY_FORM = { name: "", email: "", subject: "", message: "" };
 
 function readDraft(): typeof EMPTY_FORM | null {
@@ -231,10 +233,10 @@ export default function ContactPage() {
             <p className="mt-4 text-sm text-muted-foreground">
               {t("preferEmail")}{" "}
               <a
-                href="mailto:contact@splitcost.in"
+                href={`mailto:${contactEmail}`}
                 className="font-medium text-primary underline underline-offset-4 transition-colors hover:text-primary/80 dark:text-primary/90"
               >
-                contact@splitcost.in
+                {contactEmail}
               </a>
               .
             </p>

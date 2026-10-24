@@ -18,7 +18,8 @@ const DrawerOverlay = React.forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Overlay>
 >(({ className, ...props }, ref) => (
-  <DrawerPrimitive.Overlay ref={ref} className={cn("fixed inset-0 z-50 bg-black/80", className)} {...props} />
+  // z-[80]/[81]: above the mobile bottom nav (z-[60]) so a sheet is never cut off by it.
+  <DrawerPrimitive.Overlay ref={ref} className={cn("fixed inset-0 z-[80] bg-black/80", className)} {...props} />
 ));
 DrawerOverlay.displayName = DrawerPrimitive.Overlay.displayName;
 
@@ -31,7 +32,7 @@ const DrawerContent = React.forwardRef<
     <DrawerPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border bg-background outline-none",
+        "fixed inset-x-0 bottom-0 z-[81] mt-24 flex h-auto flex-col rounded-t-[10px] border bg-background outline-none",
         className,
       )}
       {...props}

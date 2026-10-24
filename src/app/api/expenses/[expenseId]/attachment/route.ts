@@ -1,6 +1,7 @@
 import { recordExpenseChanges } from "@/lib/activity/server/recordExpenseActivity";
 import { loadExpenseSnapshot } from "@/lib/activity/server/expenseSnapshots";
 import { broadcastExpenseChange } from "@/lib/api/broadcastExpense";
+import { errorJson } from "@/lib/api/errors";
 import { isValidUUID } from "@/lib/api/expenseValidation";
 import { readFormData, readJsonObject } from "@/lib/api/request";
 import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
@@ -82,10 +83,7 @@ export async function GET(
     return NextResponse.json(resolution.attachment);
   } catch (error) {
     console.error("loadExpenseAttachment error:", error);
-    return NextResponse.json(
-      { error: "Failed to load attachment" },
-      { status: 400 }
-    );
+    return errorJson("Failed to load attachment", 400, error);
   }
 }
 
@@ -184,10 +182,7 @@ export async function POST(
     return successJson(payload, SUCCESS_MESSAGES.receiptUploaded);
   } catch (error) {
     console.error("saveExpenseAttachment error:", error);
-    return NextResponse.json(
-      { error: "Failed to upload attachment" },
-      { status: 400 }
-    );
+    return errorJson("Failed to upload attachment", 400, error);
   }
 }
 
@@ -240,9 +235,6 @@ export async function DELETE(
       return NextResponse.json({ code: "ATTACHMENT_CHANGED", expenseId }, { status: 409 });
     }
     console.error("deleteExpenseAttachment error:", error);
-    return NextResponse.json(
-      { error: "Failed to delete attachment" },
-      { status: 400 }
-    );
+    return errorJson("Failed to delete attachment", 400, error);
   }
 }

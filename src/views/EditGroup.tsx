@@ -725,11 +725,9 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
     return true;
   };
 
-  const handleDeleteGroup = async () => {
-    if (!access.check("deleteGroup")) {
-      setDeleteDialogOpen(false);
-      return;
-    }
+  /** Resolves false on failure, so the confirm dialog unlocks and closes. */
+  const handleDeleteGroup = async (): Promise<boolean> => {
+    if (!access.check("deleteGroup")) return false;
     setIsDeleting(true);
     isDeletingRef.current = true;
     try {
@@ -742,7 +740,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
         });
         setIsDeleting(false);
         isDeletingRef.current = false;
-        return;
+        return false;
       }
 
       const existing = getEncryptedItem<string[]>(LOCAL_GROUPS_KEY, []);
@@ -752,11 +750,12 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
       );
       toast({ message: tToasts("groupDeleted"), variant: "destructive" });
       router.push("/");
+      return true;
     } catch (error) {
       if (showOfflineFailure(error)) {
         setIsDeleting(false);
         isDeletingRef.current = false;
-        return;
+        return false;
       }
       const message =
         error instanceof Error ? error.message : t("failedDelete");
@@ -767,6 +766,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
       });
       setIsDeleting(false);
       isDeletingRef.current = false;
+      return false;
     }
   };
 
@@ -1150,9 +1150,9 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
           onOpenMember={openMemberSheet}
           onSaveGroup={() => handleSaveGroup()}
           onDeleteGroup={handleDeleteGroup}
+          canDeleteGroup={() => access.check("deleteGroup")}
           unsettledWarning={unsettledWarning}
           isSubmitting={isSubmitting}
-          isDeleting={isDeleting}
         />
       )}
 
@@ -1218,9 +1218,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
       {/* Desktop confirmation; the mobile layout has its own. */}
       <GenericAlertDialog
         open={deleteDialogOpen}
-        onOpenChange={(open) => {
-          if (!isDeleting) setDeleteDialogOpen(open);
-        }}
+        onOpenChange={setDeleteDialogOpen}
         title={tGroup("deleteGroupTitle")}
         description={
           <div>
@@ -1230,15 +1228,14 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
           </div>
         }
         actions={[
-          { label: tCommon("cancel"), type: "cancel", disabled: isDeleting },
+          { label: tCommon("cancel"), type: "cancel" },
           {
-            label: isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : tCommon("delete"),
+            label: tCommon("delete"),
+            pendingLabel: <Loader2 className="h-4 w-4 animate-spin" />,
             variant: "destructive",
-            disabled: isDeleting,
-            onClick: (event) => {
-              event.preventDefault();
-              void handleDeleteGroup();
-            },
+            async: true,
+            closeOnSuccess: false,
+            onClick: handleDeleteGroup,
           },
         ]}
       />

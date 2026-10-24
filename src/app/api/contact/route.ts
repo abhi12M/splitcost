@@ -1,6 +1,8 @@
 import { Resend } from "resend";
+import { errorJson } from "@/lib/api/errors";
 import { readJsonObject } from "@/lib/api/request";
 import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
+import { getContactEmail } from "@/lib/contact-email";
 import { validateContactInput } from "@/lib/validations/contact";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -25,11 +27,12 @@ export async function POST(req: Request) {
         return Response.json({ success: false, error: input.error, fields: input.fields }, { status: 400 });
     }
     const { name, email, subject, message } = input.data;
+    const contactEmail = getContactEmail();
 
     try {
         const { data, error } = await resend.emails.send({
-            from: 'onboarding@resend.dev',
-            to: 'contact@splitcost.in',
+            from: `SplitCost Contact <${contactEmail}>`,
+            to: contactEmail,
             replyTo: email,
             subject,
             html: `
@@ -46,19 +49,13 @@ export async function POST(req: Request) {
         // Resend reports a refused email in `error` instead of throwing.
         if (error) {
             console.error("Contact email was not sent:", error);
-            return Response.json(
-                { success: false, error: "Failed to send email" },
-                { status: 500 }
-            );
+            return errorJson("Failed to send email", 500, error, { success: false });
         }
 
         return successJson({ success: true, data }, SUCCESS_MESSAGES.contactSent);
 
     } catch (error) {
         console.error("Contact email failed:", error);
-        return Response.json(
-            { success: false, error: "Failed to send email" },
-            { status: 500 }
-        );
+        return errorJson("Failed to send email", 500, error, { success: false });
     }
 }

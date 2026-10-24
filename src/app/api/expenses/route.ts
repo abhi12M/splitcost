@@ -2,6 +2,7 @@ import { recordExpenseAdded } from "@/lib/activity/server/recordExpenseActivity"
 import { loadExpenseDetails } from "@/lib/activity/server/expenseSnapshots";
 import { SETTLEMENT_CATEGORY } from "@/lib/activity/expenseSnapshot";
 import { broadcastExpenseChange } from "@/lib/api/broadcastExpense";
+import { errorJson } from "@/lib/api/errors";
 import { readJsonObject } from "@/lib/api/request";
 import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import { NextResponse } from "next/server";
@@ -51,7 +52,9 @@ export async function POST(req: Request) {
     requestId,
   } = body;
 
-  const fail = (error: string) => NextResponse.json({ error }, { status: 400 });
+  // The message is already written for people; passing it as the cause too
+  // lets development show it in the toast like every other API failure.
+  const fail = (error: string) => errorJson(error, 400, error);
 
   if (!isValidUUID(groupId)) return fail("Invalid group ID");
   // Optional: retries of one add send the same id, so it is only added once.
@@ -59,7 +62,7 @@ export async function POST(req: Request) {
 
   const descriptionResult = validateExpenseDescription(description);
   if (!descriptionResult.success) {
-    return NextResponse.json({ error: descriptionResult.error }, { status: 400 });
+    return fail(descriptionResult.error);
   }
 
   const amountError = validateAmount(amount);
@@ -127,10 +130,7 @@ export async function POST(req: Request) {
     if (!group) {
       return NextResponse.json({ code: "GROUP_NOT_FOUND", error: "Group not found" }, { status: 404 });
     }
-    return NextResponse.json(
-      { error: "Failed to add expense" },
-      { status: 400 }
-    );
+    return errorJson("Failed to add expense", 400, error);
   }
   const { alreadyAdded, ...created } = (data ?? {}) as { id?: unknown; alreadyAdded?: boolean };
   const createdId = created.id;

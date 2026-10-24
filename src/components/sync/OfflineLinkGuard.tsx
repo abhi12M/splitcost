@@ -20,6 +20,8 @@ export function OfflineLinkGuard() {
       const anchor = event.target instanceof Element ? event.target.closest("a[href]") : null;
       if (!(anchor instanceof HTMLAnchorElement) || anchor.hasAttribute("download")) return;
       if (anchor.target && anchor.target !== "_self") return;
+      // A blocked GuardedLink (add / edit) handles its own click and explains why.
+      if (anchor.getAttribute("aria-disabled") === "true") return;
 
       const url = new URL(anchor.href);
       if (url.origin !== window.location.origin) return;

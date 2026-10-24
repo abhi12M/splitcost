@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { isAuthorizedAdminRequest } from "@/lib/admin-auth";
+import { failureJson } from "@/lib/api/errors";
 import { readJsonObject } from "@/lib/api/request";
 import { SUCCESS_MESSAGES, successJson } from "@/lib/api/success";
 import {
@@ -14,14 +15,6 @@ type RouteContext = {
   params: { id: string };
 };
 
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error) return error.message;
-  if (typeof error === "object" && error && "message" in error && typeof error.message === "string") {
-    return error.message;
-  }
-  return "Failed to manage blog category";
-}
-
 export async function GET(request: Request, { params }: RouteContext) {
   if (!isAuthorizedAdminRequest(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -34,7 +27,7 @@ export async function GET(request: Request, { params }: RouteContext) {
     return NextResponse.json(category);
   } catch (error: unknown) {
     console.error("getBlogCategoryById error:", error);
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    return failureJson(error, "Failed to load blog category", 500);
   }
 }
 
@@ -52,7 +45,7 @@ export async function PUT(req: Request, { params }: RouteContext) {
     return successJson(category, SUCCESS_MESSAGES.blogCategoryUpdated);
   } catch (error: unknown) {
     console.error("updateBlogCategory error:", error);
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 400 });
+    return failureJson(error, "Failed to update blog category", 400);
   }
 }
 
@@ -65,6 +58,6 @@ export async function DELETE(request: Request, { params }: RouteContext) {
     return successJson({ ok: true }, SUCCESS_MESSAGES.blogCategoryDeleted);
   } catch (error: unknown) {
     console.error("deleteBlogCategory error:", error);
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 400 });
+    return failureJson(error, "Failed to delete blog category", 400);
   }
 }

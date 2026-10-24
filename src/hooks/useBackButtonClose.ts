@@ -2,14 +2,16 @@ import { useEffect, useId, useRef } from "react";
 
 import { BACK_CLOSE_KEY } from "@/lib/historyKeys";
 
-export function useBackButtonClose(isOpen: boolean, onClose: () => void) {
+export function useBackButtonClose(isOpen: boolean, onClose: () => void, locked = false) {
   const reactId = useId();
   const entryIdRef = useRef<string>(reactId);
   const onCloseRef = useRef(onClose);
+  const lockedRef = useRef(locked);
 
   useEffect(() => {
     onCloseRef.current = onClose;
-  }, [onClose]);
+    lockedRef.current = locked;
+  }, [onClose, locked]);
 
   useEffect(() => {
     if (!isOpen || typeof window === "undefined") return;
@@ -33,6 +35,21 @@ export function useBackButtonClose(isOpen: boolean, onClose: () => void) {
       // layer should not also close the layer underneath if its history entry
       // just became active again.
       if (activeEntryId === entryIdRef.current) {
+        return;
+      }
+
+      // Locked (e.g. a delete is running): Back already popped our entry, so
+      // push it again and stay open.
+      if (lockedRef.current) {
+        const state =
+          window.history.state && typeof window.history.state === "object"
+            ? window.history.state
+            : {};
+        window.history.pushState(
+          { ...state, [BACK_CLOSE_KEY]: entryIdRef.current },
+          "",
+          window.location.href
+        );
         return;
       }
 
