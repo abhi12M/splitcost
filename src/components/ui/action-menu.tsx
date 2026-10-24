@@ -64,7 +64,6 @@ export function ActionMenu({
 
   const handleConfirmDelete = async () => {
     await onDelete?.();
-    setConfirmOpen(false);
   };
 
   return (
@@ -126,9 +125,10 @@ export function ActionMenu({
       actions={[
         { label: t("cancel"), type: "cancel", className: "flex-1 mt-0 border-none bg-muted hover:bg-muted/80" },
         {
-          label: isDeleting ? t("deleting") : resolvedDeleteLabel,
+          label: resolvedDeleteLabel,
+          pendingLabel: t("deleting"),
           onClick: handleConfirmDelete,
-          disabled: isDeleting,
+          async: true,
           className: "flex-1 bg-destructive hover:bg-destructive/90 text-white",
         },
       ]}

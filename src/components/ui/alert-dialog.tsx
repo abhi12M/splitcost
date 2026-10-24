@@ -8,14 +8,21 @@ import { useBackButtonClose } from "@/hooks/useBackButtonClose";
 const AlertDialog = ({
   open,
   onOpenChange,
+  locked = false,
   ...props
-}: React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Root>) => {
-  useBackButtonClose(Boolean(open), () => onOpenChange?.(false));
+}: React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Root> & {
+  /** While true, Escape, outside click and Back can't close the dialog. */
+  locked?: boolean;
+}) => {
+  useBackButtonClose(Boolean(open), () => onOpenChange?.(false), locked);
 
   return (
     <AlertDialogPrimitive.Root
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={(next) => {
+        if (locked && !next) return;
+        onOpenChange?.(next);
+      }}
       {...props}
     />
   );

@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { GenericAlertDialog } from "@/components/ui/generic-alert-dialog";
+import { GenericAlertDialog, type AlertActionResult } from "@/components/ui/generic-alert-dialog";
 import {
   Drawer,
   DrawerContent,
@@ -469,7 +469,8 @@ export default function ExpenseDetailsPage({
   const headerIconButtonClass =
     "inline-flex h-10 w-10 items-center justify-center rounded-full bg-transparent text-foreground/70 transition-colors [-webkit-tap-highlight-color:transparent] hover:bg-transparent hover:text-foreground active:bg-transparent focus:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60 sm:hover:bg-background/40";
 
-  const handleDeleteExpense = async () => {
+  /** Resolves false on failure, so the confirm dialog unlocks and closes. */
+  const handleDeleteExpense = async (): Promise<boolean> => {
     setIsDeletingExpense(true);
     isOwnDeleteRef.current = true;
     try {
@@ -487,11 +488,15 @@ export default function ExpenseDetailsPage({
       // navigate away as if it had worked.
       if (!(await deleteExpense(expenseId))) throw new Error("Failed to delete expense");
       toast({ message: tToasts("expenseDeleted"), variant: "destructive" });
+      // Leave the dialog open and locked until the page navigates away, so it
+      // doesn't close onto the expense that was just deleted.
       router.push(`/group/${groupId}`);
+      return true;
     } catch (error) {
       // Still here, so the expense may still exist: let later deletes be reported.
       isOwnDeleteRef.current = false;
-      if (showOfflineFailure(error, tOffline("droppedNotDeleted"))) return;
+      setIsDeletingExpense(false);
+      if (showOfflineFailure(error, tOffline("droppedNotDeleted"))) return false;
       console.error("delete expense failed:", error);
       toast({
         title: tToasts("couldNotDeleteExpense"),
@@ -499,9 +504,7 @@ export default function ExpenseDetailsPage({
         variant: "error",
         action: { label: tToasts("retry"), callback: () => void handleDeleteExpense() },
       });
-    } finally {
-      setIsDeletingExpense(false);
-      setIsExpenseDeleteConfirmOpen(false);
+      return false;
     }
   };
 
@@ -571,30 +574,29 @@ export default function ExpenseDetailsPage({
    * the meantime the server leaves their newer one alone and the user is asked
    * whether to delete that too; `deleteNewer` answers yes.
    */
-  const deleteReceipt = async (deleteNewer: boolean) => {
-    setIsAttachmentDeleteConfirmOpen(false);
-    setReceiptReplaced(false);
-    setAttachmentSpinnerMessage(t("deletingAttachment"));
-
+  const deleteReceipt = async (deleteNewer: boolean): Promise<AlertActionResult> => {
+    // The confirm dialog stays open and locked while this runs; its Delete
+    // button shows the progress.
     try {
       await deleteExpenseAttachment(expenseId, deleteNewer ? undefined : cachedAttachment?.name);
       deletedReceiptHereRef.current = true;
       setAttachment(null);
       setIsViewerOpen(false);
+      setReceiptReplaced(false);
+      return true;
     } catch (error) {
       if ((error as { code?: string }).code === "ATTACHMENT_CHANGED") {
-        // Show the newer receipt behind the question.
+        // Show the newer receipt behind the question; the dialog turns into it.
         setAttachmentOverride(undefined);
         void refresh();
         setReceiptReplaced(true);
-        setIsAttachmentDeleteConfirmOpen(true);
-        return;
+        return "stay";
       }
-      if (showOfflineFailure(error, tOffline("droppedReceipt"))) return;
+      setReceiptReplaced(false);
+      if (showOfflineFailure(error, tOffline("droppedReceipt"))) return false;
       console.error("delete attachment failed:", error);
       toast({ title: tToasts("couldNotRemoveImage"), description: tToasts("tryAgainHint"), variant: "error" });
-    } finally {
-      setAttachmentSpinnerMessage("");
+      return false;
     }
   };
 
@@ -1219,11 +1221,11 @@ export default function ExpenseDetailsPage({
             shownReceiptReplacedRef.current
               ? [
                   { label: tReceipt("keepNew"), type: "cancel", className: "mt-0 flex-1 border-none bg-muted hover:bg-muted/80" },
-                  { label: tReceipt("deleteAnyway"), onClick: () => void deleteReceipt(true), variant: "destructive", className: "flex-1" },
+                  { label: tReceipt("deleteAnyway"), pendingLabel: tCommon("deleting"), onClick: () => deleteReceipt(true), async: true, variant: "destructive", className: "flex-1" },
                 ]
               : [
                   { label: tCommon("cancel"), type: "cancel", className: "mt-0 flex-1 border-none bg-muted hover:bg-muted/80" },
-                  { label: tCommon("delete"), onClick: () => void deleteReceipt(false), disabled: Boolean(attachmentSpinnerMessage), variant: "destructive", className: "flex-1" },
+                  { label: tCommon("delete"), pendingLabel: tCommon("deleting"), onClick: () => deleteReceipt(false), async: true, disabled: Boolean(attachmentSpinnerMessage), variant: "destructive", className: "flex-1" },
                 ]
           }
         />
@@ -1234,7 +1236,7 @@ export default function ExpenseDetailsPage({
           description={t("deleteExpenseDescription")}
           actions={[
             { label: tCommon("cancel"), type: "cancel", className: "mt-0 flex-1 border-none bg-muted hover:bg-muted/80" },
-            { label: isDeletingExpense ? tCommon("deleting") : tCommon("delete"), onClick: handleDeleteExpense, disabled: isDeletingExpense, variant: "destructive", className: "flex-1" },
+            { label: tCommon("delete"), pendingLabel: tCommon("deleting"), onClick: handleDeleteExpense, async: true, closeOnSuccess: false, variant: "destructive", className: "flex-1" },
           ]}
         />
         <GenericAlertDialog

@@ -19,7 +19,7 @@ import { AddMemberInputBox } from "@/components/group/AddMemberInputBox";
 import { GroupFormFieldBox } from "@/components/group/GroupFormFieldBox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { GenericAlertDialog } from "@/components/ui/generic-alert-dialog";
+import { GenericAlertDialog, type AlertActionResult } from "@/components/ui/generic-alert-dialog";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { MobileGroupFormLayout } from "@/components/group/MobileGroupFormLayout";
 import { balanceStyles } from "@/lib/brand-styles";
@@ -83,11 +83,10 @@ interface EditGroupMobileProps {
   };
   onOpenMember: (memberKey: string) => void;
   onSaveGroup: () => void;
-  onDeleteGroup: () => void | Promise<void>;
+  onDeleteGroup: () => AlertActionResult | Promise<AlertActionResult>;
   /** e.g. "₹4,450 is still unsettled between members."; shown in the delete confirmation. */
   unsettledWarning?: string | null;
   isSubmitting?: boolean;
-  isDeleting?: boolean;
 }
 
 const truncateMemberName = (name: string, maxLength = 24) =>
@@ -109,7 +108,6 @@ export function EditGroupMobile({
   onDeleteGroup,
   unsettledWarning = null,
   isSubmitting = false,
-  isDeleting = false,
 }: EditGroupMobileProps) {
   const t = useTranslations("group");
   const tCommon = useTranslations("common");
@@ -328,7 +326,9 @@ export function EditGroupMobile({
             label: t("keepEditing"),
             type: "cancel",
             className: "mt-0",
-            onClick: () => requestAnimationFrame(() => memberInputRef.current?.focus()),
+            onClick: () => {
+              requestAnimationFrame(() => memberInputRef.current?.focus());
+            },
           },
           { label: t("saveWithoutMember"), onClick: onSaveGroup },
         ]}
@@ -349,15 +349,14 @@ export function EditGroupMobile({
               )}
             </div>}
         actions={[
-          { label: tCommon("cancel"), type: "cancel", disabled: isDeleting },
+          { label: tCommon("cancel"), type: "cancel" },
           {
-            label: isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : tCommon("delete"),
+            label: tCommon("delete"),
+            pendingLabel: <Loader2 className="h-4 w-4 animate-spin" />,
             variant: "destructive",
-            disabled: isDeleting,
-            onClick: (e) => {
-                e.preventDefault();
-                void onDeleteGroup();
-            },
+            async: true,
+            closeOnSuccess: false,
+            onClick: onDeleteGroup,
           },
         ]}
       />
