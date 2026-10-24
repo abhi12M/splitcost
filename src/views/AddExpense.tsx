@@ -134,6 +134,7 @@ export default function AddExpensePage({ groupId }: { groupId: string }) {
                     defaultPaidByUserId={defaultPaidByUserId}
                     viewerMemberId={defaultPaidByUserId ?? null}
                     onSubmit={handleSubmit}
+                    canSubmit={() => access.check("edit")}
                     submitLabel={isSubmitting ? tCommon("adding") : t("addExpense")}
                   />
                 </CardContent>
@@ -152,6 +153,7 @@ export default function AddExpensePage({ groupId }: { groupId: string }) {
           viewerMemberId={defaultPaidByUserId ?? null}
           groupId={groupId}
           onSubmit={handleSubmit}
+          canSubmit={() => access.check("edit")}
         />
       </div>
       <Spinner show={isSubmitting} message={tCommon("creating")} />

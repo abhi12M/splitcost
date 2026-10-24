@@ -84,6 +84,8 @@ interface EditGroupMobileProps {
   onOpenMember: (memberKey: string) => void;
   onSaveGroup: () => void;
   onDeleteGroup: () => AlertActionResult | Promise<AlertActionResult>;
+  /** Asked before the delete confirmation opens; false (having explained why) keeps it closed. */
+  canDeleteGroup?: () => boolean;
   /** e.g. "₹4,450 is still unsettled between members."; shown in the delete confirmation. */
   unsettledWarning?: string | null;
   isSubmitting?: boolean;
@@ -106,6 +108,7 @@ export function EditGroupMobile({
   onOpenMember,
   onSaveGroup,
   onDeleteGroup,
+  canDeleteGroup,
   unsettledWarning = null,
   isSubmitting = false,
 }: EditGroupMobileProps) {
@@ -298,7 +301,9 @@ export function EditGroupMobile({
               variant="outline"
               size="sm"
               className="mt-3 w-full border-destructive text-destructive hover:bg-destructive/5"
-              onClick={() => setDeleteDialogOpen(true)}
+              onClick={() => {
+                if (!canDeleteGroup || canDeleteGroup()) setDeleteDialogOpen(true);
+              }}
             >
               {t("deleteGroup")}
             </Button>

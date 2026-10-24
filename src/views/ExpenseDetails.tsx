@@ -948,6 +948,7 @@ export default function ExpenseDetailsPage({
                   }}
                   inputPlaceholder={t("searchCategory")}
                   fullscreenOnMobile
+                  canOpen={() => access.check("edit")}
                   disabled={isUpdatingCategory}
                   trigger={
                     <button

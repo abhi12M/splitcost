@@ -50,6 +50,8 @@ interface SingleSelectProps {
   fullscreenOnMobile?: boolean;
   isDisplayId?: boolean;
   disabled?: boolean;
+  /** Asked before opening; false (having explained why) keeps it closed. */
+  canOpen?: () => boolean;
 }
 
 export const SingleSelect: React.FC<SingleSelectProps> = ({
@@ -65,10 +67,15 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
   label,
   fullscreenOnMobile = false,
   isDisplayId = false,
-  disabled = false
+  disabled = false,
+  canOpen
 }) => {
   const device = useDeviceType();
   const [open, setOpen] = useState(false);
+  const handleOpenChange = (next: boolean) => {
+    if (next && canOpen && !canOpen()) return;
+    setOpen(next);
+  };
   const [allowMobileKeyboard, setAllowMobileKeyboard] = useState(false);
   const mobileSearchInputRef = React.useRef<HTMLInputElement>(null);
   const isFullscreenMobile = fullscreenOnMobile && device == 'mobile';
@@ -276,7 +283,7 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
       )}
 
       {/* ================= DESKTOP POPOVER ================= */}
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={handleOpenChange}>
         <PopoverTrigger asChild>
           {trigger ?? (
             isFullscreenMobile ? (
@@ -284,7 +291,7 @@ export const SingleSelect: React.FC<SingleSelectProps> = ({
               <button
                 type="button"
                 disabled={disabled}
-                onClick={() => setOpen(true)}
+                onClick={() => handleOpenChange(true)}
                 // className={cn(
                 //   disabled && "opacity-50 cursor-not-allowed pointer-events-none"
                 // )}

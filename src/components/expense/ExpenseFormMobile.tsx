@@ -47,6 +47,8 @@ interface Props {
   groupId?: string,
   initialAttachment?: ExpenseAttachment | null,
   onSubmit: (data: ExpenseRequest) => void
+  /** Asked before validating on save; false (having explained why) stops the save. */
+  canSubmit?: () => boolean
 }
 
 export type ExpenseFormMobileHandle = {
@@ -71,7 +73,8 @@ const ExpenseFormMobile = forwardRef<ExpenseFormMobileHandle, Props>(function Ex
   initialData,
   groupId,
   initialAttachment = null,
-  onSubmit
+  onSubmit,
+  canSubmit
 }, ref) {
   const t = useTranslations("expense");
   const tCommon = useTranslations("common");
@@ -222,6 +225,7 @@ const ExpenseFormMobile = forwardRef<ExpenseFormMobileHandle, Props>(function Ex
   }, [members]);
 
   const submitForm = () => {
+    if (canSubmit && !canSubmit()) return;
     setHasSubmitted(true);
     const validation = validate();
     if (!validation.valid) {

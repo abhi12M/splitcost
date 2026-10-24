@@ -353,6 +353,7 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
                     }}
                     initialAttachment={attachment}
                     onSubmit={handleSubmit}
+                    canSubmit={() => access.check("edit")}
                     submitLabel={isSubmitting ? tCommon("saving") : t("saveChanges")}
                   />
                 </CardContent>
@@ -374,6 +375,7 @@ export default function EditExpensePage({ groupId, expenseId }: { groupId: strin
           }}
           initialAttachment={attachment}
           onSubmit={handleSubmit}
+          canSubmit={() => access.check("edit")}
         />
       </div>
       <Spinner show={isSubmitting} message={tCommon("saving")} />

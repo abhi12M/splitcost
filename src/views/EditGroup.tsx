@@ -1150,6 +1150,7 @@ export default function EditGroupPage({ groupId }: { groupId: string }) {
           onOpenMember={openMemberSheet}
           onSaveGroup={() => handleSaveGroup()}
           onDeleteGroup={handleDeleteGroup}
+          canDeleteGroup={() => access.check("deleteGroup")}
           unsettledWarning={unsettledWarning}
           isSubmitting={isSubmitting}
         />
